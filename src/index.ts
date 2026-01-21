@@ -7,7 +7,11 @@
 
 export type {
   AIRDef, AIRDocument,
-  CIRDocument, Expr, FunctionSignature, Node, Type, Value
+  CIRDocument, EIRDocument, Expr, FunctionSignature, Node, Type, Value,
+  // EIR/LIR Types
+  EvalState, Effect,
+  LIRDocument, LirBlock, LirInstruction, LirTerminator,
+  EirExpr,
 } from "./types.js";
 
 export type { Defs, TypeEnv, ValueEnv } from "./env.js";
@@ -16,18 +20,24 @@ export type { ErrorCode, ValidationError, ValidationResult } from "./errors.js";
 
 export type { Operator, OperatorRegistry } from "./domains/registry.js";
 
+export type { EffectOp, EffectRegistry } from "./effects.js";
+
 //==============================================================================
 // Type Constructors
 //==============================================================================
 
 export {
   boolType, floatType, fnType, intType, listType,
-  mapType, opaqueType, optionType, setType, stringType
+  mapType, opaqueType, optionType, setType, stringType,
+  // EIR types
+  refType, voidType,
 } from "./types.js";
 
 export {
   boolVal, closureVal,
-  errorVal, floatVal, intVal, listVal, mapVal, opaqueVal, optionVal, setVal, stringVal
+  errorVal, floatVal, intVal, listVal, mapVal, opaqueVal, optionVal, setVal, stringVal,
+  // EIR values
+  voidVal, refCellVal,
 } from "./types.js";
 
 //==============================================================================
@@ -36,7 +46,11 @@ export {
 
 export {
   hashValue, isClosure, isError, isPrimitiveType,
-  typeEqual
+  typeEqual,
+  // EIR type guards
+  isRefCell, isVoid,
+  // EIR utilities
+  emptyEvalState, createEvalState,
 } from "./types.js";
 
 //==============================================================================
@@ -61,7 +75,7 @@ export {
 // Validation
 //==============================================================================
 
-export { validateAIR, validateCIR } from "./validator.js";
+export { validateAIR, validateCIR, validateEIR, validateLIR } from "./validator.js";
 
 export { combineResults, invalidResult, validResult } from "./errors.js";
 
@@ -71,11 +85,16 @@ export { combineResults, invalidResult, validResult } from "./errors.js";
 
 export { TypeChecker, typeCheckProgram } from "./typechecker.js";
 
+export { typeCheckEIRProgram } from "./typechecker.js";
+
 //==============================================================================
 // Evaluation
 //==============================================================================
 
 export { evaluateProgram, Evaluator, type EvalOptions } from "./evaluator.js";
+
+// EIR evaluation
+export { evaluateEIR, type EIROptions } from "./evaluator.js";
 
 //==============================================================================
 // Domains
@@ -104,7 +123,38 @@ export {
 } from "./cir/substitution.js";
 
 //==============================================================================
+// Effects Registry
+//==============================================================================
+
+export {
+  createDefaultEffectRegistry,
+  defaultEffectRegistry,
+  emptyEffectRegistry,
+  lookupEffect,
+  registerEffect,
+  ioEffects,
+  stateEffects,
+} from "./effects.js";
+
+//==============================================================================
+// LIR
+//==============================================================================
+
+export { evaluateLIR, type LIREvalOptions } from "./lir/evaluator.js";
+
+export { lowerEIRtoLIR } from "./lir/lower.js";
+
+//==============================================================================
 // Schemas
 //==============================================================================
 
-export { airSchema, cirSchema } from "./schemas.js";
+export {
+  airSchema,
+  cirSchema,
+  eirSchema,
+  lirSchema,
+  isAIRSchema,
+  isCIRSchema,
+  isEIRSchema,
+  isLIRSchema,
+} from "./schemas.js";
