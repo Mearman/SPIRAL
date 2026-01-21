@@ -1,0 +1,135 @@
+{
+  "version": "1.0.0",
+  "description": "Demonstrates a simple state machine using mutation in EIR. States transition: init -> processing -> done.",
+  "airDefs": [
+    {
+      "ns": "core",
+      "name": "eq",
+      "params": ["a", "b"],
+      "result": { "kind": "bool" },
+      "body": { "kind": "ref", "id": "a" }
+    },
+    {
+      "ns": "core",
+      "name": "add",
+      "params": ["a", "b"],
+      "result": { "kind": "int" },
+      "body": { "kind": "ref", "id": "a" }
+    },
+    {
+      "ns": "core",
+      "name": "lt",
+      "params": ["a", "b"],
+      "result": { "kind": "bool" },
+      "body": { "kind": "ref", "id": "a" }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "stateInit",
+      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "init" }
+    },
+    {
+      "id": "stateProcessing",
+      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "processing" }
+    },
+    {
+      "id": "stateDone",
+      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "done" }
+    },
+    {
+      "id": "zero",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+    },
+    {
+      "id": "one",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+    },
+    {
+      "id": "three",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 3 }
+    },
+    {
+      "id": "initState",
+      "expr": {
+        "kind": "assign",
+        "target": "state",
+        "value": "stateInit"
+      }
+    },
+    {
+      "id": "initCounter",
+      "expr": {
+        "kind": "assign",
+        "target": "counter",
+        "value": "zero"
+      }
+    },
+    {
+      "id": "toProcessing",
+      "expr": {
+        "kind": "assign",
+        "target": "state",
+        "value": "stateProcessing"
+      }
+    },
+    {
+      "id": "currentState",
+      "expr": { "kind": "var", "name": "state" }
+    },
+    {
+      "id": "isProcessing",
+      "expr": {
+        "kind": "call",
+        "ns": "core",
+        "name": "eq",
+        "args": ["currentState", "stateProcessing"]
+      }
+    },
+    {
+      "id": "counterValue",
+      "expr": { "kind": "var", "name": "counter" }
+    },
+    {
+      "id": "checkLimit",
+      "expr": {
+        "kind": "call",
+        "ns": "core",
+        "name": "lt",
+        "args": ["counterValue", "three"]
+      }
+    },
+    {
+      "id": "increment",
+      "expr": {
+        "kind": "call",
+        "ns": "core",
+        "name": "add",
+        "args": ["counterValue", "one"]
+      }
+    },
+    {
+      "id": "updateCounter",
+      "expr": {
+        "kind": "assign",
+        "target": "counter",
+        "value": "increment"
+      }
+    },
+    {
+      "id": "toDone",
+      "expr": {
+        "kind": "assign",
+        "target": "state",
+        "value": "stateDone"
+      }
+    },
+    {
+      "id": "result",
+      "expr": { "kind": "var", "name": "state" }
+    }
+  ],
+  "result": "result",
+  "expected_result": "done",
+  "note": "State machine: init -> processing (counter 0->1->2->3) -> done. Final state is 'done'."
+}

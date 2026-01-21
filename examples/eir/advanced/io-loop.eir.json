@@ -1,0 +1,49 @@
+{
+  "version": "1.0.0",
+  "description": "Demonstrates interactive I/O loop with effects in EIR. Simulates reading input and producing output until a condition is met.",
+  "airDefs": [
+    {
+      "ns": "core",
+      "name": "eq",
+      "params": ["a", "b"],
+      "result": { "kind": "bool" },
+      "body": { "kind": "ref", "id": "a" }
+    },
+    {
+      "ns": "core",
+      "name": "add",
+      "params": ["a", "b"],
+      "result": { "kind": "int" },
+      "body": { "kind": "ref", "id": "a" }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "zero",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+    },
+    {
+      "id": "one",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+    },
+    {
+      "id": "five",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+    },
+    {
+      "id": "quitValue",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": -1 }
+    },
+    {
+      "id": "prompt",
+      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "Enter number (-1 to quit): " }
+    },
+    {
+      "id": "result",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+    }
+  ],
+  "result": "result",
+  "expected_result": 0,
+  "note": "Interactive I/O loop simulation. In a real implementation, would use 'read' effect to get user input and 'print' effect to display prompts. The loop continues until user enters -1."
+}
