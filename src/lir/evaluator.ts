@@ -43,6 +43,7 @@ interface LIRRuntimeState {
   effects: Array<{ op: string; args: Value[] }>;
   steps: number;
   maxSteps: number;
+  predecessor?: string; // Track which block we came from (for phi node resolution)
 }
 
 //==============================================================================
@@ -89,6 +90,9 @@ export function evaluateLIR(
   const executedBlocks = new Set<string>();
 
   while (currentBlockId) {
+    // Set the predecessor for phi node resolution
+    // (state.predecessor is already set from the previous iteration, or undefined for entry)
+
     // Check for infinite loops (basic detection)
     if (executedBlocks.has(currentBlockId)) {
       // Allow revisiting blocks in loops, but track for potential infinite loops
@@ -139,6 +143,8 @@ export function evaluateLIR(
       // Return value or error
       return { result: termResult, state };
     }
+    // Update predecessor before moving to next block
+    state.predecessor = currentBlockId;
     currentBlockId = termResult;
   }
 
@@ -268,14 +274,34 @@ function executeInstruction(
 
     case "phi": {
       // LirInsPhi: target = phi(sources)
-      // Phi nodes merge values from different control flow predecessors
-      // For execution, we use the first available source
+      // Phi nodes merge values from different control flow predecessors.
+      // We select the value from the source whose block matches our predecessor.
       let phiValue: Value | undefined;
-      for (const source of ins.sources) {
-        const value = lookupValue(state.vars, source.id);
-        if (value && value.kind !== "error") {
-          phiValue = value;
-          break;
+
+      // First, try to find a source matching the predecessor block
+      if (state.predecessor) {
+        for (const source of ins.sources) {
+          if (source.block === state.predecessor) {
+            const value = lookupValue(state.vars, source.id);
+            if (value && value.kind !== "error") {
+              phiValue = value;
+              break;
+            }
+          }
+        }
+      }
+
+      // Fallback: when no predecessor match, we need to find which source's id variable exists
+      // This handles cases where the LIR file might have incomplete phi source information
+      if (!phiValue) {
+        // Try sources in order, but only use a source if its variable exists
+        for (const source of ins.sources) {
+          const value = lookupValue(state.vars, source.id);
+          if (value && value.kind !== "error") {
+            // Found a valid source - use it
+            phiValue = value;
+            break;
+          }
         }
       }
 
