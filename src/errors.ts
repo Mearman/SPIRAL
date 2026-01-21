@@ -186,6 +186,8 @@ function formatType(t: Type): string {
 			return "float";
 		case "string":
 			return "string";
+		case "void":
+			return "void";
 		case "set":
 			return "set<" + formatType(t.of) + ">";
 		case "list":
@@ -194,6 +196,8 @@ function formatType(t: Type): string {
 			return "map<" + formatType(t.key) + ", " + formatType(t.value) + ">";
 		case "option":
 			return "option<" + formatType(t.of) + ">";
+		case "ref":
+			return "ref<" + formatType(t.of) + ">";
 		case "opaque":
 			return "opaque(" + t.name + ")";
 		case "fn":
@@ -203,6 +207,8 @@ function formatType(t: Type): string {
 				") -> " +
 				formatType(t.returns)
 			);
+		default:
+			return "unknown";
 	}
 }
 
