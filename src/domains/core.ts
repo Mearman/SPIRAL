@@ -4,20 +4,20 @@
 import { CAIRSError, ErrorCodes } from "../errors.js";
 import type { Type, Value } from "../types.js";
 import {
-  boolType,
-  boolVal,
-  errorVal,
-  floatType,
-  floatVal,
-  intType,
-  intVal,
-  isError,
+	boolType,
+	boolVal,
+	errorVal,
+	floatType,
+	floatVal,
+	intType,
+	intVal,
+	isError,
 } from "../types.js";
 import {
-  defineOperator,
-  Operator,
-  OperatorRegistry,
-  registerOperator,
+	defineOperator,
+	Operator,
+	OperatorRegistry,
+	registerOperator,
 } from "./registry.js";
 
 //==============================================================================
