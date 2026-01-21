@@ -15,6 +15,8 @@ import {
   type AIRDocument,
   type ClosureVal,
   type EIRDocument,
+  type EirExpr,
+  type EirNode,
   type EvalState,
   type Expr,
   type Node,
@@ -1843,7 +1845,7 @@ export function evaluateEIR(
 	}
 
 	const evaluator = new Evaluator(registry, defs);
-	const nodeMap = new Map<string, Node>();
+	const nodeMap = new Map<string, EirNode>();
 	const nodeValues = new Map<string, Value>();
 
 	// Build node map
@@ -1919,8 +1921,8 @@ interface EIRNodeEvalResult {
  */
 function evalEIRNode(
 	evaluator: Evaluator,
-	node: Node,
-	nodeMap: Map<string, Node>,
+	node: EirNode,
+	nodeMap: Map<string, EirNode>,
 	nodeValues: Map<string, Value>,
 	state: EvalState,
 	registry: OperatorRegistry,
@@ -1956,10 +1958,11 @@ function evalEIRNode(
 
 	// For CIR expressions, delegate to existing evalNode
 	// We need to wrap it to return the correct type
+	// The kind check above ensures expr is actually a CIR Expr, not EIR-specific
 	const cirResult = evalNode(
 		evaluator,
-		node,
-		nodeMap,
+		node as Node,
+		nodeMap as Map<string, Node>,
 		nodeValues,
 		state.env,
 		options,
@@ -1976,8 +1979,8 @@ function evalEIRNode(
  * Evaluate EIR-specific expressions.
  */
 function evalEIRExpr(
-	expr: Expr,
-	nodeMap: Map<string, Node>,
+	expr: EirExpr,
+	nodeMap: Map<string, EirNode>,
 	nodeValues: Map<string, Value>,
 	state: EvalState,
 	registry: OperatorRegistry,

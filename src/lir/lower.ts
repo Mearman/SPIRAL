@@ -5,11 +5,11 @@ import { CAIRSError, ErrorCodes } from "../errors.js";
 import type {
   EIRDocument,
   EirExpr,
+  EirNode,
   Expr,
   LIRDocument,
   LirBlock,
   LirInstruction,
-  Node,
 } from "../types.js";
 
 //==============================================================================
@@ -19,7 +19,7 @@ import type {
 interface LoweringContext {
   blocks: LirBlock[];
   nextBlockId: number;
-  nodeMap: Map<string, Node>;
+  nodeMap: Map<string, EirNode>;
 }
 
 /**
@@ -130,7 +130,7 @@ type BlockResult = {
  * Returns the entry and exit block ids.
  */
 function lowerNode(
-  node: Node,
+  node: EirNode,
   currentBlock: string,
   ctx: LoweringContext,
   nextBlock: string | null,
@@ -146,7 +146,8 @@ function lowerNode(
   }
 
   // For CIR expressions, create a simple assignment block
-  return lowerCirExpr(expr, node.id, currentBlock, ctx, nextBlock);
+  // The kind check above ensures expr is actually a CIR Expr, not EIR-specific
+  return lowerCirExpr(expr as Expr, node.id, currentBlock, ctx, nextBlock);
 }
 
 /**
