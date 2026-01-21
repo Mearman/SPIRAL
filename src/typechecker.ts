@@ -4,7 +4,7 @@
 import { lookupOperator, type OperatorRegistry } from "./domains/registry.js";
 import { TypeEnv, emptyTypeEnv, extendTypeEnv, lookupDef, lookupType, type Defs } from "./env.js";
 import { CAIRSError, exhaustive } from "./errors.js";
-import type { AIRDocument, Expr, Node, Type } from "./types.js";
+import type { AIRDocument, EirNode, Expr, Node, Type } from "./types.js";
 import {
 	boolType,
 	fnType as fnTypeCtor,
@@ -952,7 +952,7 @@ export function typeCheckEIRProgram(
 	const nodeEnvs = new Map<string, TypeEnv>();
 
 	// Build a map of nodes for easy lookup
-	const nodeMap = new Map<string, Node>();
+	const nodeMap = new Map<string, EirNode>();
 	for (const node of doc.nodes) {
 		nodeMap.set(node.id, node);
 	}
@@ -1002,8 +1002,8 @@ export function typeCheckEIRProgram(
  */
 function typeCheckEIRNode(
 	checker: TypeChecker,
-	node: Node,
-	nodeMap: Map<string, Node>,
+	node: EirNode,
+	nodeMap: Map<string, EirNode>,
 	nodeTypes: Map<string, Type>,
 	nodeEnvs: Map<string, TypeEnv>,
 	mutableTypes: Map<string, Type>,
@@ -1291,10 +1291,11 @@ function typeCheckEIRNode(
 	}
 
 	// Fall through to CIR/AIR type checking
+	// The kind check above ensures this is actually a CIR Expr, not EIR-specific
 	return typeCheckNode(
 		checker,
-		node,
-		nodeMap,
+		node as Node,
+		nodeMap as Map<string, Node>,
 		nodeTypes,
 		nodeEnvs,
 		env,

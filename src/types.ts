@@ -348,9 +348,9 @@ export interface FunctionSignature {
 	pure: boolean;
 }
 
-export interface Node {
+export interface Node<E = Expr> {
 	id: string;
-	expr: Expr;
+	expr: E;
 }
 
 export interface AIRDocument {
@@ -426,9 +426,13 @@ export interface EirDerefExpr {
 // EIR expression type - extends CIR expressions
 export type EirExpr = Expr | EirSeqExpr | EirAssignExpr | EirWhileExpr | EirForExpr | EirIterExpr | EirEffectExpr | EirRefCellExpr | EirDerefExpr;
 
-export interface EIRDocument extends CIRDocument {
+// EIR node type alias for convenience
+export type EirNode = Node<EirExpr>;
+
+export interface EIRDocument extends Omit<CIRDocument, "nodes"> {
 	// EIR documents can use seq, assign, loop (while/for/iter), effect, refCell, deref
-	// The document structure is the same as CIR, but nodes may contain EIR expressions
+	// Override nodes to allow EIR expressions
+	nodes: EirNode[];
 }
 
 //==============================================================================
