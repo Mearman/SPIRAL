@@ -1,48 +1,99 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Computes factorial using a while loop with mutation in EIR. Demonstrates iterative algorithm with accumulating result.",
   "airDefs": [
     {
       "ns": "core",
       "name": "add",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "sub",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "mul",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "gt",
-      "params": ["a", "b"],
-      "result": { "kind": "bool" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "bool"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     }
   ],
   "nodes": [
     {
       "id": "zero",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "one",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 1
+      }
     },
     {
       "id": "five",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 5
+      }
     },
     {
       "id": "initN",
@@ -66,16 +117,25 @@
         "kind": "call",
         "ns": "core",
         "name": "gt",
-        "args": ["n", "zero"]
+        "args": [
+          "n",
+          "zero"
+        ]
       }
     },
     {
       "id": "currentResult",
-      "expr": { "kind": "var", "name": "result" }
+      "expr": {
+        "kind": "var",
+        "name": "result"
+      }
     },
     {
       "id": "currentN",
-      "expr": { "kind": "var", "name": "n" }
+      "expr": {
+        "kind": "var",
+        "name": "n"
+      }
     },
     {
       "id": "mulResult",
@@ -83,7 +143,10 @@
         "kind": "call",
         "ns": "core",
         "name": "mul",
-        "args": ["currentResult", "currentN"]
+        "args": [
+          "currentResult",
+          "currentN"
+        ]
       }
     },
     {
@@ -100,7 +163,10 @@
         "kind": "call",
         "ns": "core",
         "name": "sub",
-        "args": ["n", "one"]
+        "args": [
+          "n",
+          "one"
+        ]
       }
     },
     {
@@ -129,7 +195,10 @@
     },
     {
       "id": "finalResult",
-      "expr": { "kind": "var", "name": "result" }
+      "expr": {
+        "kind": "var",
+        "name": "result"
+      }
     }
   ],
   "result": "finalResult",

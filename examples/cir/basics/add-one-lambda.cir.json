@@ -1,37 +1,72 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/cir.schema.json",
   "version": "1.0.0",
   "airDefs": [
     {
       "ns": "core",
       "name": "add",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     }
   ],
   "nodes": [
     {
       "id": "one",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 1
+      }
     },
     {
       "id": "five",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 5
+      }
     },
     {
       "id": "ten",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 10 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 10
+      }
     },
     {
       "id": "addOne",
       "expr": {
         "kind": "lambda",
-        "params": ["x"],
+        "params": [
+          "x"
+        ],
         "body": "xPlusOne",
         "type": {
           "kind": "fn",
-          "params": [{ "kind": "int" }],
-          "returns": { "kind": "int" }
+          "params": [
+            {
+              "kind": "int"
+            }
+          ],
+          "returns": {
+            "kind": "int"
+          }
         }
       }
     },
@@ -41,7 +76,10 @@
         "kind": "call",
         "ns": "core",
         "name": "add",
-        "args": ["x", "one"]
+        "args": [
+          "x",
+          "one"
+        ]
       }
     },
     {
@@ -49,7 +87,9 @@
       "expr": {
         "kind": "callExpr",
         "fn": "addOne",
-        "args": ["five"]
+        "args": [
+          "five"
+        ]
       }
     },
     {
@@ -57,7 +97,9 @@
       "expr": {
         "kind": "callExpr",
         "fn": "addOne",
-        "args": ["ten"]
+        "args": [
+          "ten"
+        ]
       }
     },
     {
@@ -65,7 +107,9 @@
       "expr": {
         "kind": "callExpr",
         "fn": "addOne",
-        "args": ["applyToFive"]
+        "args": [
+          "applyToFive"
+        ]
       }
     },
     {
@@ -73,7 +117,9 @@
       "expr": {
         "kind": "callExpr",
         "fn": "addOne",
-        "args": ["nestedCall"]
+        "args": [
+          "nestedCall"
+        ]
       }
     }
   ],

@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/air.schema.json",
   "version": "1.0.0",
   "airDefs": [],
   "functionSigs": [
@@ -6,9 +7,19 @@
       "ns": "list",
       "name": "reverse",
       "params": [
-        { "kind": "list", "of": { "kind": "int" } }
+        {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        }
       ],
-      "returns": { "kind": "list", "of": { "kind": "int" } },
+      "returns": {
+        "kind": "list",
+        "of": {
+          "kind": "int"
+        }
+      },
       "pure": true
     }
   ],
@@ -17,8 +28,17 @@
       "id": "list123",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "int" } },
-        "value": [1, 2, 3]
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          1,
+          2,
+          3
+        ]
       }
     },
     {
@@ -27,15 +47,24 @@
         "kind": "call",
         "ns": "list",
         "name": "reverse",
-        "args": ["list123"]
+        "args": [
+          "list123"
+        ]
       }
     },
     {
       "id": "list1",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "int" } },
-        "value": [1]
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          1
+        ]
       }
     },
     {
@@ -44,14 +73,21 @@
         "kind": "call",
         "ns": "list",
         "name": "reverse",
-        "args": ["list1"]
+        "args": [
+          "list1"
+        ]
       }
     },
     {
       "id": "emptyList",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "int" } },
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
         "value": []
       }
     },
@@ -61,7 +97,9 @@
         "kind": "call",
         "ns": "list",
         "name": "reverse",
-        "args": ["emptyList"]
+        "args": [
+          "emptyList"
+        ]
       }
     }
   ],

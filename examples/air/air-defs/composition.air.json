@@ -1,76 +1,119 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/air.schema.json",
   "version": "1.0.0",
   "airDefs": [
     {
       "ns": "math",
       "name": "add1",
-      "params": ["n"],
-      "result": { "kind": "int" },
+      "params": [
+        "n"
+      ],
+      "result": {
+        "kind": "int"
+      },
       "body": {
         "kind": "call",
         "ns": "core",
         "name": "add",
-        "args": ["n", "one"]
+        "args": [
+          "n",
+          "one"
+        ]
       }
     },
     {
       "ns": "math",
       "name": "mul2",
-      "params": ["n"],
-      "result": { "kind": "int" },
+      "params": [
+        "n"
+      ],
+      "result": {
+        "kind": "int"
+      },
       "body": {
         "kind": "call",
         "ns": "core",
         "name": "mul",
-        "args": ["n", "two"]
+        "args": [
+          "n",
+          "two"
+        ]
       }
     },
     {
       "ns": "math",
       "name": "square",
-      "params": ["n"],
-      "result": { "kind": "int" },
+      "params": [
+        "n"
+      ],
+      "result": {
+        "kind": "int"
+      },
       "body": {
         "kind": "call",
         "ns": "core",
         "name": "mul",
-        "args": ["n", "n"]
+        "args": [
+          "n",
+          "n"
+        ]
       }
     },
     {
       "ns": "math",
       "name": "add1ThenMul2",
-      "params": ["n"],
-      "result": { "kind": "int" },
+      "params": [
+        "n"
+      ],
+      "result": {
+        "kind": "int"
+      },
       "body": {
         "kind": "call",
         "ns": "core",
         "name": "mul",
-        "args": ["n_plus_1", "two"]
+        "args": [
+          "n_plus_1",
+          "two"
+        ]
       }
     },
     {
       "ns": "math",
       "name": "mul2ThenAdd1",
-      "params": ["n"],
-      "result": { "kind": "int" },
+      "params": [
+        "n"
+      ],
+      "result": {
+        "kind": "int"
+      },
       "body": {
         "kind": "call",
         "ns": "core",
         "name": "add",
-        "args": ["n_times_2", "one"]
+        "args": [
+          "n_times_2",
+          "one"
+        ]
       }
     },
     {
       "ns": "math",
       "name": "doubleAndSquare",
-      "params": ["n"],
-      "result": { "kind": "int" },
+      "params": [
+        "n"
+      ],
+      "result": {
+        "kind": "int"
+      },
       "body": {
         "kind": "call",
         "ns": "core",
         "name": "mul",
-        "args": ["doubled", "doubled"]
+        "args": [
+          "doubled",
+          "doubled"
+        ]
       }
     }
   ],
@@ -78,50 +121,116 @@
     {
       "ns": "core",
       "name": "add",
-      "params": [{ "kind": "int" }, { "kind": "int" }],
-      "returns": { "kind": "int" },
+      "params": [
+        {
+          "kind": "int"
+        },
+        {
+          "kind": "int"
+        }
+      ],
+      "returns": {
+        "kind": "int"
+      },
       "pure": true
     },
     {
       "ns": "core",
       "name": "mul",
-      "params": [{ "kind": "int" }, { "kind": "int" }],
-      "returns": { "kind": "int" },
+      "params": [
+        {
+          "kind": "int"
+        },
+        {
+          "kind": "int"
+        }
+      ],
+      "returns": {
+        "kind": "int"
+      },
       "pure": true
     }
   ],
   "nodes": [
     {
       "id": "one",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 1
+      }
     },
     {
       "id": "two",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 2 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 2
+      }
     },
     {
       "id": "five",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 5
+      }
     },
     {
       "id": "x",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 7 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 7
+      }
     },
     {
       "id": "n_plus_1",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "n_times_2",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "doubled",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "y",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "simpleAdd1",
@@ -129,7 +238,9 @@
         "kind": "airRef",
         "ns": "math",
         "name": "add1",
-        "args": ["five"]
+        "args": [
+          "five"
+        ]
       }
     },
     {
@@ -138,7 +249,9 @@
         "kind": "airRef",
         "ns": "math",
         "name": "mul2",
-        "args": ["five"]
+        "args": [
+          "five"
+        ]
       }
     },
     {
@@ -147,7 +260,9 @@
         "kind": "airRef",
         "ns": "math",
         "name": "square",
-        "args": ["five"]
+        "args": [
+          "five"
+        ]
       }
     },
     {
@@ -156,7 +271,9 @@
         "kind": "airRef",
         "ns": "math",
         "name": "mul2",
-        "args": ["x"]
+        "args": [
+          "x"
+        ]
       }
     },
     {
@@ -165,7 +282,9 @@
         "kind": "airRef",
         "ns": "math",
         "name": "add1",
-        "args": ["firstMul2"]
+        "args": [
+          "firstMul2"
+        ]
       }
     },
     {
@@ -174,7 +293,9 @@
         "kind": "airRef",
         "ns": "math",
         "name": "add1ThenMul2",
-        "args": ["five"]
+        "args": [
+          "five"
+        ]
       }
     },
     {
@@ -183,7 +304,9 @@
         "kind": "airRef",
         "ns": "math",
         "name": "mul2ThenAdd1",
-        "args": ["five"]
+        "args": [
+          "five"
+        ]
       }
     },
     {
@@ -192,7 +315,9 @@
         "kind": "airRef",
         "ns": "math",
         "name": "doubleAndSquare",
-        "args": ["five"]
+        "args": [
+          "five"
+        ]
       }
     }
   ],

@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/air.schema.json",
   "version": "1.0.0",
   "airDefs": [],
   "nodes": [
@@ -6,7 +7,9 @@
       "id": "score95",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "int" },
+        "type": {
+          "kind": "int"
+        },
         "value": 95
       }
     },
@@ -14,7 +17,9 @@
       "id": "score85",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "int" },
+        "type": {
+          "kind": "int"
+        },
         "value": 85
       }
     },
@@ -22,7 +27,9 @@
       "id": "score75",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "int" },
+        "type": {
+          "kind": "int"
+        },
         "value": 75
       }
     },
@@ -30,7 +37,9 @@
       "id": "score65",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "int" },
+        "type": {
+          "kind": "int"
+        },
         "value": 65
       }
     },
@@ -38,7 +47,9 @@
       "id": "score55",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "int" },
+        "type": {
+          "kind": "int"
+        },
         "value": 55
       }
     },
@@ -46,7 +57,9 @@
       "id": "gradeA",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "string" },
+        "type": {
+          "kind": "string"
+        },
         "value": "A"
       }
     },
@@ -54,7 +67,9 @@
       "id": "gradeB",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "string" },
+        "type": {
+          "kind": "string"
+        },
         "value": "B"
       }
     },
@@ -62,7 +77,9 @@
       "id": "gradeC",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "string" },
+        "type": {
+          "kind": "string"
+        },
         "value": "C"
       }
     },
@@ -70,7 +87,9 @@
       "id": "gradeD",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "string" },
+        "type": {
+          "kind": "string"
+        },
         "value": "D"
       }
     },
@@ -78,7 +97,9 @@
       "id": "gradeF",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "string" },
+        "type": {
+          "kind": "string"
+        },
         "value": "F"
       }
     },
@@ -88,14 +109,19 @@
         "kind": "call",
         "ns": "core",
         "name": "gte",
-        "args": ["score95", "score90"]
+        "args": [
+          "score95",
+          "score90"
+        ]
       }
     },
     {
       "id": "score90",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "int" },
+        "type": {
+          "kind": "int"
+        },
         "value": 90
       }
     },
@@ -105,14 +131,19 @@
         "kind": "call",
         "ns": "core",
         "name": "gte",
-        "args": ["score85", "score80"]
+        "args": [
+          "score85",
+          "score80"
+        ]
       }
     },
     {
       "id": "score80",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "int" },
+        "type": {
+          "kind": "int"
+        },
         "value": 80
       }
     },
@@ -122,14 +153,19 @@
         "kind": "call",
         "ns": "core",
         "name": "gte",
-        "args": ["score75", "score70"]
+        "args": [
+          "score75",
+          "score70"
+        ]
       }
     },
     {
       "id": "score70",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "int" },
+        "type": {
+          "kind": "int"
+        },
         "value": 70
       }
     },
@@ -139,14 +175,19 @@
         "kind": "call",
         "ns": "core",
         "name": "gte",
-        "args": ["score65", "score60"]
+        "args": [
+          "score65",
+          "score60"
+        ]
       }
     },
     {
       "id": "score60",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "int" },
+        "type": {
+          "kind": "int"
+        },
         "value": 60
       }
     },
@@ -156,7 +197,10 @@
         "kind": "call",
         "ns": "core",
         "name": "gte",
-        "args": ["score55", "score60"]
+        "args": [
+          "score55",
+          "score60"
+        ]
       }
     },
     {
@@ -166,7 +210,9 @@
         "cond": "gte55",
         "then": "gradeD",
         "else": "gradeF",
-        "type": { "kind": "string" }
+        "type": {
+          "kind": "string"
+        }
       }
     },
     {
@@ -176,7 +222,9 @@
         "cond": "gte60",
         "then": "gradeC",
         "else": "leafGradeDF",
-        "type": { "kind": "string" }
+        "type": {
+          "kind": "string"
+        }
       }
     },
     {
@@ -186,7 +234,9 @@
         "cond": "gte70",
         "then": "gradeB",
         "else": "innerGradeCDF",
-        "type": { "kind": "string" }
+        "type": {
+          "kind": "string"
+        }
       }
     },
     {
@@ -196,7 +246,9 @@
         "cond": "gte90",
         "then": "gradeA",
         "else": "midGradeBCDF",
-        "type": { "kind": "string" }
+        "type": {
+          "kind": "string"
+        }
       }
     },
     {
@@ -205,7 +257,10 @@
         "kind": "call",
         "ns": "core",
         "name": "gte",
-        "args": ["score85", "score90"]
+        "args": [
+          "score85",
+          "score90"
+        ]
       }
     },
     {
@@ -215,7 +270,9 @@
         "cond": "gte90_alt",
         "then": "gradeA",
         "else": "midGradeBCDF",
-        "type": { "kind": "string" }
+        "type": {
+          "kind": "string"
+        }
       }
     },
     {
@@ -224,7 +281,10 @@
         "kind": "call",
         "ns": "core",
         "name": "gte",
-        "args": ["score75", "score90"]
+        "args": [
+          "score75",
+          "score90"
+        ]
       }
     },
     {
@@ -234,7 +294,9 @@
         "cond": "gte90_75",
         "then": "gradeA",
         "else": "midGradeBCDF",
-        "type": { "kind": "string" }
+        "type": {
+          "kind": "string"
+        }
       }
     },
     {
@@ -243,7 +305,10 @@
         "kind": "call",
         "ns": "core",
         "name": "gte",
-        "args": ["score65", "score90"]
+        "args": [
+          "score65",
+          "score90"
+        ]
       }
     },
     {
@@ -253,7 +318,9 @@
         "cond": "gte90_65",
         "then": "gradeA",
         "else": "midGradeBCDF",
-        "type": { "kind": "string" }
+        "type": {
+          "kind": "string"
+        }
       }
     },
     {
@@ -262,7 +329,10 @@
         "kind": "call",
         "ns": "core",
         "name": "gte",
-        "args": ["score55", "score90"]
+        "args": [
+          "score55",
+          "score90"
+        ]
       }
     },
     {
@@ -272,7 +342,9 @@
         "cond": "gte90_55",
         "then": "gradeA",
         "else": "midGradeBCDF",
-        "type": { "kind": "string" }
+        "type": {
+          "kind": "string"
+        }
       }
     }
   ],

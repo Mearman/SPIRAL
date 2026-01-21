@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates nested branching in LIR CFG. The then and else blocks can themselves contain branches.",
   "blocks": [
@@ -8,24 +9,45 @@
         {
           "kind": "assign",
           "target": "x",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 10 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 10
+          }
         },
         {
           "kind": "assign",
           "target": "y",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 20 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 20
+          }
         },
         {
           "kind": "assign",
           "target": "limit",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 15 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 15
+          }
         },
         {
           "kind": "op",
           "target": "xOk",
           "ns": "core",
           "name": "gt",
-          "args": ["x", "limit"]
+          "args": [
+            "x",
+            "limit"
+          ]
         }
       ],
       "terminator": {
@@ -43,7 +65,10 @@
           "target": "yOk",
           "ns": "core",
           "name": "gt",
-          "args": ["y", "limit"]
+          "args": [
+            "y",
+            "limit"
+          ]
         }
       ],
       "terminator": {
@@ -59,7 +84,13 @@
         {
           "kind": "assign",
           "target": "status",
-          "value": { "kind": "lit", "type": { "kind": "string" }, "value": "both passed" }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "both passed"
+          }
         }
       ],
       "terminator": {
@@ -73,7 +104,13 @@
         {
           "kind": "assign",
           "target": "status",
-          "value": { "kind": "lit", "type": { "kind": "string" }, "value": "x failed" }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "x failed"
+          }
         }
       ],
       "terminator": {
@@ -87,7 +124,13 @@
         {
           "kind": "assign",
           "target": "status",
-          "value": { "kind": "lit", "type": { "kind": "string" }, "value": "y failed" }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "y failed"
+          }
         }
       ],
       "terminator": {
@@ -102,9 +145,18 @@
           "kind": "phi",
           "target": "result",
           "sources": [
-            { "block": "bothPassed", "id": "status" },
-            { "block": "xFailed", "id": "status" },
-            { "block": "yFailed", "id": "status" }
+            {
+              "block": "bothPassed",
+              "id": "status"
+            },
+            {
+              "block": "xFailed",
+              "id": "status"
+            },
+            {
+              "block": "yFailed",
+              "id": "status"
+            }
           ]
         }
       ],
@@ -115,6 +167,6 @@
     }
   ],
   "entry": "entry",
-  "expected_result": "y failed",
-  "note": "Nested branch: entry checks x>15 (false, goes to xFailed), xFailed jumps to exit with 'x failed'. Wait: x=10, so x>15 is false. Actually xFailed is correct path."
+  "expected_result": "x failed",
+  "note": "Nested branch: entry checks x>15 (false, goes to xFailed), xFailed jumps to exit with 'x failed'. With x=10, x>15 is false, so we take the else branch to xFailed."
 }

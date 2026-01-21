@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/air.schema.json",
   "version": "1.0.0",
   "airDefs": [],
   "functionSigs": [
@@ -6,10 +7,25 @@
       "ns": "list",
       "name": "concat",
       "params": [
-        { "kind": "list", "of": { "kind": "int" } },
-        { "kind": "list", "of": { "kind": "int" } }
+        {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
+        {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        }
       ],
-      "returns": { "kind": "list", "of": { "kind": "int" } },
+      "returns": {
+        "kind": "list",
+        "of": {
+          "kind": "int"
+        }
+      },
       "pure": true
     }
   ],
@@ -18,16 +34,32 @@
       "id": "list1",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "int" } },
-        "value": [1, 2]
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          1,
+          2
+        ]
       }
     },
     {
       "id": "list2",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "int" } },
-        "value": [3, 4]
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          3,
+          4
+        ]
       }
     },
     {
@@ -36,14 +68,22 @@
         "kind": "call",
         "ns": "list",
         "name": "concat",
-        "args": ["list1", "list2"]
+        "args": [
+          "list1",
+          "list2"
+        ]
       }
     },
     {
       "id": "emptyList",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "int" } },
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
         "value": []
       }
     },
@@ -51,8 +91,17 @@
       "id": "list3",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "int" } },
-        "value": [1, 2, 3]
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          1,
+          2,
+          3
+        ]
       }
     },
     {
@@ -61,15 +110,25 @@
         "kind": "call",
         "ns": "list",
         "name": "concat",
-        "args": ["emptyList", "list3"]
+        "args": [
+          "emptyList",
+          "list3"
+        ]
       }
     },
     {
       "id": "list4",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "int" } },
-        "value": [5]
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          5
+        ]
       }
     },
     {
@@ -78,7 +137,10 @@
         "kind": "call",
         "ns": "list",
         "name": "concat",
-        "args": ["list1", "list2"]
+        "args": [
+          "list1",
+          "list2"
+        ]
       }
     },
     {
@@ -87,7 +149,10 @@
         "kind": "call",
         "ns": "list",
         "name": "concat",
-        "args": ["firstConcat", "list3"]
+        "args": [
+          "firstConcat",
+          "list3"
+        ]
       }
     },
     {
@@ -96,7 +161,10 @@
         "kind": "call",
         "ns": "list",
         "name": "concat",
-        "args": ["secondConcat", "list4"]
+        "args": [
+          "secondConcat",
+          "list4"
+        ]
       }
     }
   ],

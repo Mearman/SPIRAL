@@ -1,46 +1,101 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates mutation of list-like structures using EIR. Simulates in-place modification by creating new lists with updated values.",
   "airDefs": [
     {
       "ns": "core",
       "name": "add",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "lt",
-      "params": ["a", "b"],
-      "result": { "kind": "bool" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "bool"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     }
   ],
   "nodes": [
     {
       "id": "zero",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "one",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 1
+      }
     },
     {
       "id": "ten",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 10 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 10
+      }
     },
     {
       "id": "originalList",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "int" } },
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
         "value": [
-          { "kind": "int", "value": 1 },
-          { "kind": "int", "value": 2 },
-          { "kind": "int", "value": 3 },
-          { "kind": "int", "value": 4 },
-          { "kind": "int", "value": 5 }
+          {
+            "kind": "int",
+            "value": 1
+          },
+          {
+            "kind": "int",
+            "value": 2
+          },
+          {
+            "kind": "int",
+            "value": 3
+          },
+          {
+            "kind": "int",
+            "value": 4
+          },
+          {
+            "kind": "int",
+            "value": 5
+          }
         ]
       }
     },
@@ -62,11 +117,20 @@
     },
     {
       "id": "indexValue",
-      "expr": { "kind": "var", "name": "index" }
+      "expr": {
+        "kind": "var",
+        "name": "index"
+      }
     },
     {
       "id": "listLength",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 5
+      }
     },
     {
       "id": "condition",
@@ -74,7 +138,10 @@
         "kind": "call",
         "ns": "core",
         "name": "lt",
-        "args": ["indexValue", "listLength"]
+        "args": [
+          "indexValue",
+          "listLength"
+        ]
       }
     },
     {
@@ -83,7 +150,10 @@
         "kind": "call",
         "ns": "core",
         "name": "add",
-        "args": ["indexValue", "one"]
+        "args": [
+          "indexValue",
+          "one"
+        ]
       }
     },
     {
@@ -96,7 +166,10 @@
     },
     {
       "id": "loopBody",
-      "expr": { "kind": "ref", "id": "updateIndex" }
+      "expr": {
+        "kind": "ref",
+        "id": "updateIndex"
+      }
     },
     {
       "id": "processLoop",
@@ -108,11 +181,17 @@
     },
     {
       "id": "finalList",
-      "expr": { "kind": "var", "name": "newList" }
+      "expr": {
+        "kind": "var",
+        "name": "newList"
+      }
     },
     {
       "id": "result",
-      "expr": { "kind": "ref", "id": "finalList" }
+      "expr": {
+        "kind": "ref",
+        "id": "finalList"
+      }
     }
   ],
   "result": "result",

@@ -1,23 +1,44 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates reference cells (mutable memory) using refCell and deref expressions in EIR. Reference cells provide indirect mutable state.",
   "airDefs": [
     {
       "ns": "core",
       "name": "add",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     }
   ],
   "nodes": [
     {
       "id": "ten",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 10 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 10
+      }
     },
     {
       "id": "five",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 5
+      }
     },
     {
       "id": "initialize",

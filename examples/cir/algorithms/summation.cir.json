@@ -1,14 +1,30 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/cir.schema.json",
   "description": "Recursive summation of a list of integers",
   "input": {
     "list": {
       "kind": "list",
       "elements": [
-        { "kind": "int", "value": "1" },
-        { "kind": "int", "value": "2" },
-        { "kind": "int", "value": "3" },
-        { "kind": "int", "value": "4" },
-        { "kind": "int", "value": "5" }
+        {
+          "kind": "int",
+          "value": "1"
+        },
+        {
+          "kind": "int",
+          "value": "2"
+        },
+        {
+          "kind": "int",
+          "value": "3"
+        },
+        {
+          "kind": "int",
+          "value": "4"
+        },
+        {
+          "kind": "int",
+          "value": "5"
+        }
       ],
       "type": {
         "kind": "list",
@@ -29,9 +45,13 @@
             "kind": "arrow",
             "parameterType": {
               "kind": "list",
-              "elementType": { "kind": "int" }
+              "elementType": {
+                "kind": "int"
+              }
             },
-            "returnType": { "kind": "int" }
+            "returnType": {
+              "kind": "int"
+            }
           }
         }
       ],
@@ -44,7 +64,9 @@
               "name": "nums",
               "type": {
                 "kind": "list",
-                "elementType": { "kind": "int" }
+                "elementType": {
+                  "kind": "int"
+                }
               }
             }
           ],
@@ -80,13 +102,17 @@
         "parameters": [
           {
             "name": "accumulator",
-            "type": { "kind": "int" }
+            "type": {
+              "kind": "int"
+            }
           },
           {
             "name": "remaining",
             "type": {
               "kind": "list",
-              "elementType": { "kind": "int" }
+              "elementType": {
+                "kind": "int"
+              }
             }
           }
         ],

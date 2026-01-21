@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates straight-line code execution in LIR. Instructions execute sequentially within a basic block, ending with a return terminator.",
   "blocks": [
@@ -8,31 +9,55 @@
         {
           "kind": "assign",
           "target": "x",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 10 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 10
+          }
         },
         {
           "kind": "assign",
           "target": "y",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 20 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 20
+          }
         },
         {
           "kind": "op",
           "target": "sum",
           "ns": "core",
           "name": "add",
-          "args": ["x", "y"]
+          "args": [
+            "x",
+            "y"
+          ]
         },
         {
           "kind": "assign",
           "target": "z",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 5
+          }
         },
         {
           "kind": "op",
           "target": "result",
           "ns": "core",
           "name": "add",
-          "args": ["sum", "z"]
+          "args": [
+            "sum",
+            "z"
+          ]
         }
       ],
       "terminator": {

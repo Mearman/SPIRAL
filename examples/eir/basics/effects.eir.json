@@ -1,30 +1,47 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates I/O effects using the effect expression in EIR. Effects represent side-effecting operations like print, read, etc.",
   "airDefs": [],
   "nodes": [
     {
       "id": "message",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "Hello, EIR!" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "Hello, EIR!"
+      }
     },
     {
       "id": "printEffect",
       "expr": {
         "kind": "effect",
         "op": "print",
-        "args": ["message"]
+        "args": [
+          "message"
+        ]
       }
     },
     {
       "id": "number",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 42 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 42
+      }
     },
     {
       "id": "printNumber",
       "expr": {
         "kind": "effect",
         "op": "print",
-        "args": ["number"]
+        "args": [
+          "number"
+        ]
       }
     }
   ],

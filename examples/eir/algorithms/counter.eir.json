@@ -1,34 +1,69 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates a simple counter pattern with mutation in EIR. A counter variable is initialized and incremented multiple times.",
   "airDefs": [
     {
       "ns": "core",
       "name": "add",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "lt",
-      "params": ["a", "b"],
-      "result": { "kind": "bool" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "bool"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     }
   ],
   "nodes": [
     {
       "id": "zero",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "one",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 1
+      }
     },
     {
       "id": "five",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 5
+      }
     },
     {
       "id": "init",
@@ -44,7 +79,10 @@
         "kind": "call",
         "ns": "core",
         "name": "lt",
-        "args": ["counter", "five"]
+        "args": [
+          "counter",
+          "five"
+        ]
       }
     },
     {
@@ -53,7 +91,10 @@
         "kind": "call",
         "ns": "core",
         "name": "add",
-        "args": ["counter", "one"]
+        "args": [
+          "counter",
+          "one"
+        ]
       }
     },
     {
@@ -74,7 +115,10 @@
     },
     {
       "id": "result",
-      "expr": { "kind": "var", "name": "counter" }
+      "expr": {
+        "kind": "var",
+        "name": "counter"
+      }
     }
   ],
   "result": "result",

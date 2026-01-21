@@ -1,46 +1,93 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates composition of multiple effect operations in EIR. Effects are executed sequentially and recorded in the evaluation state.",
   "airDefs": [
     {
       "ns": "core",
       "name": "add",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     }
   ],
   "nodes": [
     {
       "id": "msg1",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "Starting computation..." }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "Starting computation..."
+      }
     },
     {
       "id": "msg2",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "Processing step 1" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "Processing step 1"
+      }
     },
     {
       "id": "msg3",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "Processing step 2" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "Processing step 2"
+      }
     },
     {
       "id": "msg4",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "Computation complete!" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "Computation complete!"
+      }
     },
     {
       "id": "five",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 5
+      }
     },
     {
       "id": "ten",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 10 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 10
+      }
     },
     {
       "id": "effect1",
       "expr": {
         "kind": "effect",
         "op": "print",
-        "args": ["msg1"]
+        "args": [
+          "msg1"
+        ]
       }
     },
     {
@@ -48,7 +95,9 @@
       "expr": {
         "kind": "effect",
         "op": "print",
-        "args": ["msg2"]
+        "args": [
+          "msg2"
+        ]
       }
     },
     {
@@ -57,7 +106,10 @@
         "kind": "call",
         "ns": "core",
         "name": "add",
-        "args": ["five", "ten"]
+        "args": [
+          "five",
+          "ten"
+        ]
       }
     },
     {
@@ -65,7 +117,9 @@
       "expr": {
         "kind": "effect",
         "op": "print",
-        "args": ["msg3"]
+        "args": [
+          "msg3"
+        ]
       }
     },
     {
@@ -73,7 +127,9 @@
       "expr": {
         "kind": "effect",
         "op": "print",
-        "args": ["msg4"]
+        "args": [
+          "msg4"
+        ]
       }
     },
     {

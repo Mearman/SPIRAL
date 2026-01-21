@@ -1,12 +1,24 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/air.schema.json",
   "version": "1.0.0",
   "airDefs": [
     {
       "ns": "set",
       "name": "contains",
-      "params": ["set", "elem"],
-      "result": { "kind": "bool" },
-      "body": { "kind": "lit", "type": { "kind": "bool" }, "value": true }
+      "params": [
+        "set",
+        "elem"
+      ],
+      "result": {
+        "kind": "bool"
+      },
+      "body": {
+        "kind": "lit",
+        "type": {
+          "kind": "bool"
+        },
+        "value": true
+      }
     }
   ],
   "nodes": [
@@ -16,16 +28,24 @@
         "kind": "lit",
         "type": {
           "kind": "set",
-          "elem": { "kind": "int" }
+          "elem": {
+            "kind": "int"
+          }
         },
-        "value": [1, 2, 3]
+        "value": [
+          1,
+          2,
+          3
+        ]
       }
     },
     {
       "id": "two",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "int" },
+        "type": {
+          "kind": "int"
+        },
         "value": 2
       }
     },
@@ -33,7 +53,9 @@
       "id": "five",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "int" },
+        "type": {
+          "kind": "int"
+        },
         "value": 5
       }
     },
@@ -43,7 +65,9 @@
         "kind": "lit",
         "type": {
           "kind": "set",
-          "elem": { "kind": "int" }
+          "elem": {
+            "kind": "int"
+          }
         },
         "value": []
       }
@@ -52,7 +76,9 @@
       "id": "one",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "int" },
+        "type": {
+          "kind": "int"
+        },
         "value": 1
       }
     },
@@ -62,7 +88,10 @@
         "kind": "call",
         "ns": "set",
         "name": "contains",
-        "args": ["set123", "two"]
+        "args": [
+          "set123",
+          "two"
+        ]
       }
     },
     {
@@ -71,7 +100,10 @@
         "kind": "call",
         "ns": "set",
         "name": "contains",
-        "args": ["set123", "five"]
+        "args": [
+          "set123",
+          "five"
+        ]
       }
     },
     {
@@ -80,7 +112,10 @@
         "kind": "call",
         "ns": "set",
         "name": "contains",
-        "args": ["emptySet", "one"]
+        "args": [
+          "emptySet",
+          "one"
+        ]
       }
     }
   ],

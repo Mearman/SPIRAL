@@ -1,45 +1,94 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates nested while loops in EIR. The outer loop controls one variable, while the inner loop runs to completion for each iteration of the outer loop.",
   "airDefs": [
     {
       "ns": "core",
       "name": "add",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "lt",
-      "params": ["a", "b"],
-      "result": { "kind": "bool" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "bool"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "mul",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     }
   ],
   "nodes": [
     {
       "id": "zero",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "one",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 1
+      }
     },
     {
       "id": "three",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 3 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 3
+      }
     },
     {
       "id": "four",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 4 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 4
+      }
     },
     {
       "id": "initI",
@@ -63,7 +112,10 @@
         "kind": "call",
         "ns": "core",
         "name": "lt",
-        "args": ["i", "three"]
+        "args": [
+          "i",
+          "three"
+        ]
       }
     },
     {
@@ -72,7 +124,10 @@
         "kind": "call",
         "ns": "core",
         "name": "lt",
-        "args": ["j", "four"]
+        "args": [
+          "j",
+          "four"
+        ]
       }
     },
     {
@@ -81,7 +136,10 @@
         "kind": "call",
         "ns": "core",
         "name": "add",
-        "args": ["j", "one"]
+        "args": [
+          "j",
+          "one"
+        ]
       }
     },
     {
@@ -90,7 +148,10 @@
         "kind": "call",
         "ns": "core",
         "name": "add",
-        "args": ["i", "one"]
+        "args": [
+          "i",
+          "one"
+        ]
       }
     },
     {
@@ -143,7 +204,10 @@
     },
     {
       "id": "result",
-      "expr": { "kind": "ref", "id": "zero" }
+      "expr": {
+        "kind": "ref",
+        "id": "zero"
+      }
     }
   ],
   "result": "result",

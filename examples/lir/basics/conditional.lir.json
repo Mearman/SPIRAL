@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates conditional branching in LIR using a branch terminator. The branch selects between two blocks based on a boolean condition.",
   "blocks": [
@@ -8,19 +9,34 @@
         {
           "kind": "assign",
           "target": "x",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 10 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 10
+          }
         },
         {
           "kind": "assign",
           "target": "limit",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 5
+          }
         },
         {
           "kind": "op",
           "target": "condition",
           "ns": "core",
           "name": "gt",
-          "args": ["x", "limit"]
+          "args": [
+            "x",
+            "limit"
+          ]
         }
       ],
       "terminator": {
@@ -36,7 +52,13 @@
         {
           "kind": "assign",
           "target": "message",
-          "value": { "kind": "lit", "type": { "kind": "string" }, "value": "x is greater" }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "x is greater"
+          }
         }
       ],
       "terminator": {
@@ -50,7 +72,13 @@
         {
           "kind": "assign",
           "target": "message",
-          "value": { "kind": "lit", "type": { "kind": "string" }, "value": "x is not greater" }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "x is not greater"
+          }
         }
       ],
       "terminator": {
