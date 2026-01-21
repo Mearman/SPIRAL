@@ -808,3 +808,664 @@ export function validateCIR(doc: unknown): ValidationResult<CIRDocument> {
 
 	return validResult(doc as CIRDocument);
 }
+
+//==============================================================================
+// EIR Validation
+//==============================================================================
+
+/**
+ * Validate an EIR document.
+ * EIR extends CIR with sequencing, mutation, loops, and effects.
+ */
+export function validateEIR(doc: unknown): ValidationResult<import("./types.js").EIRDocument> {
+	const state: ValidationState = { errors: [], path: [] };
+
+	// Validate basic document structure (same as AIR/CIR)
+	if (!validateObject(doc)) {
+		addError(state, "Document must be an object", doc);
+		return invalidResult(state.errors);
+	}
+
+	const d = doc as Record<string, unknown>;
+
+	// Validate version
+	pushPath(state, "version");
+	if (!validateString(d.version) || !validateVersion(d.version as string)) {
+		addError(state, "Document must have valid semantic version", d.version);
+	}
+	popPath(state);
+
+	// Validate capabilities (optional)
+	if (d.capabilities !== undefined) {
+		pushPath(state, "capabilities");
+		if (!validateArray(d.capabilities)) {
+			addError(state, "capabilities must be an array", d.capabilities);
+		}
+		popPath(state);
+	}
+
+	// Validate airDefs
+	pushPath(state, "airDefs");
+	if (!validateArray(d.airDefs)) {
+		addError(state, "airDefs must be an array", d.airDefs);
+	}
+	popPath(state);
+
+	// Validate nodes and track node IDs
+	const nodeIds = new Set<string>();
+	if (validateArray(d.nodes)) {
+		const nodes = d.nodes as unknown[];
+		pushPath(state, "nodes");
+		for (let i = 0; i < nodes.length; i++) {
+			const node = nodes[i];
+			pushPath(state, "[" + String(i) + "]");
+
+			if (!validateObject(node)) {
+				addError(state, "Node must be an object", node);
+				popPath(state);
+				popPath(state);
+				continue;
+			}
+
+			const n = node as Record<string, unknown>;
+
+			// Validate node id
+			pushPath(state, "id");
+			if (!validateId(n.id)) {
+				addError(state, "Node must have valid id", n.id);
+			} else {
+				const nodeId = n.id as string;
+				if (nodeIds.has(nodeId)) {
+					addError(state, "Duplicate node id: " + nodeId, nodeId);
+				}
+				nodeIds.add(nodeId);
+			}
+			popPath(state);
+
+			// Validate expr (allow both CIR and EIR expressions)
+			pushPath(state, "expr");
+			if (!validateObject(n.expr)) {
+				addError(state, "Node must have expr object", n.expr);
+			} else {
+				const expr = n.expr as Record<string, unknown>;
+				validateEirExpr(state, expr);
+			}
+			popPath(state);
+
+			popPath(state);
+		}
+		popPath(state);
+	} else {
+		addError(state, "nodes must be an array", d.nodes);
+	}
+
+	// Validate result reference
+	pushPath(state, "result");
+	if (!validateId(d.result)) {
+		addError(state, "Result must be a valid identifier", d.result);
+	} else {
+		const resultId = d.result as string;
+		if (!nodeIds.has(resultId)) {
+			addError(state, "Result references non-existent node: " + resultId, resultId);
+		}
+	}
+	popPath(state);
+
+	// Validate node references in EIR expressions
+	if (validateArray(d.nodes)) {
+		const nodes = d.nodes as unknown[];
+		for (let i = 0; i < nodes.length; i++) {
+			const node = nodes[i];
+			if (validateObject(node)) {
+				const n = node as Record<string, unknown>;
+				if (n.expr && validateObject(n.expr)) {
+					const expr = n.expr as Record<string, unknown>;
+					validateEirNodeReferences(state, expr, nodeIds);
+				}
+			}
+		}
+	}
+
+	if (state.errors.length > 0) {
+		return invalidResult(state.errors);
+	}
+
+	return validResult(doc as import("./types.js").EIRDocument);
+}
+
+/**
+ * Validate EIR-specific expressions
+ */
+function validateEirExpr(state: ValidationState, expr: Record<string, unknown>): void {
+	if (!validateString(expr.kind)) {
+		addError(state, "Expression must have 'kind' property", expr);
+		return;
+	}
+
+	const kind = expr.kind as string;
+
+	switch (kind) {
+		case "seq":
+			if (!validateId(expr.first)) {
+				addError(state, "seq expression must have valid 'first' identifier", expr);
+			}
+			if (!validateId(expr.then)) {
+				addError(state, "seq expression must have valid 'then' identifier", expr);
+			}
+			break;
+
+		case "assign":
+			if (!validateId(expr.target)) {
+				addError(state, "assign expression must have valid 'target' identifier", expr);
+			}
+			if (!validateId(expr.value)) {
+				addError(state, "assign expression must have valid 'value' identifier", expr);
+			}
+			break;
+
+		case "while":
+			if (!validateId(expr.cond)) {
+				addError(state, "while expression must have valid 'cond' identifier", expr);
+			}
+			if (!validateId(expr.body)) {
+				addError(state, "while expression must have valid 'body' identifier", expr);
+			}
+			break;
+
+		case "for":
+			if (!validateId(expr.var)) {
+				addError(state, "for expression must have valid 'var' identifier", expr);
+			}
+			if (!validateId(expr.init)) {
+				addError(state, "for expression must have valid 'init' identifier", expr);
+			}
+			if (!validateId(expr.cond)) {
+				addError(state, "for expression must have valid 'cond' identifier", expr);
+			}
+			if (!validateId(expr.update)) {
+				addError(state, "for expression must have valid 'update' identifier", expr);
+			}
+			if (!validateId(expr.body)) {
+				addError(state, "for expression must have valid 'body' identifier", expr);
+			}
+			break;
+
+		case "iter":
+			if (!validateId(expr.var)) {
+				addError(state, "iter expression must have valid 'var' identifier", expr);
+			}
+			if (!validateId(expr.iter)) {
+				addError(state, "iter expression must have valid 'iter' identifier", expr);
+			}
+			if (!validateId(expr.body)) {
+				addError(state, "iter expression must have valid 'body' identifier", expr);
+			}
+			break;
+
+		case "effect":
+			if (!validateString(expr.op)) {
+				addError(state, "effect expression must have valid 'op' string", expr);
+			}
+			if (!validateArray(expr.args)) {
+				addError(state, "effect expression must have 'args' array", expr);
+			} else {
+				for (const arg of expr.args as unknown[]) {
+					if (!validateId(arg)) {
+						addError(state, "effect args must be valid identifiers", arg);
+					}
+				}
+			}
+			break;
+
+		case "refCell":
+			if (!validateId(expr.target)) {
+				addError(state, "refCell expression must have valid 'target' identifier", expr);
+			}
+			break;
+
+		case "deref":
+			if (!validateId(expr.target)) {
+				addError(state, "deref expression must have valid 'target' identifier", expr);
+			}
+			break;
+
+		// CIR and AIR expressions are already validated by validateCIR
+		case "lit":
+		case "ref":
+		case "var":
+		case "call":
+		case "if":
+		case "let":
+		case "airRef":
+		case "predicate":
+		case "lambda":
+		case "callExpr":
+		case "fix":
+			// Already validated
+			break;
+
+		default:
+			addError(state, "Unknown expression kind in EIR: " + kind, expr);
+			break;
+	}
+}
+
+/**
+ * Validate node references in EIR expressions.
+ */
+function validateEirNodeReferences(
+	state: ValidationState,
+	expr: Record<string, unknown>,
+	nodeIds: Set<string>,
+): void {
+	if (!validateString(expr.kind)) {
+		return;
+	}
+
+	const kind = expr.kind as string;
+
+	// Helper to check a node reference
+	const checkRef = (ref: unknown, name: string) => {
+		if (validateId(ref)) {
+			const refId = ref as string;
+			if (!nodeIds.has(refId)) {
+				addError(state, name + " references non-existent node: " + refId, refId);
+			}
+		}
+	};
+
+	switch (kind) {
+		case "seq":
+			checkRef(expr.first, "seq.first");
+			checkRef(expr.then, "seq.then");
+			break;
+
+		case "assign":
+			checkRef(expr.value, "assign.value");
+			break;
+
+		case "while":
+			checkRef(expr.cond, "while.cond");
+			checkRef(expr.body, "while.body");
+			break;
+
+		case "for":
+			checkRef(expr.init, "for.init");
+			checkRef(expr.cond, "for.cond");
+			checkRef(expr.update, "for.update");
+			checkRef(expr.body, "for.body");
+			break;
+
+		case "iter":
+			checkRef(expr.iter, "iter.iter");
+			checkRef(expr.body, "iter.body");
+			break;
+
+		case "effect":
+			if (validateArray(expr.args)) {
+				for (let i = 0; i < (expr.args as unknown[]).length; i++) {
+					checkRef((expr.args as unknown[])[i], "effect.args[" + String(i) + "]");
+				}
+			}
+			break;
+
+		case "refCell":
+		case "deref":
+		case "lit":
+		case "ref":
+		case "var":
+		case "call":
+		case "if":
+		case "let":
+		case "airRef":
+		case "predicate":
+		case "lambda":
+		case "callExpr":
+		case "fix":
+			// These don't have node references that need validation
+			break;
+
+		default:
+			break;
+	}
+}
+
+//==============================================================================
+// LIR Validation
+//==============================================================================
+
+/**
+ * Validate an LIR document.
+ * LIR uses a CFG structure with basic blocks and terminators.
+ */
+export function validateLIR(doc: unknown): ValidationResult<import("./types.js").LIRDocument> {
+	const state: ValidationState = { errors: [], path: [] };
+
+	// Top-level structure check
+	if (!validateObject(doc)) {
+		addError(state, "LIR Document must be an object", doc);
+		return invalidResult(state.errors);
+	}
+
+	const d = doc as Record<string, unknown>;
+
+	// Version check
+	if (!validateVersion(d.version)) {
+		pushPath(state, "version");
+		addError(state, "Document must have valid semantic version", d.version);
+		popPath(state);
+	}
+
+	// Capabilities (optional)
+	if (d.capabilities !== undefined && !validateArray(d.capabilities)) {
+		pushPath(state, "capabilities");
+		addError(state, "capabilities must be an array", d.capabilities);
+		popPath(state);
+	}
+
+	// Blocks check
+	if (!validateArray(d.blocks)) {
+		pushPath(state, "blocks");
+		addError(state, "LIR Document must have 'blocks' array", d.blocks);
+		popPath(state);
+		return invalidResult(state.errors);
+	}
+
+	const blocks = d.blocks as unknown[];
+	const blockIds = new Set<string>();
+
+	// Validate each block
+	for (let i = 0; i < blocks.length; i++) {
+		const block = blocks[i];
+		pushPath(state, "blocks[" + String(i) + "]");
+
+		if (!validateObject(block)) {
+			addError(state, "Block must be an object", block);
+			popPath(state);
+			continue;
+		}
+
+		const b = block as Record<string, unknown>;
+
+		// Block ID check
+		if (!validateId(b.id)) {
+			addError(state, "Block must have valid 'id' property", b.id);
+		} else {
+			// Check for duplicate IDs
+			if (blockIds.has(String(b.id))) {
+				addError(state, "Duplicate block id: " + String(b.id), b.id);
+			}
+			blockIds.add(String(b.id));
+		}
+
+		// Instructions check
+		if (!validateArray(b.instructions)) {
+			addError(state, "Block must have 'instructions' array", b.instructions);
+		} else {
+			const instructions = b.instructions as unknown[];
+			for (let j = 0; j < instructions.length; j++) {
+				pushPath(state, "instructions[" + String(j) + "]");
+				validateLirInstruction(state, instructions[j]);
+				popPath(state);
+			}
+		}
+
+		// Terminator check
+		if (!b.terminator) {
+			addError(state, "Block must have 'terminator' property", block);
+		} else {
+			pushPath(state, "terminator");
+			validateLirTerminator(state, b.terminator);
+			popPath(state);
+		}
+
+		popPath(state);
+	}
+
+	// Entry check
+	if (!validateId(d.entry)) {
+		pushPath(state, "entry");
+		addError(state, "LIR Document must have valid 'entry' reference", d.entry);
+		popPath(state);
+	} else {
+		// Check that entry references a valid block
+		if (!blockIds.has(String(d.entry))) {
+			pushPath(state, "entry");
+			addError(
+				state,
+				"Entry references non-existent block: " + String(d.entry),
+				d.entry,
+			);
+			popPath(state);
+		}
+	}
+
+	// Validate CFG structure
+	if (validateArray(d.blocks)) {
+		validateCFG(state, d.blocks as Array<Record<string, unknown>>);
+	}
+
+	if (state.errors.length > 0) {
+		return invalidResult(state.errors);
+	}
+
+	return validResult(doc as import("./types.js").LIRDocument);
+}
+
+/**
+ * Validate an LIR instruction
+ */
+function validateLirInstruction(state: ValidationState, ins: unknown): void {
+	if (!validateObject(ins)) {
+		addError(state, "Instruction must be an object", ins);
+		return;
+	}
+
+	const i = ins as Record<string, unknown>;
+	if (!validateString(i.kind)) {
+		addError(state, "Instruction must have 'kind' property", ins);
+		return;
+	}
+
+	const kind = i.kind as string;
+
+	switch (kind) {
+		case "assign":
+			if (!validateId(i.target)) {
+				addError(state, "assign instruction must have valid 'target'", i.target);
+			}
+			if (!i.value) {
+				addError(state, "assign instruction must have 'value' property", ins);
+			}
+			break;
+
+		case "call":
+			if (!validateId(i.target)) {
+				addError(state, "call instruction must have valid 'target'", i.target);
+			}
+			if (!validateId(i.callee)) {
+				addError(state, "call instruction must have valid 'callee'", i.callee);
+			}
+			if (!validateArray(i.args)) {
+				addError(state, "call instruction must have 'args' array", i.args);
+			}
+			break;
+
+		case "op":
+			if (!validateId(i.target)) {
+				addError(state, "op instruction must have valid 'target'", i.target);
+			}
+			if (!validateId(i.ns)) {
+				addError(state, "op instruction must have valid 'ns'", i.ns);
+			}
+			if (!validateId(i.name)) {
+				addError(state, "op instruction must have valid 'name'", i.name);
+			}
+			if (!validateArray(i.args)) {
+				addError(state, "op instruction must have 'args' array", i.args);
+			}
+			break;
+
+		case "phi":
+			if (!validateId(i.target)) {
+				addError(state, "phi instruction must have valid 'target'", i.target);
+			}
+			if (!validateArray(i.sources)) {
+				addError(state, "phi instruction must have 'sources' array", i.sources);
+			}
+			break;
+
+		case "effect":
+			if (!validateString(i.op)) {
+				addError(state, "effect instruction must have valid 'op'", i.op);
+			}
+			if (!validateArray(i.args)) {
+				addError(state, "effect instruction must have 'args' array", i.args);
+			}
+			break;
+
+		case "assignRef":
+			if (!validateId(i.target)) {
+				addError(state, "assignRef instruction must have valid 'target'", i.target);
+			}
+			if (!validateId(i.value)) {
+				addError(state, "assignRef instruction must have 'value'", i.value);
+			}
+			break;
+
+		default:
+			addError(state, "Unknown instruction kind: " + kind, ins);
+			break;
+	}
+}
+
+/**
+ * Validate an LIR terminator
+ */
+function validateLirTerminator(state: ValidationState, term: unknown): void {
+	if (!validateObject(term)) {
+		addError(state, "Terminator must be an object", term);
+		return;
+	}
+
+	const t = term as Record<string, unknown>;
+	if (!validateString(t.kind)) {
+		addError(state, "Terminator must have 'kind' property", term);
+		return;
+	}
+
+	const kind = t.kind as string;
+
+	switch (kind) {
+		case "jump":
+			if (!validateId(t.to)) {
+				addError(state, "jump terminator must have valid 'to' target", t.to);
+			}
+			break;
+
+		case "branch":
+			if (!validateId(t.cond)) {
+				addError(state, "branch terminator must have valid 'cond'", t.cond);
+			}
+			if (!validateId(t.then)) {
+				addError(state, "branch terminator must have valid 'then' target", t.then);
+			}
+			if (!validateId(t.else)) {
+				addError(state, "branch terminator must have valid 'else' target", t.else);
+			}
+			break;
+
+		case "return":
+			// value is optional
+			break;
+
+		case "exit":
+			// code is optional
+			break;
+
+		default:
+			addError(state, "Unknown terminator kind: " + kind, term);
+			break;
+	}
+}
+
+/**
+ * Validate CFG structure
+ * Check that all jump/branch targets reference valid blocks
+ */
+function validateCFG(
+	state: ValidationState,
+	blocks: Array<Record<string, unknown>>,
+): void {
+	const blockIds = new Set<string>();
+	for (const block of blocks) {
+		if (typeof block.id === "string") {
+			blockIds.add(block.id);
+		}
+	}
+
+	for (const block of blocks) {
+		if (block.terminator && validateObject(block.terminator)) {
+			const term = block.terminator as Record<string, unknown>;
+			const kind = term.kind as string;
+
+			if (kind === "jump") {
+				const to = term.to;
+				if (typeof to === "string" && !blockIds.has(to)) {
+					addError(
+						state,
+						"Jump terminator references non-existent block: " + to,
+						to,
+					);
+				}
+			} else if (kind === "branch") {
+				const thenTarget = term.then;
+				const elseTarget = term.else;
+				if (typeof thenTarget === "string" && !blockIds.has(thenTarget)) {
+					addError(
+						state,
+						"Branch terminator references non-existent block: " + thenTarget,
+						thenTarget,
+					);
+				}
+				if (typeof elseTarget === "string" && !blockIds.has(elseTarget)) {
+					addError(
+						state,
+						"Branch terminator references non-existent block: " + elseTarget,
+						elseTarget,
+					);
+				}
+			}
+		}
+
+		// Check phi sources reference valid blocks
+		if (validateArray(block.instructions)) {
+			const instructions = block.instructions as unknown[];
+			for (const ins of instructions) {
+				if (validateObject(ins)) {
+					const i = ins as Record<string, unknown>;
+					if (i.kind === "phi" && validateArray(i.sources)) {
+						const sources = i.sources as unknown[];
+						for (const source of sources) {
+							if (validateObject(source)) {
+								const s = source as Record<string, unknown>;
+								const sourceBlock = s.block;
+								if (
+									typeof sourceBlock === "string" &&
+									!blockIds.has(sourceBlock)
+								) {
+									addError(
+										state,
+										"Phi source references non-existent block: " +
+											sourceBlock,
+										sourceBlock,
+									);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
