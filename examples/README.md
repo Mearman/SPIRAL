@@ -21,19 +21,27 @@ pnpm run-example cir/algorithms/factorial --verbose
 |-------|-------------|-------------|
 | **[AIR](./air/)** | Algebraic IR - pure, declarative expressions | Mathematical relationships, static analysis |
 | **[CIR](./cir/)** | Computational IR - adds lambdas and recursion | Algorithms, higher-order functions |
-| **EIR** | Execution IR - imperative features (future) | Side effects, mutation, loops |
-| **LIR** | Low-level IR - CFG-based (future) | Code generation, optimization |
+| **[EIR](./eir/)** | Execution IR - imperative features | Side effects, mutation, loops |
+| **[LIR](./lir/)** | Low-level IR - CFG-based | Code generation, optimization |
 
 ## Example Structure
 
-Each example is a JSON file following the AIR or CIR document schema:
+Each example is a JSON file following the AIR, CIR, EIR, or LIR document schema:
 
 ```json
+// AIR/CIR/EIR format
 {
   "version": "1.0.0",
-  "airDefs": [...],    // Reusable definitions (AIR only)
+  "airDefs": [...],    // Reusable definitions (AIR only, optional for CIR/EIR)
   "nodes": [...],       // Expression nodes
   "result": "output"    // Reference to result node
+}
+
+// LIR format
+{
+  "version": "1.0.0",
+  "blocks": [...],      // Basic blocks
+  "entry": "entryBlock" // Entry block ID
 }
 ```
 
@@ -50,6 +58,10 @@ pnpm run-example air/basics/literals
 pnpm run-example air/control-flow/simple-if
 pnpm run-example cir/basics/identity-lambda
 pnpm run-example cir/algorithms/factorial
+pnpm run-example eir/basics/sequencing
+pnpm run-example eir/loops/while-loop
+pnpm run-example lir/basics/straight-line
+pnpm run-example lir/control-flow/if-else
 ```
 
 ### Options
@@ -94,6 +106,24 @@ pnpm test:examples --coverage
 | [Fixpoint](./cir/fixpoint/) | 3 | Fix combinator for recursion |
 | [Mixed](./cir/mixed/) | 1 | Using airRef within CIR |
 
+### EIR Examples (16 files)
+
+| Category | Files | Concepts |
+|----------|-------|----------|
+| [Basics](./eir/basics/) | 4 | Sequencing, assignment, refcells, effects |
+| [Loops](./eir/loops/) | 4 | While, for, iter, nested loops |
+| [Algorithms](./eir/algorithms/) | 4 | Counter, factorial, sum-list, accumulate |
+| [Advanced](./eir/advanced/) | 4 | State machine, I/O loop, mutable list, effects |
+
+### LIR Examples (12 files)
+
+| Category | Files | Concepts |
+|----------|-------|----------|
+| [Basics](./lir/basics/) | 3 | Straight-line, conditional, loop |
+| [Control Flow](./lir/control-flow/) | 3 | If-else, while CFG, nested branch |
+| [Phi](./lir/phi/) | 2 | Merge phi, loop phi |
+| [Algorithms](./lir/algorithms/) | 4 | Factorial, GCD, FizzBuzz, min-max |
+
 ## Learning Path
 
 For those new to CAIRS, we recommend exploring examples in this order:
@@ -119,6 +149,16 @@ For those new to CAIRS, we recommend exploring examples in this order:
    - `cir/higher-order/compose.cir.json` - Function composition
    - `cir/higher-order/fold.cir.json` - Accumulator pattern
 
+6. **Learn EIR imperative features:**
+   - `eir/basics/sequencing.eir.json` - Sequential execution
+   - `eir/loops/while-loop.eir.json` - While loops
+   - `eir/algorithms/factorial.eir.json` - Imperative factorial
+
+7. **Study LIR CFG representation:**
+   - `lir/basics/straight-line.lir.json` - Basic blocks
+   - `lir/control-flow/while-cfg.lir.json` - Loops as CFG
+   - `lir/phi/loop-phi.lir.json` - Loop-carried variables
+
 ## Document Schema
 
 ### AIR Document
@@ -139,21 +179,68 @@ CIR uses the same structure as AIR but allows additional expression kinds in nod
 - `callExpr` - Call a lambda value
 - `fix` - Fixpoint combinator for recursion
 
+### EIR Document
+
+EIR extends CIR with imperative expression kinds:
+- `seq` - Sequential execution
+- `assign` - Variable mutation
+- `while` - While loop
+- `for` - C-style for loop
+- `iter` - Iterator over list/set
+- `effect` - Side effect operation
+- `refCell` - Create reference cell
+- `deref` - Read from reference cell
+
+### LIR Document
+
+LIR uses a different structure based on control flow graphs:
+- `blocks` - Array of basic blocks
+- `entry` - ID of entry block
+- Each block has `instructions` and a `terminator`
+- Phi nodes implement SSA merging
+
 ## Expression Kinds
 
-| Kind | AIR | CIR | Description |
-|------|-----|-----|-------------|
-| `lit` | ✅ | ✅ | Literal value |
-| `ref` | ✅ | ✅ | Reference to another node |
-| `var` | ✅ | ✅ | Variable reference (scope-local) |
-| `call` | ✅ | ✅ | Operator application |
-| `if` | ✅ | ✅ | Conditional |
-| `let` | ✅ | ✅ | Local binding |
-| `airRef` | ✅ | ✅ | Reference to airDef |
-| `predicate` | ✅ | ✅ | Predicate value |
-| `lambda` | ❌ | ✅ | Anonymous function |
-| `callExpr` | ❌ | ✅ | Lambda call |
-| `fix` | ❌ | ✅ | Fixpoint |
+| Kind | AIR | CIR | EIR | LIR | Description |
+|------|-----|-----|-----|-----|-------------|
+| `lit` | ✅ | ✅ | ✅ | ✅ | Literal value |
+| `ref` | ✅ | ✅ | ✅ | ❌ | Reference to another node |
+| `var` | ✅ | ✅ | ✅ | ✅ | Variable reference |
+| `call` | ✅ | ✅ | ✅ | ❌ | Operator application |
+| `if` | ✅ | ✅ | ✅ | ❌ | Conditional (expression) |
+| `let` | ✅ | ✅ | ✅ | ❌ | Local binding |
+| `airRef` | ✅ | ✅ | ✅ | ❌ | Reference to airDef |
+| `predicate` | ✅ | ✅ | ✅ | ❌ | Predicate value |
+| `lambda` | ❌ | ✅ | ✅ | ❌ | Anonymous function |
+| `callExpr` | ❌ | ✅ | ✅ | ❌ | Lambda call |
+| `fix` | ❌ | ✅ | ✅ | ❌ | Fixpoint |
+| `seq` | ❌ | ❌ | ✅ | ❌ | Sequential execution |
+| `assign` | ❌ | ❌ | ✅ | ✅ | Variable assignment |
+| `while` | ❌ | ❌ | ✅ | ❌ | While loop |
+| `for` | ❌ | ❌ | ✅ | ❌ | For loop |
+| `iter` | ❌ | ❌ | ✅ | ❌ | Iterator loop |
+| `effect` | ❌ | ❌ | ✅ | ✅ | Side effect |
+| `refCell` | ❌ | ❌ | ✅ | ❌ | Reference cell |
+| `deref` | ❌ | ❌ | ✅ | ❌ | Dereference cell |
+| `phi` | ❌ | ❌ | ❌ | ✅ | SSA phi node |
+
+### LIR Instructions
+
+LIR uses instructions rather than expressions:
+- `assign` - Assign value to variable
+- `op` - Operator call
+- `call` - Function call
+- `phi` - SSA merge
+- `effect` - Side effect
+- `assignRef` - Assign to reference cell
+
+### LIR Terminators
+
+Each LIR block ends with a terminator:
+- `jump` - Unconditional jump
+- `branch` - Conditional branch
+- `return` - Return value
+- `exit` - Exit with code
 
 ## Type System
 
@@ -171,4 +258,6 @@ CIR uses the same structure as AIR but allows additional expression kinds in nod
 
 - [AIR README](./air/README.md) - Detailed AIR reference
 - [CIR README](./cir/README.md) - Detailed CIR reference
+- [EIR README](./eir/README.md) - Detailed EIR reference
+- [LIR README](./lir/README.md) - Detailed LIR reference
 - [CAIRS Repository](../) - Main project documentation
