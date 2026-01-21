@@ -1,0 +1,155 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "version": "1.0.0",
+  "description": "Demonstrates iter loop for iterating over a set of booleans in EIR. Tests boolean hash conversion.",
+  "airDefs": [
+    {
+      "ns": "bool",
+      "name": "or",
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "bool"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
+    },
+    {
+      "ns": "bool",
+      "name": "not",
+      "params": [
+        "a"
+      ],
+      "result": {
+        "kind": "bool"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "trueVal",
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "bool"
+        },
+        "value": true
+      }
+    },
+    {
+      "id": "falseVal",
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "bool"
+        },
+        "value": false
+      }
+    },
+    {
+      "id": "boolSet",
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "set",
+          "of": {
+            "kind": "bool"
+          }
+        },
+        "value": [
+          {
+            "kind": "bool",
+            "value": true
+          },
+          {
+            "kind": "bool",
+            "value": false
+          },
+          {
+            "kind": "bool",
+            "value": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "initAnyTrue",
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "bool"
+        },
+        "value": false
+      }
+    },
+    {
+      "id": "initResult",
+      "expr": {
+        "kind": "assign",
+        "target": "anyTrue",
+        "value": "initAnyTrue"
+      }
+    },
+    {
+      "id": "current",
+      "expr": {
+        "kind": "var",
+        "name": "x"
+      }
+    },
+    {
+      "id": "currentAnyTrue",
+      "expr": {
+        "kind": "var",
+        "name": "anyTrue"
+      }
+    },
+    {
+      "id": "updated",
+      "expr": {
+        "kind": "call",
+        "ns": "bool",
+        "name": "or",
+        "args": [
+          "currentAnyTrue",
+          "current"
+        ]
+      }
+    },
+    {
+      "id": "updateResult",
+      "expr": {
+        "kind": "assign",
+        "target": "anyTrue",
+        "value": "updated"
+      }
+    },
+    {
+      "id": "iterLoop",
+      "expr": {
+        "kind": "iter",
+        "var": "x",
+        "iter": "boolSet",
+        "body": "updateResult"
+      }
+    },
+    {
+      "id": "result",
+      "expr": {
+        "kind": "var",
+        "name": "anyTrue"
+      }
+    }
+  ],
+  "result": "result",
+  "expected_result": true,
+  "note": "Iterates over set {true, false, true}, ORing each value. Result is true (at least one true)."
+}
