@@ -51,13 +51,12 @@ CAIRS provides a layered representation system:
 6. [CIR - Computational Intermediate Representation](#6-cir---computational-intermediate-representation)
 7. [EIR - Execution Intermediate Representation](#7-eir---execution-intermediate-representation)
 8. [LIR - Low-Level Intermediate Representation](#8-lir---low-level-intermediate-representation)
-9. [Validation and Serialisation](#9-validation-and-serialisation)
-10. [Formal Semantics](#10-formal-semantics)
-11. [Error Handling](#11-error-handling)
-12. [Program Evaluation](#12-program-evaluation)
-13. [Capture-Avoiding Substitution](#13-capture-avoiding-substitution)
-14. [JSON Schema Reference](#14-json-schema-reference)
-15. [Non-Goals](#15-non-goals)
+9. [Formal Semantics](#9-formal-semantics)
+10. [Error Handling](#10-error-handling)
+11. [Program Evaluation](#11-program-evaluation)
+12. [Capture-Avoiding Substitution](#12-capture-avoiding-substitution)
+13. [JSON Schema Reference](#13-json-schema-reference)
+14. [Non-Goals](#14-non-goals)
 
 ---
 
