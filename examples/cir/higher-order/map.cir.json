@@ -1,74 +1,155 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/cir.schema.json",
   "description": "Map operation on lists: map(lambda x -> x * 2, [1, 2, 3]) => [2, 4, 6]",
   "version": "1.0.0",
   "airDefs": [
     {
       "ns": "core",
       "name": "mul",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "list",
       "name": "nth",
-      "params": ["xs", "n"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "xs" }
+      "params": [
+        "xs",
+        "n"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "xs"
+      }
     },
     {
       "ns": "list",
       "name": "slice",
-      "params": ["xs", "n"],
-      "result": { "kind": "list", "of": { "kind": "int" } },
-      "body": { "kind": "ref", "id": "xs" }
+      "params": [
+        "xs",
+        "n"
+      ],
+      "result": {
+        "kind": "list",
+        "of": {
+          "kind": "int"
+        }
+      },
+      "body": {
+        "kind": "ref",
+        "id": "xs"
+      }
     },
     {
       "ns": "list",
       "name": "length",
-      "params": ["xs"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "xs" }
+      "params": [
+        "xs"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "xs"
+      }
     },
     {
       "ns": "list",
       "name": "cons",
-      "params": ["x", "xs"],
-      "result": { "kind": "list", "of": { "kind": "int" } },
-      "body": { "kind": "ref", "id": "xs" }
+      "params": [
+        "x",
+        "xs"
+      ],
+      "result": {
+        "kind": "list",
+        "of": {
+          "kind": "int"
+        }
+      },
+      "body": {
+        "kind": "ref",
+        "id": "xs"
+      }
     }
   ],
   "nodes": [
     {
       "id": "two",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 2 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 2
+      }
     },
     {
       "id": "zero",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "one",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 1
+      }
     },
     {
       "id": "inputList",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "int" } },
-        "value": [1, 2, 3]
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          1,
+          2,
+          3
+        ]
       }
     },
     {
       "id": "double",
       "expr": {
         "kind": "lambda",
-        "params": ["x"],
+        "params": [
+          "x"
+        ],
         "body": "doubledX",
         "type": {
           "kind": "fn",
-          "params": [{ "kind": "int" }],
-          "returns": { "kind": "int" }
+          "params": [
+            {
+              "kind": "int"
+            }
+          ],
+          "returns": {
+            "kind": "int"
+          }
         }
       }
     },
@@ -78,26 +159,48 @@
         "kind": "call",
         "ns": "core",
         "name": "mul",
-        "args": ["x", "two"]
+        "args": [
+          "x",
+          "two"
+        ]
       }
     },
     {
       "id": "map",
       "expr": {
         "kind": "lambda",
-        "params": ["f", "xs"],
+        "params": [
+          "f",
+          "xs"
+        ],
         "body": "mapBody",
         "type": {
           "kind": "fn",
           "params": [
             {
               "kind": "fn",
-              "params": [{ "kind": "int" }],
-              "returns": { "kind": "int" }
+              "params": [
+                {
+                  "kind": "int"
+                }
+              ],
+              "returns": {
+                "kind": "int"
+              }
             },
-            { "kind": "list", "of": { "kind": "int" } }
+            {
+              "kind": "list",
+              "of": {
+                "kind": "int"
+              }
+            }
           ],
-          "returns": { "kind": "list", "of": { "kind": "int" } }
+          "returns": {
+            "kind": "list",
+            "of": {
+              "kind": "int"
+            }
+          }
         }
       }
     },
@@ -107,7 +210,9 @@
         "kind": "call",
         "ns": "list",
         "name": "length",
-        "args": ["xs"]
+        "args": [
+          "xs"
+        ]
       }
     },
     {
@@ -116,7 +221,10 @@
         "kind": "call",
         "ns": "core",
         "name": "eq",
-        "args": ["xsLength", "zero"]
+        "args": [
+          "xsLength",
+          "zero"
+        ]
       }
     },
     {
@@ -126,14 +234,24 @@
         "cond": "isEmpty",
         "then": "emptyList",
         "else": "mapRecursive",
-        "type": { "kind": "list", "of": { "kind": "int" } }
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        }
       }
     },
     {
       "id": "emptyList",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "int" } },
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
         "value": []
       }
     },
@@ -143,7 +261,10 @@
         "kind": "call",
         "ns": "list",
         "name": "nth",
-        "args": ["xs", "zero"]
+        "args": [
+          "xs",
+          "zero"
+        ]
       }
     },
     {
@@ -152,7 +273,10 @@
         "kind": "call",
         "ns": "list",
         "name": "slice",
-        "args": ["xs", "one"]
+        "args": [
+          "xs",
+          "one"
+        ]
       }
     },
     {
@@ -160,7 +284,9 @@
       "expr": {
         "kind": "callExpr",
         "fn": "f",
-        "args": ["head"]
+        "args": [
+          "head"
+        ]
       }
     },
     {
@@ -177,7 +303,10 @@
       "expr": {
         "kind": "callExpr",
         "fn": "map",
-        "args": ["f", "tail"]
+        "args": [
+          "f",
+          "tail"
+        ]
       }
     },
     {
@@ -186,7 +315,10 @@
         "kind": "call",
         "ns": "list",
         "name": "cons",
-        "args": ["mappedHead", "rest"]
+        "args": [
+          "mappedHead",
+          "rest"
+        ]
       }
     },
     {
@@ -194,7 +326,10 @@
       "expr": {
         "kind": "callExpr",
         "fn": "map",
-        "args": ["double", "inputList"]
+        "args": [
+          "double",
+          "inputList"
+        ]
       }
     },
     {
@@ -203,7 +338,10 @@
         "kind": "call",
         "ns": "list",
         "name": "nth",
-        "args": ["doubleList", "zero"]
+        "args": [
+          "doubleList",
+          "zero"
+        ]
       }
     },
     {
@@ -212,7 +350,10 @@
         "kind": "call",
         "ns": "list",
         "name": "nth",
-        "args": ["doubleList", "one"]
+        "args": [
+          "doubleList",
+          "one"
+        ]
       }
     },
     {
@@ -221,7 +362,10 @@
         "kind": "call",
         "ns": "list",
         "name": "nth",
-        "args": ["doubleList", "two"]
+        "args": [
+          "doubleList",
+          "two"
+        ]
       }
     },
     {
@@ -230,7 +374,10 @@
         "kind": "call",
         "ns": "list",
         "name": "nth",
-        "args": ["doubleList", "zero"]
+        "args": [
+          "doubleList",
+          "zero"
+        ]
       }
     }
   ],

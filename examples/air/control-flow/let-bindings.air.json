@@ -1,19 +1,36 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/air.schema.json",
   "version": "1.0.0",
   "airDefs": [
     {
       "ns": "core",
       "name": "mul",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "add",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     }
   ],
   "nodes": [
@@ -24,7 +41,9 @@
         "name": "x",
         "value": {
           "kind": "lit",
-          "type": { "kind": "int" },
+          "type": {
+            "kind": "int"
+          },
           "value": 10
         },
         "body": {
@@ -32,11 +51,19 @@
           "ns": "core",
           "name": "mul",
           "args": [
-            { "kind": "ref", "id": "x" },
-            { "kind": "ref", "id": "x" }
+            {
+              "kind": "ref",
+              "id": "x"
+            },
+            {
+              "kind": "ref",
+              "id": "x"
+            }
           ]
         },
-        "type": { "kind": "int" }
+        "type": {
+          "kind": "int"
+        }
       }
     },
     {
@@ -46,7 +73,9 @@
         "name": "x",
         "value": {
           "kind": "lit",
-          "type": { "kind": "int" },
+          "type": {
+            "kind": "int"
+          },
           "value": 5
         },
         "body": {
@@ -54,7 +83,9 @@
           "name": "y",
           "value": {
             "kind": "lit",
-            "type": { "kind": "int" },
+            "type": {
+              "kind": "int"
+            },
             "value": 3
           },
           "body": {
@@ -65,8 +96,14 @@
               "ns": "core",
               "name": "mul",
               "args": [
-                { "kind": "ref", "id": "x" },
-                { "kind": "ref", "id": "y" }
+                {
+                  "kind": "ref",
+                  "id": "x"
+                },
+                {
+                  "kind": "ref",
+                  "id": "y"
+                }
               ]
             },
             "body": {
@@ -74,15 +111,27 @@
               "ns": "core",
               "name": "add",
               "args": [
-                { "kind": "ref", "id": "z" },
-                { "kind": "ref", "id": "x" }
+                {
+                  "kind": "ref",
+                  "id": "z"
+                },
+                {
+                  "kind": "ref",
+                  "id": "x"
+                }
               ]
             },
-            "type": { "kind": "int" }
+            "type": {
+              "kind": "int"
+            }
           },
-          "type": { "kind": "int" }
+          "type": {
+            "kind": "int"
+          }
         },
-        "type": { "kind": "int" }
+        "type": {
+          "kind": "int"
+        }
       }
     },
     {
@@ -92,7 +141,9 @@
         "name": "base",
         "value": {
           "kind": "lit",
-          "type": { "kind": "int" },
+          "type": {
+            "kind": "int"
+          },
           "value": 7
         },
         "body": {
@@ -103,8 +154,14 @@
             "ns": "core",
             "name": "mul",
             "args": [
-              { "kind": "ref", "id": "base" },
-              { "kind": "ref", "id": "base" }
+              {
+                "kind": "ref",
+                "id": "base"
+              },
+              {
+                "kind": "ref",
+                "id": "base"
+              }
             ]
           },
           "body": {
@@ -112,13 +169,23 @@
             "ns": "core",
             "name": "mul",
             "args": [
-              { "kind": "ref", "id": "squared" },
-              { "kind": "ref", "id": "base" }
+              {
+                "kind": "ref",
+                "id": "squared"
+              },
+              {
+                "kind": "ref",
+                "id": "base"
+              }
             ]
           },
-          "type": { "kind": "int" }
+          "type": {
+            "kind": "int"
+          }
         },
-        "type": { "kind": "int" }
+        "type": {
+          "kind": "int"
+        }
       }
     }
   ],

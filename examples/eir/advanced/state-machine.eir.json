@@ -1,53 +1,114 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates a simple state machine using mutation in EIR. States transition: init -> processing -> done.",
   "airDefs": [
     {
       "ns": "core",
       "name": "eq",
-      "params": ["a", "b"],
-      "result": { "kind": "bool" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "bool"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "add",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "lt",
-      "params": ["a", "b"],
-      "result": { "kind": "bool" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "bool"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     }
   ],
   "nodes": [
     {
       "id": "stateInit",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "init" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "init"
+      }
     },
     {
       "id": "stateProcessing",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "processing" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "processing"
+      }
     },
     {
       "id": "stateDone",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "done" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "done"
+      }
     },
     {
       "id": "zero",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "one",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 1
+      }
     },
     {
       "id": "three",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 3 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 3
+      }
     },
     {
       "id": "initState",
@@ -75,7 +136,10 @@
     },
     {
       "id": "currentState",
-      "expr": { "kind": "var", "name": "state" }
+      "expr": {
+        "kind": "var",
+        "name": "state"
+      }
     },
     {
       "id": "isProcessing",
@@ -83,12 +147,18 @@
         "kind": "call",
         "ns": "core",
         "name": "eq",
-        "args": ["currentState", "stateProcessing"]
+        "args": [
+          "currentState",
+          "stateProcessing"
+        ]
       }
     },
     {
       "id": "counterValue",
-      "expr": { "kind": "var", "name": "counter" }
+      "expr": {
+        "kind": "var",
+        "name": "counter"
+      }
     },
     {
       "id": "checkLimit",
@@ -96,7 +166,10 @@
         "kind": "call",
         "ns": "core",
         "name": "lt",
-        "args": ["counterValue", "three"]
+        "args": [
+          "counterValue",
+          "three"
+        ]
       }
     },
     {
@@ -105,7 +178,10 @@
         "kind": "call",
         "ns": "core",
         "name": "add",
-        "args": ["counterValue", "one"]
+        "args": [
+          "counterValue",
+          "one"
+        ]
       }
     },
     {
@@ -126,7 +202,10 @@
     },
     {
       "id": "result",
-      "expr": { "kind": "var", "name": "state" }
+      "expr": {
+        "kind": "var",
+        "name": "state"
+      }
     }
   ],
   "result": "result",

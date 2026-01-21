@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/air.schema.json",
   "version": "1.0.0",
   "airDefs": [],
   "functionSigs": [
@@ -6,10 +7,25 @@
       "ns": "set",
       "name": "intersect",
       "params": [
-        { "kind": "set", "of": { "kind": "int" } },
-        { "kind": "set", "of": { "kind": "int" } }
+        {
+          "kind": "set",
+          "of": {
+            "kind": "int"
+          }
+        },
+        {
+          "kind": "set",
+          "of": {
+            "kind": "int"
+          }
+        }
       ],
-      "returns": { "kind": "set", "of": { "kind": "int" } },
+      "returns": {
+        "kind": "set",
+        "of": {
+          "kind": "int"
+        }
+      },
       "pure": true
     }
   ],
@@ -18,16 +34,34 @@
       "id": "setA",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "set", "of": { "kind": "int" } },
-        "value": [1, 2, 3]
+        "type": {
+          "kind": "set",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          1,
+          2,
+          3
+        ]
       }
     },
     {
       "id": "setB",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "set", "of": { "kind": "int" } },
-        "value": [2, 3, 4]
+        "type": {
+          "kind": "set",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          2,
+          3,
+          4
+        ]
       }
     },
     {
@@ -36,23 +70,42 @@
         "kind": "call",
         "ns": "set",
         "name": "intersect",
-        "args": ["setA", "setB"]
+        "args": [
+          "setA",
+          "setB"
+        ]
       }
     },
     {
       "id": "setC",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "set", "of": { "kind": "int" } },
-        "value": [1, 2]
+        "type": {
+          "kind": "set",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          1,
+          2
+        ]
       }
     },
     {
       "id": "setD",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "set", "of": { "kind": "int" } },
-        "value": [3, 4]
+        "type": {
+          "kind": "set",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          3,
+          4
+        ]
       }
     },
     {
@@ -61,14 +114,22 @@
         "kind": "call",
         "ns": "set",
         "name": "intersect",
-        "args": ["setC", "setD"]
+        "args": [
+          "setC",
+          "setD"
+        ]
       }
     },
     {
       "id": "emptySet",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "set", "of": { "kind": "int" } },
+        "type": {
+          "kind": "set",
+          "of": {
+            "kind": "int"
+          }
+        },
         "value": []
       }
     },
@@ -76,8 +137,17 @@
       "id": "setE",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "set", "of": { "kind": "int" } },
-        "value": [1, 2, 3]
+        "type": {
+          "kind": "set",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          1,
+          2,
+          3
+        ]
       }
     },
     {
@@ -86,7 +156,10 @@
         "kind": "call",
         "ns": "set",
         "name": "intersect",
-        "args": ["emptySet", "setE"]
+        "args": [
+          "emptySet",
+          "setE"
+        ]
       }
     },
     {
@@ -95,7 +168,10 @@
         "kind": "call",
         "ns": "set",
         "name": "intersect",
-        "args": ["setE", "emptySet"]
+        "args": [
+          "setE",
+          "emptySet"
+        ]
       }
     },
     {
@@ -104,23 +180,48 @@
         "kind": "call",
         "ns": "set",
         "name": "intersect",
-        "args": ["emptySet", "emptySet"]
+        "args": [
+          "emptySet",
+          "emptySet"
+        ]
       }
     },
     {
       "id": "setF",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "set", "of": { "kind": "int" } },
-        "value": [1, 2, 3, 4, 5]
+        "type": {
+          "kind": "set",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
       }
     },
     {
       "id": "setG",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "set", "of": { "kind": "int" } },
-        "value": [3, 4, 5, 6, 7]
+        "type": {
+          "kind": "set",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
       }
     },
     {
@@ -129,7 +230,10 @@
         "kind": "call",
         "ns": "set",
         "name": "intersect",
-        "args": ["setF", "setG"]
+        "args": [
+          "setF",
+          "setG"
+        ]
       }
     }
   ],

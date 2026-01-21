@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Computes factorial using a CFG-based loop in LIR. Uses phi nodes for loop-carried variables (n and result).",
   "blocks": [
@@ -8,12 +9,24 @@
         {
           "kind": "assign",
           "target": "initialN",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 5
+          }
         },
         {
           "kind": "assign",
           "target": "initialResult",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 1
+          }
         }
       ],
       "terminator": {
@@ -28,29 +41,50 @@
           "kind": "phi",
           "target": "n",
           "sources": [
-            { "block": "entry", "id": "initialN" },
-            { "block": "loopBody", "id": "nextN" }
+            {
+              "block": "entry",
+              "id": "initialN"
+            },
+            {
+              "block": "loopBody",
+              "id": "nextN"
+            }
           ]
         },
         {
           "kind": "phi",
           "target": "result",
           "sources": [
-            { "block": "entry", "id": "initialResult" },
-            { "block": "loopBody", "id": "newResult" }
+            {
+              "block": "entry",
+              "id": "initialResult"
+            },
+            {
+              "block": "loopBody",
+              "id": "newResult"
+            }
           ]
         },
         {
           "kind": "assign",
           "target": "zero",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 0
+          }
         },
         {
           "kind": "op",
           "target": "condition",
           "ns": "core",
           "name": "gt",
-          "args": ["n", "zero"]
+          "args": [
+            "n",
+            "zero"
+          ]
         }
       ],
       "terminator": {
@@ -68,19 +102,31 @@
           "target": "newResult",
           "ns": "core",
           "name": "mul",
-          "args": ["result", "n"]
+          "args": [
+            "result",
+            "n"
+          ]
         },
         {
           "kind": "assign",
           "target": "one",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 1
+          }
         },
         {
           "kind": "op",
           "target": "nextN",
           "ns": "core",
           "name": "sub",
-          "args": ["n", "one"]
+          "args": [
+            "n",
+            "one"
+          ]
         }
       ],
       "terminator": {
@@ -95,7 +141,10 @@
           "kind": "phi",
           "target": "finalResult",
           "sources": [
-            { "block": "loopHeader", "id": "result" }
+            {
+              "block": "loopHeader",
+              "id": "result"
+            }
           ]
         }
       ],

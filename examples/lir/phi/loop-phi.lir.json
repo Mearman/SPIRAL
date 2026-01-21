@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates loop-carried variables using phi nodes in LIR. The phi node merges the initial value and the updated value from each loop iteration.",
   "blocks": [
@@ -8,12 +9,24 @@
         {
           "kind": "assign",
           "target": "initialSum",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 0
+          }
         },
         {
           "kind": "assign",
           "target": "initialI",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 0
+          }
         }
       ],
       "terminator": {
@@ -28,29 +41,50 @@
           "kind": "phi",
           "target": "i",
           "sources": [
-            { "block": "entry", "id": "initialI" },
-            { "block": "loopBody", "id": "nextI" }
+            {
+              "block": "entry",
+              "id": "initialI"
+            },
+            {
+              "block": "loopBody",
+              "id": "nextI"
+            }
           ]
         },
         {
           "kind": "phi",
           "target": "sum",
           "sources": [
-            { "block": "entry", "id": "initialSum" },
-            { "block": "loopBody", "id": "updatedSum" }
+            {
+              "block": "entry",
+              "id": "initialSum"
+            },
+            {
+              "block": "loopBody",
+              "id": "updatedSum"
+            }
           ]
         },
         {
           "kind": "assign",
           "target": "limit",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 5
+          }
         },
         {
           "kind": "op",
           "target": "condition",
           "ns": "core",
           "name": "lt",
-          "args": ["i", "limit"]
+          "args": [
+            "i",
+            "limit"
+          ]
         }
       ],
       "terminator": {
@@ -66,21 +100,33 @@
         {
           "kind": "assign",
           "target": "one",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 1
+          }
         },
         {
           "kind": "op",
           "target": "updatedSum",
           "ns": "core",
           "name": "add",
-          "args": ["sum", "i"]
+          "args": [
+            "sum",
+            "i"
+          ]
         },
         {
           "kind": "op",
           "target": "nextI",
           "ns": "core",
           "name": "add",
-          "args": ["i", "one"]
+          "args": [
+            "i",
+            "one"
+          ]
         }
       ],
       "terminator": {
@@ -95,7 +141,10 @@
           "kind": "phi",
           "target": "finalSum",
           "sources": [
-            { "block": "loopHeader", "id": "sum" }
+            {
+              "block": "loopHeader",
+              "id": "sum"
+            }
           ]
         }
       ],

@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/air.schema.json",
   "version": "1.0.0",
   "comment": [
     "Demonstration of reusable arithmetic definitions using airDef and airRef.",
@@ -8,25 +9,39 @@
     {
       "ns": "math",
       "name": "double",
-      "params": ["x"],
-      "result": { "kind": "int" },
+      "params": [
+        "x"
+      ],
+      "result": {
+        "kind": "int"
+      },
       "body": {
         "kind": "call",
         "ns": "core",
         "name": "mul",
-        "args": ["x", "two"]
+        "args": [
+          "x",
+          "two"
+        ]
       }
     },
     {
       "ns": "math",
       "name": "square",
-      "params": ["x"],
-      "result": { "kind": "int" },
+      "params": [
+        "x"
+      ],
+      "result": {
+        "kind": "int"
+      },
       "body": {
         "kind": "call",
         "ns": "core",
         "name": "mul",
-        "args": ["x", "x"]
+        "args": [
+          "x",
+          "x"
+        ]
       }
     }
   ],
@@ -34,23 +49,50 @@
     {
       "ns": "core",
       "name": "mul",
-      "params": [{ "kind": "int" }, { "kind": "int" }],
-      "returns": { "kind": "int" },
+      "params": [
+        {
+          "kind": "int"
+        },
+        {
+          "kind": "int"
+        }
+      ],
+      "returns": {
+        "kind": "int"
+      },
       "pure": true
     }
   ],
   "nodes": [
     {
       "id": "two",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 2 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 2
+      }
     },
     {
       "id": "five",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 5
+      }
     },
     {
       "id": "three",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 3 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 3
+      }
     },
     {
       "id": "doubleResult",
@@ -58,7 +100,9 @@
         "kind": "airRef",
         "ns": "math",
         "name": "double",
-        "args": ["five"]
+        "args": [
+          "five"
+        ]
       }
     },
     {
@@ -67,7 +111,9 @@
         "kind": "airRef",
         "ns": "math",
         "name": "square",
-        "args": ["three"]
+        "args": [
+          "three"
+        ]
       }
     },
     {
@@ -76,7 +122,9 @@
         "kind": "airRef",
         "ns": "math",
         "name": "double",
-        "args": ["squareResult"]
+        "args": [
+          "squareResult"
+        ]
       }
     },
     {
@@ -85,7 +133,9 @@
         "kind": "airRef",
         "ns": "math",
         "name": "square",
-        "args": ["doubleResult"]
+        "args": [
+          "doubleResult"
+        ]
       }
     }
   ],

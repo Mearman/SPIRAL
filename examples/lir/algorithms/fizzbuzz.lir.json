@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Implements FizzBuzz logic as a CFG in LIR. For numbers 1-5, returns 'Fizz' for multiples of 3, 'Buzz' for multiples of 5, or the number as string otherwise.",
   "blocks": [
@@ -8,12 +9,24 @@
         {
           "kind": "assign",
           "target": "initialI",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 1
+          }
         },
         {
           "kind": "assign",
           "target": "limit",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 5
+          }
         }
       ],
       "terminator": {
@@ -28,10 +41,22 @@
           "kind": "phi",
           "target": "i",
           "sources": [
-            { "block": "entry", "id": "initialI" },
-            { "block": "check3", "id": "nextI" },
-            { "block": "check5", "id": "nextI" },
-            { "block": "default", "id": "nextI" }
+            {
+              "block": "entry",
+              "id": "initialI"
+            },
+            {
+              "block": "returnFizz",
+              "id": "nextI"
+            },
+            {
+              "block": "returnBuzz",
+              "id": "nextI"
+            },
+            {
+              "block": "default",
+              "id": "nextI"
+            }
           ]
         },
         {
@@ -39,7 +64,10 @@
           "target": "atLimit",
           "ns": "core",
           "name": "gt",
-          "args": ["i", "limit"]
+          "args": [
+            "i",
+            "limit"
+          ]
         }
       ],
       "terminator": {
@@ -55,26 +83,44 @@
         {
           "kind": "assign",
           "target": "three",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 3 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 3
+          }
         },
         {
           "kind": "op",
           "target": "rem3",
           "ns": "core",
           "name": "mod",
-          "args": ["i", "three"]
+          "args": [
+            "i",
+            "three"
+          ]
         },
         {
           "kind": "assign",
           "target": "zero",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 0
+          }
         },
         {
           "kind": "op",
           "target": "isMult3",
           "ns": "core",
           "name": "eq",
-          "args": ["rem3", "zero"]
+          "args": [
+            "rem3",
+            "zero"
+          ]
         }
       ],
       "terminator": {
@@ -90,26 +136,44 @@
         {
           "kind": "assign",
           "target": "five",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 5
+          }
         },
         {
           "kind": "op",
           "target": "rem5",
           "ns": "core",
           "name": "mod",
-          "args": ["i", "five"]
+          "args": [
+            "i",
+            "five"
+          ]
         },
         {
           "kind": "assign",
           "target": "zero",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 0
+          }
         },
         {
           "kind": "op",
           "target": "isMult5",
           "ns": "core",
           "name": "eq",
-          "args": ["rem5", "zero"]
+          "args": [
+            "rem5",
+            "zero"
+          ]
         }
       ],
       "terminator": {
@@ -125,19 +189,34 @@
         {
           "kind": "assign",
           "target": "one",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 1
+          }
         },
         {
           "kind": "op",
           "target": "nextI",
           "ns": "core",
           "name": "add",
-          "args": ["i", "one"]
+          "args": [
+            "i",
+            "one"
+          ]
         },
         {
           "kind": "assign",
           "target": "result",
-          "value": { "kind": "lit", "type": { "kind": "string" }, "value": "Fizz" }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "Fizz"
+          }
         }
       ],
       "terminator": {
@@ -151,19 +230,34 @@
         {
           "kind": "assign",
           "target": "one",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 1
+          }
         },
         {
           "kind": "op",
           "target": "nextI",
           "ns": "core",
           "name": "add",
-          "args": ["i", "one"]
+          "args": [
+            "i",
+            "one"
+          ]
         },
         {
           "kind": "assign",
           "target": "result",
-          "value": { "kind": "lit", "type": { "kind": "string" }, "value": "Buzz" }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "Buzz"
+          }
         }
       ],
       "terminator": {
@@ -177,19 +271,34 @@
         {
           "kind": "assign",
           "target": "one",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 1
+          }
         },
         {
           "kind": "op",
           "target": "nextI",
           "ns": "core",
           "name": "add",
-          "args": ["i", "one"]
+          "args": [
+            "i",
+            "one"
+          ]
         },
         {
           "kind": "assign",
           "target": "result",
-          "value": { "kind": "lit", "type": { "kind": "string" }, "value": "number" }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "number"
+          }
         }
       ],
       "terminator": {
@@ -203,7 +312,13 @@
         {
           "kind": "assign",
           "target": "final",
-          "value": { "kind": "lit", "type": { "kind": "string" }, "value": "Buzz" }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "Buzz"
+          }
         }
       ],
       "terminator": {

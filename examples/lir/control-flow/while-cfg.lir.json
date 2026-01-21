@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates a while loop structured as CFG. The loop has a header block with condition check, body block, and exit block.",
   "blocks": [
@@ -8,12 +9,24 @@
         {
           "kind": "assign",
           "target": "counter",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 0
+          }
         },
         {
           "kind": "assign",
           "target": "sum",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 0
+          }
         }
       ],
       "terminator": {
@@ -27,14 +40,23 @@
         {
           "kind": "assign",
           "target": "limit",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 5
+          }
         },
         {
           "kind": "op",
           "target": "shouldContinue",
           "ns": "core",
           "name": "lt",
-          "args": ["counter", "limit"]
+          "args": [
+            "counter",
+            "limit"
+          ]
         }
       ],
       "terminator": {
@@ -50,31 +72,49 @@
         {
           "kind": "assign",
           "target": "one",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 1
+          }
         },
         {
           "kind": "op",
           "target": "newSum",
           "ns": "core",
           "name": "add",
-          "args": ["sum", "counter"]
+          "args": [
+            "sum",
+            "counter"
+          ]
         },
         {
           "kind": "assign",
           "target": "sum",
-          "value": { "kind": "var", "name": "newSum" }
+          "value": {
+            "kind": "var",
+            "name": "newSum"
+          }
         },
         {
           "kind": "op",
           "target": "nextCounter",
           "ns": "core",
           "name": "add",
-          "args": ["counter", "one"]
+          "args": [
+            "counter",
+            "one"
+          ]
         },
         {
           "kind": "assign",
           "target": "counter",
-          "value": { "kind": "var", "name": "nextCounter" }
+          "value": {
+            "kind": "var",
+            "name": "nextCounter"
+          }
         }
       ],
       "terminator": {
@@ -88,7 +128,10 @@
         {
           "kind": "assign",
           "target": "finalSum",
-          "value": { "kind": "var", "name": "sum" }
+          "value": {
+            "kind": "var",
+            "name": "sum"
+          }
         }
       ],
       "terminator": {

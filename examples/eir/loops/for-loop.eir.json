@@ -1,53 +1,108 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates C-style for loop in EIR. The for loop has init, condition, update, and body components.",
   "airDefs": [
     {
       "ns": "core",
       "name": "add",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "lt",
-      "params": ["a", "b"],
-      "result": { "kind": "bool" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "bool"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "mul",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     }
   ],
   "nodes": [
     {
       "id": "zero",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "one",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 1
+      }
     },
     {
       "id": "ten",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 10 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 10
+      }
     },
     {
       "id": "two",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 2 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 2
+      }
     },
     {
       "id": "init",
-      "expr": { "kind": "ref", "id": "zero" }
+      "expr": {
+        "kind": "ref",
+        "id": "zero"
+      }
     },
     {
       "id": "condValue",
-      "expr": { "kind": "var", "name": "i" }
+      "expr": {
+        "kind": "var",
+        "name": "i"
+      }
     },
     {
       "id": "condition",
@@ -55,12 +110,18 @@
         "kind": "call",
         "ns": "core",
         "name": "lt",
-        "args": ["condValue", "ten"]
+        "args": [
+          "condValue",
+          "ten"
+        ]
       }
     },
     {
       "id": "updateValue",
-      "expr": { "kind": "var", "name": "i" }
+      "expr": {
+        "kind": "var",
+        "name": "i"
+      }
     },
     {
       "id": "update",
@@ -68,12 +129,18 @@
         "kind": "call",
         "ns": "core",
         "name": "add",
-        "args": ["updateValue", "one"]
+        "args": [
+          "updateValue",
+          "one"
+        ]
       }
     },
     {
       "id": "body",
-      "expr": { "kind": "ref", "id": "one" }
+      "expr": {
+        "kind": "ref",
+        "id": "one"
+      }
     },
     {
       "id": "forLoop",
@@ -88,7 +155,10 @@
     },
     {
       "id": "finalI",
-      "expr": { "kind": "var", "name": "i" }
+      "expr": {
+        "kind": "var",
+        "name": "i"
+      }
     }
   ],
   "result": "finalI",

@@ -1,12 +1,20 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/air.schema.json",
   "version": "1.0.0",
   "airDefs": [
     {
       "ns": "list",
       "name": "length",
-      "params": ["xs"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "xs" }
+      "params": [
+        "xs"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "xs"
+      }
     }
   ],
   "nodes": [
@@ -14,15 +22,31 @@
       "id": "numberList",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "int" } },
-        "value": [1, 2, 3, 4, 5]
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
       }
     },
     {
       "id": "emptyList",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "int" } },
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
         "value": []
       }
     },
@@ -30,8 +54,17 @@
       "id": "stringList",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "string" } },
-        "value": ["a", "b", "c"]
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "string"
+          }
+        },
+        "value": [
+          "a",
+          "b",
+          "c"
+        ]
       }
     },
     {
@@ -40,7 +73,9 @@
         "kind": "call",
         "ns": "list",
         "name": "length",
-        "args": ["numberList"]
+        "args": [
+          "numberList"
+        ]
       }
     },
     {
@@ -49,7 +84,9 @@
         "kind": "call",
         "ns": "list",
         "name": "length",
-        "args": ["emptyList"]
+        "args": [
+          "emptyList"
+        ]
       }
     },
     {
@@ -58,7 +95,9 @@
         "kind": "call",
         "ns": "list",
         "name": "length",
-        "args": ["stringList"]
+        "args": [
+          "stringList"
+        ]
       }
     }
   ],

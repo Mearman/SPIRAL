@@ -1,41 +1,86 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/cir.schema.json",
   "version": "1.0.0",
   "airDefs": [
     {
       "ns": "core",
       "name": "add",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     }
   ],
   "nodes": [
     {
       "id": "five",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 5
+      }
     },
     {
       "id": "three",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 3 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 3
+      }
     },
     {
       "id": "two",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 2 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 2
+      }
     },
     {
       "id": "ten",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 10 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 10
+      }
     },
     {
       "id": "add",
       "expr": {
         "kind": "lambda",
-        "params": ["x", "y"],
+        "params": [
+          "x",
+          "y"
+        ],
         "body": "addBody",
         "type": {
           "kind": "fn",
-          "params": [{ "kind": "int" }, { "kind": "int" }],
-          "returns": { "kind": "int" }
+          "params": [
+            {
+              "kind": "int"
+            },
+            {
+              "kind": "int"
+            }
+          ],
+          "returns": {
+            "kind": "int"
+          }
         }
       }
     },
@@ -45,7 +90,10 @@
         "kind": "call",
         "ns": "core",
         "name": "add",
-        "args": ["x", "y"]
+        "args": [
+          "x",
+          "y"
+        ]
       }
     },
     {
@@ -53,7 +101,9 @@
       "expr": {
         "kind": "callExpr",
         "fn": "add",
-        "args": ["five"]
+        "args": [
+          "five"
+        ]
       }
     },
     {
@@ -61,7 +111,9 @@
       "expr": {
         "kind": "callExpr",
         "fn": "addFive",
-        "args": ["three"]
+        "args": [
+          "three"
+        ]
       }
     },
     {
@@ -69,7 +121,9 @@
       "expr": {
         "kind": "callExpr",
         "fn": "add",
-        "args": ["two"]
+        "args": [
+          "two"
+        ]
       }
     },
     {
@@ -77,7 +131,9 @@
       "expr": {
         "kind": "callExpr",
         "fn": "addTwo",
-        "args": ["ten"]
+        "args": [
+          "ten"
+        ]
       }
     }
   ],

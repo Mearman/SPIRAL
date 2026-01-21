@@ -1,38 +1,81 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates accumulation pattern using iter loop with mutation. Accumulates squared values from a list.",
   "airDefs": [
     {
       "ns": "core",
       "name": "add",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "mul",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     }
   ],
   "nodes": [
     {
       "id": "zero",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "numbers",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "list", "of": { "kind": "int" } },
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "int"
+          }
+        },
         "value": [
-          { "kind": "int", "value": 1 },
-          { "kind": "int", "value": 2 },
-          { "kind": "int", "value": 3 },
-          { "kind": "int", "value": 4 },
-          { "kind": "int", "value": 5 }
+          {
+            "kind": "int",
+            "value": 1
+          },
+          {
+            "kind": "int",
+            "value": 2
+          },
+          {
+            "kind": "int",
+            "value": 3
+          },
+          {
+            "kind": "int",
+            "value": 4
+          },
+          {
+            "kind": "int",
+            "value": 5
+          }
         ]
       }
     },
@@ -46,11 +89,17 @@
     },
     {
       "id": "currentAccum",
-      "expr": { "kind": "var", "name": "sumOfSquares" }
+      "expr": {
+        "kind": "var",
+        "name": "sumOfSquares"
+      }
     },
     {
       "id": "element",
-      "expr": { "kind": "var", "name": "n" }
+      "expr": {
+        "kind": "var",
+        "name": "n"
+      }
     },
     {
       "id": "squared",
@@ -58,7 +107,10 @@
         "kind": "call",
         "ns": "core",
         "name": "mul",
-        "args": ["element", "element"]
+        "args": [
+          "element",
+          "element"
+        ]
       }
     },
     {
@@ -67,7 +119,10 @@
         "kind": "call",
         "ns": "core",
         "name": "add",
-        "args": ["currentAccum", "squared"]
+        "args": [
+          "currentAccum",
+          "squared"
+        ]
       }
     },
     {
@@ -89,7 +144,10 @@
     },
     {
       "id": "result",
-      "expr": { "kind": "var", "name": "sumOfSquares" }
+      "expr": {
+        "kind": "var",
+        "name": "sumOfSquares"
+      }
     }
   ],
   "result": "result",

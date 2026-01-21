@@ -1,26 +1,60 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/air.schema.json",
   "version": "1.0.0",
   "airDefs": [
     {
       "ns": "set",
       "name": "union",
-      "params": ["a", "b"],
-      "result": { "kind": "set", "elementType": { "kind": "int" } },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "set",
+        "elementType": {
+          "kind": "int"
+        }
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "set",
       "name": "intersect",
-      "params": ["a", "b"],
-      "result": { "kind": "set", "elementType": { "kind": "int" } },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "set",
+        "elementType": {
+          "kind": "int"
+        }
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "set",
       "name": "difference",
-      "params": ["a", "b"],
-      "result": { "kind": "set", "elementType": { "kind": "int" } },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "set",
+        "elementType": {
+          "kind": "int"
+        }
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     }
   ],
   "nodes": [
@@ -28,31 +62,65 @@
       "id": "setA",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "set", "elementType": { "kind": "int" } },
-        "value": [1, 2, 3, 4]
+        "type": {
+          "kind": "set",
+          "elementType": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          1,
+          2,
+          3,
+          4
+        ]
       }
     },
     {
       "id": "setB",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "set", "elementType": { "kind": "int" } },
-        "value": [3, 4, 5, 6]
+        "type": {
+          "kind": "set",
+          "elementType": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          3,
+          4,
+          5,
+          6
+        ]
       }
     },
     {
       "id": "setC",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "set", "elementType": { "kind": "int" } },
-        "value": [5, 6, 7]
+        "type": {
+          "kind": "set",
+          "elementType": {
+            "kind": "int"
+          }
+        },
+        "value": [
+          5,
+          6,
+          7
+        ]
       }
     },
     {
       "id": "emptySet",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "set", "elementType": { "kind": "int" } },
+        "type": {
+          "kind": "set",
+          "elementType": {
+            "kind": "int"
+          }
+        },
         "value": []
       }
     },
@@ -62,7 +130,10 @@
         "kind": "call",
         "ns": "set",
         "name": "union",
-        "args": ["setA", "setB"]
+        "args": [
+          "setA",
+          "setB"
+        ]
       }
     },
     {
@@ -71,7 +142,10 @@
         "kind": "call",
         "ns": "set",
         "name": "union",
-        "args": ["setA", "emptySet"]
+        "args": [
+          "setA",
+          "emptySet"
+        ]
       }
     },
     {
@@ -80,7 +154,10 @@
         "kind": "call",
         "ns": "set",
         "name": "union",
-        "args": ["basicUnion", "setC"]
+        "args": [
+          "basicUnion",
+          "setC"
+        ]
       }
     },
     {
@@ -89,7 +166,10 @@
         "kind": "call",
         "ns": "set",
         "name": "intersect",
-        "args": ["setA", "setB"]
+        "args": [
+          "setA",
+          "setB"
+        ]
       }
     },
     {
@@ -98,7 +178,10 @@
         "kind": "call",
         "ns": "set",
         "name": "difference",
-        "args": ["setA", "setB"]
+        "args": [
+          "setA",
+          "setB"
+        ]
       }
     }
   ],

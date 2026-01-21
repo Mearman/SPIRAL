@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/air.schema.json",
   "version": "1.0.0",
   "comment": [
     "Demonstration of predicate definitions using airDef.",
@@ -8,61 +9,96 @@
     {
       "ns": "pred",
       "name": "isPositive",
-      "params": ["x"],
-      "result": { "kind": "bool" },
+      "params": [
+        "x"
+      ],
+      "result": {
+        "kind": "bool"
+      },
       "body": {
         "kind": "call",
         "ns": "core",
         "name": "gt",
-        "args": ["x", "zero"]
+        "args": [
+          "x",
+          "zero"
+        ]
       }
     },
     {
       "ns": "pred",
       "name": "isNegative",
-      "params": ["x"],
-      "result": { "kind": "bool" },
+      "params": [
+        "x"
+      ],
+      "result": {
+        "kind": "bool"
+      },
       "body": {
         "kind": "call",
         "ns": "core",
         "name": "lt",
-        "args": ["x", "zero"]
+        "args": [
+          "x",
+          "zero"
+        ]
       }
     },
     {
       "ns": "pred",
       "name": "isZero",
-      "params": ["x"],
-      "result": { "kind": "bool" },
+      "params": [
+        "x"
+      ],
+      "result": {
+        "kind": "bool"
+      },
       "body": {
         "kind": "call",
         "ns": "core",
         "name": "eq",
-        "args": ["x", "zero"]
+        "args": [
+          "x",
+          "zero"
+        ]
       }
     },
     {
       "ns": "pred",
       "name": "isEven",
-      "params": ["x"],
-      "result": { "kind": "bool" },
+      "params": [
+        "x"
+      ],
+      "result": {
+        "kind": "bool"
+      },
       "body": {
         "kind": "call",
         "ns": "core",
         "name": "eq",
-        "args": ["remainder", "zero"]
+        "args": [
+          "remainder",
+          "zero"
+        ]
       }
     },
     {
       "ns": "pred",
       "name": "isOdd",
-      "params": ["x"],
-      "result": { "kind": "bool" },
+      "params": [
+        "x"
+      ],
+      "result": {
+        "kind": "bool"
+      },
       "body": {
         "kind": "call",
         "ns": "core",
         "name": "neq",
-        "args": ["remainder", "zero"]
+        "args": [
+          "remainder",
+          "zero"
+        ]
       }
     }
   ],
@@ -70,63 +106,144 @@
     {
       "ns": "core",
       "name": "gt",
-      "params": [{ "kind": "int" }, { "kind": "int" }],
-      "returns": { "kind": "bool" },
+      "params": [
+        {
+          "kind": "int"
+        },
+        {
+          "kind": "int"
+        }
+      ],
+      "returns": {
+        "kind": "bool"
+      },
       "pure": true
     },
     {
       "ns": "core",
       "name": "lt",
-      "params": [{ "kind": "int" }, { "kind": "int" }],
-      "returns": { "kind": "bool" },
+      "params": [
+        {
+          "kind": "int"
+        },
+        {
+          "kind": "int"
+        }
+      ],
+      "returns": {
+        "kind": "bool"
+      },
       "pure": true
     },
     {
       "ns": "core",
       "name": "eq",
-      "params": [{ "kind": "int" }, { "kind": "int" }],
-      "returns": { "kind": "bool" },
+      "params": [
+        {
+          "kind": "int"
+        },
+        {
+          "kind": "int"
+        }
+      ],
+      "returns": {
+        "kind": "bool"
+      },
       "pure": true
     },
     {
       "ns": "core",
       "name": "neq",
-      "params": [{ "kind": "int" }, { "kind": "int" }],
-      "returns": { "kind": "bool" },
+      "params": [
+        {
+          "kind": "int"
+        },
+        {
+          "kind": "int"
+        }
+      ],
+      "returns": {
+        "kind": "bool"
+      },
       "pure": true
     },
     {
       "ns": "core",
       "name": "rem",
-      "params": [{ "kind": "int" }, { "kind": "int" }],
-      "returns": { "kind": "int" },
+      "params": [
+        {
+          "kind": "int"
+        },
+        {
+          "kind": "int"
+        }
+      ],
+      "returns": {
+        "kind": "int"
+      },
       "pure": true
     }
   ],
   "nodes": [
     {
       "id": "zero",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "two",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 2 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 2
+      }
     },
     {
       "id": "posFive",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 5
+      }
     },
     {
       "id": "negFive",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": -5 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": -5
+      }
     },
     {
       "id": "zeroValue",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "remainder",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "isPositive_check",
@@ -134,7 +251,9 @@
         "kind": "airRef",
         "ns": "pred",
         "name": "isPositive",
-        "args": ["posFive"]
+        "args": [
+          "posFive"
+        ]
       }
     },
     {
@@ -143,7 +262,9 @@
         "kind": "airRef",
         "ns": "pred",
         "name": "isNegative",
-        "args": ["negFive"]
+        "args": [
+          "negFive"
+        ]
       }
     },
     {
@@ -152,7 +273,9 @@
         "kind": "airRef",
         "ns": "pred",
         "name": "isZero",
-        "args": ["zeroValue"]
+        "args": [
+          "zeroValue"
+        ]
       }
     },
     {
@@ -166,11 +289,23 @@
     },
     {
       "id": "positiveLabel",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "positive" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "positive"
+      }
     },
     {
       "id": "notPositiveLabel",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "not positive" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "not positive"
+      }
     },
     {
       "id": "classify_negative",
@@ -183,11 +318,23 @@
     },
     {
       "id": "negativeLabel",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "negative" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "negative"
+      }
     },
     {
       "id": "notNegativeLabel",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "not negative" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "not negative"
+      }
     },
     {
       "id": "classify_zero",
@@ -200,11 +347,23 @@
     },
     {
       "id": "zeroLabel",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "zero" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "zero"
+      }
     },
     {
       "id": "nonZeroLabel",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "non-zero" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "non-zero"
+      }
     },
     {
       "id": "tripleCheck_positive",

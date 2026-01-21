@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates SSA phi node for merging values from different control flow paths. The phi instruction selects the correct value based on which predecessor was executed.",
   "blocks": [
@@ -8,19 +9,34 @@
         {
           "kind": "assign",
           "target": "mode",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 1
+          }
         },
         {
           "kind": "assign",
           "target": "threshold",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 1
+          }
         },
         {
           "kind": "op",
           "target": "condition",
           "ns": "core",
           "name": "eq",
-          "args": ["mode", "threshold"]
+          "args": [
+            "mode",
+            "threshold"
+          ]
         }
       ],
       "terminator": {
@@ -36,7 +52,13 @@
         {
           "kind": "assign",
           "target": "value",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 100 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 100
+          }
         }
       ],
       "terminator": {
@@ -50,7 +72,13 @@
         {
           "kind": "assign",
           "target": "value",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 200 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 200
+          }
         }
       ],
       "terminator": {
@@ -65,8 +93,14 @@
           "kind": "phi",
           "target": "mergedValue",
           "sources": [
-            { "block": "pathA", "id": "value" },
-            { "block": "pathB", "id": "value" }
+            {
+              "block": "pathA",
+              "id": "value"
+            },
+            {
+              "block": "pathB",
+              "id": "value"
+            }
           ]
         },
         {
@@ -74,7 +108,10 @@
           "target": "doubled",
           "ns": "core",
           "name": "add",
-          "args": ["mergedValue", "mergedValue"]
+          "args": [
+            "mergedValue",
+            "mergedValue"
+          ]
         }
       ],
       "terminator": {

@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Computes Greatest Common Divisor using Euclid's algorithm as a CFG in LIR. Uses phi nodes for the loop-carried variables.",
   "blocks": [
@@ -8,12 +9,24 @@
         {
           "kind": "assign",
           "target": "initA",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 48 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 48
+          }
         },
         {
           "kind": "assign",
           "target": "initB",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 18 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 18
+          }
         }
       ],
       "terminator": {
@@ -28,29 +41,50 @@
           "kind": "phi",
           "target": "a",
           "sources": [
-            { "block": "entry", "id": "initA" },
-            { "block": "loopBody", "id": "newA" }
+            {
+              "block": "entry",
+              "id": "initA"
+            },
+            {
+              "block": "loopBody",
+              "id": "newA"
+            }
           ]
         },
         {
           "kind": "phi",
           "target": "b",
           "sources": [
-            { "block": "entry", "id": "initB" },
-            { "block": "loopBody", "id": "newB" }
+            {
+              "block": "entry",
+              "id": "initB"
+            },
+            {
+              "block": "loopBody",
+              "id": "newB"
+            }
           ]
         },
         {
           "kind": "assign",
           "target": "zero",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 0
+          }
         },
         {
           "kind": "op",
           "target": "condition",
           "ns": "core",
           "name": "eq",
-          "args": ["b", "zero"]
+          "args": [
+            "b",
+            "zero"
+          ]
         }
       ],
       "terminator": {
@@ -68,17 +102,26 @@
           "target": "remainder",
           "ns": "core",
           "name": "mod",
-          "args": ["a", "b"]
+          "args": [
+            "a",
+            "b"
+          ]
         },
         {
           "kind": "assign",
           "target": "newA",
-          "value": { "kind": "var", "name": "b" }
+          "value": {
+            "kind": "var",
+            "name": "b"
+          }
         },
         {
           "kind": "assign",
           "target": "newB",
-          "value": { "kind": "var", "name": "remainder" }
+          "value": {
+            "kind": "var",
+            "name": "remainder"
+          }
         }
       ],
       "terminator": {
@@ -93,7 +136,10 @@
           "kind": "phi",
           "target": "gcd",
           "sources": [
-            { "block": "loopHeader", "id": "a" }
+            {
+              "block": "loopHeader",
+              "id": "a"
+            }
           ]
         }
       ],

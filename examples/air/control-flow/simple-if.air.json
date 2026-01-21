@@ -1,30 +1,63 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/air.schema.json",
   "version": "1.0.0",
   "airDefs": [
     {
       "ns": "core",
       "name": "gte",
-      "params": ["a", "b"],
-      "result": { "kind": "bool" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "bool"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     }
   ],
   "nodes": [
     {
       "id": "trueValue",
-      "expr": { "kind": "lit", "type": { "kind": "bool" }, "value": true }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "bool"
+        },
+        "value": true
+      }
     },
     {
       "id": "falseValue",
-      "expr": { "kind": "lit", "type": { "kind": "bool" }, "value": false }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "bool"
+        },
+        "value": false
+      }
     },
     {
       "id": "hundred",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 100 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 100
+      }
     },
     {
       "id": "zero",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
     },
     {
       "id": "ifTrue",
@@ -33,7 +66,9 @@
         "cond": "trueValue",
         "then": "hundred",
         "else": "zero",
-        "type": { "kind": "int" }
+        "type": {
+          "kind": "int"
+        }
       }
     },
     {
@@ -43,28 +78,62 @@
         "cond": "falseValue",
         "then": "hundred",
         "else": "zero",
-        "type": { "kind": "int" }
+        "type": {
+          "kind": "int"
+        }
       }
     },
     {
       "id": "age",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 20 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 20
+      }
     },
     {
       "id": "eighteen",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 18 }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 18
+      }
     },
     {
       "id": "isAdult",
-      "expr": { "kind": "call", "ns": "core", "name": "gte", "args": ["age", "eighteen"] }
+      "expr": {
+        "kind": "call",
+        "ns": "core",
+        "name": "gte",
+        "args": [
+          "age",
+          "eighteen"
+        ]
+      }
     },
     {
       "id": "adult",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "adult" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "adult"
+      }
     },
     {
       "id": "minor",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "minor" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "minor"
+      }
     },
     {
       "id": "ageCheck",
@@ -73,7 +142,9 @@
         "cond": "isAdult",
         "then": "adult",
         "else": "minor",
-        "type": { "kind": "string" }
+        "type": {
+          "kind": "string"
+        }
       }
     }
   ],

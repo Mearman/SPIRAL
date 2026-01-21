@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates if-then-else pattern in LIR CFG. Each branch is a separate block that merges back at a join point.",
   "blocks": [
@@ -8,19 +9,34 @@
         {
           "kind": "assign",
           "target": "value",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 42 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 42
+          }
         },
         {
           "kind": "assign",
           "target": "threshold",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 50 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 50
+          }
         },
         {
           "kind": "op",
           "target": "isAbove",
           "ns": "core",
           "name": "gt",
-          "args": ["value", "threshold"]
+          "args": [
+            "value",
+            "threshold"
+          ]
         }
       ],
       "terminator": {
@@ -36,12 +52,24 @@
         {
           "kind": "assign",
           "target": "result",
-          "value": { "kind": "lit", "type": { "kind": "string" }, "value": "above threshold" }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "above threshold"
+          }
         },
         {
           "kind": "assign",
           "target": "branchTaken",
-          "value": { "kind": "lit", "type": { "kind": "string" }, "value": "then" }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "then"
+          }
         }
       ],
       "terminator": {
@@ -55,12 +83,24 @@
         {
           "kind": "assign",
           "target": "result",
-          "value": { "kind": "lit", "type": { "kind": "string" }, "value": "below threshold" }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "below threshold"
+          }
         },
         {
           "kind": "assign",
           "target": "branchTaken",
-          "value": { "kind": "lit", "type": { "kind": "string" }, "value": "else" }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "else"
+          }
         }
       ],
       "terminator": {
@@ -75,8 +115,14 @@
           "kind": "phi",
           "target": "finalResult",
           "sources": [
-            { "block": "thenBlock", "id": "result" },
-            { "block": "elseBlock", "id": "result" }
+            {
+              "block": "thenBlock",
+              "id": "result"
+            },
+            {
+              "block": "elseBlock",
+              "id": "result"
+            }
           ]
         }
       ],

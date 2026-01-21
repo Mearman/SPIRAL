@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates a loop in LIR using a back-edge (jump to previous block). The block executes repeatedly until a condition becomes false.",
   "blocks": [
@@ -8,7 +9,13 @@
         {
           "kind": "assign",
           "target": "i",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 0
+          }
         }
       ],
       "terminator": {
@@ -22,14 +29,23 @@
         {
           "kind": "assign",
           "target": "limit",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 5
+          }
         },
         {
           "kind": "op",
           "target": "condition",
           "ns": "core",
           "name": "lt",
-          "args": ["i", "limit"]
+          "args": [
+            "i",
+            "limit"
+          ]
         }
       ],
       "terminator": {
@@ -45,19 +61,31 @@
         {
           "kind": "assign",
           "target": "one",
-          "value": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 1
+          }
         },
         {
           "kind": "op",
           "target": "nextI",
           "ns": "core",
           "name": "add",
-          "args": ["i", "one"]
+          "args": [
+            "i",
+            "one"
+          ]
         },
         {
           "kind": "assign",
           "target": "i",
-          "value": { "kind": "var", "name": "nextI" }
+          "value": {
+            "kind": "var",
+            "name": "nextI"
+          }
         }
       ],
       "terminator": {
@@ -71,7 +99,10 @@
         {
           "kind": "assign",
           "target": "result",
-          "value": { "kind": "var", "name": "i" }
+          "value": {
+            "kind": "var",
+            "name": "i"
+          }
         }
       ],
       "terminator": {
