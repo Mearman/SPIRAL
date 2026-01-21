@@ -6,12 +6,12 @@
 //==============================================================================
 
 export type {
-  AIRDef, AIRDocument,
-  CIRDocument, EIRDocument, Expr, FunctionSignature, Node, Type, Value,
-  // EIR/LIR Types
-  EvalState, Effect,
-  LIRDocument, LirBlock, LirInstruction, LirTerminator,
-  EirExpr,
+	AIRDef, AIRDocument,
+	CIRDocument, EIRDocument, Expr, FunctionSignature, Node, Type, Value,
+	// EIR/LIR Types
+	EvalState, Effect,
+	LIRDocument, LirBlock, LirInstruction, LirTerminator,
+	EirExpr,
 } from "./types.js";
 
 export type { Defs, TypeEnv, ValueEnv } from "./env.js";
@@ -27,17 +27,17 @@ export type { EffectOp, EffectRegistry } from "./effects.js";
 //==============================================================================
 
 export {
-  boolType, floatType, fnType, intType, listType,
-  mapType, opaqueType, optionType, setType, stringType,
-  // EIR types
-  refType, voidType,
+	boolType, floatType, fnType, intType, listType,
+	mapType, opaqueType, optionType, setType, stringType,
+	// EIR types
+	refType, voidType,
 } from "./types.js";
 
 export {
-  boolVal, closureVal,
-  errorVal, floatVal, intVal, listVal, mapVal, opaqueVal, optionVal, setVal, stringVal,
-  // EIR values
-  voidVal, refCellVal,
+	boolVal, closureVal,
+	errorVal, floatVal, intVal, listVal, mapVal, opaqueVal, optionVal, setVal, stringVal,
+	// EIR values
+	voidVal, refCellVal,
 } from "./types.js";
 
 //==============================================================================
@@ -45,12 +45,12 @@ export {
 //==============================================================================
 
 export {
-  hashValue, isClosure, isError, isPrimitiveType,
-  typeEqual,
-  // EIR type guards
-  isRefCell, isVoid,
-  // EIR utilities
-  emptyEvalState, createEvalState,
+	hashValue, isClosure, isError, isPrimitiveType,
+	typeEqual,
+	// EIR type guards
+	isRefCell, isVoid,
+	// EIR utilities
+	emptyEvalState, createEvalState,
 } from "./types.js";
 
 //==============================================================================
@@ -66,9 +66,9 @@ export { CAIRSError } from "./errors.js";
 //==============================================================================
 
 export {
-  defKey, emptyTypeEnv, emptyValueEnv, extendTypeEnv,
-  extendTypeEnvMany, extendValueEnv,
-  extendValueEnvMany, lookupDef, lookupType, lookupValue, registerDef
+	defKey, emptyTypeEnv, emptyValueEnv, extendTypeEnv,
+	extendTypeEnvMany, extendValueEnv,
+	extendValueEnvMany, lookupDef, lookupType, lookupValue, registerDef
 } from "./env.js";
 
 //==============================================================================
@@ -109,7 +109,7 @@ export { createListRegistry } from "./domains/list.js";
 export { createSetRegistry } from "./domains/set.js";
 
 export {
-  defineOperator, lookupOperator, registerOperator, type OperatorBuilder
+	defineOperator, lookupOperator, registerOperator, type OperatorBuilder
 } from "./domains/registry.js";
 
 //==============================================================================
@@ -117,9 +117,9 @@ export {
 //==============================================================================
 
 export {
-  alphaRename,
-  collectFreeVars, freshName,
-  substitute, substituteEnv
+	alphaRename,
+	collectFreeVars, freshName,
+	substitute, substituteEnv
 } from "./cir/substitution.js";
 
 //==============================================================================
@@ -127,13 +127,13 @@ export {
 //==============================================================================
 
 export {
-  createDefaultEffectRegistry,
-  defaultEffectRegistry,
-  emptyEffectRegistry,
-  lookupEffect,
-  registerEffect,
-  ioEffects,
-  stateEffects,
+	createDefaultEffectRegistry,
+	defaultEffectRegistry,
+	emptyEffectRegistry,
+	lookupEffect,
+	registerEffect,
+	ioEffects,
+	stateEffects,
 } from "./effects.js";
 
 //==============================================================================
@@ -149,12 +149,12 @@ export { lowerEIRtoLIR } from "./lir/lower.js";
 //==============================================================================
 
 export {
-  airSchema,
-  cirSchema,
-  eirSchema,
-  lirSchema,
-  isAIRSchema,
-  isCIRSchema,
-  isEIRSchema,
-  isLIRSchema,
+	airSchema,
+	cirSchema,
+	eirSchema,
+	lirSchema,
+	isAIRSchema,
+	isCIRSchema,
+	isEIRSchema,
+	isLIRSchema,
 } from "./schemas.js";

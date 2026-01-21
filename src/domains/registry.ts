@@ -68,7 +68,7 @@ export class OperatorBuilder {
 	private name: string;
 	private params: Type[] = [];
 	private returns!: Type;
-	private pure: boolean = true;
+	private pure = true;
 	private fn!: (...args: Value[]) => Value;
 
 	constructor(ns: string, name: string) {

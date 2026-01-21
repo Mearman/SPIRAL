@@ -2,10 +2,10 @@
 // Manual structural validation for AIR and CIR documents
 
 import {
-  invalidResult,
-  ValidationError,
-  ValidationResult,
-  validResult,
+	invalidResult,
+	ValidationError,
+	ValidationResult,
+	validResult,
 } from "./errors.js";
 import type { AIRDef, AIRDocument, CIRDocument, Expr, Type } from "./types.js";
 
@@ -92,87 +92,87 @@ function validateType(state: ValidationState, value: unknown): value is Type {
 	const kind = t.kind as string;
 
 	switch (kind) {
-		case "bool":
-		case "int":
-		case "float":
-		case "string":
-			return true;
+	case "bool":
+	case "int":
+	case "float":
+	case "string":
+		return true;
 
-		case "set":
-			// Sets can use 'of', 'elem', or 'elementType' for the element type
-			if (!t.of && !t.elem && !t.elementType) {
-				addError(state, "set type must have 'of', 'elem', or 'elementType' property", value);
-				return false;
-			}
-			{
-				const elemProp = t.of || t.elem || t.elementType;
-				const propName = t.of ? "of" : (t.elem ? "elem" : "elementType");
-				pushPath(state, propName);
-				const ofValid = validateType(state, elemProp);
-				popPath(state);
-				return ofValid;
-			}
-
-		case "list":
-		case "option":
-			if (!t.of) {
-				addError(state, kind + " type must have 'of' property", value);
-				return false;
-			}
-			pushPath(state, "of");
-			const ofValid = validateType(state, t.of);
+	case "set":
+		// Sets can use 'of', 'elem', or 'elementType' for the element type
+		if (!t.of && !t.elem && !t.elementType) {
+			addError(state, "set type must have 'of', 'elem', or 'elementType' property", value);
+			return false;
+		}
+		{
+			const elemProp = t.of || t.elem || t.elementType;
+			const propName = t.of ? "of" : (t.elem ? "elem" : "elementType");
+			pushPath(state, propName);
+			const ofValid = validateType(state, elemProp);
 			popPath(state);
 			return ofValid;
+		}
 
-		case "map":
-			if (!t.key || !t.value) {
-				addError(
-					state,
-					"map type must have 'key' and 'value' properties",
-					value,
-				);
-				return false;
-			}
-			pushPath(state, "key");
-			const keyValid = validateType(state, t.key);
-			popPath(state);
-			pushPath(state, "value");
-			const valValid = validateType(state, t.value);
-			popPath(state);
-			return keyValid && valValid;
-
-		case "opaque":
-			if (!validateString(t.name)) {
-				addError(state, "opaque type must have 'name' property", value);
-				return false;
-			}
-			return true;
-
-		case "fn":
-			if (!validateArray(t.params)) {
-				addError(state, "fn type must have 'params' array", value);
-				return false;
-			}
-			if (!t.returns) {
-				addError(state, "fn type must have 'returns' property", value);
-				return false;
-			}
-			let paramsValid = true;
-			for (let i = 0; i < (t.params as unknown[]).length; i++) {
-				pushPath(state, "params[" + String(i) + "]");
-				if (!validateType(state, (t.params as unknown[])[i])) {
-					paramsValid = false;
-				}
-				popPath(state);
-			}
-			pushPath(state, "returns");
-			const returnsValid = validateType(state, t.returns);
-			popPath(state);
-			return paramsValid && returnsValid;
-
-		default:
-			addError(state, "Unknown type kind: " + kind, value);
+	case "list":
+	case "option":
+		if (!t.of) {
+			addError(state, kind + " type must have 'of' property", value);
 			return false;
+		}
+		pushPath(state, "of");
+		const ofValid = validateType(state, t.of);
+		popPath(state);
+		return ofValid;
+
+	case "map":
+		if (!t.key || !t.value) {
+			addError(
+				state,
+				"map type must have 'key' and 'value' properties",
+				value,
+			);
+			return false;
+		}
+		pushPath(state, "key");
+		const keyValid = validateType(state, t.key);
+		popPath(state);
+		pushPath(state, "value");
+		const valValid = validateType(state, t.value);
+		popPath(state);
+		return keyValid && valValid;
+
+	case "opaque":
+		if (!validateString(t.name)) {
+			addError(state, "opaque type must have 'name' property", value);
+			return false;
+		}
+		return true;
+
+	case "fn":
+		if (!validateArray(t.params)) {
+			addError(state, "fn type must have 'params' array", value);
+			return false;
+		}
+		if (!t.returns) {
+			addError(state, "fn type must have 'returns' property", value);
+			return false;
+		}
+		let paramsValid = true;
+		for (let i = 0; i < (t.params as unknown[]).length; i++) {
+			pushPath(state, "params[" + String(i) + "]");
+			if (!validateType(state, (t.params as unknown[])[i])) {
+				paramsValid = false;
+			}
+			popPath(state);
+		}
+		pushPath(state, "returns");
+		const returnsValid = validateType(state, t.returns);
+		popPath(state);
+		return paramsValid && returnsValid;
+
+	default:
+		addError(state, "Unknown type kind: " + kind, value);
+		return false;
 	}
 }
 
@@ -199,287 +199,287 @@ function validateExpr(
 	const kind = e.kind as string;
 
 	switch (kind) {
-		case "lit":
-			if (!e.type) {
-				addError(state, "lit expression must have 'type' property", value);
-				return false;
-			}
-			pushPath(state, "type");
-			const typeValid = validateType(state, e.type);
-			popPath(state);
-			return typeValid;
+	case "lit":
+		if (!e.type) {
+			addError(state, "lit expression must have 'type' property", value);
+			return false;
+		}
+		pushPath(state, "type");
+		const typeValid = validateType(state, e.type);
+		popPath(state);
+		return typeValid;
 
-		case "ref":
-			if (!validateId(e.id)) {
-				addError(state, "ref expression must have valid 'id' property", value);
-				return false;
-			}
-			return true;
+	case "ref":
+		if (!validateId(e.id)) {
+			addError(state, "ref expression must have valid 'id' property", value);
+			return false;
+		}
+		return true;
 
-		case "var":
-			if (!validateId(e.name)) {
-				addError(
-					state,
-					"var expression must have valid 'name' property",
-					value,
-				);
-				return false;
-			}
-			return true;
+	case "var":
+		if (!validateId(e.name)) {
+			addError(
+				state,
+				"var expression must have valid 'name' property",
+				value,
+			);
+			return false;
+		}
+		return true;
 
-		case "call":
-			if (!validateId(e.ns) || !validateId(e.name)) {
-				addError(
-					state,
-					"call expression must have valid 'ns' and 'name' properties",
-					value,
-				);
+	case "call":
+		if (!validateId(e.ns) || !validateId(e.name)) {
+			addError(
+				state,
+				"call expression must have valid 'ns' and 'name' properties",
+				value,
+			);
+			return false;
+		}
+		if (!validateArray(e.args)) {
+			addError(state, "call expression must have 'args' array", value);
+			return false;
+		}
+		for (const arg of e.args as unknown[]) {
+			// Args can be either string identifiers (node refs) or inline expressions (objects)
+			if (!validateId(arg) && !(typeof arg === "object" && arg !== null && "kind" in arg)) {
+				addError(state, "call args must be valid identifiers or expressions", arg);
 				return false;
 			}
-			if (!validateArray(e.args)) {
-				addError(state, "call expression must have 'args' array", value);
-				return false;
+			// Validate inline expression args
+			if (typeof arg === "object" && arg !== null && "kind" in arg) {
+				pushPath(state, "args");
+				const argValid = validateExpr(state, arg as Record<string, unknown>, false);
+				popPath(state);
+				if (!argValid) return false;
 			}
-			for (const arg of e.args as unknown[]) {
-				// Args can be either string identifiers (node refs) or inline expressions (objects)
-				if (!validateId(arg) && !(typeof arg === "object" && arg !== null && "kind" in arg)) {
-					addError(state, "call args must be valid identifiers or expressions", arg);
-					return false;
-				}
-				// Validate inline expression args
-				if (typeof arg === "object" && arg !== null && "kind" in arg) {
-					pushPath(state, "args");
-					const argValid = validateExpr(state, arg as Record<string, unknown>, false);
-					popPath(state);
-					if (!argValid) return false;
-				}
-			}
-			return true;
+		}
+		return true;
 
-		case "if":
-			// Support both node references (strings) and inline expressions (objects)
-			// Node references: cond/then/else are string IDs
-			// Inline expressions: cond/then/else are expression objects
-			const hasNodeRefs = validateId(e.cond) && validateId(e.then) && validateId(e.else);
-			const hasInlineExprs =
+	case "if":
+		// Support both node references (strings) and inline expressions (objects)
+		// Node references: cond/then/else are string IDs
+		// Inline expressions: cond/then/else are expression objects
+		const hasNodeRefs = validateId(e.cond) && validateId(e.then) && validateId(e.else);
+		const hasInlineExprs =
 				typeof e.cond === "object" && e.cond !== null &&
 				typeof e.then === "object" && e.then !== null &&
 				typeof e.else === "object" && e.else !== null;
 
-			if (!hasNodeRefs && !hasInlineExprs) {
-				addError(
-					state,
-					"if expression must have 'cond', 'then', 'else' as identifiers or expressions",
-					value,
-				);
-				return false;
-			}
+		if (!hasNodeRefs && !hasInlineExprs) {
+			addError(
+				state,
+				"if expression must have 'cond', 'then', 'else' as identifiers or expressions",
+				value,
+			);
+			return false;
+		}
 
-			// Validate inline expressions if present
-			if (!hasNodeRefs) {
-				// Validate cond expression
-				if (typeof e.cond === "object" && e.cond !== null) {
-					pushPath(state, "cond");
-					const condValid = validateExpr(state, e.cond as Record<string, unknown>, false);
-					popPath(state);
-					if (!condValid) return false;
-				}
-				// Validate then expression
-				if (typeof e.then === "object" && e.then !== null) {
-					pushPath(state, "then");
-					const thenValid = validateExpr(state, e.then as Record<string, unknown>, false);
-					popPath(state);
-					if (!thenValid) return false;
-				}
-				// Validate else expression
-				if (typeof e.else === "object" && e.else !== null) {
-					pushPath(state, "else");
-					const elseValid = validateExpr(state, e.else as Record<string, unknown>, false);
-					popPath(state);
-					if (!elseValid) return false;
-				}
-
-				// type is required for inline expressions
-				if (!e.type) {
-					addError(state, "if expression must have 'type' property for inline expressions", value);
-					return false;
-				}
-				pushPath(state, "type");
-				const ifTypeValid = validateType(state, e.type);
+		// Validate inline expressions if present
+		if (!hasNodeRefs) {
+			// Validate cond expression
+			if (typeof e.cond === "object" && e.cond !== null) {
+				pushPath(state, "cond");
+				const condValid = validateExpr(state, e.cond as Record<string, unknown>, false);
 				popPath(state);
-				if (!ifTypeValid) return false;
+				if (!condValid) return false;
+			}
+			// Validate then expression
+			if (typeof e.then === "object" && e.then !== null) {
+				pushPath(state, "then");
+				const thenValid = validateExpr(state, e.then as Record<string, unknown>, false);
+				popPath(state);
+				if (!thenValid) return false;
+			}
+			// Validate else expression
+			if (typeof e.else === "object" && e.else !== null) {
+				pushPath(state, "else");
+				const elseValid = validateExpr(state, e.else as Record<string, unknown>, false);
+				popPath(state);
+				if (!elseValid) return false;
 			}
 
-			return true;
-
-		case "let":
-			// Support both node references (strings) and inline expressions (objects)
-			if (!validateId(e.name)) {
-				addError(state, "let expression must have 'name' identifier", value);
+			// type is required for inline expressions
+			if (!e.type) {
+				addError(state, "if expression must have 'type' property for inline expressions", value);
 				return false;
 			}
+			pushPath(state, "type");
+			const ifTypeValid = validateType(state, e.type);
+			popPath(state);
+			if (!ifTypeValid) return false;
+		}
 
-			// Check if value and body are node references or inline expressions
-			const hasLetNodeRefs = validateId(e.value) && validateId(e.body);
-			const hasLetInlineExprs =
+		return true;
+
+	case "let":
+		// Support both node references (strings) and inline expressions (objects)
+		if (!validateId(e.name)) {
+			addError(state, "let expression must have 'name' identifier", value);
+			return false;
+		}
+
+		// Check if value and body are node references or inline expressions
+		const hasLetNodeRefs = validateId(e.value) && validateId(e.body);
+		const hasLetInlineExprs =
 				typeof e.value === "object" && e.value !== null &&
 				typeof e.body === "object" && e.body !== null;
 
-			if (!hasLetNodeRefs && !hasLetInlineExprs) {
-				addError(
-					state,
-					"let expression must have 'value', 'body' as identifiers or expressions",
-					value,
-				);
-				return false;
-			}
-
-			// Validate inline expressions if present
-			if (!hasLetNodeRefs) {
-				// Validate value expression
-				if (typeof e.value === "object" && e.value !== null) {
-					pushPath(state, "value");
-					const valueValid = validateExpr(state, e.value as Record<string, unknown>, false);
-					popPath(state);
-					if (!valueValid) return false;
-				}
-				// Validate body expression
-				if (typeof e.body === "object" && e.body !== null) {
-					pushPath(state, "body");
-					const bodyValid = validateExpr(state, e.body as Record<string, unknown>, false);
-					popPath(state);
-					if (!bodyValid) return false;
-				}
-			}
-
-			return true;
-
-		case "airRef":
-			if (!validateId(e.ns) || !validateId(e.name)) {
-				addError(
-					state,
-					"airRef expression must have valid 'ns' and 'name' properties",
-					value,
-				);
-				return false;
-			}
-			if (!validateArray(e.args)) {
-				addError(state, "airRef expression must have 'args' array", value);
-				return false;
-			}
-			for (const arg of e.args as unknown[]) {
-				if (!validateId(arg)) {
-					addError(state, "airRef args must be valid identifiers", arg);
-					return false;
-				}
-			}
-			return true;
-
-		case "predicate":
-			if (!validateId(e.name) || !validateId(e.value)) {
-				addError(
-					state,
-					"predicate expression must have 'name' and 'value' identifiers",
-					value,
-				);
-				return false;
-			}
-			return true;
-
-		case "lambda":
-			if (!allowCIR) {
-				addError(
-					state,
-					"lambda expression is only allowed in CIR documents",
-					value,
-				);
-				return false;
-			}
-			if (!validateArray(e.params)) {
-				addError(state, "lambda expression must have 'params' array", value);
-				return false;
-			}
-			for (const param of e.params as unknown[]) {
-				if (!validateId(param)) {
-					addError(state, "lambda params must be valid identifiers", param);
-					return false;
-				}
-			}
-			if (!validateId(e.body)) {
-				addError(state, "lambda expression must have 'body' identifier", value);
-				return false;
-			}
-			if (!e.type) {
-				addError(state, "lambda expression must have 'type' property", value);
-				return false;
-			}
-			pushPath(state, "type");
-			const lambdaTypeValid = validateType(state, e.type);
-			popPath(state);
-			return lambdaTypeValid;
-
-		case "callExpr":
-			if (!allowCIR) {
-				addError(
-					state,
-					"callExpr expression is only allowed in CIR documents",
-					value,
-				);
-				return false;
-			}
-			if (!validateId(e.fn)) {
-				addError(
-					state,
-					"callExpr expression must have valid 'fn' property",
-					value,
-				);
-				return false;
-			}
-			if (!validateArray(e.args)) {
-				addError(state, "callExpr expression must have 'args' array", value);
-				return false;
-			}
-			for (const arg of e.args as unknown[]) {
-				// Args can be either string identifiers (node refs) or inline expressions (objects)
-				if (!validateId(arg) && !(typeof arg === "object" && arg !== null && "kind" in arg)) {
-					addError(state, "callExpr args must be valid identifiers or expressions", arg);
-					return false;
-				}
-				// Validate inline expression args
-				if (typeof arg === "object" && arg !== null && "kind" in arg) {
-					pushPath(state, "args");
-					const argValid = validateExpr(state, arg as Record<string, unknown>, false);
-					popPath(state);
-					if (!argValid) return false;
-				}
-			}
-			return true;
-
-		case "fix":
-			if (!allowCIR) {
-				addError(
-					state,
-					"fix expression is only allowed in CIR documents",
-					value,
-				);
-				return false;
-			}
-			if (!validateId(e.fn)) {
-				addError(state, "fix expression must have valid 'fn' property", value);
-				return false;
-			}
-			if (!e.type) {
-				addError(state, "fix expression must have 'type' property", value);
-				return false;
-			}
-			pushPath(state, "type");
-			const fixTypeValid = validateType(state, e.type);
-			popPath(state);
-			return fixTypeValid;
-
-		default:
-			addError(state, "Unknown expression kind: " + kind, value);
+		if (!hasLetNodeRefs && !hasLetInlineExprs) {
+			addError(
+				state,
+				"let expression must have 'value', 'body' as identifiers or expressions",
+				value,
+			);
 			return false;
+		}
+
+		// Validate inline expressions if present
+		if (!hasLetNodeRefs) {
+			// Validate value expression
+			if (typeof e.value === "object" && e.value !== null) {
+				pushPath(state, "value");
+				const valueValid = validateExpr(state, e.value as Record<string, unknown>, false);
+				popPath(state);
+				if (!valueValid) return false;
+			}
+			// Validate body expression
+			if (typeof e.body === "object" && e.body !== null) {
+				pushPath(state, "body");
+				const bodyValid = validateExpr(state, e.body as Record<string, unknown>, false);
+				popPath(state);
+				if (!bodyValid) return false;
+			}
+		}
+
+		return true;
+
+	case "airRef":
+		if (!validateId(e.ns) || !validateId(e.name)) {
+			addError(
+				state,
+				"airRef expression must have valid 'ns' and 'name' properties",
+				value,
+			);
+			return false;
+		}
+		if (!validateArray(e.args)) {
+			addError(state, "airRef expression must have 'args' array", value);
+			return false;
+		}
+		for (const arg of e.args as unknown[]) {
+			if (!validateId(arg)) {
+				addError(state, "airRef args must be valid identifiers", arg);
+				return false;
+			}
+		}
+		return true;
+
+	case "predicate":
+		if (!validateId(e.name) || !validateId(e.value)) {
+			addError(
+				state,
+				"predicate expression must have 'name' and 'value' identifiers",
+				value,
+			);
+			return false;
+		}
+		return true;
+
+	case "lambda":
+		if (!allowCIR) {
+			addError(
+				state,
+				"lambda expression is only allowed in CIR documents",
+				value,
+			);
+			return false;
+		}
+		if (!validateArray(e.params)) {
+			addError(state, "lambda expression must have 'params' array", value);
+			return false;
+		}
+		for (const param of e.params as unknown[]) {
+			if (!validateId(param)) {
+				addError(state, "lambda params must be valid identifiers", param);
+				return false;
+			}
+		}
+		if (!validateId(e.body)) {
+			addError(state, "lambda expression must have 'body' identifier", value);
+			return false;
+		}
+		if (!e.type) {
+			addError(state, "lambda expression must have 'type' property", value);
+			return false;
+		}
+		pushPath(state, "type");
+		const lambdaTypeValid = validateType(state, e.type);
+		popPath(state);
+		return lambdaTypeValid;
+
+	case "callExpr":
+		if (!allowCIR) {
+			addError(
+				state,
+				"callExpr expression is only allowed in CIR documents",
+				value,
+			);
+			return false;
+		}
+		if (!validateId(e.fn)) {
+			addError(
+				state,
+				"callExpr expression must have valid 'fn' property",
+				value,
+			);
+			return false;
+		}
+		if (!validateArray(e.args)) {
+			addError(state, "callExpr expression must have 'args' array", value);
+			return false;
+		}
+		for (const arg of e.args as unknown[]) {
+			// Args can be either string identifiers (node refs) or inline expressions (objects)
+			if (!validateId(arg) && !(typeof arg === "object" && arg !== null && "kind" in arg)) {
+				addError(state, "callExpr args must be valid identifiers or expressions", arg);
+				return false;
+			}
+			// Validate inline expression args
+			if (typeof arg === "object" && arg !== null && "kind" in arg) {
+				pushPath(state, "args");
+				const argValid = validateExpr(state, arg as Record<string, unknown>, false);
+				popPath(state);
+				if (!argValid) return false;
+			}
+		}
+		return true;
+
+	case "fix":
+		if (!allowCIR) {
+			addError(
+				state,
+				"fix expression is only allowed in CIR documents",
+				value,
+			);
+			return false;
+		}
+		if (!validateId(e.fn)) {
+			addError(state, "fix expression must have valid 'fn' property", value);
+			return false;
+		}
+		if (!e.type) {
+			addError(state, "fix expression must have 'type' property", value);
+			return false;
+		}
+		pushPath(state, "type");
+		const fixTypeValid = validateType(state, e.type);
+		popPath(state);
+		return fixTypeValid;
+
+	default:
+		addError(state, "Unknown expression kind: " + kind, value);
+		return false;
 	}
 }
 
@@ -558,7 +558,7 @@ function checkAcyclic(
 		let hasLambda = false;
 		for (const nodeId of path) {
 			const node = nodes.get(nodeId);
-			if (node && node.expr.kind === "lambda") {
+			if (node?.expr.kind === "lambda") {
 				hasLambda = true;
 				break;
 			}
@@ -574,7 +574,7 @@ function checkAcyclic(
 	const node = nodes.get(startId);
 	if (!node) {
 		// Skip error if this is a lambda parameter or let binding (not a node)
-		if (lambdaParams && lambdaParams.has(startId)) {
+		if (lambdaParams?.has(startId)) {
 			return;
 		}
 		addError(state, "Reference to non-existent node: " + startId);
@@ -623,7 +623,7 @@ function checkAcyclic(
 		if (result.letBindings.has(refId)) {
 			continue;
 		}
-		if (lambdaParams && lambdaParams.has(refId)) {
+		if (lambdaParams?.has(refId)) {
 			continue;
 		}
 		const newPath = [...path, refId];
@@ -762,7 +762,7 @@ function collectRefsAndLetBindings(
 	} else if (expr.kind === "fix") {
 		const fn = expr.fn;
 		if (typeof fn === "string") refs.push(fn);
-		}
+	}
 
 	return { refs, letBindings: bindings };
 }
@@ -872,7 +872,7 @@ export function validateAIR(doc: unknown): ValidationResult<AIRDocument> {
 	} else {
 		// Check that result references a valid node
 		const nodeIds = new Set(
-			(d.nodes as Array<{ id: string }> | undefined)?.map((n) => n.id) ?? [],
+			(d.nodes as { id: string }[] | undefined)?.map((n) => n.id) ?? [],
 		);
 		if (!nodeIds.has(String(d.result))) {
 			pushPath(state, "result");
@@ -887,10 +887,10 @@ export function validateAIR(doc: unknown): ValidationResult<AIRDocument> {
 
 	// Build node map for acyclic checking
 	if (validateArray(d.nodes)) {
-		const nodes = d.nodes as Array<{
+		const nodes = d.nodes as {
 			id: string;
 			expr: Record<string, unknown>;
-		}>;
+		}[];
 		const nodeMap: NodeMap = new Map();
 		for (const node of nodes) {
 			if (typeof node.id === "string") {
@@ -1005,7 +1005,7 @@ export function validateCIR(doc: unknown): ValidationResult<CIRDocument> {
 	} else {
 		// Check that result references a valid node
 		const nodeIds = new Set(
-			(d.nodes as Array<{ id: string }> | undefined)?.map((n) => n.id) ?? [],
+			(d.nodes as { id: string }[] | undefined)?.map((n) => n.id) ?? [],
 		);
 		if (!nodeIds.has(String(d.result))) {
 			pushPath(state, "result");
@@ -1020,10 +1020,10 @@ export function validateCIR(doc: unknown): ValidationResult<CIRDocument> {
 
 	// Build node map for acyclic checking and collect lambda parameters and let bindings
 	if (validateArray(d.nodes)) {
-		const nodes = d.nodes as Array<{
+		const nodes = d.nodes as {
 			id: string;
 			expr: Record<string, unknown>;
-		}>;
+		}[];
 		const nodeMap: NodeMap = new Map();
 		const allParamsAndBindings = new Set<string>(); // Lambda parameters AND let binding names
 
@@ -1225,108 +1225,108 @@ function validateEirExpr(state: ValidationState, expr: Record<string, unknown>):
 	const kind = expr.kind as string;
 
 	switch (kind) {
-		case "seq":
-			if (!validateId(expr.first)) {
-				addError(state, "seq expression must have valid 'first' identifier", expr);
-			}
-			if (!validateId(expr.then)) {
-				addError(state, "seq expression must have valid 'then' identifier", expr);
-			}
-			break;
+	case "seq":
+		if (!validateId(expr.first)) {
+			addError(state, "seq expression must have valid 'first' identifier", expr);
+		}
+		if (!validateId(expr.then)) {
+			addError(state, "seq expression must have valid 'then' identifier", expr);
+		}
+		break;
 
-		case "assign":
-			if (!validateId(expr.target)) {
-				addError(state, "assign expression must have valid 'target' identifier", expr);
-			}
-			if (!validateId(expr.value)) {
-				addError(state, "assign expression must have valid 'value' identifier", expr);
-			}
-			break;
+	case "assign":
+		if (!validateId(expr.target)) {
+			addError(state, "assign expression must have valid 'target' identifier", expr);
+		}
+		if (!validateId(expr.value)) {
+			addError(state, "assign expression must have valid 'value' identifier", expr);
+		}
+		break;
 
-		case "while":
-			if (!validateId(expr.cond)) {
-				addError(state, "while expression must have valid 'cond' identifier", expr);
-			}
-			if (!validateId(expr.body)) {
-				addError(state, "while expression must have valid 'body' identifier", expr);
-			}
-			break;
+	case "while":
+		if (!validateId(expr.cond)) {
+			addError(state, "while expression must have valid 'cond' identifier", expr);
+		}
+		if (!validateId(expr.body)) {
+			addError(state, "while expression must have valid 'body' identifier", expr);
+		}
+		break;
 
-		case "for":
-			if (!validateId(expr.var)) {
-				addError(state, "for expression must have valid 'var' identifier", expr);
-			}
-			if (!validateId(expr.init)) {
-				addError(state, "for expression must have valid 'init' identifier", expr);
-			}
-			if (!validateId(expr.cond)) {
-				addError(state, "for expression must have valid 'cond' identifier", expr);
-			}
-			if (!validateId(expr.update)) {
-				addError(state, "for expression must have valid 'update' identifier", expr);
-			}
-			if (!validateId(expr.body)) {
-				addError(state, "for expression must have valid 'body' identifier", expr);
-			}
-			break;
+	case "for":
+		if (!validateId(expr.var)) {
+			addError(state, "for expression must have valid 'var' identifier", expr);
+		}
+		if (!validateId(expr.init)) {
+			addError(state, "for expression must have valid 'init' identifier", expr);
+		}
+		if (!validateId(expr.cond)) {
+			addError(state, "for expression must have valid 'cond' identifier", expr);
+		}
+		if (!validateId(expr.update)) {
+			addError(state, "for expression must have valid 'update' identifier", expr);
+		}
+		if (!validateId(expr.body)) {
+			addError(state, "for expression must have valid 'body' identifier", expr);
+		}
+		break;
 
-		case "iter":
-			if (!validateId(expr.var)) {
-				addError(state, "iter expression must have valid 'var' identifier", expr);
-			}
-			if (!validateId(expr.iter)) {
-				addError(state, "iter expression must have valid 'iter' identifier", expr);
-			}
-			if (!validateId(expr.body)) {
-				addError(state, "iter expression must have valid 'body' identifier", expr);
-			}
-			break;
+	case "iter":
+		if (!validateId(expr.var)) {
+			addError(state, "iter expression must have valid 'var' identifier", expr);
+		}
+		if (!validateId(expr.iter)) {
+			addError(state, "iter expression must have valid 'iter' identifier", expr);
+		}
+		if (!validateId(expr.body)) {
+			addError(state, "iter expression must have valid 'body' identifier", expr);
+		}
+		break;
 
-		case "effect":
-			if (!validateString(expr.op)) {
-				addError(state, "effect expression must have valid 'op' string", expr);
-			}
-			if (!validateArray(expr.args)) {
-				addError(state, "effect expression must have 'args' array", expr);
-			} else {
-				for (const arg of expr.args as unknown[]) {
-					if (!validateId(arg)) {
-						addError(state, "effect args must be valid identifiers", arg);
-					}
+	case "effect":
+		if (!validateString(expr.op)) {
+			addError(state, "effect expression must have valid 'op' string", expr);
+		}
+		if (!validateArray(expr.args)) {
+			addError(state, "effect expression must have 'args' array", expr);
+		} else {
+			for (const arg of expr.args as unknown[]) {
+				if (!validateId(arg)) {
+					addError(state, "effect args must be valid identifiers", arg);
 				}
 			}
-			break;
+		}
+		break;
 
-		case "refCell":
-			if (!validateId(expr.target)) {
-				addError(state, "refCell expression must have valid 'target' identifier", expr);
-			}
-			break;
+	case "refCell":
+		if (!validateId(expr.target)) {
+			addError(state, "refCell expression must have valid 'target' identifier", expr);
+		}
+		break;
 
-		case "deref":
-			if (!validateId(expr.target)) {
-				addError(state, "deref expression must have valid 'target' identifier", expr);
-			}
-			break;
+	case "deref":
+		if (!validateId(expr.target)) {
+			addError(state, "deref expression must have valid 'target' identifier", expr);
+		}
+		break;
 
 		// CIR and AIR expressions are already validated by validateCIR
-		case "lit":
-		case "ref":
-		case "var":
-		case "call":
-		case "if":
-		case "let":
-		case "airRef":
-		case "predicate":
-		case "lambda":
-		case "callExpr":
-		case "fix":
-			// Already validated
-			break;
+	case "lit":
+	case "ref":
+	case "var":
+	case "call":
+	case "if":
+	case "let":
+	case "airRef":
+	case "predicate":
+	case "lambda":
+	case "callExpr":
+	case "fix":
+		// Already validated
+		break;
 
-		default:
-			addError(state, "Unknown expression kind in EIR: " + kind, expr);
-			break;
+	default:
+		addError(state, "Unknown expression kind in EIR: " + kind, expr);
+		break;
 	}
 }
 
@@ -1355,58 +1355,58 @@ function validateEirNodeReferences(
 	};
 
 	switch (kind) {
-		case "seq":
-			checkRef(expr.first, "seq.first");
-			checkRef(expr.then, "seq.then");
-			break;
+	case "seq":
+		checkRef(expr.first, "seq.first");
+		checkRef(expr.then, "seq.then");
+		break;
 
-		case "assign":
-			checkRef(expr.value, "assign.value");
-			break;
+	case "assign":
+		checkRef(expr.value, "assign.value");
+		break;
 
-		case "while":
-			checkRef(expr.cond, "while.cond");
-			checkRef(expr.body, "while.body");
-			break;
+	case "while":
+		checkRef(expr.cond, "while.cond");
+		checkRef(expr.body, "while.body");
+		break;
 
-		case "for":
-			checkRef(expr.init, "for.init");
-			checkRef(expr.cond, "for.cond");
-			checkRef(expr.update, "for.update");
-			checkRef(expr.body, "for.body");
-			break;
+	case "for":
+		checkRef(expr.init, "for.init");
+		checkRef(expr.cond, "for.cond");
+		checkRef(expr.update, "for.update");
+		checkRef(expr.body, "for.body");
+		break;
 
-		case "iter":
-			checkRef(expr.iter, "iter.iter");
-			checkRef(expr.body, "iter.body");
-			break;
+	case "iter":
+		checkRef(expr.iter, "iter.iter");
+		checkRef(expr.body, "iter.body");
+		break;
 
-		case "effect":
-			if (validateArray(expr.args)) {
-				for (let i = 0; i < (expr.args as unknown[]).length; i++) {
-					checkRef((expr.args as unknown[])[i], "effect.args[" + String(i) + "]");
-				}
+	case "effect":
+		if (validateArray(expr.args)) {
+			for (let i = 0; i < (expr.args as unknown[]).length; i++) {
+				checkRef((expr.args as unknown[])[i], "effect.args[" + String(i) + "]");
 			}
-			break;
+		}
+		break;
 
-		case "refCell":
-		case "deref":
-		case "lit":
-		case "ref":
-		case "var":
-		case "call":
-		case "if":
-		case "let":
-		case "airRef":
-		case "predicate":
-		case "lambda":
-		case "callExpr":
-		case "fix":
-			// These don't have node references that need validation
-			break;
+	case "refCell":
+	case "deref":
+	case "lit":
+	case "ref":
+	case "var":
+	case "call":
+	case "if":
+	case "let":
+	case "airRef":
+	case "predicate":
+	case "lambda":
+	case "callExpr":
+	case "fix":
+		// These don't have node references that need validation
+		break;
 
-		default:
-			break;
+	default:
+		break;
 	}
 }
 
@@ -1522,7 +1522,7 @@ export function validateLIR(doc: unknown): ValidationResult<import("./types.js")
 
 	// Validate CFG structure
 	if (validateArray(d.blocks)) {
-		validateCFG(state, d.blocks as Array<Record<string, unknown>>);
+		validateCFG(state, d.blocks as Record<string, unknown>[]);
 	}
 
 	if (state.errors.length > 0) {
@@ -1550,72 +1550,72 @@ function validateLirInstruction(state: ValidationState, ins: unknown): void {
 	const kind = i.kind as string;
 
 	switch (kind) {
-		case "assign":
-			if (!validateId(i.target)) {
-				addError(state, "assign instruction must have valid 'target'", i.target);
-			}
-			if (!i.value) {
-				addError(state, "assign instruction must have 'value' property", ins);
-			}
-			break;
+	case "assign":
+		if (!validateId(i.target)) {
+			addError(state, "assign instruction must have valid 'target'", i.target);
+		}
+		if (!i.value) {
+			addError(state, "assign instruction must have 'value' property", ins);
+		}
+		break;
 
-		case "call":
-			if (!validateId(i.target)) {
-				addError(state, "call instruction must have valid 'target'", i.target);
-			}
-			if (!validateId(i.callee)) {
-				addError(state, "call instruction must have valid 'callee'", i.callee);
-			}
-			if (!validateArray(i.args)) {
-				addError(state, "call instruction must have 'args' array", i.args);
-			}
-			break;
+	case "call":
+		if (!validateId(i.target)) {
+			addError(state, "call instruction must have valid 'target'", i.target);
+		}
+		if (!validateId(i.callee)) {
+			addError(state, "call instruction must have valid 'callee'", i.callee);
+		}
+		if (!validateArray(i.args)) {
+			addError(state, "call instruction must have 'args' array", i.args);
+		}
+		break;
 
-		case "op":
-			if (!validateId(i.target)) {
-				addError(state, "op instruction must have valid 'target'", i.target);
-			}
-			if (!validateId(i.ns)) {
-				addError(state, "op instruction must have valid 'ns'", i.ns);
-			}
-			if (!validateId(i.name)) {
-				addError(state, "op instruction must have valid 'name'", i.name);
-			}
-			if (!validateArray(i.args)) {
-				addError(state, "op instruction must have 'args' array", i.args);
-			}
-			break;
+	case "op":
+		if (!validateId(i.target)) {
+			addError(state, "op instruction must have valid 'target'", i.target);
+		}
+		if (!validateId(i.ns)) {
+			addError(state, "op instruction must have valid 'ns'", i.ns);
+		}
+		if (!validateId(i.name)) {
+			addError(state, "op instruction must have valid 'name'", i.name);
+		}
+		if (!validateArray(i.args)) {
+			addError(state, "op instruction must have 'args' array", i.args);
+		}
+		break;
 
-		case "phi":
-			if (!validateId(i.target)) {
-				addError(state, "phi instruction must have valid 'target'", i.target);
-			}
-			if (!validateArray(i.sources)) {
-				addError(state, "phi instruction must have 'sources' array", i.sources);
-			}
-			break;
+	case "phi":
+		if (!validateId(i.target)) {
+			addError(state, "phi instruction must have valid 'target'", i.target);
+		}
+		if (!validateArray(i.sources)) {
+			addError(state, "phi instruction must have 'sources' array", i.sources);
+		}
+		break;
 
-		case "effect":
-			if (!validateString(i.op)) {
-				addError(state, "effect instruction must have valid 'op'", i.op);
-			}
-			if (!validateArray(i.args)) {
-				addError(state, "effect instruction must have 'args' array", i.args);
-			}
-			break;
+	case "effect":
+		if (!validateString(i.op)) {
+			addError(state, "effect instruction must have valid 'op'", i.op);
+		}
+		if (!validateArray(i.args)) {
+			addError(state, "effect instruction must have 'args' array", i.args);
+		}
+		break;
 
-		case "assignRef":
-			if (!validateId(i.target)) {
-				addError(state, "assignRef instruction must have valid 'target'", i.target);
-			}
-			if (!validateId(i.value)) {
-				addError(state, "assignRef instruction must have 'value'", i.value);
-			}
-			break;
+	case "assignRef":
+		if (!validateId(i.target)) {
+			addError(state, "assignRef instruction must have valid 'target'", i.target);
+		}
+		if (!validateId(i.value)) {
+			addError(state, "assignRef instruction must have 'value'", i.value);
+		}
+		break;
 
-		default:
-			addError(state, "Unknown instruction kind: " + kind, ins);
-			break;
+	default:
+		addError(state, "Unknown instruction kind: " + kind, ins);
+		break;
 	}
 }
 
@@ -1637,35 +1637,35 @@ function validateLirTerminator(state: ValidationState, term: unknown): void {
 	const kind = t.kind as string;
 
 	switch (kind) {
-		case "jump":
-			if (!validateId(t.to)) {
-				addError(state, "jump terminator must have valid 'to' target", t.to);
-			}
-			break;
+	case "jump":
+		if (!validateId(t.to)) {
+			addError(state, "jump terminator must have valid 'to' target", t.to);
+		}
+		break;
 
-		case "branch":
-			if (!validateId(t.cond)) {
-				addError(state, "branch terminator must have valid 'cond'", t.cond);
-			}
-			if (!validateId(t.then)) {
-				addError(state, "branch terminator must have valid 'then' target", t.then);
-			}
-			if (!validateId(t.else)) {
-				addError(state, "branch terminator must have valid 'else' target", t.else);
-			}
-			break;
+	case "branch":
+		if (!validateId(t.cond)) {
+			addError(state, "branch terminator must have valid 'cond'", t.cond);
+		}
+		if (!validateId(t.then)) {
+			addError(state, "branch terminator must have valid 'then' target", t.then);
+		}
+		if (!validateId(t.else)) {
+			addError(state, "branch terminator must have valid 'else' target", t.else);
+		}
+		break;
 
-		case "return":
-			// value is optional
-			break;
+	case "return":
+		// value is optional
+		break;
 
-		case "exit":
-			// code is optional
-			break;
+	case "exit":
+		// code is optional
+		break;
 
-		default:
-			addError(state, "Unknown terminator kind: " + kind, term);
-			break;
+	default:
+		addError(state, "Unknown terminator kind: " + kind, term);
+		break;
 	}
 }
 
@@ -1675,7 +1675,7 @@ function validateLirTerminator(state: ValidationState, term: unknown): void {
  */
 function validateCFG(
 	state: ValidationState,
-	blocks: Array<Record<string, unknown>>,
+	blocks: Record<string, unknown>[],
 ): void {
 	const blockIds = new Set<string>();
 	for (const block of blocks) {

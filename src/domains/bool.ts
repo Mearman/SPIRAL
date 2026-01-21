@@ -5,10 +5,10 @@ import { CAIRSError } from "../errors.js";
 import type { Type, Value } from "../types.js";
 import { boolType, boolVal, isError } from "../types.js";
 import {
-  defineOperator,
-  Operator,
-  OperatorRegistry,
-  registerOperator,
+	defineOperator,
+	Operator,
+	OperatorRegistry,
+	registerOperator,
 } from "./registry.js";
 
 //==============================================================================

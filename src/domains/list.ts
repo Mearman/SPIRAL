@@ -4,18 +4,18 @@
 import { ErrorCodes } from "../errors.js";
 import type { Type } from "../types.js";
 import {
-  errorVal,
-  intType,
-  intVal,
-  isError,
-  listType,
-  listVal,
+	errorVal,
+	intType,
+	intVal,
+	isError,
+	listType,
+	listVal,
 } from "../types.js";
 import {
-  defineOperator,
-  Operator,
-  OperatorRegistry,
-  registerOperator,
+	defineOperator,
+	Operator,
+	OperatorRegistry,
+	registerOperator,
 } from "./registry.js";
 
 //==============================================================================

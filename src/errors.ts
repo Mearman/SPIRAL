@@ -178,37 +178,37 @@ export class CAIRSError extends Error {
 
 function formatType(t: Type): string {
 	switch (t.kind) {
-		case "bool":
-			return "bool";
-		case "int":
-			return "int";
-		case "float":
-			return "float";
-		case "string":
-			return "string";
-		case "void":
-			return "void";
-		case "set":
-			return "set<" + formatType(t.of) + ">";
-		case "list":
-			return "list<" + formatType(t.of) + ">";
-		case "map":
-			return "map<" + formatType(t.key) + ", " + formatType(t.value) + ">";
-		case "option":
-			return "option<" + formatType(t.of) + ">";
-		case "ref":
-			return "ref<" + formatType(t.of) + ">";
-		case "opaque":
-			return "opaque(" + t.name + ")";
-		case "fn":
-			return (
-				"fn(" +
+	case "bool":
+		return "bool";
+	case "int":
+		return "int";
+	case "float":
+		return "float";
+	case "string":
+		return "string";
+	case "void":
+		return "void";
+	case "set":
+		return "set<" + formatType(t.of) + ">";
+	case "list":
+		return "list<" + formatType(t.of) + ">";
+	case "map":
+		return "map<" + formatType(t.key) + ", " + formatType(t.value) + ">";
+	case "option":
+		return "option<" + formatType(t.of) + ">";
+	case "ref":
+		return "ref<" + formatType(t.of) + ">";
+	case "opaque":
+		return "opaque(" + t.name + ")";
+	case "fn":
+		return (
+			"fn(" +
 				t.params.map(formatType).join(", ") +
 				") -> " +
 				formatType(t.returns)
-			);
-		default:
-			return "unknown";
+		);
+	default:
+		return "unknown";
 	}
 }
 

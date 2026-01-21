@@ -19,10 +19,10 @@ import {
 // Type Checking Result
 //==============================================================================
 
-export type TypeCheckResult = {
+export interface TypeCheckResult {
 	type: Type;
 	env: TypeEnv;
-};
+}
 
 //==============================================================================
 // Type Checker
@@ -42,33 +42,33 @@ export class TypeChecker {
 	 */
 	typeCheck(expr: Expr, env: TypeEnv): TypeCheckResult {
 		switch (expr.kind) {
-			case "lit":
-				return this.typeCheckLit(expr, env);
-			case "var":
-				return this.typeCheckVar(expr, env);
-			case "ref":
-				return this.typeCheckRef(expr, env);
-			case "call":
-				return this.typeCheckCall(expr, env);
-			case "if":
-				return this.typeCheckIf(expr, env);
-			case "let":
-				return this.typeCheckLet(expr, env);
-			case "airRef":
-				return this.typeCheckAirRef(expr, env);
-			case "predicate":
-				return this.typeCheckPredicate(expr, env);
-			case "lambda":
-				return this.typeCheckLambda(expr, env);
-			case "callExpr":
-				return this.typeCheckCallExpr(expr, env);
-			case "fix":
-				return this.typeCheckFix(expr, env);
-			default:
-				throw CAIRSError.validation(
-					"expression",
-					"Unknown expression kind: " + (expr as { kind: string }).kind,
-				);
+		case "lit":
+			return this.typeCheckLit(expr, env);
+		case "var":
+			return this.typeCheckVar(expr, env);
+		case "ref":
+			return this.typeCheckRef(expr, env);
+		case "call":
+			return this.typeCheckCall(expr, env);
+		case "if":
+			return this.typeCheckIf(expr, env);
+		case "let":
+			return this.typeCheckLet(expr, env);
+		case "airRef":
+			return this.typeCheckAirRef(expr, env);
+		case "predicate":
+			return this.typeCheckPredicate(expr, env);
+		case "lambda":
+			return this.typeCheckLambda(expr, env);
+		case "callExpr":
+			return this.typeCheckCallExpr(expr, env);
+		case "fix":
+			return this.typeCheckFix(expr, env);
+		default:
+			throw CAIRSError.validation(
+				"expression",
+				"Unknown expression kind: " + (expr as { kind: string }).kind,
+			);
 		}
 	}
 
@@ -127,7 +127,7 @@ export class TypeChecker {
 	 * T-Call: find operator signature and check argument types
 	 */
 	private typeCheckCall(
-		expr: { kind: "call"; ns: string; name: string; args: Array<string | Expr> },
+		expr: { kind: "call"; ns: string; name: string; args: (string | Expr)[] },
 		env: TypeEnv,
 	): TypeCheckResult {
 		const op = lookupOperator(this.registry, expr.ns, expr.name);
@@ -463,462 +463,462 @@ function typeCheckNode(
 	const expr = node.expr;
 
 	switch (expr.kind) {
-		case "lit": {
-			return checker.typeCheck(expr, env);
-		}
+	case "lit": {
+		return checker.typeCheck(expr, env);
+	}
 
-		case "var": {
-			return checker.typeCheck(expr, env);
-		}
+	case "var": {
+		return checker.typeCheck(expr, env);
+	}
 
-		case "ref": {
-			// Look up the referenced node's type
-			const targetType = nodeTypes.get(expr.id);
-			if (!targetType) {
+	case "ref": {
+		// Look up the referenced node's type
+		const targetType = nodeTypes.get(expr.id);
+		if (!targetType) {
+			throw CAIRSError.validation(
+				"ref",
+				"Referenced node not found: " + expr.id,
+			);
+		}
+		return { type: targetType, env };
+	}
+
+	case "call": {
+		// Check arguments - can be node refs (strings) or inline expressions
+		for (const arg of expr.args) {
+			if (typeof arg === "string") {
+				// Node reference - check it exists in nodeMap
+				// Skip if not found - could be a lambda parameter or other runtime binding
+				const argNode = nodeMap.get(arg);
+				if (argNode) {
+					// Node exists, will be type-checked when processed
+				}
+				// If argNode is null, it might be a lambda parameter - skip validation
+			}
+			// Inline expressions will be type-checked by checker.typeCheck()
+		}
+		return checker.typeCheck(expr, env);
+	}
+
+	case "if": {
+		// Support both node references (strings) and inline expressions (objects)
+		// For node references, we require expr.type to be declared
+		// For inline expressions, type is inferred from branches
+
+		let condType: Type;
+		if (typeof expr.cond === "string") {
+			// Node reference - can also be a lambda param or let-bound variable
+			const condIsNode = nodeMap.has(expr.cond);
+			const condIsParam = lambdaParams.has(expr.cond);
+			if (!condIsNode && !condIsParam) {
 				throw CAIRSError.validation(
-					"ref",
-					"Referenced node not found: " + expr.id,
+					"if",
+					"Condition node not found: " + expr.cond,
 				);
 			}
-			return { type: targetType, env };
+			const nodeCondType = nodeTypes.get(expr.cond);
+			// If not yet type-checked, use bool as placeholder
+			condType = nodeCondType ?? boolType;
+		} else {
+			// Inline expression
+			const condResult = checker.typeCheck(expr.cond as Expr, env);
+			condType = condResult.type;
 		}
 
-		case "call": {
-			// Check arguments - can be node refs (strings) or inline expressions
-			for (const arg of expr.args) {
-				if (typeof arg === "string") {
-					// Node reference - check it exists in nodeMap
-					// Skip if not found - could be a lambda parameter or other runtime binding
-					const argNode = nodeMap.get(arg);
-					if (argNode) {
-						// Node exists, will be type-checked when processed
-					}
-					// If argNode is null, it might be a lambda parameter - skip validation
-				}
-				// Inline expressions will be type-checked by checker.typeCheck()
+		// Only validate condition type if we have a real type (not placeholder)
+		if (nodeTypes.has(typeof expr.cond === "string" ? expr.cond : "")) {
+			if (condType.kind !== "bool") {
+				throw CAIRSError.typeError(boolType, condType, "if condition");
 			}
-			return checker.typeCheck(expr, env);
 		}
 
-		case "if": {
-			// Support both node references (strings) and inline expressions (objects)
-			// For node references, we require expr.type to be declared
-			// For inline expressions, type is inferred from branches
-
-			let condType: Type;
-			if (typeof expr.cond === "string") {
-				// Node reference - can also be a lambda param or let-bound variable
-				const condIsNode = nodeMap.has(expr.cond);
-				const condIsParam = lambdaParams.has(expr.cond);
-				if (!condIsNode && !condIsParam) {
-					throw CAIRSError.validation(
-						"if",
-						"Condition node not found: " + expr.cond,
-					);
-				}
-				const nodeCondType = nodeTypes.get(expr.cond);
-				// If not yet type-checked, use bool as placeholder
-				condType = nodeCondType ?? boolType;
-			} else {
-				// Inline expression
-				const condResult = checker.typeCheck(expr.cond as Expr, env);
-				condType = condResult.type;
-			}
-
-			// Only validate condition type if we have a real type (not placeholder)
-			if (nodeTypes.has(typeof expr.cond === "string" ? expr.cond : "")) {
-				if (condType.kind !== "bool") {
-					throw CAIRSError.typeError(boolType, condType, "if condition");
-				}
-			}
-
-			let thenType: Type;
-			if (typeof expr.then === "string") {
-				if (!nodeMap.has(expr.then)) {
-					throw CAIRSError.validation(
-						"if",
-						"Then branch node not found: " + expr.then,
-					);
-				}
-				const nodeThenType = nodeTypes.get(expr.then);
-				if (!nodeThenType) {
-					// Node not yet type-checked - skip validation for now
-					// Use declared type if available, or int as placeholder
-					thenType = expr.type ?? { kind: "int" };
-				} else {
-					thenType = nodeThenType;
-				}
-			} else {
-				const thenResult = checker.typeCheck(expr.then as Expr, env);
-				thenType = thenResult.type;
-			}
-
-			let elseType: Type;
-			if (typeof expr.else === "string") {
-				if (!nodeMap.has(expr.else)) {
-					throw CAIRSError.validation(
-						"if",
-						"Else branch node not found: " + expr.else,
-					);
-				}
-				const nodeElseType = nodeTypes.get(expr.else);
-				if (!nodeElseType) {
-					// Node not yet type-checked - skip validation for now
-					elseType = expr.type ?? { kind: "int" };
-				} else {
-					elseType = nodeElseType;
-				}
-			} else {
-				const elseResult = checker.typeCheck(expr.else as Expr, env);
-				elseType = elseResult.type;
-			}
-
-			// If type is explicitly declared, use it
-			const declaredType = expr.type;
-			if (declaredType) {
-				// Only validate branch types if they've been type-checked
-				if (nodeTypes.has(typeof expr.then === "string" ? expr.then : "")) {
-					if (!typeEqual(thenType, declaredType)) {
-						throw CAIRSError.typeError(declaredType, thenType, "if then branch");
-					}
-				}
-				if (nodeTypes.has(typeof expr.else === "string" ? expr.else : "")) {
-					if (!typeEqual(elseType, declaredType)) {
-						throw CAIRSError.typeError(declaredType, elseType, "if else branch");
-					}
-				}
-				return { type: declaredType, env };
-			}
-
-			// Infer type from branches (they must match and both be type-checked)
-			const thenIsChecked = typeof expr.then !== "string" || nodeTypes.has(expr.then);
-			const elseIsChecked = typeof expr.else !== "string" || nodeTypes.has(expr.else);
-
-			if (thenIsChecked && elseIsChecked) {
-				if (!typeEqual(thenType, elseType)) {
-					throw CAIRSError.validation(
-						"if",
-						"Branches must have the same type for type inference",
-					);
-				}
-				return { type: thenType, env };
-			}
-
-			// Can't infer type yet - use int type as placeholder
-			return { type: { kind: "int" }, env };
-		}
-
-		case "let": {
-			// Support both node references (strings) and inline expressions (objects)
-			let valueType: Type;
-
-			if (typeof expr.value === "string") {
-				// Node reference - look up in nodeMap/nodeTypes
-				const valueIsNode = nodeMap.has(expr.value);
-				const valueIsParam = lambdaParams.has(expr.value);
-				const valueIsBound = boundNodes.has(expr.value);
-
-				if (!valueIsNode && !valueIsParam) {
-					throw CAIRSError.validation(
-						"let",
-						"Value node not found: " + expr.value,
-					);
-				}
-
-				// If value is a bound node that hasn't been type-checked yet,
-				// or if it's a lambda param, use a placeholder
-				const nodeValueType = nodeTypes.get(expr.value);
-				if (!nodeValueType) {
-					if (valueIsBound || valueIsParam) {
-						// Bound node or lambda param - defer type checking
-						valueType = intType; // placeholder
-					} else {
-						throw CAIRSError.validation(
-							"let",
-							"Value node not yet type-checked: " + expr.value,
-						);
-					}
-				} else {
-					valueType = nodeValueType;
-				}
-			} else {
-				// Inline expression - type check it directly
-				const valueResult = checker.typeCheck(
-					expr.value as Expr,
-					env,
-				);
-				valueType = valueResult.type;
-			}
-
-			const extendedEnv = extendTypeEnv(env, expr.name, valueType);
-
-			// Get the body type
-			let bodyType: Type;
-			if (typeof expr.body === "string") {
-				// Node reference - look up in nodeMap/nodeTypes
-				const bodyIsNode = nodeMap.has(expr.body);
-				const bodyIsParam = lambdaParams.has(expr.body);
-				const bodyIsBound = boundNodes.has(expr.body);
-
-				if (!bodyIsNode && !bodyIsParam) {
-					throw CAIRSError.validation("let", "Body node not found: " + expr.body);
-				}
-
-				const nodeBodyType = nodeTypes.get(expr.body);
-				if (!nodeBodyType) {
-					if (bodyIsBound || bodyIsParam) {
-						// Bound node or lambda param - defer type checking
-						bodyType = intType; // placeholder
-					} else {
-						throw CAIRSError.validation(
-							"let",
-							"Body node not yet type-checked: " + expr.body,
-						);
-					}
-				} else {
-					bodyType = nodeBodyType;
-				}
-			} else {
-				// Inline expression - type check it directly
-				const bodyResult = checker.typeCheck(
-					expr.body as Expr,
-					extendedEnv,
-				);
-				bodyType = bodyResult.type;
-			}
-
-			return { type: bodyType, env: extendedEnv };
-		}
-
-		case "airRef": {
-			// Check arguments exist
-			for (const argId of expr.args) {
-				const argNode = nodeMap.get(argId);
-				if (!argNode) {
-					throw CAIRSError.validation(
-						"airRef",
-						"Argument node not found: " + argId,
-					);
-				}
-				if (!nodeTypes.has(argId)) {
-					throw CAIRSError.validation(
-						"airRef",
-						"Argument node not yet type-checked: " + argId,
-					);
-				}
-			}
-			return checker.typeCheck(expr, env);
-		}
-
-		case "predicate": {
-			// Check value node exists
-			if (!nodeMap.has(expr.value)) {
+		let thenType: Type;
+		if (typeof expr.then === "string") {
+			if (!nodeMap.has(expr.then)) {
 				throw CAIRSError.validation(
-					"predicate",
+					"if",
+					"Then branch node not found: " + expr.then,
+				);
+			}
+			const nodeThenType = nodeTypes.get(expr.then);
+			if (!nodeThenType) {
+				// Node not yet type-checked - skip validation for now
+				// Use declared type if available, or int as placeholder
+				thenType = expr.type ?? { kind: "int" };
+			} else {
+				thenType = nodeThenType;
+			}
+		} else {
+			const thenResult = checker.typeCheck(expr.then as Expr, env);
+			thenType = thenResult.type;
+		}
+
+		let elseType: Type;
+		if (typeof expr.else === "string") {
+			if (!nodeMap.has(expr.else)) {
+				throw CAIRSError.validation(
+					"if",
+					"Else branch node not found: " + expr.else,
+				);
+			}
+			const nodeElseType = nodeTypes.get(expr.else);
+			if (!nodeElseType) {
+				// Node not yet type-checked - skip validation for now
+				elseType = expr.type ?? { kind: "int" };
+			} else {
+				elseType = nodeElseType;
+			}
+		} else {
+			const elseResult = checker.typeCheck(expr.else as Expr, env);
+			elseType = elseResult.type;
+		}
+
+		// If type is explicitly declared, use it
+		const declaredType = expr.type;
+		if (declaredType) {
+			// Only validate branch types if they've been type-checked
+			if (nodeTypes.has(typeof expr.then === "string" ? expr.then : "")) {
+				if (!typeEqual(thenType, declaredType)) {
+					throw CAIRSError.typeError(declaredType, thenType, "if then branch");
+				}
+			}
+			if (nodeTypes.has(typeof expr.else === "string" ? expr.else : "")) {
+				if (!typeEqual(elseType, declaredType)) {
+					throw CAIRSError.typeError(declaredType, elseType, "if else branch");
+				}
+			}
+			return { type: declaredType, env };
+		}
+
+		// Infer type from branches (they must match and both be type-checked)
+		const thenIsChecked = typeof expr.then !== "string" || nodeTypes.has(expr.then);
+		const elseIsChecked = typeof expr.else !== "string" || nodeTypes.has(expr.else);
+
+		if (thenIsChecked && elseIsChecked) {
+			if (!typeEqual(thenType, elseType)) {
+				throw CAIRSError.validation(
+					"if",
+					"Branches must have the same type for type inference",
+				);
+			}
+			return { type: thenType, env };
+		}
+
+		// Can't infer type yet - use int type as placeholder
+		return { type: { kind: "int" }, env };
+	}
+
+	case "let": {
+		// Support both node references (strings) and inline expressions (objects)
+		let valueType: Type;
+
+		if (typeof expr.value === "string") {
+			// Node reference - look up in nodeMap/nodeTypes
+			const valueIsNode = nodeMap.has(expr.value);
+			const valueIsParam = lambdaParams.has(expr.value);
+			const valueIsBound = boundNodes.has(expr.value);
+
+			if (!valueIsNode && !valueIsParam) {
+				throw CAIRSError.validation(
+					"let",
 					"Value node not found: " + expr.value,
 				);
 			}
-			return { type: boolType, env };
+
+			// If value is a bound node that hasn't been type-checked yet,
+			// or if it's a lambda param, use a placeholder
+			const nodeValueType = nodeTypes.get(expr.value);
+			if (!nodeValueType) {
+				if (valueIsBound || valueIsParam) {
+					// Bound node or lambda param - defer type checking
+					valueType = intType; // placeholder
+				} else {
+					throw CAIRSError.validation(
+						"let",
+						"Value node not yet type-checked: " + expr.value,
+					);
+				}
+			} else {
+				valueType = nodeValueType;
+			}
+		} else {
+			// Inline expression - type check it directly
+			const valueResult = checker.typeCheck(
+					expr.value as Expr,
+					env,
+			);
+			valueType = valueResult.type;
 		}
 
-		case "lambda": {
-			// Lambda body must be a node reference
-			if (!nodeMap.has(expr.body)) {
-				throw CAIRSError.validation(
-					"lambda",
-					"Body node not found: " + expr.body,
-				);
+		const extendedEnv = extendTypeEnv(env, expr.name, valueType);
+
+		// Get the body type
+		let bodyType: Type;
+		if (typeof expr.body === "string") {
+			// Node reference - look up in nodeMap/nodeTypes
+			const bodyIsNode = nodeMap.has(expr.body);
+			const bodyIsParam = lambdaParams.has(expr.body);
+			const bodyIsBound = boundNodes.has(expr.body);
+
+			if (!bodyIsNode && !bodyIsParam) {
+				throw CAIRSError.validation("let", "Body node not found: " + expr.body);
 			}
 
-			if (expr.type.kind !== "fn") {
-				throw CAIRSError.typeError(
-					{ kind: "fn", params: [], returns: intType },
-					expr.type,
-					"lambda",
-				);
-			}
-
-			const lambdaType = expr.type;
-			// Create environment with parameter types
-			let lambdaEnv = env;
-			for (let i = 0; i < expr.params.length; i++) {
-				const paramType = lambdaType.params[i];
-				if (paramType === undefined) {
+			const nodeBodyType = nodeTypes.get(expr.body);
+			if (!nodeBodyType) {
+				if (bodyIsBound || bodyIsParam) {
+					// Bound node or lambda param - defer type checking
+					bodyType = intType; // placeholder
+				} else {
 					throw CAIRSError.validation(
-						"lambda",
-						"Missing parameter type at index " + i,
+						"let",
+						"Body node not yet type-checked: " + expr.body,
 					);
 				}
-				const paramName = expr.params[i];
-				if (paramName === undefined) {
-					throw CAIRSError.validation(
-						"lambda",
-						"Missing parameter name at index " + i,
-					);
-				}
-				lambdaEnv = extendTypeEnv(lambdaEnv, paramName, paramType);
+			} else {
+				bodyType = nodeBodyType;
 			}
-
-			// Check that body type matches return type
-			const bodyType = nodeTypes.get(expr.body);
-			if (bodyType && !typeEqual(bodyType, lambdaType.returns)) {
-				throw CAIRSError.typeError(lambdaType.returns, bodyType, "lambda body");
-			}
-
-			return { type: expr.type, env };
+		} else {
+			// Inline expression - type check it directly
+			const bodyResult = checker.typeCheck(
+					expr.body as Expr,
+					extendedEnv,
+			);
+			bodyType = bodyResult.type;
 		}
 
-		case "callExpr": {
-			// Check function exists - can be a node OR a lambda parameter
-			const fnIsNode = nodeMap.has(expr.fn);
-			const fnIsParam = lambdaParams.has(expr.fn);
-			const fnIsBound = boundNodes.has(expr.fn);
+		return { type: bodyType, env: extendedEnv };
+	}
 
-			if (!fnIsNode && !fnIsParam) {
+	case "airRef": {
+		// Check arguments exist
+		for (const argId of expr.args) {
+			const argNode = nodeMap.get(argId);
+			if (!argNode) {
+				throw CAIRSError.validation(
+					"airRef",
+					"Argument node not found: " + argId,
+				);
+			}
+			if (!nodeTypes.has(argId)) {
+				throw CAIRSError.validation(
+					"airRef",
+					"Argument node not yet type-checked: " + argId,
+				);
+			}
+		}
+		return checker.typeCheck(expr, env);
+	}
+
+	case "predicate": {
+		// Check value node exists
+		if (!nodeMap.has(expr.value)) {
+			throw CAIRSError.validation(
+				"predicate",
+				"Value node not found: " + expr.value,
+			);
+		}
+		return { type: boolType, env };
+	}
+
+	case "lambda": {
+		// Lambda body must be a node reference
+		if (!nodeMap.has(expr.body)) {
+			throw CAIRSError.validation(
+				"lambda",
+				"Body node not found: " + expr.body,
+			);
+		}
+
+		if (expr.type.kind !== "fn") {
+			throw CAIRSError.typeError(
+				{ kind: "fn", params: [], returns: intType },
+				expr.type,
+				"lambda",
+			);
+		}
+
+		const lambdaType = expr.type;
+		// Create environment with parameter types
+		let lambdaEnv = env;
+		for (let i = 0; i < expr.params.length; i++) {
+			const paramType = lambdaType.params[i];
+			if (paramType === undefined) {
+				throw CAIRSError.validation(
+					"lambda",
+					"Missing parameter type at index " + i,
+				);
+			}
+			const paramName = expr.params[i];
+			if (paramName === undefined) {
+				throw CAIRSError.validation(
+					"lambda",
+					"Missing parameter name at index " + i,
+				);
+			}
+			lambdaEnv = extendTypeEnv(lambdaEnv, paramName, paramType);
+		}
+
+		// Check that body type matches return type
+		const bodyType = nodeTypes.get(expr.body);
+		if (bodyType && !typeEqual(bodyType, lambdaType.returns)) {
+			throw CAIRSError.typeError(lambdaType.returns, bodyType, "lambda body");
+		}
+
+		return { type: expr.type, env };
+	}
+
+	case "callExpr": {
+		// Check function exists - can be a node OR a lambda parameter
+		const fnIsNode = nodeMap.has(expr.fn);
+		const fnIsParam = lambdaParams.has(expr.fn);
+		const fnIsBound = boundNodes.has(expr.fn);
+
+		if (!fnIsNode && !fnIsParam) {
+			throw CAIRSError.validation(
+				"callExpr",
+				"Function node not found: " + expr.fn,
+			);
+		}
+
+		// Check arguments exist - can be nodes OR lambda params
+		for (const argId of expr.args) {
+			const argIsNode = nodeMap.has(argId);
+			const argIsParam = lambdaParams.has(argId);
+			if (!argIsNode && !argIsParam) {
 				throw CAIRSError.validation(
 					"callExpr",
-					"Function node not found: " + expr.fn,
+					"Argument node not found: " + argId,
 				);
 			}
+		}
 
-			// Check arguments exist - can be nodes OR lambda params
-			for (const argId of expr.args) {
-				const argIsNode = nodeMap.has(argId);
-				const argIsParam = lambdaParams.has(argId);
-				if (!argIsNode && !argIsParam) {
-					throw CAIRSError.validation(
-						"callExpr",
-						"Argument node not found: " + argId,
-					);
-				}
-			}
-
-			// If fn or args are bound nodes or lambda params, we can't fully type-check here
-			// Just trust the declared type on the containing lambda
-			if (fnIsParam || fnIsBound) {
-				// Function is a lambda parameter - we can get its type from the environment
-				const fnTypeFromEnv = lookupType(env, expr.fn);
-				if (fnTypeFromEnv) {
-					if (fnTypeFromEnv.kind !== "fn") {
-						throw CAIRSError.typeError(
-							fnTypeCtor([], intType),
-							fnTypeFromEnv,
-							"callExpr function",
-						);
-					}
-					return { type: fnTypeFromEnv.returns, env };
-				}
-				// Can't determine type - return int as placeholder
-				return { type: intType, env };
-			}
-
-			// Get function type from node types
-			const fnType = nodeTypes.get(expr.fn);
-			if (!fnType) {
-				throw CAIRSError.validation(
-					"callExpr",
-					"Function node not yet type-checked: " + expr.fn,
-				);
-			}
-			if (fnType.kind !== "fn") {
-				throw CAIRSError.typeError(
-					fnTypeCtor([], intType),
-					fnType,
-					"callExpr function",
-				);
-			}
-			// Support partial application (currying)
-			if (expr.args.length > fnType.params.length) {
-				throw CAIRSError.arityError(
-					fnType.params.length,
-					expr.args.length,
-					"callExpr (too many arguments)",
-				);
-			}
-
-			// Check each argument type
-			for (let i = 0; i < expr.args.length; i++) {
-				const argId = expr.args[i];
-				if (argId === undefined) {
-					throw CAIRSError.validation(
-						"callExpr",
-						"Missing argument id at index " + i,
-					);
-				}
-				// Skip type check for lambda params
-				if (lambdaParams.has(argId)) {
-					continue;
-				}
-				const argType = nodeTypes.get(argId);
-				const expectedParamType = fnType.params[i];
-				if (expectedParamType === undefined) {
-					throw CAIRSError.validation(
-						"callExpr",
-						"Missing parameter type at index " + i,
-					);
-				}
-				if (argType && !typeEqual(argType, expectedParamType)) {
+		// If fn or args are bound nodes or lambda params, we can't fully type-check here
+		// Just trust the declared type on the containing lambda
+		if (fnIsParam || fnIsBound) {
+			// Function is a lambda parameter - we can get its type from the environment
+			const fnTypeFromEnv = lookupType(env, expr.fn);
+			if (fnTypeFromEnv) {
+				if (fnTypeFromEnv.kind !== "fn") {
 					throw CAIRSError.typeError(
-						expectedParamType,
-						argType,
-						"callExpr argument " + String(i),
+						fnTypeCtor([], intType),
+						fnTypeFromEnv,
+						"callExpr function",
 					);
 				}
+				return { type: fnTypeFromEnv.returns, env };
 			}
-
-			// Handle partial application (currying)
-			if (expr.args.length < fnType.params.length) {
-				// Return a function type with remaining parameters
-				const remainingParams = fnType.params.slice(expr.args.length);
-				return { type: fnTypeCtor(remainingParams, fnType.returns), env };
-			}
-
-			return { type: fnType.returns, env };
+			// Can't determine type - return int as placeholder
+			return { type: intType, env };
 		}
 
-		case "fix": {
-			// Check function node exists
-			if (!nodeMap.has(expr.fn)) {
-				throw CAIRSError.validation(
-					"fix",
-					"Function node not found: " + expr.fn,
-				);
-			}
+		// Get function type from node types
+		const fnType = nodeTypes.get(expr.fn);
+		if (!fnType) {
+			throw CAIRSError.validation(
+				"callExpr",
+				"Function node not yet type-checked: " + expr.fn,
+			);
+		}
+		if (fnType.kind !== "fn") {
+			throw CAIRSError.typeError(
+				fnTypeCtor([], intType),
+				fnType,
+				"callExpr function",
+			);
+		}
+		// Support partial application (currying)
+		if (expr.args.length > fnType.params.length) {
+			throw CAIRSError.arityError(
+				fnType.params.length,
+				expr.args.length,
+				"callExpr (too many arguments)",
+			);
+		}
 
-			// Get function type and verify it has the form fn(τ) -> τ
-			const fnType = nodeTypes.get(expr.fn);
-			if (!fnType) {
+		// Check each argument type
+		for (let i = 0; i < expr.args.length; i++) {
+			const argId = expr.args[i];
+			if (argId === undefined) {
 				throw CAIRSError.validation(
-					"fix",
-					"Function node not yet type-checked: " + expr.fn,
+					"callExpr",
+					"Missing argument id at index " + i,
 				);
 			}
-			if (fnType.kind !== "fn") {
+			// Skip type check for lambda params
+			if (lambdaParams.has(argId)) {
+				continue;
+			}
+			const argType = nodeTypes.get(argId);
+			const expectedParamType = fnType.params[i];
+			if (expectedParamType === undefined) {
+				throw CAIRSError.validation(
+					"callExpr",
+					"Missing parameter type at index " + i,
+				);
+			}
+			if (argType && !typeEqual(argType, expectedParamType)) {
 				throw CAIRSError.typeError(
-					fnTypeCtor([], intType),
-					fnType,
-					"fix function",
+					expectedParamType,
+					argType,
+					"callExpr argument " + String(i),
 				);
 			}
-			if (fnType.params.length !== 1) {
-				throw CAIRSError.arityError(1, fnType.params.length, "fix");
-			}
-			const firstParam = fnType.params[0];
-			if (firstParam === undefined) {
-				throw CAIRSError.validation("fix", "Missing parameter type");
-			}
-			if (!typeEqual(firstParam, fnType.returns)) {
-				throw CAIRSError.typeError(firstParam, fnType.returns, "fix");
-			}
-			if (!typeEqual(fnType.returns, expr.type)) {
-				throw CAIRSError.typeError(expr.type, fnType.returns, "fix");
-			}
-
-			return { type: expr.type, env };
 		}
 
-		default:
-			return exhaustive(expr);
+		// Handle partial application (currying)
+		if (expr.args.length < fnType.params.length) {
+			// Return a function type with remaining parameters
+			const remainingParams = fnType.params.slice(expr.args.length);
+			return { type: fnTypeCtor(remainingParams, fnType.returns), env };
+		}
+
+		return { type: fnType.returns, env };
+	}
+
+	case "fix": {
+		// Check function node exists
+		if (!nodeMap.has(expr.fn)) {
+			throw CAIRSError.validation(
+				"fix",
+				"Function node not found: " + expr.fn,
+			);
+		}
+
+		// Get function type and verify it has the form fn(τ) -> τ
+		const fnType = nodeTypes.get(expr.fn);
+		if (!fnType) {
+			throw CAIRSError.validation(
+				"fix",
+				"Function node not yet type-checked: " + expr.fn,
+			);
+		}
+		if (fnType.kind !== "fn") {
+			throw CAIRSError.typeError(
+				fnTypeCtor([], intType),
+				fnType,
+				"fix function",
+			);
+		}
+		if (fnType.params.length !== 1) {
+			throw CAIRSError.arityError(1, fnType.params.length, "fix");
+		}
+		const firstParam = fnType.params[0];
+		if (firstParam === undefined) {
+			throw CAIRSError.validation("fix", "Missing parameter type");
+		}
+		if (!typeEqual(firstParam, fnType.returns)) {
+			throw CAIRSError.typeError(firstParam, fnType.returns, "fix");
+		}
+		if (!typeEqual(fnType.returns, expr.type)) {
+			throw CAIRSError.typeError(expr.type, fnType.returns, "fix");
+		}
+
+		return { type: expr.type, env };
+	}
+
+	default:
+		return exhaustive(expr);
 	}
 }
 
@@ -1019,274 +1019,274 @@ function typeCheckEIRNode(
 	// Check if this is an EIR-specific expression
 	if (EIR_EXPRESSION_KINDS.includes(kind as typeof EIR_EXPRESSION_KINDS[number])) {
 		switch (kind) {
-			case "seq": {
-				const e = expr as unknown as { first: string; then: string };
-				// T-Seq: Γ ⊢ first : T, Γ ⊢ then : U ⇒ Γ ⊢ seq(first, then) : U
-				if (!nodeMap.has(e.first)) {
-					throw CAIRSError.validation(
-						"seq",
-						"First node not found: " + e.first,
-					);
-				}
-				if (!nodeMap.has(e.then)) {
-					throw CAIRSError.validation(
-						"seq",
-						"Then node not found: " + e.then,
-					);
-				}
-
-				const firstType = nodeTypes.get(e.first);
-				if (!firstType) {
-					throw CAIRSError.validation(
-						"seq",
-						"First node not yet type-checked: " + e.first,
-					);
-				}
-
-				const thenType = nodeTypes.get(e.then);
-				if (!thenType) {
-					throw CAIRSError.validation(
-						"seq",
-						"Then node not yet type-checked: " + e.then,
-					);
-				}
-
-				return { type: thenType, env };
+		case "seq": {
+			const e = expr as unknown as { first: string; then: string };
+			// T-Seq: Γ ⊢ first : T, Γ ⊢ then : U ⇒ Γ ⊢ seq(first, then) : U
+			if (!nodeMap.has(e.first)) {
+				throw CAIRSError.validation(
+					"seq",
+					"First node not found: " + e.first,
+				);
+			}
+			if (!nodeMap.has(e.then)) {
+				throw CAIRSError.validation(
+					"seq",
+					"Then node not found: " + e.then,
+				);
 			}
 
-			case "assign": {
-				const e = expr as unknown as { target: string; value: string };
-				// T-Assign: Γ ⊢ value : T ⇒ Γ ⊢ assign(target, value) : void
-				if (!nodeMap.has(e.value)) {
-					throw CAIRSError.validation(
-						"assign",
-						"Value node not found: " + e.value,
-					);
-				}
-
-				const valueType = nodeTypes.get(e.value);
-				if (!valueType) {
-					throw CAIRSError.validation(
-						"assign",
-						"Value node not yet type-checked: " + e.value,
-					);
-				}
-
-				// Update mutable types for the target
-				mutableTypes.set(e.target, valueType);
-
-				return { type: voidType, env };
+			const firstType = nodeTypes.get(e.first);
+			if (!firstType) {
+				throw CAIRSError.validation(
+					"seq",
+					"First node not yet type-checked: " + e.first,
+				);
 			}
 
-			case "while": {
-				const e = expr as unknown as { cond: string; body: string };
-				// T-While: Γ ⊢ cond : bool, Γ ⊢ body : T ⇒ Γ ⊢ while(cond, body) : void
-				if (!nodeMap.has(e.cond)) {
-					throw CAIRSError.validation(
-						"while",
-						"Condition node not found: " + e.cond,
-					);
-				}
-				if (!nodeMap.has(e.body)) {
-					throw CAIRSError.validation(
-						"while",
-						"Body node not found: " + e.body,
-					);
-				}
-
-				const condType = nodeTypes.get(e.cond);
-				if (condType && condType.kind !== "bool") {
-					throw CAIRSError.typeError(boolType, condType, "while condition");
-				}
-
-				return { type: voidType, env };
+			const thenType = nodeTypes.get(e.then);
+			if (!thenType) {
+				throw CAIRSError.validation(
+					"seq",
+					"Then node not yet type-checked: " + e.then,
+				);
 			}
 
-			case "for": {
-				const e = expr as unknown as { var: string; init: string; cond: string; update: string; body: string };
-				// T-For: (complex typing with var binding)
-				if (!nodeMap.has(e.init)) {
-					throw CAIRSError.validation(
-						"for",
-						"Init node not found: " + e.init,
-					);
-				}
-				if (!nodeMap.has(e.cond)) {
-					throw CAIRSError.validation(
-						"for",
-						"Condition node not found: " + e.cond,
-					);
-				}
-				if (!nodeMap.has(e.update)) {
-					throw CAIRSError.validation(
-						"for",
-						"Update node not found: " + e.update,
-					);
-				}
-				if (!nodeMap.has(e.body)) {
-					throw CAIRSError.validation(
-						"for",
-						"Body node not found: " + e.body,
-					);
-				}
+			return { type: thenType, env };
+		}
 
-				const condType = nodeTypes.get(e.cond);
-				if (condType && condType.kind !== "bool") {
-					throw CAIRSError.typeError(boolType, condType, "for condition");
-				}
-
-				// Get the loop variable type from init
-				const initType = nodeTypes.get(e.init);
-				if (initType) {
-					mutableTypes.set(e.var, initType);
-				}
-
-				return { type: voidType, env };
+		case "assign": {
+			const e = expr as unknown as { target: string; value: string };
+			// T-Assign: Γ ⊢ value : T ⇒ Γ ⊢ assign(target, value) : void
+			if (!nodeMap.has(e.value)) {
+				throw CAIRSError.validation(
+					"assign",
+					"Value node not found: " + e.value,
+				);
 			}
 
-			case "iter": {
-				const e = expr as unknown as { var: string; iter: string; body: string };
-				// T-Iter: Γ ⊢ iter : list<T>, Γ ⊢ body : R ⇒ Γ ⊢ iter(var, iter, body) : void
-				if (!nodeMap.has(e.iter)) {
-					throw CAIRSError.validation(
-						"iter",
-						"Iter node not found: " + e.iter,
-					);
-				}
-				if (!nodeMap.has(e.body)) {
-					throw CAIRSError.validation(
-						"iter",
-						"Body node not found: " + e.body,
-					);
-				}
-
-				const iterType = nodeTypes.get(e.iter);
-				if (iterType && iterType.kind !== "list") {
-					throw CAIRSError.typeError(
-						listType(intType),
-						iterType,
-						"iter iterable",
-					);
-				}
-
-				// Set the loop variable type
-				if (iterType && iterType.kind === "list") {
-					mutableTypes.set(e.var, iterType.of);
-				}
-
-				return { type: voidType, env };
+			const valueType = nodeTypes.get(e.value);
+			if (!valueType) {
+				throw CAIRSError.validation(
+					"assign",
+					"Value node not yet type-checked: " + e.value,
+				);
 			}
 
-			case "effect": {
-				const e = expr as unknown as { op: string; args: string[] };
-				// T-Effect: Look up effect signature, check args
-				const effect = effects.get(e.op);
-				if (!effect) {
+			// Update mutable types for the target
+			mutableTypes.set(e.target, valueType);
+
+			return { type: voidType, env };
+		}
+
+		case "while": {
+			const e = expr as unknown as { cond: string; body: string };
+			// T-While: Γ ⊢ cond : bool, Γ ⊢ body : T ⇒ Γ ⊢ while(cond, body) : void
+			if (!nodeMap.has(e.cond)) {
+				throw CAIRSError.validation(
+					"while",
+					"Condition node not found: " + e.cond,
+				);
+			}
+			if (!nodeMap.has(e.body)) {
+				throw CAIRSError.validation(
+					"while",
+					"Body node not found: " + e.body,
+				);
+			}
+
+			const condType = nodeTypes.get(e.cond);
+			if (condType && condType.kind !== "bool") {
+				throw CAIRSError.typeError(boolType, condType, "while condition");
+			}
+
+			return { type: voidType, env };
+		}
+
+		case "for": {
+			const e = expr as unknown as { var: string; init: string; cond: string; update: string; body: string };
+			// T-For: (complex typing with var binding)
+			if (!nodeMap.has(e.init)) {
+				throw CAIRSError.validation(
+					"for",
+					"Init node not found: " + e.init,
+				);
+			}
+			if (!nodeMap.has(e.cond)) {
+				throw CAIRSError.validation(
+					"for",
+					"Condition node not found: " + e.cond,
+				);
+			}
+			if (!nodeMap.has(e.update)) {
+				throw CAIRSError.validation(
+					"for",
+					"Update node not found: " + e.update,
+				);
+			}
+			if (!nodeMap.has(e.body)) {
+				throw CAIRSError.validation(
+					"for",
+					"Body node not found: " + e.body,
+				);
+			}
+
+			const condType = nodeTypes.get(e.cond);
+			if (condType && condType.kind !== "bool") {
+				throw CAIRSError.typeError(boolType, condType, "for condition");
+			}
+
+			// Get the loop variable type from init
+			const initType = nodeTypes.get(e.init);
+			if (initType) {
+				mutableTypes.set(e.var, initType);
+			}
+
+			return { type: voidType, env };
+		}
+
+		case "iter": {
+			const e = expr as unknown as { var: string; iter: string; body: string };
+			// T-Iter: Γ ⊢ iter : list<T>, Γ ⊢ body : R ⇒ Γ ⊢ iter(var, iter, body) : void
+			if (!nodeMap.has(e.iter)) {
+				throw CAIRSError.validation(
+					"iter",
+					"Iter node not found: " + e.iter,
+				);
+			}
+			if (!nodeMap.has(e.body)) {
+				throw CAIRSError.validation(
+					"iter",
+					"Body node not found: " + e.body,
+				);
+			}
+
+			const iterType = nodeTypes.get(e.iter);
+			if (iterType && iterType.kind !== "list") {
+				throw CAIRSError.typeError(
+					listType(intType),
+					iterType,
+					"iter iterable",
+				);
+			}
+
+			// Set the loop variable type
+			if (iterType?.kind === "list") {
+				mutableTypes.set(e.var, iterType.of);
+			}
+
+			return { type: voidType, env };
+		}
+
+		case "effect": {
+			const e = expr as unknown as { op: string; args: string[] };
+			// T-Effect: Look up effect signature, check args
+			const effect = effects.get(e.op);
+			if (!effect) {
+				throw CAIRSError.validation(
+					"effect",
+					"Unknown effect operation: " + e.op,
+				);
+			}
+
+			// Check arity
+			if (effect.params.length !== e.args.length) {
+				throw CAIRSError.arityError(
+					effect.params.length,
+					e.args.length,
+					"effect:" + e.op,
+				);
+			}
+
+			// Check argument types
+			for (let i = 0; i < e.args.length; i++) {
+				const argId = e.args[i];
+				if (argId === undefined) {
 					throw CAIRSError.validation(
 						"effect",
-						"Unknown effect operation: " + e.op,
+						"Missing argument id at index " + String(i),
 					);
 				}
-
-				// Check arity
-				if (effect.params.length !== e.args.length) {
-					throw CAIRSError.arityError(
-						effect.params.length,
-						e.args.length,
-						"effect:" + e.op,
+				const argType = nodeTypes.get(argId);
+				const expectedParamType = effect.params[i];
+				if (expectedParamType === undefined) {
+					throw CAIRSError.validation(
+						"effect",
+						"Missing parameter type at index " + String(i),
 					);
 				}
-
-				// Check argument types
-				for (let i = 0; i < e.args.length; i++) {
-					const argId = e.args[i];
-					if (argId === undefined) {
-						throw CAIRSError.validation(
-							"effect",
-							"Missing argument id at index " + String(i),
-						);
-					}
-					const argType = nodeTypes.get(argId);
-					const expectedParamType = effect.params[i];
-					if (expectedParamType === undefined) {
-						throw CAIRSError.validation(
-							"effect",
-							"Missing parameter type at index " + String(i),
-						);
-					}
-					if (argType && !typeEqual(argType, expectedParamType)) {
-						throw CAIRSError.typeError(
-							expectedParamType,
-							argType,
-							"effect argument " + String(i),
-						);
-					}
-				}
-
-				return { type: effect.returns, env };
-			}
-
-			case "refCell": {
-				const e = expr as unknown as { target: string };
-				// T-RefCell: Γ ⊢ target : T ⇒ Γ ⊢ refCell(target) : ref<T>
-				let targetType: Type | undefined;
-
-				// Check if target is a mutable variable
-				targetType = mutableTypes.get(e.target);
-
-				// If not in mutable types, check node map
-				if (!targetType && nodeMap.has(e.target)) {
-					targetType = nodeTypes.get(e.target);
-				}
-
-				// If not in node map, check environment
-				if (!targetType) {
-					targetType = lookupType(env, e.target);
-				}
-
-				if (!targetType) {
-					throw CAIRSError.unboundIdentifier(e.target);
-				}
-
-				return { type: refType(targetType), env };
-			}
-
-			case "deref": {
-				const e = expr as unknown as { target: string };
-				// T-Deref: Γ ⊢ target : ref<T> ⇒ Γ ⊢ deref(target) : T
-				let targetType: Type | undefined;
-
-				// Check mutable types first
-				targetType = mutableTypes.get(e.target);
-
-				// Then check node map
-				if (!targetType && nodeMap.has(e.target)) {
-					targetType = nodeTypes.get(e.target);
-				}
-
-				// Then check environment
-				if (!targetType) {
-					targetType = lookupType(env, e.target);
-				}
-
-				if (!targetType) {
-					throw CAIRSError.unboundIdentifier(e.target);
-				}
-
-				if (targetType.kind !== "ref") {
+				if (argType && !typeEqual(argType, expectedParamType)) {
 					throw CAIRSError.typeError(
-						refType(intType),
-						targetType,
-						"deref target",
+						expectedParamType,
+						argType,
+						"effect argument " + String(i),
 					);
 				}
-
-				return { type: targetType.of, env };
 			}
 
-			default:
-				// Should not reach here due to EIR_EXPRESSION_KINDS check
-				return { type: voidType, env };
+			return { type: effect.returns, env };
+		}
+
+		case "refCell": {
+			const e = expr as unknown as { target: string };
+			// T-RefCell: Γ ⊢ target : T ⇒ Γ ⊢ refCell(target) : ref<T>
+			let targetType: Type | undefined;
+
+			// Check if target is a mutable variable
+			targetType = mutableTypes.get(e.target);
+
+			// If not in mutable types, check node map
+			if (!targetType && nodeMap.has(e.target)) {
+				targetType = nodeTypes.get(e.target);
+			}
+
+			// If not in node map, check environment
+			if (!targetType) {
+				targetType = lookupType(env, e.target);
+			}
+
+			if (!targetType) {
+				throw CAIRSError.unboundIdentifier(e.target);
+			}
+
+			return { type: refType(targetType), env };
+		}
+
+		case "deref": {
+			const e = expr as unknown as { target: string };
+			// T-Deref: Γ ⊢ target : ref<T> ⇒ Γ ⊢ deref(target) : T
+			let targetType: Type | undefined;
+
+			// Check mutable types first
+			targetType = mutableTypes.get(e.target);
+
+			// Then check node map
+			if (!targetType && nodeMap.has(e.target)) {
+				targetType = nodeTypes.get(e.target);
+			}
+
+			// Then check environment
+			if (!targetType) {
+				targetType = lookupType(env, e.target);
+			}
+
+			if (!targetType) {
+				throw CAIRSError.unboundIdentifier(e.target);
+			}
+
+			if (targetType.kind !== "ref") {
+				throw CAIRSError.typeError(
+					refType(intType),
+					targetType,
+					"deref target",
+				);
+			}
+
+			return { type: targetType.of, env };
+		}
+
+		default:
+			// Should not reach here due to EIR_EXPRESSION_KINDS check
+			return { type: voidType, env };
 		}
 	}
 
