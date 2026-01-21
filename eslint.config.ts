@@ -20,13 +20,27 @@ export default [
 	// Base ESLint recommended rules
 	eslint.configs.recommended,
 
-	// TypeScript
-	...tseslint.configs.recommended,
+	// TypeScript (type-aware)
+	...tseslint.configs.recommendedTypeChecked,
+	{
+		languageOptions: {
+			parserOptions: {
+				projectService: {
+					allowDefaultProject: ["*.config.ts"],
+				},
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 	{
 		files: ["**/*.ts"],
 		rules: {
 			"@typescript-eslint/no-unused-vars": "error",
 			"@typescript-eslint/no-explicit-any": "error",
+			"@typescript-eslint/consistent-type-assertions": [
+				"error",
+				{ assertionStyle: "never" },
+			],
 			indent: ["error", "tab"],
 			quotes: ["error", "double", { avoidEscape: true }],
 		},
