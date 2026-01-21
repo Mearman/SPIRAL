@@ -1,6 +1,4 @@
-# CAIRS
-
-**Computational Algebraic & Iterative Representation System**
+# CAIRS (**Computational Algebraic & Iterative Representation System**)
 
 A TypeScript implementation of a portable, JSON-based intermediate representation for mathematical and logical expressions.
 
