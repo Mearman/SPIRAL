@@ -1,0 +1,83 @@
+{
+  "version": "1.0.0",
+  "description": "Demonstrates while loop iteration in EIR. The while loop evaluates its condition before each iteration; if true, executes the body and repeats.",
+  "airDefs": [
+    {
+      "ns": "core",
+      "name": "add",
+      "params": ["a", "b"],
+      "result": { "kind": "int" },
+      "body": { "kind": "ref", "id": "a" }
+    },
+    {
+      "ns": "core",
+      "name": "lt",
+      "params": ["a", "b"],
+      "result": { "kind": "bool" },
+      "body": { "kind": "ref", "id": "a" }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "zero",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+    },
+    {
+      "id": "one",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+    },
+    {
+      "id": "five",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+    },
+    {
+      "id": "initCounter",
+      "expr": {
+        "kind": "assign",
+        "target": "i",
+        "value": "zero"
+      }
+    },
+    {
+      "id": "condition",
+      "expr": {
+        "kind": "call",
+        "ns": "core",
+        "name": "lt",
+        "args": ["i", "five"]
+      }
+    },
+    {
+      "id": "increment",
+      "expr": {
+        "kind": "call",
+        "ns": "core",
+        "name": "add",
+        "args": ["i", "one"]
+      }
+    },
+    {
+      "id": "body",
+      "expr": {
+        "kind": "assign",
+        "target": "i",
+        "value": "increment"
+      }
+    },
+    {
+      "id": "whileLoop",
+      "expr": {
+        "kind": "while",
+        "cond": "condition",
+        "body": "body"
+      }
+    },
+    {
+      "id": "result",
+      "expr": { "kind": "var", "name": "i" }
+    }
+  ],
+  "result": "result",
+  "expected_result": 5,
+  "note": "The while loop increments i from 0 while i < 5. After the loop exits, i equals 5."
+}

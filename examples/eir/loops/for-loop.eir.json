@@ -1,0 +1,97 @@
+{
+  "version": "1.0.0",
+  "description": "Demonstrates C-style for loop in EIR. The for loop has init, condition, update, and body components.",
+  "airDefs": [
+    {
+      "ns": "core",
+      "name": "add",
+      "params": ["a", "b"],
+      "result": { "kind": "int" },
+      "body": { "kind": "ref", "id": "a" }
+    },
+    {
+      "ns": "core",
+      "name": "lt",
+      "params": ["a", "b"],
+      "result": { "kind": "bool" },
+      "body": { "kind": "ref", "id": "a" }
+    },
+    {
+      "ns": "core",
+      "name": "mul",
+      "params": ["a", "b"],
+      "result": { "kind": "int" },
+      "body": { "kind": "ref", "id": "a" }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "zero",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+    },
+    {
+      "id": "one",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+    },
+    {
+      "id": "ten",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 10 }
+    },
+    {
+      "id": "two",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 2 }
+    },
+    {
+      "id": "init",
+      "expr": { "kind": "ref", "id": "zero" }
+    },
+    {
+      "id": "condValue",
+      "expr": { "kind": "var", "name": "i" }
+    },
+    {
+      "id": "condition",
+      "expr": {
+        "kind": "call",
+        "ns": "core",
+        "name": "lt",
+        "args": ["condValue", "ten"]
+      }
+    },
+    {
+      "id": "updateValue",
+      "expr": { "kind": "var", "name": "i" }
+    },
+    {
+      "id": "update",
+      "expr": {
+        "kind": "call",
+        "ns": "core",
+        "name": "add",
+        "args": ["updateValue", "one"]
+      }
+    },
+    {
+      "id": "body",
+      "expr": { "kind": "ref", "id": "one" }
+    },
+    {
+      "id": "forLoop",
+      "expr": {
+        "kind": "for",
+        "var": "i",
+        "init": "init",
+        "cond": "condition",
+        "update": "update",
+        "body": "body"
+      }
+    },
+    {
+      "id": "finalI",
+      "expr": { "kind": "var", "name": "i" }
+    }
+  ],
+  "result": "finalI",
+  "expected_result": 10,
+  "note": "The for loop initializes i=0, checks i<10, executes body (no-op), updates i++, and repeats. After loop, i equals 10."
+}
