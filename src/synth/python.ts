@@ -5,9 +5,10 @@ import type {
 	AIRDef, AIRDocument, CIRDocument, EIRDocument,
 	Expr, EirExpr, Node, EirNode,
 	LIRDocument,
+	LirHybridNode,
 	Value,
 } from "../types.js";
-import { isExprNode } from "../types.js";
+import { isBlockNode, isExprNode } from "../types.js";
 
 //==============================================================================
 // Options and Types
@@ -61,9 +62,10 @@ export function synthesizePython(doc: Document, opts: PythonSynthOptions = {}): 
 	const { moduleName = "cairs_generated" } = opts;
 
 	// Detect IR layer and dispatch
-	// LIR documents with legacy blocks field get LIR synthesis
-	if ("blocks" in doc && doc.blocks && doc.blocks.length > 0) {
-		return synthesizeLIR(doc, { moduleName });
+	// LIR documents have nodes containing block nodes (CFG-based)
+	// Check if any node has blocks/entry (block node structure)
+	if ("nodes" in doc && doc.nodes.some((n) => "blocks" in n && "entry" in n)) {
+		return synthesizeLIR(doc as LIRDocument, { moduleName });
 	}
 	// Expression-based documents (AIR/CIR/EIR) with nodes
 	if ("nodes" in doc && "airDefs" in doc) {
@@ -346,11 +348,19 @@ function synthesizeLIR(doc: LIRDocument, opts: PythonSynthOptions): string {
 	lines.push("from typing import Dict, Any");
 	lines.push("");
 
+	// Find the result node (should be a block node)
+	const resultNode = doc.nodes.find((n: LirHybridNode) => n.id === doc.result);
+	if (!resultNode || !isBlockNode(resultNode)) {
+		throw new Error("LIR document result must be a block node");
+	}
+
+	const blocks = resultNode.blocks;
+	const entry = resultNode.entry;
+
 	// Emit block definitions
 	lines.push("# Blocks");
 	lines.push("blocks = {");
 
-	const blocks = doc.blocks ?? [];
 	for (const block of blocks) {
 		lines.push(`    "${block.id}": {`);
 		lines.push(`        "instructions": ${JSON.stringify(block.instructions).replace(/"/g, '\\"')},`);
@@ -430,7 +440,7 @@ function synthesizeLIR(doc: LIRDocument, opts: PythonSynthOptions): string {
 
 	// Main entry
 	lines.push("if __name__ == \"__main__\":");
-	lines.push(`    result = execute_lir(blocks, "${doc.entry ?? "entry"}")`);
+	lines.push(`    result = execute_lir(blocks, "${entry}")`);
 	lines.push("    print(result)");
 
 	return lines.join("\n");
