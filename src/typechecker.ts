@@ -4,7 +4,8 @@
 import { lookupOperator, type OperatorRegistry } from "./domains/registry.js";
 import { TypeEnv, emptyTypeEnv, extendTypeEnv, lookupDef, lookupType, type Defs } from "./env.js";
 import { CAIRSError, exhaustive } from "./errors.js";
-import type { AIRDocument, EirNode, Expr, Node, Type } from "./types.js";
+import type { AIRDocument, AirHybridNode, EirHybridNode, Expr, Node, Type } from "./types.js";
+import { isBlockNode, isExprNode } from "./types.js";
 import {
 	boolType,
 	fnType as fnTypeCtor,
@@ -291,7 +292,7 @@ export class TypeChecker {
  * This is used to recognize valid identifiers during type checking.
  */
 function collectLambdaParamsAndLetBindings(
-	nodes: Node[],
+	nodes: AirHybridNode[],
 ): Set<string> {
 	const params = new Set<string>();
 
@@ -306,7 +307,10 @@ function collectLambdaParamsAndLetBindings(
 	};
 
 	for (const node of nodes) {
-		collectFromExpr(node.expr);
+		// Only collect from expr nodes
+		if (isExprNode(node)) {
+			collectFromExpr(node.expr);
+		}
 	}
 
 	return params;
@@ -318,8 +322,8 @@ function collectLambdaParamsAndLetBindings(
  * their containing lambda is checked.
  */
 function identifyBoundNodes(
-	nodes: Node[],
-	nodeMap: Map<string, Node>,
+	nodes: AirHybridNode[],
+	nodeMap: Map<string, AirHybridNode>,
 ): Set<string> {
 	const boundNodes = new Set<string>();
 	const lambdaBodies = new Set<string>();
@@ -332,6 +336,9 @@ function identifyBoundNodes(
 
 		const node = nodeMap.get(nodeId);
 		if (!node) return;
+
+		// Block nodes don't have expressions to traverse
+		if (isBlockNode(node)) return;
 
 		const expr = node.expr;
 		// Collect references from the expression
@@ -366,7 +373,7 @@ function identifyBoundNodes(
 
 	// Collect lambda bodies first
 	for (const node of nodes) {
-		if (node.expr.kind === "lambda") {
+		if (isExprNode(node) && node.expr.kind === "lambda") {
 			lambdaBodies.add(node.expr.body);
 		}
 	}
@@ -378,7 +385,7 @@ function identifyBoundNodes(
 
 	// Remove lambda nodes themselves - they're not bound, only their bodies are
 	for (const node of nodes) {
-		if (node.expr.kind === "lambda") {
+		if (isExprNode(node) && node.expr.kind === "lambda") {
 			boundNodes.delete(node.id);
 		}
 	}
@@ -400,7 +407,7 @@ export function typeCheckProgram(
 	const nodeEnvs = new Map<string, TypeEnv>();
 
 	// Build a map of nodes for easy lookup
-	const nodeMap = new Map<string, Node>();
+	const nodeMap = new Map<string, AirHybridNode>();
 	for (const node of doc.nodes) {
 		nodeMap.set(node.id, node);
 	}
@@ -452,14 +459,20 @@ export function typeCheckProgram(
  */
 function typeCheckNode(
 	checker: TypeChecker,
-	node: Node,
-	nodeMap: Map<string, Node>,
+	node: AirHybridNode,
+	nodeMap: Map<string, AirHybridNode>,
 	nodeTypes: Map<string, Type>,
 	_nodeEnvs: Map<string, TypeEnv>,
 	env: TypeEnv,
 	lambdaParams: Set<string>,
 	boundNodes: Set<string>,
 ): TypeCheckResult {
+	// Handle block nodes - return the declared type or infer from return terminator
+	if (isBlockNode(node)) {
+		// For now, use the node's declared type or default to int
+		return { type: node.type ?? intType, env };
+	}
+
 	const expr = node.expr;
 
 	switch (expr.kind) {
@@ -952,7 +965,7 @@ export function typeCheckEIRProgram(
 	const nodeEnvs = new Map<string, TypeEnv>();
 
 	// Build a map of nodes for easy lookup
-	const nodeMap = new Map<string, EirNode>();
+	const nodeMap = new Map<string, EirHybridNode>();
 	for (const node of doc.nodes) {
 		nodeMap.set(node.id, node);
 	}
@@ -1002,8 +1015,8 @@ export function typeCheckEIRProgram(
  */
 function typeCheckEIRNode(
 	checker: TypeChecker,
-	node: EirNode,
-	nodeMap: Map<string, EirNode>,
+	node: EirHybridNode,
+	nodeMap: Map<string, EirHybridNode>,
 	nodeTypes: Map<string, Type>,
 	nodeEnvs: Map<string, TypeEnv>,
 	mutableTypes: Map<string, Type>,
@@ -1013,6 +1026,11 @@ function typeCheckEIRNode(
 	lambdaParams: Set<string>,
 	boundNodes: Set<string>,
 ): TypeCheckResult {
+	// Handle block nodes
+	if (isBlockNode(node)) {
+		return { type: node.type ?? intType, env };
+	}
+
 	const expr = node.expr;
 	const kind = expr.kind as string;
 
