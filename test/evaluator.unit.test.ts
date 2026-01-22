@@ -701,3 +701,148 @@ describe("Complex Expressions", () => {
 		assert.deepStrictEqual(resultGte, boolVal(true));
 	});
 });
+
+describe("Hybrid Node Evaluation", () => {
+	const registry = new Map();
+	const coreReg = createCoreRegistry();
+	for (const [key, op] of coreReg) {
+		registry.set(key, op);
+	}
+	const defs = emptyDefs();
+
+	it("should evaluate document with block node", () => {
+		const doc = {
+			version: "1.0.0",
+			airDefs: [],
+			nodes: [
+				{
+					id: "result",
+					blocks: [
+						{
+							id: "entry",
+							instructions: [
+								{
+									kind: "assign",
+									target: "x",
+									value: { kind: "lit", type: { kind: "int" }, value: 42 },
+								},
+							],
+							terminator: { kind: "return", value: "x" },
+						},
+					],
+					entry: "entry",
+				},
+			],
+			result: "result",
+		};
+		const result = evaluateProgram(createTestDocument(doc), registry, defs);
+		assert.deepStrictEqual(result, intVal(42));
+	});
+
+	it("should evaluate document with mixed expr and block nodes", () => {
+		const doc = {
+			version: "1.0.0",
+			airDefs: [],
+			nodes: [
+				{ id: "x", expr: { kind: "lit", type: { kind: "int" }, value: 30 } },
+				{ id: "y", expr: { kind: "lit", type: { kind: "int" }, value: 50 } },
+				{
+					id: "max",
+					blocks: [
+						{
+							id: "entry",
+							instructions: [
+								{ kind: "op", target: "cond", ns: "core", name: "gt", args: ["x", "y"] },
+							],
+							terminator: { kind: "branch", cond: "cond", then: "retX", else: "retY" },
+						},
+						{
+							id: "retX",
+							instructions: [],
+							terminator: { kind: "return", value: "x" },
+						},
+						{
+							id: "retY",
+							instructions: [],
+							terminator: { kind: "return", value: "y" },
+						},
+					],
+					entry: "entry",
+				},
+			],
+			result: "max",
+		};
+		const result = evaluateProgram(createTestDocument(doc), registry, defs);
+		// x=30, y=50, so max should be y=50
+		assert.deepStrictEqual(result, intVal(50));
+	});
+
+	it("should evaluate block node referencing expr node values", () => {
+		const doc = {
+			version: "1.0.0",
+			airDefs: [],
+			nodes: [
+				{ id: "base", expr: { kind: "lit", type: { kind: "int" }, value: 7 } },
+				{
+					id: "squared",
+					blocks: [
+						{
+							id: "entry",
+							instructions: [
+								{ kind: "op", target: "result", ns: "core", name: "mul", args: ["base", "base"] },
+							],
+							terminator: { kind: "return", value: "result" },
+						},
+					],
+					entry: "entry",
+				},
+			],
+			result: "squared",
+		};
+		const result = evaluateProgram(createTestDocument(doc), registry, defs);
+		// 7 * 7 = 49
+		assert.deepStrictEqual(result, intVal(49));
+	});
+
+	it("should evaluate CFG-only document (all block nodes)", () => {
+		const doc = {
+			version: "1.0.0",
+			airDefs: [],
+			nodes: [
+				{
+					id: "result",
+					blocks: [
+						{
+							id: "entry",
+							instructions: [
+								{
+									kind: "assign",
+									target: "a",
+									value: { kind: "lit", type: { kind: "int" }, value: 5 },
+								},
+								{
+									kind: "assign",
+									target: "b",
+									value: { kind: "lit", type: { kind: "int" }, value: 3 },
+								},
+								{
+									kind: "op",
+									target: "sum",
+									ns: "core",
+									name: "add",
+									args: ["a", "b"],
+								},
+							],
+							terminator: { kind: "return", value: "sum" },
+						},
+					],
+					entry: "entry",
+				},
+			],
+			result: "result",
+		};
+		const result = evaluateProgram(createTestDocument(doc), registry, defs);
+		// 5 + 3 = 8
+		assert.deepStrictEqual(result, intVal(8));
+	});
+});

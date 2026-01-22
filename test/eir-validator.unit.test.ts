@@ -293,3 +293,85 @@ describe("EIR Validation", () => {
 		assert.strictEqual(result.valid, true);
 	});
 });
+
+describe("EIR Hybrid Node Validation", () => {
+	it("should validate EIR document with block node", () => {
+		const doc = {
+			version: "1.0.0",
+			airDefs: [],
+			nodes: [
+				{
+					id: "result",
+					blocks: [
+						{
+							id: "entry",
+							instructions: [
+								{
+									kind: "assign",
+									target: "x",
+									value: { kind: "lit", type: { kind: "int" }, value: 42 },
+								},
+							],
+							terminator: { kind: "return", value: "x" },
+						},
+					],
+					entry: "entry",
+				},
+			],
+			result: "result",
+		};
+		const result = validateEIR(doc);
+		assert.strictEqual(result.valid, true, "EIR should accept block nodes");
+	});
+
+	it("should validate EIR document with hybrid expr and block nodes", () => {
+		const doc = {
+			version: "1.0.0",
+			airDefs: [],
+			nodes: [
+				{ id: "input", expr: { kind: "lit", type: { kind: "int" }, value: -5 } },
+				{ id: "zero", expr: { kind: "lit", type: { kind: "int" }, value: 0 } },
+				{
+					id: "abs",
+					blocks: [
+						{
+							id: "entry",
+							instructions: [
+								{ kind: "op", target: "isNeg", ns: "core", name: "lt", args: ["input", "zero"] },
+							],
+							terminator: { kind: "branch", cond: "isNeg", then: "negate", else: "returnInput" },
+						},
+						{
+							id: "negate",
+							instructions: [
+								{ kind: "op", target: "negated", ns: "core", name: "neg", args: ["input"] },
+							],
+							terminator: { kind: "return", value: "negated" },
+						},
+						{
+							id: "returnInput",
+							instructions: [],
+							terminator: { kind: "return", value: "input" },
+						},
+					],
+					entry: "entry",
+				},
+			],
+			result: "abs",
+		};
+		const result = validateEIR(doc);
+		assert.strictEqual(result.valid, true, "EIR should accept hybrid documents");
+	});
+
+	it("should reject EIR node without expr or blocks", () => {
+		const doc = {
+			version: "1.0.0",
+			airDefs: [],
+			nodes: [{ id: "n1" }],
+			result: "n1",
+		};
+		const result = validateEIR(doc);
+		assert.strictEqual(result.valid, false);
+		assert.ok(result.errors.some((e) => e.message.includes("blocks") || e.message.includes("expr")));
+	});
+});

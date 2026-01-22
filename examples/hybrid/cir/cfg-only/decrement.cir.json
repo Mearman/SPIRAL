@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/cir.schema.json",
+  "version": "1.0.0",
+  "description": "CIR CFG-only example: all nodes are block nodes (no expression nodes).",
+  "airDefs": [],
+  "nodes": [
+    {
+      "id": "result",
+      "blocks": [
+        {
+          "id": "entry",
+          "instructions": [
+            {
+              "kind": "assign",
+              "target": "x",
+              "value": { "kind": "lit", "type": { "kind": "int" }, "value": 10 }
+            },
+            {
+              "kind": "assign",
+              "target": "one",
+              "value": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+            },
+            {
+              "kind": "op",
+              "target": "decremented",
+              "ns": "core",
+              "name": "sub",
+              "args": ["x", "one"]
+            }
+          ],
+          "terminator": { "kind": "return", "value": "decremented" }
+        }
+      ],
+      "entry": "entry"
+    }
+  ],
+  "result": "result",
+  "expected_result": 9,
+  "note": "All nodes are block nodes. Computes 10 - 1 = 9."
+}
