@@ -117,12 +117,12 @@ pnpm test:examples --coverage
 | [Fixpoint](./cir/fixpoint/) | 3 | Fix combinator for recursion |
 | [Mixed](./cir/mixed/) | 1 | Using airRef within CIR |
 
-### EIR Examples (18 files)
+### EIR Examples (22 files)
 
 | Category | Files | Concepts |
 |----------|-------|----------|
 | [Basics](./eir/basics/) | 4 | Sequencing, assignment, refcells, effects |
-| [Interactive](./eir/interactive/) | 2 | Input effects, readLine, readInt |
+| [Interactive](./eir/interactive/) | 6 | Input/output patterns, readLine, readInt, print, printInt |
 | [Loops](./eir/loops/) | 4 | While, for, iter, nested loops |
 | [Algorithms](./eir/algorithms/) | 4 | Counter, factorial, sum-list, accumulate |
 | [Advanced](./eir/advanced/) | 4 | State machine, I/O loop, mutable list, effects |
@@ -166,9 +166,13 @@ For those new to CAIRS, we recommend exploring examples in this order:
    - `eir/loops/while-loop.eir.json` - While loops
    - `eir/algorithms/factorial.eir.json` - Imperative factorial
 
-7. **Explore interactive I/O:**
-   - `eir/interactive/prompt-echo.eir.json` - Read and print strings
-   - `eir/interactive/add-two-ints.eir.json` - Read integers, perform arithmetic
+7. **Explore interactive I/O patterns:**
+   - `eir/interactive/hello-world.eir.json` - No input, single output
+   - `eir/interactive/greeting-sequence.eir.json` - No input, multiple outputs
+   - `eir/interactive/prompt-echo.eir.json` - Single input, single output (read strings)
+   - `eir/interactive/echo-formats.eir.json` - Single input, multiple outputs
+   - `eir/interactive/add-two-ints.eir.json` - Multiple inputs, single output (read integers, perform arithmetic)
+   - `eir/interactive/calculator.eir.json` - Multiple inputs, multiple outputs (compute and display results)
    - Try with `--inputs` flag: `pnpm run-example eir/interactive/add-two-ints --inputs "3,4"`
 
 8. **Study LIR CFG representation:**
