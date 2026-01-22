@@ -856,13 +856,17 @@ export function validateAIR(doc: unknown): ValidationResult<AIRDocument> {
 				nodeIds.add(String(n.id));
 			}
 
-			// Node expression check
-			if (!n.expr) {
-				addError(state, "Node must have 'expr' property", node);
-			} else {
+			// Node expression or blocks check (hybrid support)
+			if (validateArray(n.blocks)) {
+				// Block node - validate CFG structure
+				validateHybridBlockNode(state, n);
+			} else if (n.expr) {
+				// Expression node
 				pushPath(state, "expr");
 				validateExpr(state, n.expr, false);
 				popPath(state);
+			} else {
+				addError(state, "Node must have either 'blocks' array or 'expr' property", node);
 			}
 
 			popPath(state);
@@ -989,13 +993,17 @@ export function validateCIR(doc: unknown): ValidationResult<CIRDocument> {
 				nodeIds.add(String(n.id));
 			}
 
-			// Node expression check (allow CIR)
-			if (!n.expr) {
-				addError(state, "Node must have 'expr' property", node);
-			} else {
+			// Node expression or blocks check (hybrid support, allow CIR)
+			if (validateArray(n.blocks)) {
+				// Block node - validate CFG structure
+				validateHybridBlockNode(state, n);
+			} else if (n.expr) {
+				// Expression node
 				pushPath(state, "expr");
 				validateExpr(state, n.expr, true);
 				popPath(state);
+			} else {
+				addError(state, "Node must have either 'blocks' array or 'expr' property", node);
 			}
 
 			popPath(state);
@@ -1169,15 +1177,19 @@ export function validateEIR(doc: unknown): ValidationResult<import("./types.js")
 			}
 			popPath(state);
 
-			// Validate expr (allow both CIR and EIR expressions)
-			pushPath(state, "expr");
-			if (!validateObject(n.expr)) {
-				addError(state, "Node must have expr object", n.expr);
-			} else {
+			// Validate expr or blocks (hybrid support, allow both CIR and EIR expressions)
+			if (validateArray(n.blocks)) {
+				// Block node - validate CFG structure
+				validateHybridBlockNode(state, n);
+			} else if (validateObject(n.expr)) {
+				// Expression node
+				pushPath(state, "expr");
 				const expr = n.expr as Record<string, unknown>;
 				validateEirExpr(state, expr);
+				popPath(state);
+			} else {
+				addError(state, "Node must have either 'blocks' array or 'expr' property", n);
 			}
-			popPath(state);
 
 			popPath(state);
 		}
@@ -1526,6 +1538,138 @@ export function validateLIR(doc: unknown): ValidationResult<import("./types.js")
 	}
 
 	return validResult(doc as import("./types.js").LIRDocument);
+}
+
+/**
+ * Validate a hybrid block node for AIR/CIR/EIR documents.
+ * This validates the CFG structure (blocks/entry) that can be used
+ * as an alternative to expressions in hybrid documents.
+ */
+function validateHybridBlockNode(state: ValidationState, n: Record<string, unknown>): void {
+	const blocks = n.blocks as unknown[];
+	const blockIds = new Set<string>();
+
+	// Validate each block
+	for (let i = 0; i < blocks.length; i++) {
+		const block = blocks[i];
+		pushPath(state, "blocks[" + String(i) + "]");
+
+		if (!validateObject(block)) {
+			addError(state, "Block must be an object", block);
+			popPath(state);
+			continue;
+		}
+
+		const b = block as Record<string, unknown>;
+
+		// Block ID check
+		if (!validateId(b.id)) {
+			addError(state, "Block must have valid 'id' property", b.id);
+		} else {
+			if (blockIds.has(String(b.id))) {
+				addError(state, "Duplicate block id: " + String(b.id), b.id);
+			}
+			blockIds.add(String(b.id));
+		}
+
+		// Instructions check
+		if (!validateArray(b.instructions)) {
+			addError(state, "Block must have 'instructions' array", b.instructions);
+		} else {
+			const instructions = b.instructions as unknown[];
+			for (let j = 0; j < instructions.length; j++) {
+				pushPath(state, "instructions[" + String(j) + "]");
+				validateHybridInstruction(state, instructions[j]);
+				popPath(state);
+			}
+		}
+
+		// Terminator check
+		if (!b.terminator) {
+			addError(state, "Block must have 'terminator' property", block);
+		} else {
+			pushPath(state, "terminator");
+			validateLirTerminator(state, b.terminator);
+			popPath(state);
+		}
+
+		popPath(state);
+	}
+
+	// Entry check
+	if (!validateId(n.entry)) {
+		pushPath(state, "entry");
+		addError(state, "Block node must have valid 'entry' reference", n.entry);
+		popPath(state);
+	} else {
+		if (!blockIds.has(String(n.entry))) {
+			pushPath(state, "entry");
+			addError(
+				state,
+				"Entry references non-existent block: " + String(n.entry),
+				n.entry,
+			);
+			popPath(state);
+		}
+	}
+}
+
+/**
+ * Validate an instruction in a hybrid block node.
+ * Allows: assign, op, phi (pure instructions for AIR/CIR/EIR hybrid nodes)
+ */
+function validateHybridInstruction(state: ValidationState, ins: unknown): void {
+	if (!validateObject(ins)) {
+		addError(state, "Instruction must be an object", ins);
+		return;
+	}
+
+	const i = ins as Record<string, unknown>;
+	if (!validateString(i.kind)) {
+		addError(state, "Instruction must have 'kind' property", ins);
+		return;
+	}
+
+	const kind = i.kind as string;
+
+	switch (kind) {
+	case "assign":
+		if (!validateId(i.target)) {
+			addError(state, "assign instruction must have valid 'target'", i.target);
+		}
+		if (!i.value) {
+			addError(state, "assign instruction must have 'value' property", ins);
+		}
+		break;
+
+	case "op":
+		if (!validateId(i.target)) {
+			addError(state, "op instruction must have valid 'target'", i.target);
+		}
+		if (!validateId(i.ns)) {
+			addError(state, "op instruction must have valid 'ns'", i.ns);
+		}
+		if (!validateId(i.name)) {
+			addError(state, "op instruction must have valid 'name'", i.name);
+		}
+		if (!validateArray(i.args)) {
+			addError(state, "op instruction must have 'args' array", i.args);
+		}
+		break;
+
+	case "phi":
+		if (!validateId(i.target)) {
+			addError(state, "phi instruction must have valid 'target'", i.target);
+		}
+		if (!validateArray(i.sources)) {
+			addError(state, "phi instruction must have 'sources' array", i.sources);
+		}
+		break;
+
+	default:
+		addError(state, "Unknown or disallowed instruction kind in hybrid block: " + kind, ins);
+		break;
+	}
 }
 
 /**

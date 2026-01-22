@@ -1,0 +1,53 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/cir.schema.json",
+  "version": "1.0.0",
+  "description": "Demonstrates hybrid documents mixing expression nodes and CFG block nodes. Expression nodes define values declaratively, while the block node uses CFG control flow to compute the maximum.",
+  "airDefs": [],
+  "nodes": [
+    {
+      "id": "x",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 42 }
+    },
+    {
+      "id": "y",
+      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 73 }
+    },
+    {
+      "id": "maxValue",
+      "blocks": [
+        {
+          "id": "entry",
+          "instructions": [
+            {
+              "kind": "op",
+              "target": "cond",
+              "ns": "core",
+              "name": "gt",
+              "args": ["x", "y"]
+            }
+          ],
+          "terminator": {
+            "kind": "branch",
+            "cond": "cond",
+            "then": "returnX",
+            "else": "returnY"
+          }
+        },
+        {
+          "id": "returnX",
+          "instructions": [],
+          "terminator": { "kind": "return", "value": "x" }
+        },
+        {
+          "id": "returnY",
+          "instructions": [],
+          "terminator": { "kind": "return", "value": "y" }
+        }
+      ],
+      "entry": "entry"
+    }
+  ],
+  "result": "maxValue",
+  "expected_result": 73,
+  "note": "x=42, y=73. Block node compares x>y (false), so returns y=73."
+}
