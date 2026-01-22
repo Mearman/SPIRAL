@@ -24,6 +24,7 @@ import {
 	typeCheckProgram,
 	registerDef,
 	defaultEffectRegistry,
+	createQueuedEffectRegistry,
 	type AIRDocument,
 	type CIRDocument,
 	type EIRDocument,
@@ -102,6 +103,25 @@ function buildDefs(doc: AIRDocument | CIRDocument | EIRDocument): Defs {
 	return defs;
 }
 
+/**
+ * Read inputs from a fixture file
+ */
+async function readInputsFixture(examplePath: string): Promise<(string | number)[] | null> {
+	try {
+		const dirPath = dirname(examplePath);
+		const baseName = examplePath.split("/").pop()?.replace(/\.(air|cir|eir|lir)\.json$/, "") || "";
+		const fixtureFile = join(dirPath, `${baseName}.inputs.json`);
+		const content = await readFile(fixtureFile, "utf-8");
+		const parsed = JSON.parse(content);
+		if (Array.isArray(parsed)) {
+			return parsed.map((v: any) => (typeof v === "number" ? v : String(v)));
+		}
+	} catch {
+		// File doesn't exist or is invalid JSON
+	}
+	return null;
+}
+
 async function runExampleTests() {
 	const examples = await findExampleFiles(EXAMPLES_DIR);
 	// Merge all registries into one Map
@@ -152,13 +172,19 @@ async function runExampleTests() {
 					}
 
 					// Test 3: Evaluation
-					let evalResult;
+					let evalResult: any;
 					if (ir === "EIR") {
 						const defs = buildDefs(doc as EIRDocument);
-						const eirResult = evaluateEIR(doc as EIRDocument, registry, defs, undefined, { effects: defaultEffectRegistry });
+						// Try to load fixture inputs
+						const inputs = await readInputsFixture(example.fullPath);
+						const effectRegistry = inputs ? createQueuedEffectRegistry(inputs) : defaultEffectRegistry;
+						const eirResult = evaluateEIR(doc as EIRDocument, registry, defs, undefined, { effects: effectRegistry });
 						evalResult = eirResult.result;
 					} else if (ir === "LIR") {
-						const lirResult = evaluateLIR(doc as LIRDocument, registry, defaultEffectRegistry);
+						// Try to load fixture inputs
+						const inputs = await readInputsFixture(example.fullPath);
+						const effectRegistry = inputs ? createQueuedEffectRegistry(inputs) : defaultEffectRegistry;
+						const lirResult = evaluateLIR(doc as LIRDocument, registry, effectRegistry);
 						evalResult = lirResult.result;
 					} else {
 						const defs = buildDefs(doc as AIRDocument | CIRDocument);
