@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/air.schema.json",
+  "version": "1.0.0",
+  "description": "AIR CFG-only example: all nodes are block nodes (no expression nodes).",
+  "airDefs": [],
+  "nodes": [
+    {
+      "id": "result",
+      "blocks": [
+        {
+          "id": "entry",
+          "instructions": [
+            {
+              "kind": "assign",
+              "target": "x",
+              "value": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+            },
+            {
+              "kind": "assign",
+              "target": "one",
+              "value": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+            },
+            {
+              "kind": "op",
+              "target": "incremented",
+              "ns": "core",
+              "name": "add",
+              "args": ["x", "one"]
+            }
+          ],
+          "terminator": { "kind": "return", "value": "incremented" }
+        }
+      ],
+      "entry": "entry"
+    }
+  ],
+  "result": "result",
+  "expected_result": 6,
+  "note": "All nodes are block nodes. Computes 5 + 1 = 6."
+}

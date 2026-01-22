@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "version": "1.0.0",
+  "description": "EIR CFG-only example: all nodes are block nodes (no expression nodes).",
+  "airDefs": [],
+  "nodes": [
+    {
+      "id": "result",
+      "blocks": [
+        {
+          "id": "entry",
+          "instructions": [
+            {
+              "kind": "assign",
+              "target": "x",
+              "value": { "kind": "lit", "type": { "kind": "int" }, "value": 7 }
+            },
+            {
+              "kind": "op",
+              "target": "squared",
+              "ns": "core",
+              "name": "mul",
+              "args": ["x", "x"]
+            }
+          ],
+          "terminator": { "kind": "return", "value": "squared" }
+        }
+      ],
+      "entry": "entry"
+    }
+  ],
+  "result": "result",
+  "expected_result": 49,
+  "note": "All nodes are block nodes. Computes 7 * 7 = 49."
+}
