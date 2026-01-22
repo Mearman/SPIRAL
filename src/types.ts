@@ -823,8 +823,15 @@ export function typeEqual(a: Type, b: Type): boolean {
 	case "fn": {
 		const fnB = b as FnType;
 		if (a.params.length !== fnB.params.length) return false;
-		if (!a.params.every((p, i) => typeEqual(p, fnB.params[i]!))) {
-			return false;
+		for (let i = 0; i < a.params.length; i++) {
+			const paramA = a.params[i];
+			const paramB = fnB.params[i];
+			if (paramA === undefined || paramB === undefined) {
+				return false;
+			}
+			if (!typeEqual(paramA, paramB)) {
+				return false;
+			}
 		}
 		return typeEqual(a.returns, fnB.returns);
 	}
