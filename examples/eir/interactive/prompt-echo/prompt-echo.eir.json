@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "version": "1.0.0",
+  "description": "Interactive example: reads a line of input and echoes it back to the output. Demonstrates readLine and print effects.",
+  "airDefs": [],
+  "nodes": [
+    {
+      "id": "readUserInput",
+      "expr": {
+        "kind": "effect",
+        "op": "readLine",
+        "args": []
+      }
+    },
+    {
+      "id": "echoOutput",
+      "expr": {
+        "kind": "effect",
+        "op": "print",
+        "args": [
+          "readUserInput"
+        ]
+      }
+    }
+  ],
+  "result": "echoOutput",
+  "note": "Interactive example: reads a line of text from input and echoes it to output."
+}

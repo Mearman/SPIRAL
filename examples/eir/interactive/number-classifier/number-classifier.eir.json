@@ -1,0 +1,160 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "version": "1.0.0",
+  "description": "Interactive example: reads an integer, classifies it as zero, positive, or negative, and prints appropriate output. Demonstrates nested conditional I/O pattern with readInt and print effects.",
+  "airDefs": [],
+  "nodes": [
+    {
+      "id": "readNumber",
+      "expr": {
+        "kind": "effect",
+        "op": "readInt",
+        "args": []
+      }
+    },
+    {
+      "id": "zero",
+      "expr": {
+        "kind": "lit",
+        "type": {"kind": "int"},
+        "value": 0
+      }
+    },
+    {
+      "id": "isZero",
+      "expr": {
+        "kind": "call",
+        "ns": "core",
+        "name": "eq",
+        "args": ["readNumber", "zero"]
+      }
+    },
+    {
+      "id": "msgZero",
+      "expr": {
+        "kind": "lit",
+        "type": {"kind": "string"},
+        "value": "Zero"
+      }
+    },
+    {
+      "id": "printZero",
+      "expr": {
+        "kind": "effect",
+        "op": "print",
+        "args": ["msgZero"]
+      }
+    },
+    {
+      "id": "isPositive",
+      "expr": {
+        "kind": "call",
+        "ns": "core",
+        "name": "gt",
+        "args": ["readNumber", "zero"]
+      }
+    },
+    {
+      "id": "msgPositive",
+      "expr": {
+        "kind": "lit",
+        "type": {"kind": "string"},
+        "value": "Positive: "
+      }
+    },
+    {
+      "id": "printPos",
+      "expr": {
+        "kind": "effect",
+        "op": "print",
+        "args": ["msgPositive"]
+      }
+    },
+    {
+      "id": "printPosValue",
+      "expr": {
+        "kind": "effect",
+        "op": "printInt",
+        "args": ["readNumber"]
+      }
+    },
+    {
+      "id": "positiveBranch",
+      "expr": {
+        "kind": "seq",
+        "first": "printPos",
+        "then": "printPosValue"
+      }
+    },
+    {
+      "id": "msgNegative",
+      "expr": {
+        "kind": "lit",
+        "type": {"kind": "string"},
+        "value": "Negative: "
+      }
+    },
+    {
+      "id": "printNeg",
+      "expr": {
+        "kind": "effect",
+        "op": "print",
+        "args": ["msgNegative"]
+      }
+    },
+    {
+      "id": "minusOne",
+      "expr": {
+        "kind": "lit",
+        "type": {"kind": "int"},
+        "value": -1
+      }
+    },
+    {
+      "id": "absolute",
+      "expr": {
+        "kind": "call",
+        "ns": "core",
+        "name": "mul",
+        "args": ["readNumber", "minusOne"]
+      }
+    },
+    {
+      "id": "printNegValue",
+      "expr": {
+        "kind": "effect",
+        "op": "printInt",
+        "args": ["absolute"]
+      }
+    },
+    {
+      "id": "negativeBranch",
+      "expr": {
+        "kind": "seq",
+        "first": "printNeg",
+        "then": "printNegValue"
+      }
+    },
+    {
+      "id": "innerIf",
+      "expr": {
+        "kind": "if",
+        "cond": "isPositive",
+        "then": "positiveBranch",
+        "else": "negativeBranch"
+      }
+    },
+    {
+      "id": "outerIf",
+      "expr": {
+        "kind": "if",
+        "cond": "isZero",
+        "then": "printZero",
+        "else": "innerIf"
+      }
+    }
+  ],
+  "result": "outerIf",
+  "expected_result": null,
+  "note": "Number classifier with nested conditionals: reads integer, first checks if zero, then checks if positive/negative. Different output for each case."
+}

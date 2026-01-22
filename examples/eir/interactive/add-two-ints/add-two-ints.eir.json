@@ -1,0 +1,49 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "version": "1.0.0",
+  "description": "Interactive example: reads two integers from input, adds them together, and prints the result. Demonstrates readInt and printInt effects.",
+  "airDefs": [],
+  "nodes": [
+    {
+      "id": "readFirstInt",
+      "expr": {
+        "kind": "effect",
+        "op": "readInt",
+        "args": []
+      }
+    },
+    {
+      "id": "readSecondInt",
+      "expr": {
+        "kind": "effect",
+        "op": "readInt",
+        "args": []
+      }
+    },
+    {
+      "id": "sum",
+      "expr": {
+        "kind": "call",
+        "ns": "core",
+        "name": "add",
+        "args": [
+          "readFirstInt",
+          "readSecondInt"
+        ]
+      }
+    },
+    {
+      "id": "printSum",
+      "expr": {
+        "kind": "effect",
+        "op": "printInt",
+        "args": [
+          "sum"
+        ]
+      }
+    }
+  ],
+  "result": "printSum",
+  "expected_result": 7,
+  "note": "Interactive example: reads two integers and outputs their sum. Uses readInt to read values and printInt to display the result."
+}
