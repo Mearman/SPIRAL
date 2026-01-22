@@ -2,7 +2,7 @@
 // Effect registry and built-in effects for EIR
 
 import type { Type, Value } from "./types.js";
-import { intType, stringType, voidType, intVal, stringVal } from "./types.js";
+import { intType, stringType, voidType, intVal, stringVal, errorVal, ErrorCodes } from "./types.js";
 
 //==============================================================================
 // Effect Operation Signature
@@ -68,28 +68,52 @@ export const ioEffects: EffectOp[] = [
 		params: [stringType],
 		returns: voidType,
 		pure: false,
-		fn: (..._args: Value[]) => ({ kind: "void" }),
+		fn: (...args: Value[]) => {
+			// Validate expected args (mock implementation would print args[0])
+			if (args.length < 1) {
+				return errorVal(ErrorCodes.ArityError, "print requires 1 argument");
+			}
+			return { kind: "void" };
+		},
 	},
 	{
 		name: "printInt",
 		params: [intType],
 		returns: voidType,
 		pure: false,
-		fn: (..._args: Value[]) => ({ kind: "void" }),
+		fn: (...args: Value[]) => {
+			// Validate expected args (mock implementation would print args[0])
+			if (args.length < 1) {
+				return errorVal(ErrorCodes.ArityError, "printInt requires 1 argument");
+			}
+			return { kind: "void" };
+		},
 	},
 	{
 		name: "readLine",
 		params: [],
 		returns: stringType,
 		pure: false,
-		fn: (..._args: Value[]) => stringVal(""), // runner supplies actual value
+		fn: (...args: Value[]) => {
+			// Validate no args expected
+			if (args.length > 0) {
+				return errorVal(ErrorCodes.ArityError, "readLine accepts no arguments");
+			}
+			return stringVal(""); // runner supplies actual value
+		},
 	},
 	{
 		name: "readInt",
 		params: [],
 		returns: intType,
 		pure: false,
-		fn: (..._args: Value[]) => intVal(0), // runner supplies actual value
+		fn: (...args: Value[]) => {
+			// Validate no args expected
+			if (args.length > 0) {
+				return errorVal(ErrorCodes.ArityError, "readInt accepts no arguments");
+			}
+			return intVal(0); // runner supplies actual value
+		},
 	},
 ];
 
@@ -102,7 +126,11 @@ export const stateEffects: EffectOp[] = [
 		params: [],
 		returns: stringType,
 		pure: false,
-		fn: (..._args: Value[]) => {
+		fn: (...args: Value[]) => {
+			// Validate no args expected
+			if (args.length > 0) {
+				return errorVal(ErrorCodes.ArityError, "getState accepts no arguments");
+			}
 			// Return a mock state value
 			return { kind: "string", value: "mock-state" };
 		},
@@ -112,8 +140,12 @@ export const stateEffects: EffectOp[] = [
 		params: [stringType],
 		returns: voidType,
 		pure: false,
-		fn: (..._args: Value[]) => {
-			// In a real implementation, this would update state
+		fn: (...args: Value[]) => {
+			// Validate expected args
+			if (args.length < 1) {
+				return errorVal(ErrorCodes.ArityError, "setState requires 1 argument");
+			}
+			// In a real implementation, this would update state with args[0]
 			return { kind: "void" };
 		},
 	},
@@ -153,7 +185,13 @@ export function createQueuedEffectRegistry(inputs: (string | number)[]): EffectR
 		params: [stringType],
 		returns: voidType,
 		pure: false,
-		fn: (..._args: Value[]) => ({ kind: "void" }),
+		fn: (...args: Value[]) => {
+			// Validate expected args
+			if (args.length < 1) {
+				return errorVal(ErrorCodes.ArityError, "print requires 1 argument");
+			}
+			return { kind: "void" };
+		},
 	});
 
 	// Add printInt effect (unchanged)
@@ -162,7 +200,13 @@ export function createQueuedEffectRegistry(inputs: (string | number)[]): EffectR
 		params: [intType],
 		returns: voidType,
 		pure: false,
-		fn: (..._args: Value[]) => ({ kind: "void" }),
+		fn: (...args: Value[]) => {
+			// Validate expected args
+			if (args.length < 1) {
+				return errorVal(ErrorCodes.ArityError, "printInt requires 1 argument");
+			}
+			return { kind: "void" };
+		},
 	});
 
 	// Add readLine effect with queue
@@ -171,7 +215,11 @@ export function createQueuedEffectRegistry(inputs: (string | number)[]): EffectR
 		params: [],
 		returns: stringType,
 		pure: false,
-		fn: (..._args: Value[]) => {
+		fn: (...args: Value[]) => {
+			// Validate no args expected
+			if (args.length > 0) {
+				return errorVal(ErrorCodes.ArityError, "readLine accepts no arguments");
+			}
 			if (inputQueue.length === 0) {
 				return stringVal("");
 			}
@@ -186,7 +234,11 @@ export function createQueuedEffectRegistry(inputs: (string | number)[]): EffectR
 		params: [],
 		returns: intType,
 		pure: false,
-		fn: (..._args: Value[]) => {
+		fn: (...args: Value[]) => {
+			// Validate no args expected
+			if (args.length > 0) {
+				return errorVal(ErrorCodes.ArityError, "readInt accepts no arguments");
+			}
 			if (inputQueue.length === 0) {
 				return intVal(0);
 			}
