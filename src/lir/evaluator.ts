@@ -73,8 +73,21 @@ export function evaluateLIR(
 		maxSteps: options?.maxSteps ?? 10000,
 	};
 
+	// Handle legacy LIR documents (blocks/entry) vs new structure (nodes/result)
+	const blocks = doc.blocks;
+	const entry = doc.entry;
+	if (!blocks || !entry) {
+		return {
+			result: errorVal(
+				ErrorCodes.ValidationError,
+				"LIR document missing blocks or entry field",
+			),
+			state,
+		};
+	}
+
 	// Validate entry block exists
-	const entryBlock = doc.blocks.find((b) => b.id === doc.entry);
+	const entryBlock = blocks.find((b) => b.id === entry);
 	if (!entryBlock) {
 		return {
 			result: errorVal(
@@ -108,7 +121,7 @@ export function evaluateLIR(
 		}
 
 		// Find current block
-		const currentBlock = doc.blocks.find((b) => b.id === currentBlockId);
+		const currentBlock = blocks.find((b) => b.id === currentBlockId);
 		if (!currentBlock) {
 			return {
 				result: errorVal(
