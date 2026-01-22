@@ -99,18 +99,8 @@ export default [
 			},
 		},
 		rules: {
-			// Allow underscore-prefixed unused vars (convention for intentionally unused)
-			"@typescript-eslint/no-unused-vars": [
-				"error",
-				{ argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
-			],
+			"@typescript-eslint/no-unused-vars": "error",
 			"@typescript-eslint/no-explicit-any": "error",
-			// Allow type assertions - needed for dynamic type refinement in the evaluator
-			"@typescript-eslint/consistent-type-assertions": "off",
-			// Allow case declarations without blocks (common pattern)
-			"no-case-declarations": "off",
-			// Allow truthy conditionals (often intentional guards)
-			"@typescript-eslint/no-unnecessary-condition": "off",
 			// Allow number in template literals
 			"@typescript-eslint/restrict-template-expressions": [
 				"error",
@@ -121,14 +111,8 @@ export default [
 				"error",
 				{ allowNumberAndString: true },
 			],
-			// Allow || for default values (nullish coalescing not always better)
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
-			// Allow non-null assertions (code often validates before use)
-			"@typescript-eslint/no-non-null-assertion": "off",
-			// Allow empty interfaces (used for documentation/extension)
-			"@typescript-eslint/no-empty-object-type": "off",
-			// Allow traditional for loops
-			"@typescript-eslint/prefer-for-of": "off",
+			// Forbid non-null assertions (use proper type guards instead)
+			"@typescript-eslint/no-non-null-assertion": "error",
 			indent: ["error", "tab"],
 			quotes: ["error", "double", { avoidEscape: true }],
 		},
@@ -142,10 +126,7 @@ export default [
 	{
 		files: ["test/**/*.ts", "examples/**/*.ts"],
 		rules: {
-			"@typescript-eslint/no-unused-vars": [
-				"error",
-				{ argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
-			],
+			"@typescript-eslint/no-unused-vars": "error",
 			"@typescript-eslint/no-explicit-any": "off", // Tests often need any
 			"no-case-declarations": "off",
 			indent: ["error", "tab"],
@@ -167,13 +148,15 @@ export default [
 		},
 	},
 
-	// Markdown - scope to .md files only
+	// Markdown - scope to .md files only, but exclude .tmp
 	...markdown.configs.recommended.map((config) => ({
 		...config,
 		files: ["**/*.md"],
+		ignores: [".tmp/**/*.md"],
 	})),
 	{
 		files: ["**/*.md"],
+		ignores: [".tmp/**/*.md"],
 		rules: {
 			// Allow code blocks without language (many are pseudo-code or math notation)
 			"markdown/fenced-code-language": "off",
