@@ -263,7 +263,7 @@ describe("AsyncEvaluator", () => {
 			const result = await evaluator.evaluate(expr as any, env as any);
 
 			assert.equal(result.kind, "closure");
-			assert.deepEqual((result as { kind: "closure"; params: string[] }).params, ["x"]);
+			assert.deepEqual((result as unknown as { kind: "closure"; params: string[] }).params, ["x"]);
 		});
 	});
 
