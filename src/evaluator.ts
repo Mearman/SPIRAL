@@ -51,6 +51,7 @@ import {
 	optionVal,
 	setVal,
 	stringVal,
+	undefinedVal,
 } from "./types.js";
 
 //==============================================================================
@@ -778,7 +779,7 @@ function evalExprWithNodeMap(
 ): Value {
 	// Handle different expression kinds
 	if (expr.kind === "lambda") {
-		const lambdaExpr = expr as { kind: "lambda"; params: string[]; body: string; type: Type };
+		const lambdaExpr = expr as { kind: "lambda"; params: (string | { name: string; optional?: boolean; default?: Expr })[]; body: string; type: Type };
 		const bodyNode = nodeMap.get(lambdaExpr.body);
 		if (!bodyNode) {
 			return errorVal(ErrorCodes.DomainError, "Lambda body node not found: " + lambdaExpr.body);
@@ -787,7 +788,11 @@ function evalExprWithNodeMap(
 			// Block node as lambda body - not currently supported
 			return errorVal(ErrorCodes.DomainError, "Block nodes as lambda bodies are not supported");
 		}
-		return closureVal(lambdaExpr.params, bodyNode.expr, env);
+		// Convert params to LambdaParam format
+		const lambdaParams: import("./types.js").LambdaParam[] = lambdaExpr.params.map(p =>
+			typeof p === "string" ? { name: p } : p
+		);
+		return closureVal(lambdaParams, bodyNode.expr, env);
 	}
 
 	if (expr.kind === "callExpr") {
@@ -845,18 +850,65 @@ function evalExprWithNodeMap(
 			argValues.push(argValue);
 		}
 
-		// Check arity
-		if (fnValue.params.length !== argValues.length) {
-			return errorVal(ErrorCodes.ArityError, "Arity error in callExpr");
+		// Check arity with optional parameter support
+		// Calculate min arity (required params) and max arity (all params)
+		let minArity = 0;
+		for (const param of fnValue.params) {
+			if (!param.optional) {
+				minArity++;
+			}
+		}
+		const maxArity = fnValue.params.length;
+
+		if (argValues.length < minArity) {
+			return errorVal(
+				ErrorCodes.ArityError,
+				`Arity error: expected at least ${minArity} args, got ${argValues.length}`,
+			);
+		}
+		if (argValues.length > maxArity) {
+			return errorVal(
+				ErrorCodes.ArityError,
+				`Arity error: expected at most ${maxArity} args, got ${argValues.length}`,
+			);
 		}
 
 		// Extend environment with parameters
 		let callEnv = fnValue.env;
 		for (let i = 0; i < fnValue.params.length; i++) {
-			const paramName = fnValue.params[i];
+			const param = fnValue.params[i]!;
 			const argValue = argValues[i];
-			if (paramName !== undefined && argValue !== undefined) {
-				callEnv = extendValueEnv(callEnv, paramName, argValue);
+
+			if (argValue !== undefined) {
+				// Provided argument - use it
+				callEnv = extendValueEnv(callEnv, param.name, argValue);
+			} else if (param.optional) {
+				// Omitted optional param - check for default or use undefined
+				if (param.default !== undefined) {
+					// Evaluate default expression in closure's defining environment
+					const defaultVal = evalExprWithNodeMap(
+						registry,
+						defs,
+						param.default,
+						nodeMap,
+						nodeValues,
+						fnValue.env,
+						options,
+					);
+					if (isError(defaultVal)) {
+						return defaultVal;
+					}
+					callEnv = extendValueEnv(callEnv, param.name, defaultVal);
+				} else {
+					// Optional without default = undefined
+					callEnv = extendValueEnv(callEnv, param.name, undefinedVal());
+				}
+			} else {
+				// Required param not provided
+				return errorVal(
+					ErrorCodes.ArityError,
+					`Missing required parameter: ${param.name}`,
+				);
 			}
 		}
 
@@ -1839,7 +1891,11 @@ function evalNode(
 				env,
 			};
 		}
-		const value = closureVal(expr.params, bodyNode.expr, env);
+		// Convert params to LambdaParam format
+		const lambdaParams: import("./types.js").LambdaParam[] = expr.params.map(p =>
+			typeof p === "string" ? { name: p } : p
+		);
+		const value = closureVal(lambdaParams, bodyNode.expr, env);
 		return { value, env };
 	}
 
@@ -1903,32 +1959,59 @@ function evalNode(
 			};
 		}
 
-		// Handle partial application (currying)
-		if (argValues.length < fnValue.params.length) {
-			// Create a new closure with remaining parameters
-			let partialEnv = fnValue.env;
-			for (let i = 0; i < argValues.length; i++) {
-				const paramName = fnValue.params[i];
-				const argValue = argValues[i];
-				if (paramName !== undefined && argValue !== undefined) {
-					partialEnv = extendValueEnv(partialEnv, paramName, argValue);
-				}
+		// Handle partial application (currying) with optional parameter support
+		// Calculate min arity
+		let minArity = 0;
+		for (const param of fnValue.params) {
+			if (!param.optional) {
+				minArity++;
 			}
-			const remainingParams = fnValue.params.slice(argValues.length);
+		}
+
+		// Only do partial application if we have FEWER args than required (min arity)
+		// If we have at least min arity, we should fill in defaults and do full application
+		if (argValues.length < minArity) {
 			return {
-				value: closureVal(remainingParams, fnValue.body, partialEnv),
+				value: errorVal(
+					ErrorCodes.ArityError,
+					`Arity error: expected at least ${minArity} args, got ${argValues.length}`,
+				),
 				env,
 			};
 		}
 
-		// Full application - extend closure environment with arguments
+		// We have at least the min arity - do full application with defaults for omitted optional params
 		let callEnv = fnValue.env;
 		for (let i = 0; i < fnValue.params.length; i++) {
-			const paramName = fnValue.params[i];
+			const param = fnValue.params[i]!;
 			const argValue = argValues[i];
-			if (paramName !== undefined && argValue !== undefined) {
-				callEnv = extendValueEnv(callEnv, paramName, argValue);
+
+			if (argValue !== undefined) {
+				// Provided argument - use it
+				callEnv = extendValueEnv(callEnv, param.name, argValue);
+			} else if (param.optional) {
+				// Omitted optional param - use default or undefined
+				if (param.default !== undefined) {
+					// Evaluate default expression in closure's defining environment
+					const defaultVal = evalExprWithNodeMap(
+						evaluator.registry,
+						evaluator.defs,
+						param.default,
+						nodeMap,
+						nodeValues,
+						fnValue.env,
+						options,
+					);
+					if (isError(defaultVal)) {
+						return { value: defaultVal, env };
+					}
+					callEnv = extendValueEnv(callEnv, param.name, defaultVal);
+				} else {
+					// Optional without default = undefined
+					callEnv = extendValueEnv(callEnv, param.name, undefinedVal());
+				}
 			}
+			// else: required param not provided - should have been caught by arity check above
 		}
 
 		// Evaluate the body
@@ -2052,7 +2135,7 @@ function evalNode(
 		// Create the fixed point by unrolling: fix(f) = f(fix(f))
 		// For factorial: fix(λrec.λn.body) = (λrec.λn.body)(fix(λrec.λn.body))
 		// The result is λn.body with rec bound to the fixed point
-		const param = fnValue.params[0]!;
+		const param = fnValue.params[0]!.name;
 
 		// Create a placeholder for the fixed point (will be replaced)
 		// We need to create a self-referential closure
@@ -2142,6 +2225,7 @@ const EIR_EXPRESSION_KINDS = [
 	"effect",
 	"refCell",
 	"deref",
+	"try",
 ] as const;
 
 //==============================================================================
@@ -2212,10 +2296,8 @@ export function evaluateEIR(
 			state.env = result.env;
 		}
 
-		// Check for errors - but continue on UnboundIdentifier as it might be resolved later
-		if (isError(result.value) && result.value.code !== ErrorCodes.UnboundIdentifier) {
-			return { result: result.value, state };
-		}
+		// Don't return early on errors - let try/catch expressions handle them
+		// Continue evaluating all nodes so that try expressions can catch errors
 	}
 
 	// Get the result node's value
@@ -2944,6 +3026,111 @@ function evalEIRExpr(
 				refCells: state.refCells,
 			};
 		}
+	}
+
+	case "try": {
+		const e = expr as unknown as {
+			tryBody: string;
+			catchParam: string;
+			catchBody: string;
+			fallback?: string;
+		};
+
+		// Check if tryBody was already evaluated and has a value (or error) in nodeValues
+		const tryNode = nodeMap.get(e.tryBody);
+		if (!tryNode) {
+			return {
+				value: errorVal(ErrorCodes.ValidationError, "Try body node not found: " + e.tryBody),
+				env: state.env,
+				refCells: state.refCells,
+			};
+		}
+
+		// Try to get pre-evaluated value from nodeValues
+		let tryValue = nodeValues.get(e.tryBody);
+		let tryRefCells = state.refCells;
+
+		// If not in nodeValues, evaluate it now
+		if (tryValue === undefined) {
+			const tryResult = evalEIRNode(
+				new Evaluator(registry, defs),
+				tryNode,
+				nodeMap,
+				nodeValues,
+				state,
+				registry,
+				effectRegistry,
+				defs,
+				options,
+			);
+			tryValue = tryResult.value;
+			tryRefCells = tryResult.refCells ?? state.refCells;
+			// Store the result for future reference
+			nodeValues.set(e.tryBody, tryValue);
+		}
+
+		// Check if error occurred
+		if (isError(tryValue)) {
+			// ERROR PATH - bind error to catchParam and evaluate catchBody
+			const catchEnv = extendValueEnv(state.env, e.catchParam, tryValue);
+			const catchState: EvalState = {
+				...state,
+				env: catchEnv,
+				refCells: tryRefCells,
+			};
+
+			const catchNode = nodeMap.get(e.catchBody);
+			if (!catchNode) {
+				return {
+					value: errorVal(ErrorCodes.ValidationError, "Catch body node not found: " + e.catchBody),
+					env: state.env,
+					refCells: state.refCells,
+				};
+			}
+
+			return evalEIRNode(
+				new Evaluator(registry, defs),
+				catchNode,
+				nodeMap,
+				nodeValues,
+				catchState,
+				registry,
+				effectRegistry,
+				defs,
+				options,
+			);
+		}
+
+		// SUCCESS PATH
+		if (e.fallback) {
+			// Has fallback - evaluate it
+			const fallbackNode = nodeMap.get(e.fallback);
+			if (!fallbackNode) {
+				return {
+					value: errorVal(ErrorCodes.ValidationError, "Fallback node not found: " + e.fallback),
+					env: state.env,
+					refCells: state.refCells,
+				};
+			}
+
+			// Update state from try evaluation
+			state.refCells = tryRefCells;
+
+			return evalEIRNode(
+				new Evaluator(registry, defs),
+				fallbackNode,
+				nodeMap,
+				nodeValues,
+				state,
+				registry,
+				effectRegistry,
+				defs,
+				options,
+			);
+		}
+
+		// No fallback - return tryBody result
+		return { value: tryValue, env: state.env, refCells: tryRefCells };
 	}
 
 	case "refCell": {
