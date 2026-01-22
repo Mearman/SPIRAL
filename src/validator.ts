@@ -400,8 +400,33 @@ function validateExpr(
 			return false;
 		}
 		for (const param of e.params as unknown[]) {
-			if (!validateId(param)) {
-				addError(state, "lambda params must be valid identifiers", param);
+			// Support both string identifiers and lambdaParam objects
+			if (typeof param === "string") {
+				if (!validateId(param)) {
+					addError(state, "lambda param must be a valid identifier", param);
+					return false;
+				}
+			} else if (param && typeof param === "object") {
+				const lambdaParam = param as { name?: string; optional?: boolean; default?: unknown };
+				if (!lambdaParam.name || !validateId(lambdaParam.name)) {
+					addError(state, "lambda param must have a valid 'name' identifier", param);
+					return false;
+				}
+				if (lambdaParam.optional !== undefined && typeof lambdaParam.optional !== "boolean") {
+					addError(state, "lambda param 'optional' must be a boolean", param);
+					return false;
+				}
+				if (lambdaParam.default !== undefined) {
+					const paramsArray = e.params as unknown[];
+					pushPath(state, "params[" + paramsArray.indexOf(param) + "].default");
+					const defaultValid = validateExpr(state, lambdaParam.default as Expr, false);
+					popPath(state);
+					if (!defaultValid) {
+						return false;
+					}
+				}
+			} else {
+				addError(state, "lambda param must be a string or object", param);
 				return false;
 			}
 		}
@@ -1316,6 +1341,21 @@ function validateEirExpr(state: ValidationState, expr: Record<string, unknown>):
 		}
 		break;
 
+	case "try":
+		if (!validateId(expr.tryBody)) {
+			addError(state, "try expression must have valid 'tryBody' identifier", expr);
+		}
+		if (!validateId(expr.catchParam)) {
+			addError(state, "try expression must have valid 'catchParam' identifier", expr);
+		}
+		if (!validateId(expr.catchBody)) {
+			addError(state, "try expression must have valid 'catchBody' identifier", expr);
+		}
+		if (expr.fallback !== undefined && !validateId(expr.fallback)) {
+			addError(state, "try expression fallback must be a valid identifier", expr);
+		}
+		break;
+
 	case "refCell":
 		if (!validateId(expr.target)) {
 			addError(state, "refCell expression must have valid 'target' identifier", expr);
@@ -1405,6 +1445,14 @@ function validateEirNodeReferences(
 			for (let i = 0; i < (expr.args as unknown[]).length; i++) {
 				checkRef((expr.args as unknown[])[i], "effect.args[" + String(i) + "]");
 			}
+		}
+		break;
+
+	case "try":
+		checkRef(expr.tryBody, "try.tryBody");
+		checkRef(expr.catchBody, "try.catchBody");
+		if (expr.fallback !== undefined) {
+			checkRef(expr.fallback, "try.fallback");
 		}
 		break;
 
