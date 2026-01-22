@@ -2,196 +2,202 @@
   "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "LIR representation of personalized-greeter: demonstrates mixed-cadence I/O pattern in straight-line form with print effect instructions.",
-  "blocks": [
+  "nodes": [
     {
-      "id": "entry",
-      "instructions": [
+      "id": "main",
+      "blocks": [
         {
-          "kind": "assign",
-          "target": "welcome_msg",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "string"
+          "id": "entry",
+          "instructions": [
+            {
+              "kind": "assign",
+              "target": "welcome_msg",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "string"
+                },
+                "value": "Welcome!"
+              }
             },
-            "value": "Welcome!"
-          }
-        },
-        {
-          "kind": "effect",
-          "target": "out1",
-          "op": "print",
-          "args": [
-            "welcome_msg"
-          ]
-        },
-        {
-          "kind": "assign",
-          "target": "name_prompt",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "string"
+            {
+              "kind": "effect",
+              "target": "out1",
+              "op": "print",
+              "args": [
+                "welcome_msg"
+              ]
             },
-            "value": "What is your name?"
-          }
-        },
-        {
-          "kind": "effect",
-          "target": "out2",
-          "op": "print",
-          "args": [
-            "name_prompt"
-          ]
-        },
-        {
-          "kind": "assign",
-          "target": "name",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "string"
+            {
+              "kind": "assign",
+              "target": "name_prompt",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "string"
+                },
+                "value": "What is your name?"
+              }
             },
-            "value": "Alice"
-          }
-        },
-        {
-          "kind": "assign",
-          "target": "hello_prefix",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "string"
+            {
+              "kind": "effect",
+              "target": "out2",
+              "op": "print",
+              "args": [
+                "name_prompt"
+              ]
             },
-            "value": "Hello, "
-          }
-        },
-        {
-          "kind": "effect",
-          "target": "out3",
-          "op": "print",
-          "args": [
-            "hello_prefix"
-          ]
-        },
-        {
-          "kind": "effect",
-          "target": "out4",
-          "op": "print",
-          "args": [
-            "name"
-          ]
-        },
-        {
-          "kind": "assign",
-          "target": "age_prompt",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "string"
+            {
+              "kind": "assign",
+              "target": "name",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "string"
+                },
+                "value": "Alice"
+              }
             },
-            "value": "What is your age?"
-          }
-        },
-        {
-          "kind": "effect",
-          "target": "out5",
-          "op": "print",
-          "args": [
-            "age_prompt"
-          ]
-        },
-        {
-          "kind": "assign",
-          "target": "age",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "int"
+            {
+              "kind": "assign",
+              "target": "hello_prefix",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "string"
+                },
+                "value": "Hello, "
+              }
             },
-            "value": 25
-          }
-        },
-        {
-          "kind": "assign",
-          "target": "age_prefix",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "string"
+            {
+              "kind": "effect",
+              "target": "out3",
+              "op": "print",
+              "args": [
+                "hello_prefix"
+              ]
             },
-            "value": "You are "
-          }
-        },
-        {
-          "kind": "effect",
-          "target": "out6",
-          "op": "print",
-          "args": [
-            "age_prefix"
-          ]
-        },
-        {
-          "kind": "effect",
-          "target": "out7",
-          "op": "printInt",
-          "args": [
-            "age"
-          ]
-        },
-        {
-          "kind": "assign",
-          "target": "years_msg",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "string"
+            {
+              "kind": "effect",
+              "target": "out4",
+              "op": "print",
+              "args": [
+                "name"
+              ]
             },
-            "value": "years old."
-          }
-        },
-        {
-          "kind": "effect",
-          "target": "out8",
-          "op": "print",
-          "args": [
-            "years_msg"
-          ]
-        },
-        {
-          "kind": "assign",
-          "target": "goodbye_msg",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "string"
+            {
+              "kind": "assign",
+              "target": "age_prompt",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "string"
+                },
+                "value": "What is your age?"
+              }
             },
-            "value": "Goodbye, "
+            {
+              "kind": "effect",
+              "target": "out5",
+              "op": "print",
+              "args": [
+                "age_prompt"
+              ]
+            },
+            {
+              "kind": "assign",
+              "target": "age",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "int"
+                },
+                "value": 25
+              }
+            },
+            {
+              "kind": "assign",
+              "target": "age_prefix",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "string"
+                },
+                "value": "You are "
+              }
+            },
+            {
+              "kind": "effect",
+              "target": "out6",
+              "op": "print",
+              "args": [
+                "age_prefix"
+              ]
+            },
+            {
+              "kind": "effect",
+              "target": "out7",
+              "op": "printInt",
+              "args": [
+                "age"
+              ]
+            },
+            {
+              "kind": "assign",
+              "target": "years_msg",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "string"
+                },
+                "value": "years old."
+              }
+            },
+            {
+              "kind": "effect",
+              "target": "out8",
+              "op": "print",
+              "args": [
+                "years_msg"
+              ]
+            },
+            {
+              "kind": "assign",
+              "target": "goodbye_msg",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "string"
+                },
+                "value": "Goodbye, "
+              }
+            },
+            {
+              "kind": "effect",
+              "target": "out9",
+              "op": "print",
+              "args": [
+                "goodbye_msg"
+              ]
+            },
+            {
+              "kind": "effect",
+              "target": "out10",
+              "op": "print",
+              "args": [
+                "name"
+              ]
+            }
+          ],
+          "terminator": {
+            "kind": "return"
           }
-        },
-        {
-          "kind": "effect",
-          "target": "out9",
-          "op": "print",
-          "args": [
-            "goodbye_msg"
-          ]
-        },
-        {
-          "kind": "effect",
-          "target": "out10",
-          "op": "print",
-          "args": [
-            "name"
-          ]
         }
       ],
-      "terminator": {
-        "kind": "return"
-      }
+      "entry": "entry"
     }
   ],
-  "entry": "entry",
+  "result": "main",
   "expected_output": [
     "Welcome!",
     "What is your name?",

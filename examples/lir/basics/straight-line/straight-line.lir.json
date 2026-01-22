@@ -2,71 +2,77 @@
   "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates straight-line code execution in LIR. Instructions execute sequentially within a basic block, ending with a return terminator.",
-  "blocks": [
+  "nodes": [
     {
-      "id": "entry",
-      "instructions": [
+      "id": "main",
+      "blocks": [
         {
-          "kind": "assign",
-          "target": "x",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "int"
+          "id": "entry",
+          "instructions": [
+            {
+              "kind": "assign",
+              "target": "x",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "int"
+                },
+                "value": 10
+              }
             },
-            "value": 10
-          }
-        },
-        {
-          "kind": "assign",
-          "target": "y",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "int"
+            {
+              "kind": "assign",
+              "target": "y",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "int"
+                },
+                "value": 20
+              }
             },
-            "value": 20
-          }
-        },
-        {
-          "kind": "op",
-          "target": "sum",
-          "ns": "core",
-          "name": "add",
-          "args": [
-            "x",
-            "y"
-          ]
-        },
-        {
-          "kind": "assign",
-          "target": "z",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "int"
+            {
+              "kind": "op",
+              "target": "sum",
+              "ns": "core",
+              "name": "add",
+              "args": [
+                "x",
+                "y"
+              ]
             },
-            "value": 5
+            {
+              "kind": "assign",
+              "target": "z",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "int"
+                },
+                "value": 5
+              }
+            },
+            {
+              "kind": "op",
+              "target": "result",
+              "ns": "core",
+              "name": "add",
+              "args": [
+                "sum",
+                "z"
+              ]
+            }
+          ],
+          "terminator": {
+            "kind": "return",
+            "value": "result"
           }
-        },
-        {
-          "kind": "op",
-          "target": "result",
-          "ns": "core",
-          "name": "add",
-          "args": [
-            "sum",
-            "z"
-          ]
         }
       ],
-      "terminator": {
-        "kind": "return",
-        "value": "result"
-      }
+      "entry": "entry"
     }
   ],
-  "entry": "entry",
+  "result": "main",
   "expected_result": 35,
   "note": "Straight-line execution: x=10, y=20, sum=x+y=30, z=5, result=sum+z=35"
 }
