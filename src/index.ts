@@ -128,6 +128,7 @@ export {
 
 export {
 	createDefaultEffectRegistry,
+	createQueuedEffectRegistry,
 	defaultEffectRegistry,
 	emptyEffectRegistry,
 	lookupEffect,
@@ -143,6 +144,17 @@ export {
 export { evaluateLIR, type LIREvalOptions } from "./lir/evaluator.js";
 
 export { lowerEIRtoLIR } from "./lir/lower.js";
+
+//==============================================================================
+// CLI Utilities
+//==============================================================================
+
+export {
+	parseInputString,
+	readInputsFile,
+	parseArgs,
+	type Options as CLIOptions,
+} from "./cli-utils.js";
 
 //==============================================================================
 // Schemas
