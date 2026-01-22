@@ -117,17 +117,19 @@ pnpm test:examples --coverage
 | [Fixpoint](./cir/fixpoint/) | 3 | Fix combinator for recursion |
 | [Mixed](./cir/mixed/) | 1 | Using airRef within CIR |
 
-### EIR Examples (22 files)
+### EIR Examples (27 files)
 
 | Category | Files | Concepts |
 |----------|-------|----------|
 | [Basics](./eir/basics/) | 4 | Sequencing, assignment, refcells, effects |
-| [Interactive](./eir/interactive/) | 6 | Input/output patterns, readLine, readInt, print, printInt |
+| [Interactive](./eir/interactive/) | 11 | Input/output patterns, readLine, readInt, print, printInt |
+|   - Basic I/O | 6 | hello-world, greeting-sequence, prompt-echo, echo-formats, add-two-ints, calculator |
+|   - Complex I/O | 5 | Conditional, loop, accumulative, mixed-cadence patterns |
 | [Loops](./eir/loops/) | 4 | While, for, iter, nested loops |
 | [Algorithms](./eir/algorithms/) | 4 | Counter, factorial, sum-list, accumulate |
 | [Advanced](./eir/advanced/) | 4 | State machine, I/O loop, mutable list, effects |
 
-### LIR Examples (12 files)
+### LIR Examples (17 files)
 
 | Category | Files | Concepts |
 |----------|-------|----------|
@@ -135,6 +137,7 @@ pnpm test:examples --coverage
 | [Control Flow](./lir/control-flow/) | 3 | If-else, while CFG, nested branch |
 | [Phi](./lir/phi/) | 2 | Merge phi, loop phi |
 | [Algorithms](./lir/algorithms/) | 4 | Factorial, GCD, FizzBuzz, min-max |
+| [Interactive](./lir/interactive/) | 5 | Complex I/O patterns in CFG form with branching and loops |
 
 ## Learning Path
 
