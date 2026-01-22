@@ -146,6 +146,27 @@ export { evaluateLIR, type LIREvalOptions } from "./lir/evaluator.js";
 export { lowerEIRtoLIR } from "./lir/lower.js";
 
 //==============================================================================
+// PIR (Parallel IR)
+//==============================================================================
+
+export { validatePIR } from "./validator.js";
+export { AsyncEvaluator, type AsyncEvalOptions } from "./async-evaluator.js";
+export { createTaskScheduler, createDeterministicScheduler, type TaskScheduler, type SchedulerMode } from "./scheduler.js";
+export {
+	createAsyncChannelStore,
+	createAsyncRefCell,
+	createAsyncMutex,
+	createAsyncChannel,
+	createConcurrentEffectLog,
+	type AsyncChannelStore,
+	type AsyncChannel,
+	type AsyncRefCell,
+	type AsyncMutex,
+	type ConcurrentEffectLog,
+} from "./async-effects.js";
+export type { PIRDocument } from "./types.js";
+
+//==============================================================================
 // Synthesis
 //==============================================================================
 

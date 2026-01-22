@@ -121,7 +121,10 @@ export type Value =
 	| ClosureVal // CIR only
 	| VoidVal // EIR void value
 	| RefCellVal // EIR reference cell value
-	| ErrorVal; // Err(code, message?, meta?)
+	| ErrorVal // Err(code, message?, meta?)
+	| FutureVal // PIR future value
+	| ChannelVal // PIR channel value
+	| TaskVal; // PIR task value
 
 export interface BoolVal {
 	kind: "bool";
@@ -241,6 +244,50 @@ export function createEvalState(
 // Expression AST (e - syntactic expressions)
 //==============================================================================
 
+// Forward declarations for PIR expression types (defined later in detail)
+export interface PirParExpr {
+	kind: "par";
+	branches: string[];
+}
+
+export interface PirSpawnExpr {
+	kind: "spawn";
+	task: string;
+}
+
+export interface PirAwaitExpr {
+	kind: "await";
+	future: string;
+}
+
+export interface PirChannelExpr {
+	kind: "channel";
+	channelType: "mpsc" | "spsc" | "mpmc" | "broadcast";
+	bufferSize?: string;
+}
+
+export interface PirSendExpr {
+	kind: "send";
+	channel: string;
+	value: string;
+}
+
+export interface PirRecvExpr {
+	kind: "recv";
+	channel: string;
+}
+
+export interface PirSelectExpr {
+	kind: "select";
+	futures: string[];
+	timeout?: string;
+}
+
+export interface PirRaceExpr {
+	kind: "race";
+	tasks: string[];
+}
+
 export type Expr =
 	| LitExpr
 	| RefExpr
@@ -252,7 +299,15 @@ export type Expr =
 	| PredicateExpr
 	| LambdaExpr // CIR only
 	| CallFnExpr // CIR only (distinguished from operator Call)
-	| FixExpr; // CIR only
+	| FixExpr // CIR only
+	| PirParExpr // PIR parallel composition
+	| PirSpawnExpr // PIR spawn task
+	| PirAwaitExpr // PIR await future
+	| PirChannelExpr // PIR create channel
+	| PirSendExpr // PIR send to channel
+	| PirRecvExpr // PIR receive from channel
+	| PirSelectExpr // PIR select on futures
+	| PirRaceExpr; // PIR race on tasks
 
 export interface LitExpr {
 	kind: "lit";
@@ -820,3 +875,268 @@ export const fnType = (params: Type[], returns: Type): FnType => ({
 // EIR type constructors
 export const voidType: VoidType = { kind: "void" };
 export const refType = (of: Type): RefType => ({ kind: "ref", of });
+
+//==============================================================================
+// PIR Types (Parallel Intermediate Representation)
+// Extends EIR with async primitives (par, spawn, await, channels)
+//==============================================================================
+
+//------------------------------------------------------------------------------
+// PIR Type Domain
+//------------------------------------------------------------------------------
+
+export interface FutureType {
+	kind: "future";
+	of: Type;
+}
+
+export interface ChannelType {
+	kind: "channel";
+	channelType: "mpsc" | "spsc" | "mpmc" | "broadcast";
+	of: Type;
+}
+
+export interface TaskType {
+	kind: "task";
+	returns: Type;
+}
+
+export interface AsyncFnType {
+	kind: "async";
+	params: Type[];
+	returns: FutureType;
+}
+
+//------------------------------------------------------------------------------
+// PIR Value Domain
+//------------------------------------------------------------------------------
+
+export interface FutureVal {
+	kind: "future";
+	taskId: string;
+	status: "pending" | "ready" | "error";
+	value?: Value;
+}
+
+export interface ChannelVal {
+	kind: "channel";
+	id: string;
+	channelType: "mpsc" | "spsc" | "mpmc" | "broadcast";
+}
+
+export interface TaskVal {
+	kind: "task";
+	id: string;
+	returnType: Type;
+}
+
+// PIR expression type - extends EIR expressions
+// Note: Individual PirParExpr, etc. are defined earlier in the file before Expr union
+export type PirExpr =
+	| EirExpr
+	| PirParExpr
+	| PirSpawnExpr
+	| PirAwaitExpr
+	| PirChannelExpr
+	| PirSendExpr
+	| PirRecvExpr
+	| PirSelectExpr
+	| PirRaceExpr;
+
+//------------------------------------------------------------------------------
+// PIR Block/Instruction Types (CFG-based async)
+//------------------------------------------------------------------------------
+
+export interface PirInsSpawn {
+	kind: "spawn";
+	target: string;
+	entry: string;
+	args?: string[];
+}
+
+export interface PirInsChannelOp {
+	kind: "channelOp";
+	op: "send" | "recv" | "trySend" | "tryRecv";
+	target?: string;
+	channel: string;
+	value?: string;
+}
+
+export interface PirInsAwait {
+	kind: "await";
+	target: string;
+	future: string;
+}
+
+export type PirInstruction = EirInstruction | PirInsSpawn | PirInsChannelOp | PirInsAwait;
+
+export interface PirBlock {
+	id: string;
+	instructions: PirInstruction[];
+	terminator: PirTerminator;
+}
+
+//------------------------------------------------------------------------------
+// PIR Terminators (CFG-based async)
+//------------------------------------------------------------------------------
+
+export interface PirTermFork {
+	kind: "fork";
+	branches: { block: string; taskId: string }[];
+	continuation: string;
+}
+
+export interface PirTermJoin {
+	kind: "join";
+	tasks: string[];
+	results?: string[];
+	to: string;
+}
+
+export interface PirTermSuspend {
+	kind: "suspend";
+	future: string;
+	resumeBlock: string;
+}
+
+export type PirTerminator = LirTerminator | PirTermFork | PirTermJoin | PirTermSuspend;
+
+//------------------------------------------------------------------------------
+// PIR Hybrid Node Types
+//------------------------------------------------------------------------------
+
+/** PIR expression-only node type */
+export type PirNode = Node<PirExpr>;
+
+/** PIR hybrid node: PIR expression or PIR blocks */
+export type PirHybridNode = HybridNode<PirExpr, PirBlock>;
+
+//------------------------------------------------------------------------------
+// PIR Document
+//------------------------------------------------------------------------------
+
+export interface PIRDocument {
+	version: string;
+	capabilities?: string[];
+	functionSigs?: FunctionSignature[];
+	airDefs: AIRDef[];
+	nodes: PirHybridNode[];
+	result: string;
+}
+
+//------------------------------------------------------------------------------
+// Async Evaluation State (extends EIR EvalState)
+//------------------------------------------------------------------------------
+
+export interface AsyncEvalState extends EvalState {
+	taskId: string;
+	scheduler: TaskScheduler;
+	channels: unknown; // AsyncChannelStore (use unknown to avoid circular dependency)
+	taskPool: Map<string, TaskState>;
+	parentTaskId?: string;
+}
+
+export interface TaskState {
+	expr: PirExpr;
+	env: ValueEnv;
+	status: "running" | "completed" | "failed";
+	result?: Value;
+	error?: ErrorVal;
+}
+
+//------------------------------------------------------------------------------
+// PIR Value Constructors
+//------------------------------------------------------------------------------
+
+export const futureVal = (
+	taskId: string,
+	status: "pending" | "ready" | "error" = "pending",
+	value?: Value,
+): FutureVal => {
+	const result: FutureVal = { kind: "future", taskId, status };
+	if (value !== undefined) result.value = value;
+	return result;
+};
+
+export const channelVal = (
+	id: string,
+	channelType: "mpsc" | "spsc" | "mpmc" | "broadcast",
+): ChannelVal => ({ kind: "channel", id, channelType });
+
+export const taskVal = (id: string, returnType: Type): TaskVal => ({
+	kind: "task",
+	id,
+	returnType,
+});
+
+//------------------------------------------------------------------------------
+// PIR Type Constructors
+//------------------------------------------------------------------------------
+
+export const futureType = (of: Type): FutureType => ({ kind: "future", of });
+
+export const channelTypeCtor = (
+	chanType: "mpsc" | "spsc" | "mpmc" | "broadcast",
+	of: Type,
+): ChannelType => ({ kind: "channel", channelType: chanType, of });
+
+export const taskType = (returns: Type): TaskType => ({ kind: "task", returns });
+
+export const asyncFnType = (params: Type[], returns: Type): AsyncFnType => ({
+	kind: "async",
+	params,
+	returns: futureType(returns),
+});
+
+//==============================================================================
+// Async Runtime Types (imported from async-effects.ts to avoid circular deps)
+//==============================================================================
+
+/**
+ * TaskScheduler interface - cooperative task scheduling
+ * Implemented in src/scheduler.ts
+ */
+export interface TaskScheduler {
+	spawn(taskId: string, fn: () => Promise<Value>): void;
+	await(taskId: string): Promise<Value>;
+	currentTaskId: string;
+	checkGlobalSteps(): Promise<void>;
+}
+
+/**
+ * AsyncChannel interface - Go-style buffered channels
+ * Implemented in src/async-effects.ts
+ */
+export interface AsyncChannel {
+	send(value: Value): Promise<void>;
+	recv(): Promise<Value>;
+	close(): void;
+}
+
+//==============================================================================
+// Type Guards for PIR Types
+//==============================================================================
+
+export function isFuture(v: Value): v is FutureVal {
+	return v.kind === "future";
+}
+
+export function isChannel(v: Value): v is ChannelVal {
+	return v.kind === "channel";
+}
+
+export function isTask(v: Value): v is TaskVal {
+	return v.kind === "task";
+}
+
+export function isPirParExpr(expr: Expr): expr is PirParExpr {
+	return expr.kind === "par";
+}
+
+export function isPirSpawnExpr(expr: Expr): expr is PirSpawnExpr {
+	return expr.kind === "spawn";
+}
+
+export function isPirAwaitExpr(expr: Expr): expr is PirAwaitExpr {
+	return expr.kind === "await";
+}
