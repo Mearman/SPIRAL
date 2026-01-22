@@ -348,6 +348,7 @@ export interface FunctionSignature {
 	pure: boolean;
 }
 
+/** Legacy node type (expression-only) - kept for backward compatibility */
 export interface Node<E = Expr> {
 	id: string;
 	expr: E;
@@ -358,13 +359,17 @@ export interface AIRDocument {
 	capabilities?: string[];
 	functionSigs?: FunctionSignature[];
 	airDefs: AIRDef[];
-	nodes: Node[];
+	nodes: AirHybridNode[];
 	result: string;
 }
 
-export interface CIRDocument extends AIRDocument {
-	// CIR extends AIR - additional capabilities are implicit
-	// in the presence of lambda, callExpr, fix nodes
+export interface CIRDocument {
+	version: string;
+	capabilities?: string[];
+	functionSigs?: FunctionSignature[];
+	airDefs: AIRDef[];
+	nodes: CirHybridNode[];
+	result: string;
 }
 
 //==============================================================================
@@ -426,13 +431,18 @@ export interface EirDerefExpr {
 // EIR expression type - extends CIR expressions
 export type EirExpr = Expr | EirSeqExpr | EirAssignExpr | EirWhileExpr | EirForExpr | EirIterExpr | EirEffectExpr | EirRefCellExpr | EirDerefExpr;
 
-// EIR node type alias for convenience
+// EIR node type alias for convenience (legacy, for backward compatibility)
 export type EirNode = Node<EirExpr>;
 
-export interface EIRDocument extends Omit<CIRDocument, "nodes"> {
+export interface EIRDocument {
+	version: string;
+	capabilities?: string[];
+	functionSigs?: FunctionSignature[];
+	airDefs: AIRDef[];
 	// EIR documents can use seq, assign, loop (while/for/iter), effect, refCell, deref
-	// Override nodes to allow EIR expressions
-	nodes: EirNode[];
+	// Hybrid nodes allow mixing expression and block nodes
+	nodes: EirHybridNode[];
+	result: string;
 }
 
 //==============================================================================
@@ -524,12 +534,133 @@ export interface LirBlock {
 	terminator: LirTerminator;
 }
 
-// LIR Document
-export interface LIRDocument {
+//==============================================================================
+// Layer-Specific Block Instruction Types
+//==============================================================================
+
+// AIR blocks: pure operations only
+export interface AirInsAssign {
+	kind: "assign";
+	target: string;
+	value: Expr; // AIR expressions only
+}
+
+export interface AirInsOp {
+	kind: "op";
+	target: string;
+	ns: string;
+	name: string;
+	args: string[];
+}
+
+export type AirInsPhi = LirInsPhi; // Phi nodes for CFG merge points
+
+export type AirInstruction = AirInsAssign | AirInsOp | AirInsPhi;
+
+// CIR blocks: extend AIR (lambda/callExpr/fix allowed in assign values)
+export type CirInstruction = AirInstruction;
+
+// EIR blocks: extend CIR with effect and assignRef
+export type EirInsEffect = LirInsEffect;
+export type EirInsAssignRef = LirInsAssignRef;
+export type EirInstruction = CirInstruction | EirInsEffect | EirInsAssignRef;
+
+// Layer-specific block types
+export interface AirBlock {
+	id: string;
+	instructions: AirInstruction[];
+	terminator: LirTerminator;
+}
+
+export interface CirBlock {
+	id: string;
+	instructions: CirInstruction[];
+	terminator: LirTerminator;
+}
+
+export interface EirBlock {
+	id: string;
+	instructions: EirInstruction[];
+	terminator: LirTerminator;
+}
+
+//==============================================================================
+// Hybrid Node Types
+// Nodes can contain either an expression (expr) OR a block structure (blocks+entry)
+//==============================================================================
+
+/** Expression-based node (traditional AIR/CIR/EIR structure) */
+export interface ExprNode<E = Expr> {
+	id: string;
+	type?: Type;
+	expr: E;
+}
+
+/** Block-based node (CFG structure) */
+export interface BlockNode<B = LirBlock> {
+	id: string;
+	type?: Type;
+	blocks: B[];
+	entry: string;
+}
+
+/** Hybrid node - either expression-based or block-based */
+export type HybridNode<E = Expr, B = LirBlock> = ExprNode<E> | BlockNode<B>;
+
+/** AIR hybrid node: expression or AIR blocks */
+export type AirHybridNode = HybridNode<Expr, AirBlock>;
+
+/** CIR hybrid node: CIR expression or CIR blocks */
+export type CirHybridNode = HybridNode<Expr, CirBlock>;
+
+/** EIR hybrid node: EIR expression or EIR blocks */
+export type EirHybridNode = HybridNode<EirExpr, EirBlock>;
+
+/** LIR hybrid node: typically block-based but can reference expr nodes */
+export type LirHybridNode = HybridNode;
+
+//==============================================================================
+// Type Guards for Hybrid Nodes
+//==============================================================================
+
+/** Check if a node is block-based (has blocks and entry) */
+export function isBlockNode<E, B>(node: HybridNode<E, B>): node is BlockNode<B> {
+	return "blocks" in node && "entry" in node && Array.isArray(node.blocks);
+}
+
+/** Check if a node is expression-based (has expr) */
+export function isExprNode<E, B>(node: HybridNode<E, B>): node is ExprNode<E> {
+	return "expr" in node && !("blocks" in node);
+}
+
+//==============================================================================
+// LIR Document (legacy format - document-level blocks)
+// Kept for backward compatibility during migration
+//==============================================================================
+
+/** Legacy LIR document with document-level blocks */
+export interface LIRDocumentLegacy {
 	version: string;
 	capabilities?: string[];
 	blocks: LirBlock[];
 	entry: string; // entry block id
+}
+
+//==============================================================================
+// Unified Document Types with Hybrid Node Support
+//==============================================================================
+
+/** LIR document - now uses unified nodes/result structure */
+export interface LIRDocument {
+	version: string;
+	capabilities?: string[];
+	functionSigs?: FunctionSignature[];
+	airDefs?: AIRDef[];
+	nodes: LirHybridNode[];
+	result: string;
+	// Legacy fields (for backward compatibility during migration)
+	blocks?: LirBlock[];
+	entry?: string;
 }
 
 //==============================================================================
