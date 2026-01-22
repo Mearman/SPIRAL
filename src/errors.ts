@@ -258,7 +258,13 @@ export function combineResults<T>(
 	if (allErrors.length > 0) {
 		return invalidResult(allErrors);
 	}
-	return validResult(results.map((r) => r.value!));
+	const values: T[] = [];
+	for (const r of results) {
+		if (r.value !== undefined) {
+			values.push(r.value);
+		}
+	}
+	return validResult(values);
 }
 
 //==============================================================================
