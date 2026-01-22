@@ -92,6 +92,7 @@ export interface FnType {
 	kind: "fn";
 	params: Type[];
 	returns: Type;
+	optionalParams?: boolean[]; // Track which params are optional (same length as params)
 }
 
 //==============================================================================
@@ -124,7 +125,8 @@ export type Value =
 	| ErrorVal // Err(code, message?, meta?)
 	| FutureVal // PIR future value
 	| ChannelVal // PIR channel value
-	| TaskVal; // PIR task value
+	| TaskVal // PIR task value
+	| SelectResultVal; // PIR select/await result with index
 
 export interface BoolVal {
 	kind: "bool";
@@ -172,9 +174,27 @@ export interface OpaqueVal {
 	value: unknown;
 }
 
+//==============================================================================
+// Lambda Parameter Types (CIR optional parameters)
+//==============================================================================
+
+/**
+ * Lambda parameter with optional and default support
+ * Like TypeScript: optional and default are independent flags
+ */
+export interface LambdaParam {
+	name: string;
+	type?: Type; // Type annotation (optional)
+	optional?: boolean; // Can this param be omitted?
+	default?: Expr; // Default value expression (evaluated in defining env)
+}
+
+/**
+ * Closure value with optional parameters support
+ */
 export interface ClosureVal {
 	kind: "closure";
-	params: string[];
+	params: LambdaParam[]; // All parameters are LambdaParam
 	body: Expr;
 	env: ValueEnv;
 }
@@ -258,6 +278,9 @@ export interface PirSpawnExpr {
 export interface PirAwaitExpr {
 	kind: "await";
 	future: string;
+	timeout?: string;      // Timeout in milliseconds (node reference)
+	fallback?: string;     // Fallback value on timeout (node reference)
+	returnIndex?: boolean; // Return success(0)/timeout(1) index instead of value
 }
 
 export interface PirChannelExpr {
@@ -280,7 +303,9 @@ export interface PirRecvExpr {
 export interface PirSelectExpr {
 	kind: "select";
 	futures: string[];
-	timeout?: string;
+	timeout?: string;      // Timeout in milliseconds (node reference)
+	fallback?: string;     // Fallback value on timeout (node reference)
+	returnIndex?: boolean; // Return which future won (index: -1=timeout, 0..n-1=winning future)
 }
 
 export interface PirRaceExpr {
@@ -483,8 +508,16 @@ export interface EirDerefExpr {
 	target: string;
 }
 
+export interface EirTryExpr {
+	kind: "try";
+	tryBody: string; // Node to try
+	catchParam: string; // Error parameter name
+	catchBody: string; // Node on error
+	fallback?: string; // Node on success (optional)
+}
+
 // EIR expression type - extends CIR expressions
-export type EirExpr = Expr | EirSeqExpr | EirAssignExpr | EirWhileExpr | EirForExpr | EirIterExpr | EirEffectExpr | EirRefCellExpr | EirDerefExpr;
+export type EirExpr = Expr | EirSeqExpr | EirAssignExpr | EirWhileExpr | EirForExpr | EirIterExpr | EirEffectExpr | EirRefCellExpr | EirDerefExpr | EirTryExpr;
 
 // EIR expression-only node type alias
 export type EirNode = Node<EirExpr>;
@@ -535,6 +568,7 @@ export interface LirInsPhi {
 
 export interface LirInsEffect {
 	kind: "effect";
+	target: string;
 	op: string;
 	args: string[];
 }
@@ -824,7 +858,7 @@ export const opaqueVal = (name: string, value: unknown): OpaqueVal => ({
 	value,
 });
 export const closureVal = (
-	params: string[],
+	params: LambdaParam[],
 	body: Expr,
 	env: ValueEnv,
 ): ClosureVal => ({ kind: "closure", params, body, env });
@@ -845,6 +879,10 @@ export const refCellVal = (value: Value): RefCellVal => ({
 	kind: "refCell",
 	value,
 });
+
+// Undefined value for optional parameters without defaults
+// Uses Option<T> with null to represent undefined
+export const undefinedVal = (): OptionVal => optionVal(null);
 
 //==============================================================================
 // Type Constructors
@@ -928,6 +966,12 @@ export interface TaskVal {
 	kind: "task";
 	id: string;
 	returnType: Type;
+}
+
+export interface SelectResultVal {
+	kind: "selectResult";
+	index: number; // -1=timeout, 0..n-1=winning future
+	value: Value;
 }
 
 // PIR expression type - extends EIR expressions
