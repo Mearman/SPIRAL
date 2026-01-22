@@ -2,7 +2,51 @@ import eslint from "@eslint/js";
 import markdown from "@eslint/markdown";
 import jsonc from "eslint-plugin-jsonc";
 import tseslint from "typescript-eslint";
+import type { Rule } from "eslint";
 import type { ConfigArray } from "typescript-eslint";
+
+// Custom rule: enforce test file naming convention
+const testFileNamingRule: Rule.RuleModule = {
+	meta: {
+		type: "problem",
+		docs: {
+			description:
+				"Enforce that test files end with .unit.test.ts or .integration.test.ts",
+			category: "Best Practices",
+			recommended: true,
+		},
+		messages: {
+			invalidTestFileName:
+				"Test file must end with .unit.test.ts or .integration.test.ts. Found: '{{actual}}'",
+		},
+	},
+	create(context) {
+		const filename = context.filename;
+
+		return {
+			Program() {
+				// Skip if not a test file
+				if (!filename.match(/\.test\.ts$|\.spec\.ts$/)) {
+					return;
+				}
+
+				// Check if it follows the allowed naming convention
+				const validSuffixes = [".unit.test.ts", ".integration.test.ts"];
+				const isValid = validSuffixes.some((suffix) => filename.endsWith(suffix));
+
+				if (isValid) {
+					return;
+				}
+
+				context.report({
+					loc: { column: 0, line: 1 },
+					messageId: "invalidTestFileName",
+					data: { actual: filename },
+				});
+			},
+		};
+	},
+};
 
 export default [
 	// Global ignores
@@ -16,6 +60,17 @@ export default [
 			"*.config.mjs",
 			"*.config.ts", // Ignore config file to avoid parsing issues
 		],
+	},
+
+	// Test file naming convention - enforce .unit.test.ts or .integration.test.ts
+	{
+		files: ["**/*.test.ts", "**/*.spec.ts"],
+		plugins: {
+			cairs: { rules: { "test-file-naming": testFileNamingRule } },
+		},
+		rules: {
+			"cairs/test-file-naming": "error",
+		},
 	},
 
 	// Base ESLint recommended rules (only for JS/TS files)
