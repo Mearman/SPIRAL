@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "tsx --test \"test/*.ts\"",
+    "test": "tsx --test \"test/**/*.test.ts\"",
     "test:types": "tsc --noEmit -p tsconfig.test.json",
     "test:examples": "tsx --test \"examples/*.ts\"",
     "lint": "eslint . && tsc --noEmit",
@@ -31,6 +31,7 @@
     "@types/node": "^22.10.5",
     "eslint": "^9.39.2",
     "eslint-plugin-jsonc": "^2.21.0",
+    "globals": "^17.0.0",
     "husky": "^9.1.7",
     "jiti": "^2.6.1",
     "lint-staged": "^16.2.7",
@@ -48,7 +49,8 @@
   "packageManager": "pnpm@10.27.0",
   "lint-staged": {
     "*.ts": [
-      "eslint --fix"
+      "eslint --fix",
+      "tsx scripts/typecheck-files.ts"
     ],
     "*.json": [
       "eslint --fix"
