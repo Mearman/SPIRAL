@@ -1115,7 +1115,7 @@ function evaluateBlockNode<B extends { id: string; instructions: unknown[]; term
 		}
 
 		// Execute terminator
-		const termResult = executeBlockTerminator(currentBlock.terminator, vars, predecessor);
+		const termResult = executeBlockTerminator(currentBlock.terminator, vars, nodeValues, predecessor);
 		if (termResult.returnValue !== undefined) {
 			return termResult.returnValue;
 		}
@@ -1230,6 +1230,7 @@ interface BlockTerminatorResult {
 function executeBlockTerminator(
 	term: LirTerminator,
 	vars: ValueEnv,
+	nodeValues: Map<string, Value>,
 	_predecessor?: string,
 ): BlockTerminatorResult {
 	switch (term.kind) {
@@ -1237,7 +1238,7 @@ function executeBlockTerminator(
 		return { nextBlock: term.to };
 
 	case "branch": {
-		const condValue = lookupValue(vars, term.cond);
+		const condValue = lookupValue(vars, term.cond) ?? nodeValues.get(term.cond);
 		if (!condValue) {
 			return { error: errorVal(ErrorCodes.UnboundIdentifier, "Condition not found: " + term.cond) };
 		}
@@ -1249,7 +1250,7 @@ function executeBlockTerminator(
 
 	case "return": {
 		if (term.value) {
-			const value = lookupValue(vars, term.value);
+			const value = lookupValue(vars, term.value) ?? nodeValues.get(term.value);
 			if (!value) {
 				return { error: errorVal(ErrorCodes.UnboundIdentifier, "Return value not found: " + term.value) };
 			}
