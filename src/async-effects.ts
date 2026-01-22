@@ -147,6 +147,7 @@ type ChannelSendResolver = () => void;
 interface ChannelSender {
 	resolve: ChannelSendResolver;
 	reject: (error: Error) => void;
+	value: Value;  // Store the value being sent for rendezvous
 }
 
 interface ChannelReceiver {
@@ -203,6 +204,7 @@ export class AsyncChannelImpl implements AsyncChannel {
 					resolve();
 				},
 				reject,
+				value,  // Store value for rendezvous in recv()
 			});
 		});
 	}
@@ -255,6 +257,15 @@ export class AsyncChannelImpl implements AsyncChannel {
 		// If channel is closed and buffer is empty
 		if (this.closed) {
 			throw new Error("Cannot receive from closed channel");
+		}
+
+		// If there's a waiting sender (rendezvous for unbuffered channels), complete the handshake
+		if (this.waitingSenders.length > 0) {
+			const sender = this.waitingSenders.shift()!;
+			// Resolve the sender's promise (so send() completes)
+			sender.resolve();
+			// Return the value the sender was trying to send
+			return sender.value;
 		}
 
 		// Wait for a value
