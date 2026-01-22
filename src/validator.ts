@@ -1423,7 +1423,7 @@ function validateEirNodeReferences(
 
 /**
  * Validate an LIR document.
- * LIR uses a CFG structure with basic blocks and terminators.
+ * LIR uses nodes/result structure where nodes contain CFG blocks.
  */
 export function validateLIR(doc: unknown): ValidationResult<import("./types.js").LIRDocument> {
 	const state: ValidationState = { errors: [], path: [] };
@@ -1450,15 +1450,89 @@ export function validateLIR(doc: unknown): ValidationResult<import("./types.js")
 		popPath(state);
 	}
 
-	// Blocks check
-	if (!validateArray(d.blocks)) {
-		pushPath(state, "blocks");
-		addError(state, "LIR Document must have 'blocks' array", d.blocks);
+	// Nodes check
+	if (!validateArray(d.nodes)) {
+		pushPath(state, "nodes");
+		addError(state, "LIR Document must have 'nodes' array", d.nodes);
 		popPath(state);
 		return invalidResult(state.errors);
 	}
 
-	const blocks = d.blocks as unknown[];
+	const nodes = d.nodes as unknown[];
+	const nodeIds = new Set<string>();
+
+	// Validate each node
+	for (let i = 0; i < nodes.length; i++) {
+		const node = nodes[i];
+		pushPath(state, "nodes[" + String(i) + "]");
+
+		if (!validateObject(node)) {
+			addError(state, "Node must be an object", node);
+			popPath(state);
+			continue;
+		}
+
+		const n = node as Record<string, unknown>;
+
+		// Node ID check
+		if (!validateId(n.id)) {
+			addError(state, "Node must have valid 'id' property", n.id);
+		} else {
+			if (nodeIds.has(String(n.id))) {
+				addError(state, "Duplicate node id: " + String(n.id), n.id);
+			}
+			nodeIds.add(String(n.id));
+		}
+
+		// Check if this is a block node (has blocks/entry) or expression node (has expr)
+		if (validateArray(n.blocks)) {
+			// Block node - validate CFG structure
+			validateLirBlockNode(state, n);
+		} else if (n.expr !== undefined) {
+			// Expression node - validate expression
+			pushPath(state, "expr");
+			// Basic expression validation (LIR typically uses block nodes)
+			if (!validateObject(n.expr)) {
+				addError(state, "Expression must be an object", n.expr);
+			}
+			popPath(state);
+		} else {
+			addError(state, "Node must have either 'blocks' array or 'expr' property", node);
+		}
+
+		popPath(state);
+	}
+
+	// Result check
+	if (!validateId(d.result)) {
+		pushPath(state, "result");
+		addError(state, "LIR Document must have valid 'result' reference", d.result);
+		popPath(state);
+	} else {
+		// Check that result references a valid node
+		if (!nodeIds.has(String(d.result))) {
+			pushPath(state, "result");
+			addError(
+				state,
+				"Result references non-existent node: " + String(d.result),
+				d.result,
+			);
+			popPath(state);
+		}
+	}
+
+	if (state.errors.length > 0) {
+		return invalidResult(state.errors);
+	}
+
+	return validResult(doc as import("./types.js").LIRDocument);
+}
+
+/**
+ * Validate an LIR block node (a node with blocks/entry).
+ */
+function validateLirBlockNode(state: ValidationState, n: Record<string, unknown>): void {
+	const blocks = n.blocks as unknown[];
 	const blockIds = new Set<string>();
 
 	// Validate each block
@@ -1510,33 +1584,25 @@ export function validateLIR(doc: unknown): ValidationResult<import("./types.js")
 	}
 
 	// Entry check
-	if (!validateId(d.entry)) {
+	if (!validateId(n.entry)) {
 		pushPath(state, "entry");
-		addError(state, "LIR Document must have valid 'entry' reference", d.entry);
+		addError(state, "Block node must have valid 'entry' reference", n.entry);
 		popPath(state);
 	} else {
 		// Check that entry references a valid block
-		if (!blockIds.has(String(d.entry))) {
+		if (!blockIds.has(String(n.entry))) {
 			pushPath(state, "entry");
 			addError(
 				state,
-				"Entry references non-existent block: " + String(d.entry),
-				d.entry,
+				"Entry references non-existent block: " + String(n.entry),
+				n.entry,
 			);
 			popPath(state);
 		}
 	}
 
 	// Validate CFG structure
-	if (validateArray(d.blocks)) {
-		validateCFG(state, d.blocks as Record<string, unknown>[]);
-	}
-
-	if (state.errors.length > 0) {
-		return invalidResult(state.errors);
-	}
-
-	return validResult(doc as import("./types.js").LIRDocument);
+	validateCFG(state, blocks as Record<string, unknown>[]);
 }
 
 /**
