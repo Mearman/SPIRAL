@@ -2,154 +2,160 @@
   "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Computes Greatest Common Divisor using Euclid's algorithm as a CFG in LIR. Uses phi nodes for the loop-carried variables.",
-  "blocks": [
+  "nodes": [
     {
-      "id": "entry",
-      "instructions": [
+      "id": "main",
+      "blocks": [
         {
-          "kind": "assign",
-          "target": "initA",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "int"
-            },
-            "value": 48
-          }
-        },
-        {
-          "kind": "assign",
-          "target": "initB",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "int"
-            },
-            "value": 18
-          }
-        }
-      ],
-      "terminator": {
-        "kind": "jump",
-        "to": "loopHeader"
-      }
-    },
-    {
-      "id": "loopHeader",
-      "instructions": [
-        {
-          "kind": "phi",
-          "target": "a",
-          "sources": [
+          "id": "entry",
+          "instructions": [
             {
-              "block": "entry",
-              "id": "initA"
+              "kind": "assign",
+              "target": "initA",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "int"
+                },
+                "value": 48
+              }
             },
             {
-              "block": "loopBody",
-              "id": "newA"
+              "kind": "assign",
+              "target": "initB",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "int"
+                },
+                "value": 18
+              }
             }
-          ]
+          ],
+          "terminator": {
+            "kind": "jump",
+            "to": "loopHeader"
+          }
         },
         {
-          "kind": "phi",
-          "target": "b",
-          "sources": [
+          "id": "loopHeader",
+          "instructions": [
             {
-              "block": "entry",
-              "id": "initB"
+              "kind": "phi",
+              "target": "a",
+              "sources": [
+                {
+                  "block": "entry",
+                  "id": "initA"
+                },
+                {
+                  "block": "loopBody",
+                  "id": "newA"
+                }
+              ]
             },
             {
-              "block": "loopBody",
-              "id": "newB"
-            }
-          ]
-        },
-        {
-          "kind": "assign",
-          "target": "zero",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "int"
+              "kind": "phi",
+              "target": "b",
+              "sources": [
+                {
+                  "block": "entry",
+                  "id": "initB"
+                },
+                {
+                  "block": "loopBody",
+                  "id": "newB"
+                }
+              ]
             },
-            "value": 0
-          }
-        },
-        {
-          "kind": "op",
-          "target": "condition",
-          "ns": "core",
-          "name": "eq",
-          "args": [
-            "b",
-            "zero"
-          ]
-        }
-      ],
-      "terminator": {
-        "kind": "branch",
-        "cond": "condition",
-        "then": "exit",
-        "else": "loopBody"
-      }
-    },
-    {
-      "id": "loopBody",
-      "instructions": [
-        {
-          "kind": "op",
-          "target": "remainder",
-          "ns": "core",
-          "name": "mod",
-          "args": [
-            "a",
-            "b"
-          ]
-        },
-        {
-          "kind": "assign",
-          "target": "newA",
-          "value": {
-            "kind": "var",
-            "name": "b"
-          }
-        },
-        {
-          "kind": "assign",
-          "target": "newB",
-          "value": {
-            "kind": "var",
-            "name": "remainder"
-          }
-        }
-      ],
-      "terminator": {
-        "kind": "jump",
-        "to": "loopHeader"
-      }
-    },
-    {
-      "id": "exit",
-      "instructions": [
-        {
-          "kind": "phi",
-          "target": "gcd",
-          "sources": [
             {
-              "block": "loopHeader",
-              "id": "a"
+              "kind": "assign",
+              "target": "zero",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "int"
+                },
+                "value": 0
+              }
+            },
+            {
+              "kind": "op",
+              "target": "condition",
+              "ns": "core",
+              "name": "eq",
+              "args": [
+                "b",
+                "zero"
+              ]
             }
-          ]
+          ],
+          "terminator": {
+            "kind": "branch",
+            "cond": "condition",
+            "then": "exit",
+            "else": "loopBody"
+          }
+        },
+        {
+          "id": "loopBody",
+          "instructions": [
+            {
+              "kind": "op",
+              "target": "remainder",
+              "ns": "core",
+              "name": "mod",
+              "args": [
+                "a",
+                "b"
+              ]
+            },
+            {
+              "kind": "assign",
+              "target": "newA",
+              "value": {
+                "kind": "var",
+                "name": "b"
+              }
+            },
+            {
+              "kind": "assign",
+              "target": "newB",
+              "value": {
+                "kind": "var",
+                "name": "remainder"
+              }
+            }
+          ],
+          "terminator": {
+            "kind": "jump",
+            "to": "loopHeader"
+          }
+        },
+        {
+          "id": "exit",
+          "instructions": [
+            {
+              "kind": "phi",
+              "target": "gcd",
+              "sources": [
+                {
+                  "block": "loopHeader",
+                  "id": "a"
+                }
+              ]
+            }
+          ],
+          "terminator": {
+            "kind": "return",
+            "value": "gcd"
+          }
         }
       ],
-      "terminator": {
-        "kind": "return",
-        "value": "gcd"
-      }
+      "entry": "entry"
     }
   ],
-  "entry": "entry",
+  "result": "main",
   "expected_result": 6,
   "note": "Euclid's algorithm: gcd(48, 18) = gcd(18, 12) = gcd(12, 6) = gcd(6, 0) = 6."
 }

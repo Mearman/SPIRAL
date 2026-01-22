@@ -2,159 +2,165 @@
   "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Computes factorial using a CFG-based loop in LIR. Uses phi nodes for loop-carried variables (n and result).",
-  "blocks": [
+  "nodes": [
     {
-      "id": "entry",
-      "instructions": [
+      "id": "main",
+      "blocks": [
         {
-          "kind": "assign",
-          "target": "initialN",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "int"
-            },
-            "value": 5
-          }
-        },
-        {
-          "kind": "assign",
-          "target": "initialResult",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "int"
-            },
-            "value": 1
-          }
-        }
-      ],
-      "terminator": {
-        "kind": "jump",
-        "to": "loopHeader"
-      }
-    },
-    {
-      "id": "loopHeader",
-      "instructions": [
-        {
-          "kind": "phi",
-          "target": "n",
-          "sources": [
+          "id": "entry",
+          "instructions": [
             {
-              "block": "entry",
-              "id": "initialN"
+              "kind": "assign",
+              "target": "initialN",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "int"
+                },
+                "value": 5
+              }
             },
             {
-              "block": "loopBody",
-              "id": "nextN"
+              "kind": "assign",
+              "target": "initialResult",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "int"
+                },
+                "value": 1
+              }
             }
-          ]
-        },
-        {
-          "kind": "phi",
-          "target": "result",
-          "sources": [
-            {
-              "block": "entry",
-              "id": "initialResult"
-            },
-            {
-              "block": "loopBody",
-              "id": "newResult"
-            }
-          ]
-        },
-        {
-          "kind": "assign",
-          "target": "zero",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "int"
-            },
-            "value": 0
+          ],
+          "terminator": {
+            "kind": "jump",
+            "to": "loopHeader"
           }
         },
         {
-          "kind": "op",
-          "target": "condition",
-          "ns": "core",
-          "name": "gt",
-          "args": [
-            "n",
-            "zero"
-          ]
-        }
-      ],
-      "terminator": {
-        "kind": "branch",
-        "cond": "condition",
-        "then": "loopBody",
-        "else": "exit"
-      }
-    },
-    {
-      "id": "loopBody",
-      "instructions": [
-        {
-          "kind": "op",
-          "target": "newResult",
-          "ns": "core",
-          "name": "mul",
-          "args": [
-            "result",
-            "n"
-          ]
-        },
-        {
-          "kind": "assign",
-          "target": "one",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "int"
+          "id": "loopHeader",
+          "instructions": [
+            {
+              "kind": "phi",
+              "target": "n",
+              "sources": [
+                {
+                  "block": "entry",
+                  "id": "initialN"
+                },
+                {
+                  "block": "loopBody",
+                  "id": "nextN"
+                }
+              ]
             },
-            "value": 1
+            {
+              "kind": "phi",
+              "target": "result",
+              "sources": [
+                {
+                  "block": "entry",
+                  "id": "initialResult"
+                },
+                {
+                  "block": "loopBody",
+                  "id": "newResult"
+                }
+              ]
+            },
+            {
+              "kind": "assign",
+              "target": "zero",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "int"
+                },
+                "value": 0
+              }
+            },
+            {
+              "kind": "op",
+              "target": "condition",
+              "ns": "core",
+              "name": "gt",
+              "args": [
+                "n",
+                "zero"
+              ]
+            }
+          ],
+          "terminator": {
+            "kind": "branch",
+            "cond": "condition",
+            "then": "loopBody",
+            "else": "exit"
           }
         },
         {
-          "kind": "op",
-          "target": "nextN",
-          "ns": "core",
-          "name": "sub",
-          "args": [
-            "n",
-            "one"
-          ]
-        }
-      ],
-      "terminator": {
-        "kind": "jump",
-        "to": "loopHeader"
-      }
-    },
-    {
-      "id": "exit",
-      "instructions": [
-        {
-          "kind": "phi",
-          "target": "finalResult",
-          "sources": [
+          "id": "loopBody",
+          "instructions": [
             {
-              "block": "loopHeader",
-              "id": "result"
+              "kind": "op",
+              "target": "newResult",
+              "ns": "core",
+              "name": "mul",
+              "args": [
+                "result",
+                "n"
+              ]
+            },
+            {
+              "kind": "assign",
+              "target": "one",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "int"
+                },
+                "value": 1
+              }
+            },
+            {
+              "kind": "op",
+              "target": "nextN",
+              "ns": "core",
+              "name": "sub",
+              "args": [
+                "n",
+                "one"
+              ]
             }
-          ]
+          ],
+          "terminator": {
+            "kind": "jump",
+            "to": "loopHeader"
+          }
+        },
+        {
+          "id": "exit",
+          "instructions": [
+            {
+              "kind": "phi",
+              "target": "finalResult",
+              "sources": [
+                {
+                  "block": "loopHeader",
+                  "id": "result"
+                }
+              ]
+            }
+          ],
+          "terminator": {
+            "kind": "return",
+            "value": "finalResult"
+          }
         }
       ],
-      "terminator": {
-        "kind": "return",
-        "value": "finalResult"
-      }
+      "entry": "entry"
     }
   ],
-  "entry": "entry",
+  "result": "main",
   "expected_result": 120,
   "note": "Computes 5! = 120 using CFG loop with phi nodes for n (decrementing) and result (accumulating product)."
 }

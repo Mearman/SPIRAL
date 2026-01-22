@@ -2,167 +2,203 @@
   "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
   "version": "1.0.0",
   "description": "LIR representation of survey collector: for loop with I/O effects. Uses CFG with entry, loop header, loop body with sequential effects, and loop exit.",
-  "blocks": [
+  "nodes": [
     {
-      "id": "entry",
-      "instructions": [
+      "id": "main",
+      "blocks": [
         {
-          "kind": "assign",
-          "target": "i",
-          "value": {
-            "kind": "lit",
-            "type": {"kind": "int"},
-            "value": 0
+          "id": "entry",
+          "instructions": [
+            {
+              "kind": "assign",
+              "target": "i",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "int"
+                },
+                "value": 0
+              }
+            }
+          ],
+          "terminator": {
+            "kind": "jump",
+            "to": "loopHeader"
+          }
+        },
+        {
+          "id": "loopHeader",
+          "instructions": [
+            {
+              "kind": "assign",
+              "target": "limit",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "int"
+                },
+                "value": 3
+              }
+            },
+            {
+              "kind": "op",
+              "target": "shouldContinue",
+              "ns": "core",
+              "name": "lt",
+              "args": [
+                "i",
+                "limit"
+              ]
+            }
+          ],
+          "terminator": {
+            "kind": "branch",
+            "cond": "shouldContinue",
+            "then": "loopBody",
+            "else": "loopExit"
+          }
+        },
+        {
+          "id": "loopBody",
+          "instructions": [
+            {
+              "kind": "assign",
+              "target": "promptPrefix",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "string"
+                },
+                "value": "Respondent "
+              }
+            },
+            {
+              "kind": "effect",
+              "target": "print1",
+              "op": "print",
+              "args": [
+                "promptPrefix"
+              ]
+            },
+            {
+              "kind": "effect",
+              "target": "print2",
+              "op": "print",
+              "args": [
+                "i"
+              ]
+            },
+            {
+              "kind": "assign",
+              "target": "promptSuffix",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "string"
+                },
+                "value": ": "
+              }
+            },
+            {
+              "kind": "effect",
+              "target": "print3",
+              "op": "print",
+              "args": [
+                "promptSuffix"
+              ]
+            },
+            {
+              "kind": "effect",
+              "target": "response",
+              "op": "readLine",
+              "args": []
+            },
+            {
+              "kind": "assign",
+              "target": "recordedMsg",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "string"
+                },
+                "value": "Response recorded."
+              }
+            },
+            {
+              "kind": "effect",
+              "target": "print4",
+              "op": "print",
+              "args": [
+                "recordedMsg"
+              ]
+            },
+            {
+              "kind": "assign",
+              "target": "one",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "int"
+                },
+                "value": 1
+              }
+            },
+            {
+              "kind": "op",
+              "target": "nextI",
+              "ns": "core",
+              "name": "add",
+              "args": [
+                "i",
+                "one"
+              ]
+            },
+            {
+              "kind": "assign",
+              "target": "i",
+              "value": {
+                "kind": "var",
+                "name": "nextI"
+              }
+            }
+          ],
+          "terminator": {
+            "kind": "jump",
+            "to": "loopHeader"
+          }
+        },
+        {
+          "id": "loopExit",
+          "instructions": [
+            {
+              "kind": "assign",
+              "target": "completionMsg",
+              "value": {
+                "kind": "lit",
+                "type": {
+                  "kind": "string"
+                },
+                "value": "Survey complete!"
+              }
+            },
+            {
+              "kind": "effect",
+              "target": "printFinal",
+              "op": "print",
+              "args": [
+                "completionMsg"
+              ]
+            }
+          ],
+          "terminator": {
+            "kind": "return"
           }
         }
       ],
-      "terminator": {
-        "kind": "jump",
-        "to": "loopHeader"
-      }
-    },
-    {
-      "id": "loopHeader",
-      "instructions": [
-        {
-          "kind": "assign",
-          "target": "limit",
-          "value": {
-            "kind": "lit",
-            "type": {"kind": "int"},
-            "value": 3
-          }
-        },
-        {
-          "kind": "op",
-          "target": "shouldContinue",
-          "ns": "core",
-          "name": "lt",
-          "args": ["i", "limit"]
-        }
-      ],
-      "terminator": {
-        "kind": "branch",
-        "cond": "shouldContinue",
-        "then": "loopBody",
-        "else": "loopExit"
-      }
-    },
-    {
-      "id": "loopBody",
-      "instructions": [
-        {
-          "kind": "assign",
-          "target": "promptPrefix",
-          "value": {
-            "kind": "lit",
-            "type": {"kind": "string"},
-            "value": "Respondent "
-          }
-        },
-        {
-          "kind": "effect",
-          "target": "print1",
-          "op": "print",
-          "args": ["promptPrefix"]
-        },
-        {
-          "kind": "effect",
-          "target": "print2",
-          "op": "print",
-          "args": ["i"]
-        },
-        {
-          "kind": "assign",
-          "target": "promptSuffix",
-          "value": {
-            "kind": "lit",
-            "type": {"kind": "string"},
-            "value": ": "
-          }
-        },
-        {
-          "kind": "effect",
-          "target": "print3",
-          "op": "print",
-          "args": ["promptSuffix"]
-        },
-        {
-          "kind": "effect",
-          "target": "response",
-          "op": "readLine",
-          "args": []
-        },
-        {
-          "kind": "assign",
-          "target": "recordedMsg",
-          "value": {
-            "kind": "lit",
-            "type": {"kind": "string"},
-            "value": "Response recorded."
-          }
-        },
-        {
-          "kind": "effect",
-          "target": "print4",
-          "op": "print",
-          "args": ["recordedMsg"]
-        },
-        {
-          "kind": "assign",
-          "target": "one",
-          "value": {
-            "kind": "lit",
-            "type": {"kind": "int"},
-            "value": 1
-          }
-        },
-        {
-          "kind": "op",
-          "target": "nextI",
-          "ns": "core",
-          "name": "add",
-          "args": ["i", "one"]
-        },
-        {
-          "kind": "assign",
-          "target": "i",
-          "value": {
-            "kind": "var",
-            "name": "nextI"
-          }
-        }
-      ],
-      "terminator": {
-        "kind": "jump",
-        "to": "loopHeader"
-      }
-    },
-    {
-      "id": "loopExit",
-      "instructions": [
-        {
-          "kind": "assign",
-          "target": "completionMsg",
-          "value": {
-            "kind": "lit",
-            "type": {"kind": "string"},
-            "value": "Survey complete!"
-          }
-        },
-        {
-          "kind": "effect",
-          "target": "printFinal",
-          "op": "print",
-          "args": ["completionMsg"]
-        }
-      ],
-      "terminator": {
-        "kind": "return"
-      }
+      "entry": "entry"
     }
   ],
-  "entry": "entry",
+  "result": "main",
   "expected_result": null,
   "note": "Survey collector CFG: entry initializes i=0, loopHeader checks i<3, loopBody prints prompt, reads response, prints confirmation, increments i, loopExit prints completion message."
 }
