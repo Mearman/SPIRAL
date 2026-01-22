@@ -216,10 +216,12 @@ function listExamples(examples: ExampleInfo[]): void {
 
 	const byIR = examples.reduce(
 		(acc, ex) => {
-			if (!acc[ex.ir]) {
-				acc[ex.ir] = [];
+			let arr = acc[ex.ir];
+			if (!arr) {
+				arr = [];
+				acc[ex.ir] = arr;
 			}
-			acc[ex.ir]!.push(ex);
+			arr.push(ex);
 			return acc;
 		},
     {} as Record<string, ExampleInfo[]>
@@ -229,10 +231,12 @@ function listExamples(examples: ExampleInfo[]): void {
 		print(`${colors.bold}${ir} Examples${colors.reset} (${exs.length})`, "blue");
 		const byCategory = exs.reduce(
 			(acc, ex) => {
-				if (!acc[ex.category]) {
-					acc[ex.category] = [];
+				let arr = acc[ex.category];
+				if (!arr) {
+					arr = [];
+					acc[ex.category] = arr;
 				}
-				acc[ex.category]!.push(ex);
+				arr.push(ex);
 				return acc;
 			},
       {} as Record<string, ExampleInfo[]>
