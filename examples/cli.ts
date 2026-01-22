@@ -103,7 +103,15 @@ function parseArgs(args: string[]): { path: string | null; options: Options } {
 	};
 	let path: string | null = null;
 
-	for (const arg of args) {
+	const normalized = args.flatMap((arg) => {
+		// Support subcommand style: `examples list`, `examples validate <path>`
+		if (arg === "list") return ["--list"];
+		if (arg === "validate") return ["--validate"];
+		if (arg === "help") return ["--help"];
+		return [arg];
+	});
+
+	for (const arg of normalized) {
 		switch (arg) {
 		case "--verbose":
 		case "-v":
@@ -200,21 +208,48 @@ function listExamples(examples: ExampleInfo[]): void {
 }
 
 async function loadExample(path: string): Promise<{ doc: AIRDocument | CIRDocument; ir: "AIR" | "CIR" } | null> {
-	let filePath = path;
-	if (!filePath.endsWith(".json")) {
-		if (filePath.includes("cir/") || filePath.startsWith("cir/")) {
-			filePath += ".cir.json";
-		} else {
-			filePath += ".air.json";
+	const isCirHint = path.includes("cir/") || path.startsWith("cir/") || path.endsWith(".cir.json");
+	const defaultExt = isCirHint ? ".cir.json" : ".air.json";
+	const candidates: string[] = [];
+
+	// If caller provided an explicit filename (with or without extension), try that first.
+	if (path.endsWith(".json")) {
+		candidates.push(path);
+	} else {
+		candidates.push(`${path}${defaultExt}`);
+	}
+
+	// If the path is a directory, look for <basename>.{air|cir}.json or a single json file inside.
+	const dirPath = join(EXAMPLES_DIR, path);
+	try {
+		const s = await stat(dirPath);
+		if (s.isDirectory()) {
+			const baseName = path.split("/").pop() || "";
+			candidates.push(join(path, `${baseName}.cir.json`));
+			candidates.push(join(path, `${baseName}.air.json`));
+			const entries = await readdir(dirPath);
+			const jsons = entries.filter((e) => e.endsWith(".json"));
+			if (jsons.length === 1) {
+				candidates.push(join(path, jsons[0]));
+			}
+		}
+	} catch {
+		// not a directory; ignore
+	}
+
+	for (const rel of candidates) {
+		const fullPath = join(EXAMPLES_DIR, rel);
+		try {
+			const content = await readFile(fullPath, "utf-8");
+			const doc = JSON.parse(content) as AIRDocument | CIRDocument;
+			const ir: "AIR" | "CIR" = fullPath.endsWith(".cir.json") ? "CIR" : "AIR";
+			return { doc, ir };
+		} catch {
+			continue;
 		}
 	}
 
-	const fullPath = join(EXAMPLES_DIR, filePath);
-	const content = await readFile(fullPath, "utf-8");
-	const doc = JSON.parse(content) as AIRDocument | CIRDocument;
-
-	const ir: "AIR" | "CIR" = filePath.endsWith(".cir.json") ? "CIR" : "AIR";
-	return { doc, ir };
+	return null;
 }
 
 async function runExample(path: string, options: Options): Promise<boolean> {

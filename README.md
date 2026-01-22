@@ -13,6 +13,26 @@ pnpm build
 pnpm test
 ```
 
+### Run Examples
+
+Each example now lives in its own folder alongside a README. You can pass the folder or folder+filename (runner resolves directories):
+
+```bash
+pnpm run-example air/basics/arithmetic      # folder
+pnpm run-example air/basics/arithmetic/arithmetic  # explicit file stem
+```
+
+Common invocations:
+- List examples: `pnpm run-example --list` or `pnpm examples:list`
+- Validate only: `pnpm run-example <path> --validate` or `pnpm examples:validate <path>`
+- Help: `pnpm run-example --help` or `pnpm examples:help`
+
+Representative examples:
+- AIR: [basics/arithmetic](./examples/air/basics/arithmetic/arithmetic.air.json)
+- CIR: [algorithms/factorial](./examples/cir/algorithms/factorial/factorial.cir.json)
+- EIR: [loops/while-loop](./examples/eir/loops/while-loop/while-loop.eir.json)
+- LIR: [control-flow/while-cfg](./examples/lir/control-flow/while-cfg/while-cfg.lir.json)
+
 ## Overview
 
 CAIRS provides a layered representation system:
@@ -21,6 +41,31 @@ CAIRS provides a layered representation system:
 - **CIR** — Computational IR: Extends AIR with lambdas, recursion, fixpoints
 - **EIR** — Execution IR: Expression-based, adds sequencing, mutation, loops, effects
 - **LIR** — Low-level IR: CFG-based with basic blocks, explicit control flow (code generation target)
+
+### Expression Kinds by Layer (reference)
+
+| Kind        | AIR | CIR | EIR | LIR | Description |
+|-------------|-----|-----|-----|-----|-------------|
+| `lit`       | ✅  | ✅  | ✅  | ✅  | Literal value |
+| `ref`       | ✅  | ✅  | ✅  | ❌  | Reference to another node |
+| `var`       | ✅  | ✅  | ✅  | ✅  | Variable reference |
+| `call`      | ✅  | ✅  | ✅  | ❌  | Operator application |
+| `if`        | ✅  | ✅  | ✅  | ❌  | Conditional (expression) |
+| `let`       | ✅  | ✅  | ✅  | ❌  | Local binding |
+| `airRef`    | ✅  | ✅  | ✅  | ❌  | Reference to airDef |
+| `predicate` | ✅  | ✅  | ✅  | ❌  | Predicate value |
+| `lambda`    | ❌  | ✅  | ✅  | ❌  | Anonymous function |
+| `callExpr`  | ❌  | ✅  | ✅  | ❌  | Lambda call |
+| `fix`       | ❌  | ✅  | ✅  | ❌  | Fixpoint |
+| `seq`       | ❌  | ❌  | ✅  | ❌  | Sequential execution |
+| `assign`    | ❌  | ❌  | ✅  | ✅  | Variable assignment |
+| `while`     | ❌  | ❌  | ✅  | ❌  | While loop |
+| `for`       | ❌  | ❌  | ✅  | ❌  | For loop |
+| `iter`      | ❌  | ❌  | ✅  | ❌  | Iterator loop |
+| `effect`    | ❌  | ❌  | ✅  | ✅  | Side effect |
+| `refCell`   | ❌  | ❌  | ✅  | ❌  | Reference cell |
+| `deref`     | ❌  | ❌  | ✅  | ❌  | Dereference cell |
+| `phi`       | ❌  | ❌  | ❌  | ✅  | SSA phi node |
 
 ## Features
 
@@ -31,13 +76,23 @@ CAIRS provides a layered representation system:
 - Capture-avoiding substitution for `airRef` in CIR
 - Extensible domain modules (core, bool, list, set, ...)
 
+### Tooling
+
+- Requires Node (see badge) and pnpm
+- Example runner: `pnpm run-example` (flags: `--list`, `--verbose`, `--validate`, `--help`)
+- Tests: `pnpm test` (all), `pnpm test:examples` (examples), `pnpm test:examples --coverage`
+
 ## Documentation
 
-- [AIR Schema](./air.schema.json) — JSON Schema for AIR documents
-- [CIR Schema](./cir.schema.json) — JSON Schema for CIR documents
-- [EIR Schema](./eir.schema.json) — JSON Schema for EIR documents (expression-based execution)
-- [LIR Schema](./lir.schema.json) — JSON Schema for LIR documents (CFG-based low-level)
+Schemas (quick summaries):
+- [AIR Schema](./air.schema.json) — `version`, `airDefs`, `nodes`, `result` (pure expressions)
+- [CIR Schema](./cir.schema.json) — Same shape as AIR; adds lambdas/recursion constructs in expressions
+- [EIR Schema](./eir.schema.json) — Adds `seq`, `assign`, `loop`, `effect`, `refCell` to support imperative execution
+- [LIR Schema](./lir.schema.json) — CFG with `blocks` (instructions) and `entry`; instructions plus terminators
+
+Further reading:
 - [Formal Specification](#specification) — Complete semantics and inference rules
+- [Examples guide](./examples/README.md) — Runner usage, learning path, expression-kind table
 
 ---
 
@@ -60,23 +115,39 @@ CAIRS provides a layered representation system:
 
 ---
 
+## Learning Path (examples)
+
+Follow these curated examples to see AIR → CIR → EIR → LIR in practice:
+1. AIR basics: `air/basics/literals.air.json`, `air/basics/arithmetic.air.json`, `air/control-flow/simple-if.air.json`
+2. AIR data structures: `air/data-structures/list-length.air.json`, `air/data-structures/set-union.air.json`
+3. CIR lambdas: `cir/basics/identity-lambda.cir.json`, `cir/basics/closures.cir.json`
+4. CIR algorithms: `cir/algorithms/gcd.cir.json`, `cir/fixpoint/fix-factorial.cir.json`
+5. CIR higher-order: `cir/higher-order/compose.cir.json`, `cir/higher-order/fold.cir.json`
+6. EIR imperative: `eir/basics/sequencing.eir.json`, `eir/loops/while-loop.eir.json`, `eir/algorithms/factorial.eir.json`
+7. LIR CFGs: `lir/basics/straight-line.lir.json`, `lir/control-flow/while-cfg.lir.json`, `lir/phi/loop-phi.lir.json`
+
+---
+
 ## 1. Introduction
 
-Many systems require a portable, precise way to describe mathematical and logical operations without committing to a specific programming language or execution strategy. Existing representations frequently conflate semantics with execution, limiting portability, analysability, and reuse.
+CAIRS is a portable, JSON-first intermediate representation for mathematical and logical computation. It keeps **semantics** separate from **execution**, so the same document can be validated, analysed, and executed (or code-generated) without binding to a single runtime.
 
-CAIRS addresses this by defining a layered representation system that:
+Who it’s for:
+- Language/runtime implementers who want a stable IR format for multiple targets
+- Verification and analysis tools that need structured semantics without runtime dependencies
+- Folks teaching or learning IR design across declarative, computational, and imperative layers
 
-- expresses mathematical meaning declaratively,
-- allows computation to be layered explicitly when required,
-- remains serialisable and structurally verifiable,
-- avoids dependence on a particular runtime or evaluation model.
+What it provides:
+- **AIR** — algebraic meaning (pure, non-recursive, declarative)
+- **CIR** — computational constructs (lambdas, recursion, fixpoints)
+- **EIR** — imperative execution (sequencing, mutation, loops, effects)
+- **LIR** — CFG form for code generation and optimization
 
-CAIRS separates **algebraic meaning** from **computational process**, enabling declarative specification with optional computational extension. The system consists of:
-
-- **AIR (Algebraic Intermediate Representation)** — pure, declarative algebraic expressions
-- **CIR (Computational Intermediate Representation)** — extends AIR with computational constructs
-- **EIR (Execution Intermediate Representation)** — extends CIR with imperative features
-- **LIR (Low-Level Intermediate Representation)** — CFG-based representation for code generation
+Design principles:
+- Declarative first: expressions describe meaning before execution strategy
+- Layered extension: each layer is a superset, preserving prior semantics
+- Portable artifacts: JSON schemas for validation; no runtime dependencies required
+- Tooling included: example runner and tests to validate documents end-to-end
 
 ---
 

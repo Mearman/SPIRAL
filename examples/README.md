@@ -4,15 +4,16 @@ This directory contains examples demonstrating each Intermediate Representation 
 
 ## Quick Start
 
+Per-example folder layout: each example lives in its own directory alongside a minimal README. Run with the folder path plus the filename (without extension):
+
 ```bash
-# Run a specific example
-pnpm run-example air/basics/arithmetic
+pnpm run-example air/basics/arithmetic/arithmetic
 
 # List all available examples
 pnpm run-example --list
 
 # Run with verbose output
-pnpm run-example cir/algorithms/factorial --verbose
+pnpm run-example cir/algorithms/factorial/factorial --verbose
 ```
 
 ## IR Layers
@@ -26,24 +27,10 @@ pnpm run-example cir/algorithms/factorial --verbose
 
 ## Example Structure
 
-Each example is a JSON file following the AIR, CIR, EIR, or LIR document schema:
-
-```json
-// AIR/CIR/EIR format
-{
-  "version": "1.0.0",
-  "airDefs": [...],    // Reusable definitions (AIR only, optional for CIR/EIR)
-  "nodes": [...],       // Expression nodes
-  "result": "output"    // Reference to result node
-}
-
-// LIR format
-{
-  "version": "1.0.0",
-  "blocks": [...],      // Basic blocks
-  "entry": "entryBlock" // Entry block ID
-}
-```
+- Layout: `examples/<layer>/<category>/<example>/<example>.<layer>.json` with a sibling `README.md` describing what the example shows.
+- Run path: the portion after `examples/`, minus the `.json` extension. Example: `air/basics/arithmetic/arithmetic` (or just `air/basics/arithmetic` now that directory resolution is supported).
+- README content: brief purpose and run command; it does **not** duplicate the JSON contents.
+- Validation: examples are covered by `pnpm test:examples`.
 
 ## Running Examples
 
