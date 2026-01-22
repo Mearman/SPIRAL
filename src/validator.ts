@@ -1966,3 +1966,225 @@ function validateCFG(
 		}
 	}
 }
+
+//==============================================================================
+// PIR Validation
+//==============================================================================
+
+export function validatePIR(doc: unknown): ValidationResult<import("./types.js").PIRDocument> {
+	const state: ValidationState = { errors: [], path: [] };
+
+	// Top-level structure check
+	if (!validateObject(doc)) {
+		addError(state, "Document must be an object", doc);
+		return invalidResult<import("./types.js").PIRDocument>(state.errors);
+	}
+
+	const d = doc as Record<string, unknown>;
+
+	// Check version (PIR uses version 2.x.x)
+	if (d.version !== undefined && typeof d.version !== "string") {
+		addError(state, "version must be a string", d.version);
+	} else if (typeof d.version === "string" && !(/^2\.\d+\.\d+$/.exec(d.version))) {
+		addError(state, "PIR version must match 2.x.x format", d.version);
+	}
+
+	// Check airDefs (optional, should be array if present)
+	if (d.airDefs !== undefined && !Array.isArray(d.airDefs)) {
+		addError(state, "airDefs must be an array", d.airDefs);
+	}
+
+	// Check functionSigs (optional, should be array if present)
+	if (d.functionSigs !== undefined && !Array.isArray(d.functionSigs)) {
+		addError(state, "functionSigs must be an array", d.functionSigs);
+	}
+
+	// Check capabilities (optional, should be array if present)
+	if (d.capabilities !== undefined) {
+		if (!Array.isArray(d.capabilities)) {
+			addError(state, "capabilities must be an array", d.capabilities);
+		} else {
+			const validCapabilities = ["async", "parallel", "channels", "hybrid"];
+			for (const cap of d.capabilities) {
+				if (typeof cap !== "string" || !validCapabilities.includes(cap)) {
+					addError(state, `Invalid capability: ${cap}`, cap);
+				}
+			}
+		}
+	}
+
+	// Check nodes (required)
+	if (!Array.isArray(d.nodes)) {
+		addError(state, "nodes must be an array", d.nodes);
+	} else {
+		for (let i = 0; i < d.nodes.length; i++) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const node = d.nodes[i];
+			pushPath(state, `nodes[${i}]`);
+			validatePIRNode(node, state);
+			popPath(state);
+		}
+	}
+
+	// Check result (required)
+	if (typeof d.result !== "string") {
+		addError(state, "result must be a string (node ID)", d.result);
+	}
+
+	if (state.errors.length > 0) {
+		return invalidResult<import("./types.js").PIRDocument>(state.errors);
+	}
+
+	return validResult(doc as import("./types.js").PIRDocument);
+}
+
+/**
+ * Validate a PIR node (expression or block-based)
+ */
+function validatePIRNode(node: unknown, state: ValidationState): void {
+	if (!validateObject(node)) {
+		addError(state, "Node must be an object", node);
+		return;
+	}
+
+	const n = node as Record<string, unknown>;
+
+	// Check id (required)
+	if (typeof n.id !== "string" || !(/^[A-Za-z][A-Za-z0-9_-]*$/.exec(n.id))) {
+		addError(state, "id must be a valid identifier", n.id);
+	}
+
+	// Check type (optional)
+	if (n.type !== undefined) {
+		// Type validation would go here
+	}
+
+	// Check for expr OR (blocks + entry)
+	const hasExpr = n.expr !== undefined;
+	const hasBlocks = n.blocks !== undefined;
+	const hasEntry = n.entry !== undefined;
+
+	if (hasExpr && (hasBlocks || hasEntry)) {
+		addError(state, "Node cannot have both expr and blocks", node);
+	} else if (!hasExpr && (!hasBlocks || !hasEntry)) {
+		addError(state, "Node must have either expr or (blocks + entry)", node);
+	}
+
+	if (hasExpr) {
+		validatePIRExpr(n.expr, state);
+	}
+
+	if (hasBlocks) {
+		if (!Array.isArray(n.blocks)) {
+			addError(state, "blocks must be an array", n.blocks);
+		} else {
+			for (let i = 0; i < n.blocks.length; i++) {
+				pushPath(state, `blocks[${i}]`);
+				validatePIRBlock(n.blocks[i], state);
+				popPath(state);
+			}
+		}
+	}
+
+	if (hasEntry && typeof n.entry !== "string") {
+		addError(state, "entry must be a string (block ID)", n.entry);
+	}
+}
+
+/**
+ * Validate a PIR expression
+ */
+function validatePIRExpr(expr: unknown, state: ValidationState): void {
+	if (!validateObject(expr)) {
+		addError(state, "Expression must be an object", expr);
+		return;
+	}
+
+	const e = expr as Record<string, unknown>;
+	const kind = e.kind;
+
+	if (typeof kind !== "string") {
+		addError(state, "Expression must have a 'kind' field", expr);
+		return;
+	}
+
+	// PIR-specific expression kinds
+	const pirKinds = ["par", "spawn", "await", "channel", "send", "recv", "select", "race"];
+	// EIR expression kinds (PIR extends EIR)
+	const eirKinds = ["lit", "var", "call", "if", "let", "lambda", "callExpr", "fix", "seq", "assign", "while", "for", "iter", "effect", "refCell"];
+
+	const validKinds = [...pirKinds, ...eirKinds];
+	if (!validKinds.includes(kind)) {
+		addError(state, `Unknown expression kind in PIR: ${kind}`, kind);
+		return;
+	}
+
+	// Validate PIR-specific expressions
+	switch (kind) {
+	case "par":
+		if (!Array.isArray(e.branches) || e.branches.length < 2) {
+			addError(state, "par expression must have at least 2 branches", e.branches);
+		}
+		break;
+	case "spawn":
+		if (typeof e.task !== "string") {
+			addError(state, "spawn expression must have a task (node ID)", e.task);
+		}
+		break;
+	case "await":
+		if (typeof e.future !== "string") {
+			addError(state, "await expression must have a future (node ID)", e.future);
+		}
+		break;
+	case "channel":
+		if (typeof e.channelType !== "string") {
+			addError(state, "channel expression must have a channelType", e.channelType);
+		}
+		break;
+	case "send":
+		if (typeof e.channel !== "string" || typeof e.value !== "string") {
+			addError(state, "send expression must have channel and value (node IDs)", { channel: e.channel, value: e.value });
+		}
+		break;
+	case "recv":
+		if (typeof e.channel !== "string") {
+			addError(state, "recv expression must have a channel (node ID)", e.channel);
+		}
+		break;
+	case "select":
+		if (!Array.isArray(e.futures) || e.futures.length < 1) {
+			addError(state, "select expression must have at least 1 future", e.futures);
+		}
+		break;
+	case "race":
+		if (!Array.isArray(e.tasks) || e.tasks.length < 2) {
+			addError(state, "race expression must have at least 2 tasks", e.tasks);
+		}
+		break;
+	}
+}
+
+/**
+ * Validate a PIR block
+ */
+function validatePIRBlock(block: unknown, state: ValidationState): void {
+	if (!validateObject(block)) {
+		addError(state, "Block must be an object", block);
+		return;
+	}
+
+	const b = block as Record<string, unknown>;
+
+	if (typeof b.id !== "string") {
+		addError(state, "Block must have an id", b.id);
+	}
+
+	if (!Array.isArray(b.instructions)) {
+		addError(state, "Block must have instructions array", b.instructions);
+	}
+
+	if (!validateObject(b.terminator)) {
+		addError(state, "Block must have a terminator object", b.terminator);
+	}
+}
+
