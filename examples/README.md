@@ -58,7 +58,31 @@ pnpm run-example lir/control-flow/if-else
 | `--list` | List all available examples |
 | `--verbose` | Show detailed evaluation output |
 | `--validate` | Only validate, don't evaluate |
+| `--inputs <values>` | Provide comma-separated or JSON inputs for interactive examples |
+| `--inputs-file <path>` | Read inputs from a JSON file |
 | `--help` | Show help message |
+
+### Interactive Input (EIR/LIR)
+
+Examples using `readLine` or `readInt` effects can accept inputs from multiple sources:
+
+```bash
+# Interactive stdin prompt (default on TTY)
+pnpm run-example eir/interactive/add-two-ints
+
+# Comma-separated values
+pnpm run-example eir/interactive/add-two-ints --inputs "3,4"
+
+# JSON array format
+pnpm run-example eir/interactive/add-two-ints --inputs "[3, 4]"
+
+# From a JSON file
+pnpm run-example eir/interactive/add-two-ints --inputs-file ./inputs.json
+```
+
+**Input precedence:** `--inputs` flag > `--inputs-file` flag > `.inputs.json` fixture > interactive prompt (TTY only)
+
+Fixture files (e.g., `add-two-ints.inputs.json`) enable deterministic testing of interactive examples.
 
 ## Test Runner
 
@@ -93,11 +117,12 @@ pnpm test:examples --coverage
 | [Fixpoint](./cir/fixpoint/) | 3 | Fix combinator for recursion |
 | [Mixed](./cir/mixed/) | 1 | Using airRef within CIR |
 
-### EIR Examples (16 files)
+### EIR Examples (18 files)
 
 | Category | Files | Concepts |
 |----------|-------|----------|
 | [Basics](./eir/basics/) | 4 | Sequencing, assignment, refcells, effects |
+| [Interactive](./eir/interactive/) | 2 | Input effects, readLine, readInt |
 | [Loops](./eir/loops/) | 4 | While, for, iter, nested loops |
 | [Algorithms](./eir/algorithms/) | 4 | Counter, factorial, sum-list, accumulate |
 | [Advanced](./eir/advanced/) | 4 | State machine, I/O loop, mutable list, effects |
@@ -141,7 +166,12 @@ For those new to CAIRS, we recommend exploring examples in this order:
    - `eir/loops/while-loop.eir.json` - While loops
    - `eir/algorithms/factorial.eir.json` - Imperative factorial
 
-7. **Study LIR CFG representation:**
+7. **Explore interactive I/O:**
+   - `eir/interactive/prompt-echo.eir.json` - Read and print strings
+   - `eir/interactive/add-two-ints.eir.json` - Read integers, perform arithmetic
+   - Try with `--inputs` flag: `pnpm run-example eir/interactive/add-two-ints --inputs "3,4"`
+
+8. **Study LIR CFG representation:**
    - `lir/basics/straight-line.lir.json` - Basic blocks
    - `lir/control-flow/while-cfg.lir.json` - Loops as CFG
    - `lir/phi/loop-phi.lir.json` - Loop-carried variables

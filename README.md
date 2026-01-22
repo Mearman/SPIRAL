@@ -27,10 +27,30 @@ Common invocations:
 - Validate only: `pnpm run-example <path> --validate` or `pnpm examples:validate <path>`
 - Help: `pnpm run-example --help` or `pnpm examples:help`
 
+#### Interactive Examples (EIR/LIR)
+
+For examples that use interactive input effects (`readLine`, `readInt`), you can provide inputs via flags, files, or interactive prompts:
+
+```bash
+# Interactive prompt (on TTY)
+pnpm run-example eir/interactive/add-two-ints
+
+# With comma-separated inputs
+pnpm run-example eir/interactive/add-two-ints --inputs "3,4"
+
+# With JSON array format
+pnpm run-example eir/interactive/add-two-ints --inputs "[3, 4]"
+
+# From JSON file
+pnpm run-example eir/interactive/add-two-ints --inputs-file ./inputs.json
+```
+
+Examples automatically look for `.inputs.json` fixtures for deterministic testing.
+
 Representative examples:
 - AIR: [basics/arithmetic](./examples/air/basics/arithmetic/arithmetic.air.json)
 - CIR: [algorithms/factorial](./examples/cir/algorithms/factorial/factorial.cir.json)
-- EIR: [loops/while-loop](./examples/eir/loops/while-loop/while-loop.eir.json)
+- EIR: [interactive/add-two-ints](./examples/eir/interactive/add-two-ints/add-two-ints.eir.json)
 - LIR: [control-flow/while-cfg](./examples/lir/control-flow/while-cfg/while-cfg.lir.json)
 
 ## Overview
