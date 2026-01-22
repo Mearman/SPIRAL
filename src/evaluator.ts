@@ -13,12 +13,18 @@ import {
 import { CAIRSError, ErrorCodes, exhaustive } from "./errors.js";
 import {
 	type AIRDocument,
+	type AirHybridNode,
+	type BlockNode,
 	type ClosureVal,
 	type EIRDocument,
 	type EirExpr,
-	type EirNode,
+	type EirHybridNode,
 	type EvalState,
 	type Expr,
+	isBlockNode,
+	isExprNode,
+	type LirInstruction,
+	type LirTerminator,
 	type Node,
 	type Type,
 	type Value,
@@ -539,7 +545,7 @@ export function evaluateProgram(
 	options?: EvalOptions,
 ): Value {
 	const evaluator = new Evaluator(registry, defs);
-	const nodeMap = new Map<string, Node>();
+	const nodeMap = new Map<string, AirHybridNode>();
 	const nodeValues = new Map<string, Value>();
 
 	// Build a map of nodes and find nodes that are "bound" (referenced as body in let/if/lambda)
@@ -553,7 +559,8 @@ export function evaluateProgram(
 	// Collect all lambda parameters in the document
 	const allLambdaParams = new Set<string>();
 	for (const node of doc.nodes) {
-		if (node.expr.kind === "lambda" && Array.isArray(node.expr.params)) {
+		// Only expr nodes can have lambda expressions
+		if (isExprNode(node) && node.expr.kind === "lambda" && Array.isArray(node.expr.params)) {
 			for (const p of node.expr.params) {
 				if (typeof p === "string") allLambdaParams.add(p);
 			}
@@ -580,8 +587,10 @@ export function evaluateProgram(
 	// Second pass: mark bound nodes using transitive closure
 	// A node is bound if it actually needs context to be evaluated
 	// We only mark non-trivial nodes recursively
-	const isTrivalNode = (node: Node | undefined): boolean => {
+	const isTrivalNode = (node: AirHybridNode | undefined): boolean => {
 		if (!node) return true;
+		// Block nodes are not trivial - they need to be evaluated
+		if (isBlockNode(node)) return false;
 		const expr = node.expr;
 		// Literals and refs to already-evaluated nodes are trivial
 		return expr.kind === "lit" || expr.kind === "airRef";
@@ -616,6 +625,9 @@ export function evaluateProgram(
 
 		boundNodes.add(nodeId);
 
+		// Block nodes don't have expressions to traverse
+		if (isBlockNode(node)) return;
+
 		// Recursively mark children that depend on context
 		const expr = node.expr;
 		if (expr.kind === "let") {
@@ -638,6 +650,8 @@ export function evaluateProgram(
 
 	// First pass: mark initial bound nodes
 	for (const node of doc.nodes) {
+		// Block nodes don't have expressions - skip binding analysis
+		if (isBlockNode(node)) continue;
 		const expr = node.expr;
 		// Lambda bodies are bound - start the recursive marking
 		if (expr.kind === "lambda" && typeof expr.body === "string") {
@@ -661,6 +675,8 @@ export function evaluateProgram(
 		for (const node of doc.nodes) {
 			if (boundNodes.has(node.id)) continue;
 			if (isTrivalNode(node)) continue;
+			// Block nodes don't use bound nodes in expressions
+			if (isBlockNode(node)) continue;
 			if (usesBoundNodes(node.expr)) {
 				boundNodes.add(node.id);
 				changed = true;
@@ -668,13 +684,14 @@ export function evaluateProgram(
 		}
 	}
 
-	// Second pass: find ref nodes that point to var or call nodes and mark them as bound
+	// Third pass: find ref nodes that point to var or call nodes and mark them as bound
 	// These need to be evaluated in the correct let-bound context
 	for (const node of doc.nodes) {
+		if (isBlockNode(node)) continue;
 		const expr = node.expr;
 		if (expr.kind === "ref") {
 			const refNode = nodeMap.get(expr.id);
-			if (refNode && (refNode.expr.kind === "var" || refNode.expr.kind === "call")) {
+			if (refNode && isExprNode(refNode) && (refNode.expr.kind === "var" || refNode.expr.kind === "call")) {
 				boundNodes.add(node.id);
 			}
 		}
@@ -740,7 +757,7 @@ function evalExprWithNodeMap(
 	registry: OperatorRegistry,
 	defs: Defs,
 	expr: Expr,
-	nodeMap: Map<string, Node>,
+	nodeMap: Map<string, AirHybridNode>,
 	nodeValues: Map<string, Value>,
 	env: ValueEnv,
 	options?: EvalOptions,
@@ -751,6 +768,10 @@ function evalExprWithNodeMap(
 		const bodyNode = nodeMap.get(lambdaExpr.body);
 		if (!bodyNode) {
 			return errorVal(ErrorCodes.DomainError, "Lambda body node not found: " + lambdaExpr.body);
+		}
+		if (isBlockNode(bodyNode)) {
+			// Block node as lambda body - not currently supported
+			return errorVal(ErrorCodes.DomainError, "Block nodes as lambda bodies are not supported");
 		}
 		return closureVal(lambdaExpr.params, bodyNode.expr, env);
 	}
@@ -766,7 +787,11 @@ function evalExprWithNodeMap(
 		if (!fnValue) {
 			const fnNode = nodeMap.get(callExpr.fn);
 			if (fnNode) {
-				fnValue = evalExprWithNodeMap(registry, defs, fnNode.expr, nodeMap, nodeValues, env, options);
+				if (isBlockNode(fnNode)) {
+					fnValue = evaluateBlockNode(fnNode, registry, nodeMap, nodeValues, env, options);
+				} else {
+					fnValue = evalExprWithNodeMap(registry, defs, fnNode.expr, nodeMap, nodeValues, env, options);
+				}
 			}
 		}
 		if (!fnValue) {
@@ -790,7 +815,11 @@ function evalExprWithNodeMap(
 			if (!argValue) {
 				const argNode = nodeMap.get(argId);
 				if (argNode) {
-					argValue = evalExprWithNodeMap(registry, defs, argNode.expr, nodeMap, nodeValues, env, options);
+					if (isBlockNode(argNode)) {
+						argValue = evaluateBlockNode(argNode, registry, nodeMap, nodeValues, env, options);
+					} else {
+						argValue = evalExprWithNodeMap(registry, defs, argNode.expr, nodeMap, nodeValues, env, options);
+					}
 				}
 			}
 			if (!argValue) {
@@ -847,7 +876,11 @@ function evalExprWithNodeMap(
 			if (!argValue) {
 				const argNode = nodeMap.get(argId);
 				if (argNode) {
-					argValue = evalExprWithNodeMap(registry, defs, argNode.expr, nodeMap, nodeValues, env, options);
+					if (isBlockNode(argNode)) {
+						argValue = evaluateBlockNode(argNode, registry, nodeMap, nodeValues, env, options);
+					} else {
+						argValue = evalExprWithNodeMap(registry, defs, argNode.expr, nodeMap, nodeValues, env, options);
+					}
 				}
 			}
 			if (!argValue) {
@@ -907,7 +940,11 @@ function evalExprWithNodeMap(
 			// Try evaluating the value node
 			const valueNode = nodeMap.get(letExpr.value);
 			if (valueNode) {
-				valueResult = evalExprWithNodeMap(registry, defs, valueNode.expr, nodeMap, nodeValues, env, options);
+				if (isBlockNode(valueNode)) {
+					valueResult = evaluateBlockNode(valueNode, registry, nodeMap, nodeValues, env, options);
+				} else {
+					valueResult = evalExprWithNodeMap(registry, defs, valueNode.expr, nodeMap, nodeValues, env, options);
+				}
 			}
 		}
 		if (!valueResult) {
@@ -926,7 +963,12 @@ function evalExprWithNodeMap(
 			return errorVal(ErrorCodes.DomainError, "Let body node not found: " + letExpr.body);
 		}
 		// Always evaluate with letEnv to ensure let bindings are available
-		const bodyResult = evalExprWithNodeMap(registry, defs, bodyNode.expr, nodeMap, nodeValues, letEnv, options);
+		let bodyResult: Value;
+		if (isBlockNode(bodyNode)) {
+			bodyResult = evaluateBlockNode(bodyNode, registry, nodeMap, nodeValues, letEnv, options);
+		} else {
+			bodyResult = evalExprWithNodeMap(registry, defs, bodyNode.expr, nodeMap, nodeValues, letEnv, options);
+		}
 		return bodyResult;
 	}
 
@@ -937,7 +979,11 @@ function evalExprWithNodeMap(
 		if (!condValue) {
 			const condNode = nodeMap.get(ifExpr.cond);
 			if (condNode) {
-				condValue = evalExprWithNodeMap(registry, defs, condNode.expr, nodeMap, nodeValues, env, options);
+				if (isBlockNode(condNode)) {
+					condValue = evaluateBlockNode(condNode, registry, nodeMap, nodeValues, env, options);
+				} else {
+					condValue = evalExprWithNodeMap(registry, defs, condNode.expr, nodeMap, nodeValues, env, options);
+				}
 			}
 		}
 		if (!condValue) {
@@ -956,7 +1002,11 @@ function evalExprWithNodeMap(
 		if (!branchValue) {
 			const branchNode = nodeMap.get(branchId);
 			if (branchNode) {
-				branchValue = evalExprWithNodeMap(registry, defs, branchNode.expr, nodeMap, nodeValues, env, options);
+				if (isBlockNode(branchNode)) {
+					branchValue = evaluateBlockNode(branchNode, registry, nodeMap, nodeValues, env, options);
+				} else {
+					branchValue = evalExprWithNodeMap(registry, defs, branchNode.expr, nodeMap, nodeValues, env, options);
+				}
 			}
 		}
 		if (!branchValue) {
@@ -1007,20 +1057,254 @@ function evalExprWithNodeMap(
 	return errorVal(ErrorCodes.DomainError, "Unsupported expression kind in closure body: " + expr.kind);
 }
 
+//==============================================================================
+// Block Node Evaluation
+// Evaluates CFG-based block nodes within AIR/CIR/EIR documents
+//==============================================================================
+
+/**
+ * Evaluate a block node (CFG structure) and return its result.
+ * Block nodes contain basic blocks with instructions and terminators.
+ */
+function evaluateBlockNode<B extends { id: string; instructions: unknown[]; terminator: LirTerminator }>(
+	node: BlockNode<B>,
+	registry: OperatorRegistry,
+	nodeMap: Map<string, AirHybridNode>,
+	nodeValues: Map<string, Value>,
+	env: ValueEnv,
+	options?: EvalOptions,
+): Value {
+	// Build block map
+	const blockMap = new Map<string, B>();
+	for (const block of node.blocks) {
+		blockMap.set(block.id, block);
+	}
+
+	// Find entry block
+	const entryBlock = blockMap.get(node.entry);
+	if (!entryBlock) {
+		return errorVal(ErrorCodes.ValidationError, "Entry block not found: " + node.entry);
+	}
+
+	// Runtime state
+	let vars: ValueEnv = env;
+	let predecessor: string | undefined;
+	let steps = 0;
+	const maxSteps = options?.maxSteps ?? 10000;
+
+	// Execute CFG
+	let currentBlockId = node.entry;
+	while (currentBlockId) {
+		steps++;
+		if (steps > maxSteps) {
+			return errorVal(ErrorCodes.NonTermination, "Block node execution exceeded maximum steps");
+		}
+
+		const currentBlock = blockMap.get(currentBlockId);
+		if (!currentBlock) {
+			return errorVal(ErrorCodes.ValidationError, "Block not found: " + currentBlockId);
+		}
+
+		// Execute instructions
+		for (const ins of currentBlock.instructions as LirInstruction[]) {
+			const result = executeBlockInstruction(ins, vars, registry, nodeMap, nodeValues);
+			if (result.error) {
+				return result.error;
+			}
+			vars = result.vars;
+		}
+
+		// Execute terminator
+		const termResult = executeBlockTerminator(currentBlock.terminator, vars, predecessor);
+		if (termResult.returnValue !== undefined) {
+			return termResult.returnValue;
+		}
+		if (termResult.error) {
+			return termResult.error;
+		}
+		predecessor = currentBlockId;
+		currentBlockId = termResult.nextBlock!;
+	}
+
+	return voidVal();
+}
+
+interface BlockInstructionResult {
+	vars: ValueEnv;
+	error?: Value;
+}
+
+function executeBlockInstruction(
+	ins: LirInstruction,
+	vars: ValueEnv,
+	registry: OperatorRegistry,
+	_nodeMap: Map<string, AirHybridNode>,
+	nodeValues: Map<string, Value>,
+): BlockInstructionResult {
+	switch (ins.kind) {
+	case "assign": {
+		// Evaluate the expression value
+		const expr = ins.value;
+		let value: Value;
+		if (expr.kind === "lit") {
+			value = evaluateLitExpr(expr);
+		} else if (expr.kind === "var") {
+			const varVal = lookupValue(vars, expr.name);
+			value = varVal ?? errorVal(ErrorCodes.UnboundIdentifier, "Unbound identifier: " + expr.name);
+		} else if (expr.kind === "ref") {
+			// Reference to another node
+			value = nodeValues.get(expr.id) ?? errorVal(ErrorCodes.DomainError, "Node not found: " + expr.id);
+		} else {
+			value = errorVal(ErrorCodes.DomainError, "Unsupported expression in block assign: " + expr.kind);
+		}
+		if (isError(value)) {
+			return { vars, error: value };
+		}
+		return { vars: extendValueEnv(vars, ins.target, value) };
+	}
+
+	case "op": {
+		// Look up argument values
+		const argValues: Value[] = [];
+		for (const argId of ins.args) {
+			const argVal = lookupValue(vars, argId) ?? nodeValues.get(argId);
+			if (!argVal) {
+				return { vars, error: errorVal(ErrorCodes.UnboundIdentifier, "Argument not found: " + argId) };
+			}
+			if (isError(argVal)) {
+				return { vars, error: argVal };
+			}
+			argValues.push(argVal);
+		}
+
+		// Look up operator
+		const op = lookupOperator(registry, ins.ns, ins.name);
+		if (!op) {
+			return { vars, error: errorVal(ErrorCodes.UnknownOperator, "Unknown operator: " + ins.ns + ":" + ins.name) };
+		}
+
+		try {
+			const result = op.fn(...argValues);
+			return { vars: extendValueEnv(vars, ins.target, result) };
+		} catch (e) {
+			if (e instanceof CAIRSError) {
+				return { vars, error: e.toValue() };
+			}
+			return { vars, error: errorVal(ErrorCodes.DomainError, String(e)) };
+		}
+	}
+
+	case "phi": {
+		// Phi nodes are handled by looking up the first source with a value
+		let phiValue: Value | undefined;
+		for (const source of ins.sources) {
+			const value = lookupValue(vars, source.id);
+			if (value && !isError(value)) {
+				phiValue = value;
+				break;
+			}
+		}
+		if (!phiValue) {
+			return { vars, error: errorVal(ErrorCodes.DomainError, "Phi node has no valid sources: " + ins.target) };
+		}
+		return { vars: extendValueEnv(vars, ins.target, phiValue) };
+	}
+
+	case "call":
+	case "effect":
+	case "assignRef":
+		// These are not commonly used in AIR/CIR blocks, but we can provide basic support
+		return { vars, error: errorVal(ErrorCodes.DomainError, "Instruction kind not yet supported in hybrid blocks: " + ins.kind) };
+
+	default:
+		return { vars, error: errorVal(ErrorCodes.DomainError, "Unknown instruction kind") };
+	}
+}
+
+interface BlockTerminatorResult {
+	nextBlock?: string;
+	returnValue?: Value;
+	error?: Value;
+}
+
+function executeBlockTerminator(
+	term: LirTerminator,
+	vars: ValueEnv,
+	_predecessor?: string,
+): BlockTerminatorResult {
+	switch (term.kind) {
+	case "jump":
+		return { nextBlock: term.to };
+
+	case "branch": {
+		const condValue = lookupValue(vars, term.cond);
+		if (!condValue) {
+			return { error: errorVal(ErrorCodes.UnboundIdentifier, "Condition not found: " + term.cond) };
+		}
+		if (condValue.kind !== "bool") {
+			return { error: errorVal(ErrorCodes.TypeError, "Branch condition must be bool") };
+		}
+		return { nextBlock: condValue.value ? term.then : term.else };
+	}
+
+	case "return": {
+		if (term.value) {
+			const value = lookupValue(vars, term.value);
+			if (!value) {
+				return { error: errorVal(ErrorCodes.UnboundIdentifier, "Return value not found: " + term.value) };
+			}
+			return { returnValue: value };
+		}
+		return { returnValue: voidVal() };
+	}
+
+	case "exit":
+		return { returnValue: voidVal() };
+
+	default:
+		return { error: errorVal(ErrorCodes.DomainError, "Unknown terminator kind") };
+	}
+}
+
+function evaluateLitExpr(expr: { kind: "lit"; type: Type; value: unknown }): Value {
+	switch (expr.type.kind) {
+	case "bool":
+		return boolVal(Boolean(expr.value));
+	case "int":
+		return intVal(Number(expr.value));
+	case "float":
+		return floatVal(Number(expr.value));
+	case "string":
+		return stringVal(String(expr.value));
+	case "void":
+		return voidVal();
+	default:
+		return errorVal(ErrorCodes.TypeError, "Complex literals not yet supported in blocks");
+	}
+}
+
 function evalNode(
 	evaluator: Evaluator,
-	node: Node,
-	nodeMap: Map<string, Node>,
+	node: AirHybridNode,
+	nodeMap: Map<string, AirHybridNode>,
 	nodeValues: Map<string, Value>,
 	env: ValueEnv,
 	options?: EvalOptions,
 ): NodeEvalResult {
-	const expr = node.expr;
 	const state: EvalContext = {
 		steps: 0,
 		maxSteps: options?.maxSteps ?? 10000,
 		trace: options?.trace ?? false,
 	};
+
+	// Handle block nodes - evaluate CFG and return result
+	if (isBlockNode(node)) {
+		const result = evaluateBlockNode(node, evaluator.registry, nodeMap, nodeValues, env, options);
+		return { value: result, env };
+	}
+
+	// Expression node - evaluate normally
+	const expr = node.expr;
 
 	switch (expr.kind) {
 	case "lit": {
@@ -1075,9 +1359,9 @@ function evalNode(
 			if (typeof arg === "string") {
 				// Node reference - get value from nodeMap/nodeValues
 				const argNode = nodeMap.get(arg);
-				const isVarNode = argNode?.expr.kind === "var";
-				const isLetNode = argNode?.expr.kind === "let";
-				const isCallNode = argNode?.expr.kind === "call";
+				const isVarNode = argNode && isExprNode(argNode) && argNode.expr.kind === "var";
+				const isLetNode = argNode && isExprNode(argNode) && argNode.expr.kind === "let";
+				const isCallNode = argNode && isExprNode(argNode) && argNode.expr.kind === "call";
 
 				// First try to get the value from nodeValues (for already-evaluated nodes)
 				// But skip error values, var nodes, let nodes, and call nodes since they need fresh evaluation
@@ -1243,16 +1527,21 @@ function evalNode(
 			if (!valueNodeValue) {
 				const valueNode = nodeMap.get(expr.value);
 				if (valueNode) {
-					// Use evalExprWithNodeMap to properly handle bound nodes
-					valueNodeValue = evalExprWithNodeMap(
-						evaluator.registry,
-						evaluator.defs,
-						valueNode.expr,
-						nodeMap,
-						nodeValues,
-						env,
-						options,
-					);
+					if (isBlockNode(valueNode)) {
+						// Block node - evaluate CFG
+						valueNodeValue = evaluateBlockNode(valueNode, evaluator.registry, nodeMap, nodeValues, env, options);
+					} else {
+						// Use evalExprWithNodeMap to properly handle bound nodes
+						valueNodeValue = evalExprWithNodeMap(
+							evaluator.registry,
+							evaluator.defs,
+							valueNode.expr,
+							nodeMap,
+							nodeValues,
+							env,
+							options,
+						);
+					}
 				}
 			}
 			if (!valueNodeValue) {
@@ -1287,6 +1576,12 @@ function evalNode(
 					),
 					env,
 				};
+			}
+
+			// Handle block nodes
+			if (isBlockNode(bodyNode)) {
+				const blockResult = evaluateBlockNode(bodyNode, evaluator.registry, nodeMap, nodeValues, extendedEnv, options);
+				return { value: blockResult, env: extendedEnv };
 			}
 
 			// Handle var expressions - look up directly in extended environment
@@ -1519,6 +1814,16 @@ function evalNode(
 			};
 		}
 		// Create a closure
+		if (isBlockNode(bodyNode)) {
+			// Block nodes as lambda bodies are not currently supported
+			return {
+				value: errorVal(
+					ErrorCodes.DomainError,
+					"Block nodes as lambda bodies are not supported",
+				),
+				env,
+			};
+		}
 		const value = closureVal(expr.params, bodyNode.expr, env);
 		return { value, env };
 	}
@@ -1847,7 +2152,7 @@ export function evaluateEIR(
 	}
 
 	const evaluator = new Evaluator(registry, defs);
-	const nodeMap = new Map<string, EirNode>();
+	const nodeMap = new Map<string, EirHybridNode>();
 	const nodeValues = new Map<string, Value>();
 
 	// Build node map
@@ -1923,8 +2228,8 @@ interface EIRNodeEvalResult {
  */
 function evalEIRNode(
 	evaluator: Evaluator,
-	node: EirNode,
-	nodeMap: Map<string, EirNode>,
+	node: EirHybridNode,
+	nodeMap: Map<string, EirHybridNode>,
 	nodeValues: Map<string, Value>,
 	state: EvalState,
 	registry: OperatorRegistry,
@@ -1936,6 +2241,18 @@ function evalEIRNode(
 	if (state.steps > state.maxSteps) {
 		return {
 			value: errorVal(ErrorCodes.NonTermination, "Evaluation exceeded maximum steps"),
+			env: state.env,
+			refCells: state.refCells,
+		};
+	}
+
+	// Handle block nodes
+	if (isBlockNode(node)) {
+		// For EIR block nodes, we need to convert to AIR map and evaluate
+		const airNodeMap = nodeMap as unknown as Map<string, AirHybridNode>;
+		const result = evaluateBlockNode(node, registry, airNodeMap, nodeValues, state.env, options);
+		return {
+			value: result,
 			env: state.env,
 			refCells: state.refCells,
 		};
@@ -1982,7 +2299,7 @@ function evalEIRNode(
  */
 function evalEIRExpr(
 	expr: EirExpr,
-	nodeMap: Map<string, EirNode>,
+	nodeMap: Map<string, EirHybridNode>,
 	nodeValues: Map<string, Value>,
 	state: EvalState,
 	registry: OperatorRegistry,
