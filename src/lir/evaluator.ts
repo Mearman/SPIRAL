@@ -195,9 +195,6 @@ export function evaluateLIR(
 		const termResult = executeTerminator(
 			currentBlock.terminator,
 			state,
-			registry,
-			effectRegistry,
-			doc,
 		);
 		if (typeof termResult === "object") {
 			// Return value or error
@@ -455,9 +452,6 @@ function executeInstruction(
 function executeTerminator(
 	term: LirTerminator,
 	state: LIRRuntimeState,
-	_registry: OperatorRegistry,
-	_effectRegistry: EffectRegistry,
-	_doc: LIRDocument,
 ): string | Value {
 	switch (term.kind) {
 	case "jump": {
@@ -527,7 +521,7 @@ function executeTerminator(
  */
 function evaluateExpr(expr: Expr, env: ValueEnv): Value {
 	switch (expr.kind) {
-	case "lit":
+	case "lit": {
 		// For literals, return the value based on type
 		const t = expr.type;
 		const v = expr.value;
@@ -545,6 +539,7 @@ function evaluateExpr(expr: Expr, env: ValueEnv): Value {
 		default:
 			return errorVal(ErrorCodes.TypeError, "Complex literals not yet supported in LIR");
 		}
+	}
 
 	case "var": {
 		const value = lookupValue(env, expr.name);

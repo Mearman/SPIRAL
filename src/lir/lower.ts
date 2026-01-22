@@ -90,15 +90,13 @@ export function lowerEIRtoLIR(eir: EIRDocument): LIRDocument {
 	let prevBlockId: string | null = null;
 	for (const { node } of exprNodes) {
 		const blockId = freshBlock(ctx);
-		if (entryBlock === null) {
-			entryBlock = blockId;
-		}
+		entryBlock ??= blockId;
 		lowerNode(node, blockId, ctx, null);
 
 		// Add jump from previous block to this block (for chaining)
 		if (prevBlockId !== null) {
 			const prevBlock = ctx.blocks.find((b) => b.id === prevBlockId);
-			if (prevBlock && prevBlock.terminator?.kind === "return") {
+			if (prevBlock?.terminator.kind === "return") {
 				// Replace return with jump to chain blocks
 				prevBlock.terminator = { kind: "jump", to: blockId };
 			}
@@ -124,7 +122,7 @@ export function lowerEIRtoLIR(eir: EIRDocument): LIRDocument {
 	// The final block should return the EIR document's result, not its local result
 	if (ctx.blocks.length > 0) {
 		const finalBlock = ctx.blocks[ctx.blocks.length - 1];
-		if (finalBlock && finalBlock.terminator?.kind === "return") {
+		if (finalBlock?.terminator.kind === "return") {
 			finalBlock.terminator = { kind: "return", value: eir.result };
 		}
 	}
@@ -155,8 +153,8 @@ export function lowerEIRtoLIR(eir: EIRDocument): LIRDocument {
  */
 function ensureReturnTerminator(ctx: LoweringContext): void {
 	for (const block of ctx.blocks) {
-		if (!block.terminator || block.terminator.kind === "jump") {
-			const jumpTo = block.terminator?.kind === "jump" ? block.terminator.to : null;
+		if (block.terminator.kind === "jump") {
+			const jumpTo = block.terminator.to;
 			if (!jumpTo) {
 				// Add return terminator if missing
 				block.terminator = { kind: "return" };
@@ -465,7 +463,7 @@ function lowerEirExpr(
 			lowerNode(bodyNode, bodyId, ctx, headerId);
 			// Ensure body block jumps back to header
 			const bodyBlock = ctx.blocks.find((b) => b.id === bodyId);
-			if (bodyBlock && bodyBlock.terminator?.kind !== "jump") {
+			if (bodyBlock && bodyBlock.terminator.kind !== "jump") {
 				bodyBlock.terminator = { kind: "jump", to: headerId };
 			}
 		} else {
