@@ -7,6 +7,7 @@ import type {
 	EirExpr,
 	EirHybridNode,
 	Expr,
+	HybridNode,
 	LIRDocument,
 	LirBlock,
 	LirInstruction,
@@ -67,22 +68,51 @@ export function lowerEIRtoLIR(eir: EIRDocument): LIRDocument {
 		ctx.nodeMap.set(node.id, node);
 	}
 
-	// Lower the result node
-	const resultNode = ctx.nodeMap.get(eir.result);
-	if (!resultNode) {
+	// Validate that result node exists
+	if (!ctx.nodeMap.has(eir.result)) {
 		throw new CAIRSError(
 			ErrorCodes.ValidationError,
-			"Result node not found: " + eir.result,
+			`Result node not found: ${eir.result}`,
 		);
 	}
 
-	const entryId = freshBlock(ctx);
-	lowerNode(resultNode, entryId, ctx, null);
+	// Collect all expression nodes in document order (this ensures dependencies are lowered)
+	// This is a simple approach that works for most cases
+	const exprNodes: { id: string; node: EirHybridNode }[] = [];
+	for (const node of eir.nodes) {
+		if (isExprNode(node)) {
+			exprNodes.push({ id: node.id, node });
+		}
+	}
 
-	// If the result block wasn't added (e.g., for simple expressions), add a simple return block
-	if (ctx.blocks.length === 0 || !ctx.blocks.some((b) => b.id === entryId)) {
+	// Lower all expression nodes in order, chaining them together
+	let entryBlock: string | null = null;
+	let prevBlockId: string | null = null;
+	for (const { node } of exprNodes) {
+		const blockId = freshBlock(ctx);
+		if (entryBlock === null) {
+			entryBlock = blockId;
+		}
+		lowerNode(node, blockId, ctx, null);
+
+		// Add jump from previous block to this block (for chaining)
+		if (prevBlockId !== null) {
+			const prevBlock = ctx.blocks.find((b) => b.id === prevBlockId);
+			if (prevBlock && prevBlock.terminator?.kind === "return") {
+				// Replace return with jump to chain blocks
+				prevBlock.terminator = { kind: "jump", to: blockId };
+			}
+		}
+
+		prevBlockId = blockId;
+	}
+
+	// If no blocks were created, add a simple return block
+	if (ctx.blocks.length === 0) {
+		const fallbackId = freshBlock(ctx);
+		entryBlock = fallbackId;
 		addBlock(ctx, {
-			id: entryId,
+			id: fallbackId,
 			instructions: [],
 			terminator: { kind: "return", value: eir.result },
 		});
@@ -91,17 +121,28 @@ export function lowerEIRtoLIR(eir: EIRDocument): LIRDocument {
 	// Ensure we have a return terminator in the final block
 	ensureReturnTerminator(ctx);
 
+	// The final block should return the EIR document's result, not its local result
+	if (ctx.blocks.length > 0) {
+		const finalBlock = ctx.blocks[ctx.blocks.length - 1];
+		if (finalBlock && finalBlock.terminator?.kind === "return") {
+			finalBlock.terminator = { kind: "return", value: eir.result };
+		}
+	}
+
 	// Build LIR document with a single block node containing all CFG blocks
-	const mainBlockNode = {
-		id: "main",
+	// All expression nodes are lowered into LIR instructions within the blocks
+	// Use the EIR result as the block node ID to preserve the result reference
+	const blockNodeId = eir.result;
+	const mainBlockNode: HybridNode = {
+		id: blockNodeId,
 		blocks: ctx.blocks,
-		entry: entryId,
+		entry: entryBlock ?? "bb0",
 	};
 
 	const lirDoc: LIRDocument = {
 		version: eir.version,
 		nodes: [mainBlockNode],
-		result: "main",
+		result: blockNodeId,
 	};
 	if (eir.capabilities) {
 		lirDoc.capabilities = eir.capabilities;
@@ -178,7 +219,12 @@ function lowerCirExpr(
 
 	switch (expr.kind) {
 	case "lit":
-		// Literals don't need instructions - they're referenced directly
+		// Create an assign instruction with the literal value inline
+		instructions.push({
+			kind: "assign",
+			target: nodeId,
+			value: expr,
+		});
 		break;
 
 	case "var":
@@ -196,12 +242,37 @@ function lowerCirExpr(
 
 	case "call": {
 		// Operator call becomes op instruction
+		// Process args: inline literals by creating assign instructions
+		const processedArgs: string[] = [];
+
+		for (let i = 0; i < expr.args.length; i++) {
+			const argId = expr.args[i];
+			if (argId === undefined) {
+				continue;
+			}
+			const argNode = ctx.nodeMap.get(argId);
+
+			if (argNode && isExprNode(argNode) && argNode.expr.kind === "lit") {
+				// Create a unique variable name for this literal
+				const litVarName = `${nodeId}_arg${i}_lit`;
+				instructions.push({
+					kind: "assign",
+					target: litVarName,
+					value: argNode.expr,
+				});
+				processedArgs.push(litVarName);
+			} else {
+				// Use original arg ID (will be looked up in vars)
+				processedArgs.push(argId);
+			}
+		}
+
 		instructions.push({
 			kind: "op",
 			target: nodeId,
 			ns: expr.ns,
 			name: expr.name,
-			args: expr.args,
+			args: processedArgs,
 		});
 		break;
 	}
@@ -545,6 +616,7 @@ function lowerEirExpr(
 		const instructions: LirInstruction[] = [
 			{
 				kind: "effect",
+				target: nodeId, // Store effect result in the node
 				op: e.op,
 				args: e.args,
 			},
