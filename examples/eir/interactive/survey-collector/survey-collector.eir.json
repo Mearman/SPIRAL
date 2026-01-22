@@ -1,0 +1,220 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "version": "1.0.0",
+  "description": "Interactive example: collects survey responses in a for loop. Reads 3 names from input, each preceded by a prompt. Demonstrates for loop with nested sequential effects.",
+  "airDefs": [],
+  "nodes": [
+    {
+      "id": "zero",
+      "expr": {
+        "kind": "lit",
+        "type": {"kind": "int"},
+        "value": 0
+      }
+    },
+    {
+      "id": "one",
+      "expr": {
+        "kind": "lit",
+        "type": {"kind": "int"},
+        "value": 1
+      }
+    },
+    {
+      "id": "three",
+      "expr": {
+        "kind": "lit",
+        "type": {"kind": "int"},
+        "value": 3
+      }
+    },
+    {
+      "id": "promptPrefix",
+      "expr": {
+        "kind": "lit",
+        "type": {"kind": "string"},
+        "value": "Respondent "
+      }
+    },
+    {
+      "id": "promptSuffix",
+      "expr": {
+        "kind": "lit",
+        "type": {"kind": "string"},
+        "value": ": "
+      }
+    },
+    {
+      "id": "recordedMsg",
+      "expr": {
+        "kind": "lit",
+        "type": {"kind": "string"},
+        "value": "Response recorded."
+      }
+    },
+    {
+      "id": "completionMsg",
+      "expr": {
+        "kind": "lit",
+        "type": {"kind": "string"},
+        "value": "Survey complete!"
+      }
+    },
+    {
+      "id": "init",
+      "expr": {
+        "kind": "ref",
+        "id": "zero"
+      }
+    },
+    {
+      "id": "condI",
+      "expr": {
+        "kind": "var",
+        "name": "i"
+      }
+    },
+    {
+      "id": "cond",
+      "expr": {
+        "kind": "call",
+        "ns": "core",
+        "name": "lt",
+        "args": ["condI", "three"]
+      }
+    },
+    {
+      "id": "updateI",
+      "expr": {
+        "kind": "var",
+        "name": "i"
+      }
+    },
+    {
+      "id": "upd",
+      "expr": {
+        "kind": "call",
+        "ns": "core",
+        "name": "add",
+        "args": ["updateI", "one"]
+      }
+    },
+    {
+      "id": "bodySeq1",
+      "expr": {
+        "kind": "seq",
+        "first": "bodyEffect1",
+        "then": "bodyEffect2"
+      }
+    },
+    {
+      "id": "bodyEffect1",
+      "expr": {
+        "kind": "effect",
+        "op": "print",
+        "args": ["promptPrefix"]
+      }
+    },
+    {
+      "id": "bodySeq2",
+      "expr": {
+        "kind": "seq",
+        "first": "bodySeq1",
+        "then": "bodyEffect3"
+      }
+    },
+    {
+      "id": "bodyEffect2",
+      "expr": {
+        "kind": "var",
+        "name": "i"
+      }
+    },
+    {
+      "id": "bodyEffect3",
+      "expr": {
+        "kind": "effect",
+        "op": "print",
+        "args": ["bodyEffect2"]
+      }
+    },
+    {
+      "id": "bodySeq3",
+      "expr": {
+        "kind": "seq",
+        "first": "bodySeq2",
+        "then": "bodyEffect4"
+      }
+    },
+    {
+      "id": "bodyEffect4",
+      "expr": {
+        "kind": "effect",
+        "op": "print",
+        "args": ["promptSuffix"]
+      }
+    },
+    {
+      "id": "bodySeq4",
+      "expr": {
+        "kind": "seq",
+        "first": "bodySeq3",
+        "then": "bodyEffect5"
+      }
+    },
+    {
+      "id": "bodyEffect5",
+      "expr": {
+        "kind": "effect",
+        "op": "readLine",
+        "args": []
+      }
+    },
+    {
+      "id": "body",
+      "expr": {
+        "kind": "seq",
+        "first": "bodySeq4",
+        "then": "bodyEffect6"
+      }
+    },
+    {
+      "id": "bodyEffect6",
+      "expr": {
+        "kind": "effect",
+        "op": "print",
+        "args": ["recordedMsg"]
+      }
+    },
+    {
+      "id": "forLoop",
+      "expr": {
+        "kind": "for",
+        "var": "i",
+        "init": "init",
+        "cond": "cond",
+        "update": "upd",
+        "body": "body"
+      }
+    },
+    {
+      "id": "printCompletion",
+      "expr": {
+        "kind": "effect",
+        "op": "print",
+        "args": ["completionMsg"]
+      }
+    },
+    {
+      "id": "result",
+      "expr": {
+        "kind": "seq",
+        "first": "forLoop",
+        "then": "printCompletion"
+      }
+    }
+  ],
+  "result": "result",
+  "expected_result": null,
+  "note": "Survey collector with for loop: iterates 3 times, each iteration prompts for respondent name, reads input, and confirms recording."
+}
