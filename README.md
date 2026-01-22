@@ -52,6 +52,7 @@ Representative examples:
 - CIR: [algorithms/factorial](./examples/cir/algorithms/factorial/factorial.cir.json)
 - EIR: [interactive/add-two-ints](./examples/eir/interactive/add-two-ints/add-two-ints.eir.json)
 - LIR: [control-flow/while-cfg](./examples/lir/control-flow/while-cfg/while-cfg.lir.json)
+- PIR: [async/spawn-await](./examples/pir/async/spawn-await/spawn-await.pir.json)
 - Hybrid: [basics/max-value](./examples/hybrid/basics/max-value/max-value.cir.json)
 
 ## Overview
@@ -62,31 +63,40 @@ CAIRS provides a layered representation system:
 - **CIR** — Computational IR: Extends AIR with lambdas, recursion, fixpoints
 - **EIR** — Execution IR: Expression-based, adds sequencing, mutation, loops, effects
 - **LIR** — Low-level IR: CFG-based with basic blocks, explicit control flow (code generation target)
+- **PIR** — Parallel IR: Extends EIR with async/parallel primitives (spawn, await, channels, select)
 
 ### Expression Kinds by Layer (reference)
 
-| Kind        | AIR | CIR | EIR | LIR | Description |
-|-------------|-----|-----|-----|-----|-------------|
-| `lit`       | ✅  | ✅  | ✅  | ✅  | Literal value |
-| `ref`       | ✅  | ✅  | ✅  | ❌  | Reference to another node |
-| `var`       | ✅  | ✅  | ✅  | ✅  | Variable reference |
-| `call`      | ✅  | ✅  | ✅  | ❌  | Operator application |
-| `if`        | ✅  | ✅  | ✅  | ❌  | Conditional (expression) |
-| `let`       | ✅  | ✅  | ✅  | ❌  | Local binding |
-| `airRef`    | ✅  | ✅  | ✅  | ❌  | Reference to airDef |
-| `predicate` | ✅  | ✅  | ✅  | ❌  | Predicate value |
-| `lambda`    | ❌  | ✅  | ✅  | ❌  | Anonymous function |
-| `callExpr`  | ❌  | ✅  | ✅  | ❌  | Lambda call |
-| `fix`       | ❌  | ✅  | ✅  | ❌  | Fixpoint |
-| `seq`       | ❌  | ❌  | ✅  | ❌  | Sequential execution |
-| `assign`    | ❌  | ❌  | ✅  | ✅  | Variable assignment |
-| `while`     | ❌  | ❌  | ✅  | ❌  | While loop |
-| `for`       | ❌  | ❌  | ✅  | ❌  | For loop |
-| `iter`      | ❌  | ❌  | ✅  | ❌  | Iterator loop |
-| `effect`    | ❌  | ❌  | ✅  | ✅  | Side effect |
-| `refCell`   | ❌  | ❌  | ✅  | ❌  | Reference cell |
-| `deref`     | ❌  | ❌  | ✅  | ❌  | Dereference cell |
-| `phi`       | ❌  | ❌  | ❌  | ✅  | SSA phi node |
+| Kind        | AIR | CIR | EIR | PIR | LIR | Description |
+|-------------|-----|-----|-----|-----|-----|-------------|
+| `lit`       | ✅  | ✅  | ✅  | ✅  | ✅  | Literal value |
+| `ref`       | ✅  | ✅  | ✅  | ✅  | ❌  | Reference to another node |
+| `var`       | ✅  | ✅  | ✅  | ✅  | ✅  | Variable reference |
+| `call`      | ✅  | ✅  | ✅  | ✅  | ❌  | Operator application |
+| `if`        | ✅  | ✅  | ✅  | ✅  | ❌  | Conditional (expression) |
+| `let`       | ✅  | ✅  | ✅  | ✅  | ❌  | Local binding |
+| `airRef`    | ✅  | ✅  | ✅  | ✅  | ❌  | Reference to airDef |
+| `predicate` | ✅  | ✅  | ✅  | ✅  | ❌  | Predicate value |
+| `lambda`    | ❌  | ✅  | ✅  | ✅  | ❌  | Anonymous function |
+| `callExpr`  | ❌  | ✅  | ✅  | ✅  | ❌  | Lambda call |
+| `fix`       | ❌  | ✅  | ✅  | ✅  | ❌  | Fixpoint |
+| `seq`       | ❌  | ❌  | ✅  | ✅  | ❌  | Sequential execution |
+| `assign`    | ❌  | ❌  | ✅  | ✅  | ✅  | Variable assignment |
+| `while`     | ❌  | ❌  | ✅  | ✅  | ❌  | While loop |
+| `for`       | ❌  | ❌  | ✅  | ✅  | ❌  | For loop |
+| `iter`      | ❌  | ❌  | ✅  | ✅  | ❌  | Iterator loop |
+| `effect`    | ❌  | ❌  | ✅  | ✅  | ✅  | Side effect |
+| `refCell`   | ❌  | ❌  | ✅  | ✅  | ❌  | Reference cell |
+| `deref`     | ❌  | ❌  | ✅  | ✅  | ❌  | Dereference cell |
+| `phi`       | ❌  | ❌  | ❌  | ❌  | ✅  | SSA phi node |
+| `par`       | ❌  | ❌  | ❌  | ✅  | ❌  | Parallel execution |
+| `spawn`     | ❌  | ❌  | ❌  | ✅  | ❌  | Create async task |
+| `await`     | ❌  | ❌  | ❌  | ✅  | ❌  | Wait for Future |
+| `channel`   | ❌  | ❌  | ❌  | ✅  | ❌  | Create channel |
+| `send`      | ❌  | ❌  | ❌  | ✅  | ❌  | Send to channel |
+| `recv`      | ❌  | ❌  | ❌  | ✅  | ❌  | Receive from channel |
+| `select`    | ❌  | ❌  | ❌  | ✅  | ❌  | Race multiple futures |
+| `race`      | ❌  | ❌  | ❌  | ✅  | ❌  | Execute in parallel |
 
 ### Hybrid Documents
 
@@ -141,6 +151,7 @@ Schemas (quick summaries):
 - [AIR Schema](./air.schema.json) — `version`, `airDefs`, `nodes`, `result` (pure expressions)
 - [CIR Schema](./cir.schema.json) — Same shape as AIR; adds lambdas/recursion constructs in expressions
 - [EIR Schema](./eir.schema.json) — Adds `seq`, `assign`, `loop`, `effect`, `refCell` to support imperative execution
+- [PIR Schema](./pir.schema.json) — Adds `par`, `spawn`, `await`, `channel`, `send`, `recv`, `select`, `race` for async/parallel execution
 - [LIR Schema](./lir.schema.json) — Same `nodes`/`result` structure; nodes use block-based CFG with instructions and terminators
 
 Further reading:
@@ -170,15 +181,16 @@ Further reading:
 
 ## Learning Path (examples)
 
-Follow these curated examples to see AIR → CIR → EIR → LIR in practice:
+Follow these curated examples to see AIR → CIR → EIR → PIR → LIR in practice:
 1. AIR basics: `air/basics/literals.air.json`, `air/basics/arithmetic.air.json`, `air/control-flow/simple-if.air.json`
 2. AIR data structures: `air/data-structures/list-length.air.json`, `air/data-structures/set-union.air.json`
 3. CIR lambdas: `cir/basics/identity-lambda.cir.json`, `cir/basics/closures.cir.json`
 4. CIR algorithms: `cir/algorithms/gcd.cir.json`, `cir/fixpoint/fix-factorial.cir.json`
 5. CIR higher-order: `cir/higher-order/compose.cir.json`, `cir/higher-order/fold.cir.json`
 6. EIR imperative: `eir/basics/sequencing.eir.json`, `eir/loops/while-loop.eir.json`, `eir/algorithms/factorial.eir.json`
-7. LIR CFGs: `lir/basics/straight-line.lir.json`, `lir/control-flow/while-cfg.lir.json`, `lir/phi/loop-phi.lir.json`
-8. Hybrid documents: `hybrid/air/basics/min-value.air.json`, `hybrid/lir/basics/double-value.lir.json`, `hybrid/lir/expr-only/sum-literals.lir.json`
+7. PIR async: `pir/async/spawn-await.pir.json`, `pir/async/timeout-select.pir.json`, `pir/channels/producer-consumer.pir.json`
+8. LIR CFGs: `lir/basics/straight-line.lir.json`, `lir/control-flow/while-cfg.lir.json`, `lir/phi/loop-phi.lir.json`
+9. Hybrid documents: `hybrid/air/basics/min-value.air.json`, `hybrid/lir/basics/double-value.lir.json`, `hybrid/lir/expr-only/sum-literals.lir.json`
 
 ---
 
@@ -943,6 +955,167 @@ execute_effect(op, v₁,…,vₙ) = (v, eff)
 ─────────────────────────────
 ρ, σ ⊢ deref(target) ⇓ v, σ'
 ```
+
+---
+
+## 8. PIR - Parallel Intermediate Representation
+
+### 8.1 Purpose
+
+PIR extends EIR with **parallel and asynchronous execution primitives**. PIR is used to represent:
+
+- Concurrent and parallel computations
+- Asynchronous task spawning and waiting
+- Channel-based communication
+- Timeout and race conditions
+- Non-blocking operations
+
+### 8.2 Relationship to EIR
+
+PIR is a **strict superset** of EIR:
+
+- Every valid EIR document MUST be a valid PIR document
+- PIR MUST preserve EIR semantics
+- PIR MUST NOT alter the meaning of EIR expressions
+
+### 8.3 PIR Extensions
+
+PIR introduces the following expressions:
+
+| Kind              | Description                                      |
+| ----------------- | ------------------------------------------------ |
+| `par`            | Parallel composition of multiple branches         |
+| `spawn`          | Create an async task that returns a Future       |
+| `await`          | Wait for a Future to complete                   |
+| `channel`        | Create a channel for communication              |
+| `send`           | Send a value to a channel                       |
+| `recv`           | Receive a value from a channel                   |
+| `select`         | Race multiple futures, return first to complete |
+| `race`           | Execute tasks in parallel, return all results   |
+
+### 8.4 PIR Expressions
+
+#### Parallel Composition
+
+```
+ρ, σ ⊢ par(e₁, e₂, …) ⇓ [v₁, v₂, …], σ'
+```
+
+Evaluates multiple branches concurrently, returning a list of results.
+
+#### Task Spawning
+
+```
+ρ, σ ⊢ spawn(e) ⇓ Future(taskId), σ'
+```
+
+Creates a new async task that evaluates `e`. Returns a `Future` value with:
+- `taskId`: Unique task identifier
+- `status`: `"pending"` | `"ready"` | `"error"`
+- `value`: The result value (when ready)
+
+#### Awaiting Futures
+
+```
+ρ, σ ⊢ await(f) ⇓ v, σ'
+```
+
+Waits for a future `f` to complete and returns its value.
+
+**With timeout:**
+
+```
+ρ, σ ⊢ await(f, timeout, fallback) ⇓ v, σ'
+```
+
+If the future doesn't complete within `timeout` milliseconds, returns `fallback`.
+
+**With returnIndex:**
+
+When `returnIndex: true`, returns `{index: n, value: v}` where:
+- `n = 0`: Future completed successfully
+- `n = 1`: Timeout fired, fallback value returned
+
+#### Channel Operations
+
+```
+ρ, σ ⊢ channel(type, size) ⇓ Channel(id), σ'
+ρ, σ ⊢ send(ch, v) ⇓ Void, σ'
+ρ, σ ⊢ recv(ch) ⇓ v, σ'
+```
+
+Channels provide Go-style buffered communication:
+- `channel(type, size)`: Creates a channel with buffer size `size`
+- `send(ch, v)`: Sends `v` to channel `ch` (blocks if buffer full)
+- `recv(ch)`: Receives value from channel `ch` (blocks if empty)
+
+#### Select Operation
+
+```
+ρ, σ ⊢ select([f₁, f₂, …]) ⇓ v, σ'
+```
+
+Waits for multiple futures and returns the first to complete.
+
+**With timeout:**
+
+```
+ρ, σ ⊢ select([f₁, f₂, …], timeout, fallback) ⇓ v, σ'
+```
+
+If no future completes within `timeout`, returns `fallback`.
+
+**With returnIndex:**
+
+Returns `{index: n, value: v}` where:
+- `n = -1`: Timeout fired
+- `n = 0..k-1`: Future at index `n` completed first
+
+### 8.5 Async Evaluation Options
+
+PIR evaluation supports the following options:
+
+| Option        | Description                                               |
+| ------------- | --------------------------------------------------------- |
+| `concurrency` | `"sequential"` | `"parallel"` | `"speculative"`         |
+| `maxSteps`    | Global step limit for termination                     |
+| `trace`       | Enable debug output                                    |
+| `scheduler`   | Custom task scheduler (default: `DefaultTaskScheduler`) |
+
+### 8.6 Timeout/Fallback Semantics
+
+Timeouts in PIR provide guaranteed completion:
+
+- **await with timeout**: Fires if future doesn't complete in Nms
+- **select with timeout**: Fires if no future completes in Nms
+- **returnIndex**: Returns structured result indicating success or timeout
+- **Fallback values**: Must be pre-evaluated expressions
+
+### 8.7 Channel Types
+
+PIR supports multiple channel types:
+
+| Type        | Description                              |
+| ----------- | ---------------------------------------- |
+| `spsc`      | Single producer, single consumer        |
+| `mpsc`      | Multi producer, single consumer         |
+| `mpmc`      | Multi producer, multi consumer          |
+| `broadcast` | Multi consumer, each receives all sends |
+
+### 8.8 PIR Evaluation Context
+
+PIR evaluation extends EIR's `EvalState` with async-specific state:
+
+```
+AsyncEvalState = (ρ, σ, ε, n, taskId, scheduler, channels, taskPool, parentTaskId)
+```
+
+Where:
+- `taskId`: Current task identifier
+- `scheduler`: Task scheduler for cooperative multitasking
+- `channels`: Async channel store for communication
+- `taskPool`: Map of active async tasks
+- `parentTaskId`: Optional parent task identifier
 
 ---
 
