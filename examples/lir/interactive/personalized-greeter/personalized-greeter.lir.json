@@ -1,0 +1,208 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
+  "version": "1.0.0",
+  "description": "LIR representation of personalized-greeter: demonstrates mixed-cadence I/O pattern in straight-line form with print effect instructions.",
+  "blocks": [
+    {
+      "id": "entry",
+      "instructions": [
+        {
+          "kind": "assign",
+          "target": "welcome_msg",
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "Welcome!"
+          }
+        },
+        {
+          "kind": "effect",
+          "target": "out1",
+          "op": "print",
+          "args": [
+            "welcome_msg"
+          ]
+        },
+        {
+          "kind": "assign",
+          "target": "name_prompt",
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "What is your name?"
+          }
+        },
+        {
+          "kind": "effect",
+          "target": "out2",
+          "op": "print",
+          "args": [
+            "name_prompt"
+          ]
+        },
+        {
+          "kind": "assign",
+          "target": "name",
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "Alice"
+          }
+        },
+        {
+          "kind": "assign",
+          "target": "hello_prefix",
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "Hello, "
+          }
+        },
+        {
+          "kind": "effect",
+          "target": "out3",
+          "op": "print",
+          "args": [
+            "hello_prefix"
+          ]
+        },
+        {
+          "kind": "effect",
+          "target": "out4",
+          "op": "print",
+          "args": [
+            "name"
+          ]
+        },
+        {
+          "kind": "assign",
+          "target": "age_prompt",
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "What is your age?"
+          }
+        },
+        {
+          "kind": "effect",
+          "target": "out5",
+          "op": "print",
+          "args": [
+            "age_prompt"
+          ]
+        },
+        {
+          "kind": "assign",
+          "target": "age",
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "int"
+            },
+            "value": 25
+          }
+        },
+        {
+          "kind": "assign",
+          "target": "age_prefix",
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "You are "
+          }
+        },
+        {
+          "kind": "effect",
+          "target": "out6",
+          "op": "print",
+          "args": [
+            "age_prefix"
+          ]
+        },
+        {
+          "kind": "effect",
+          "target": "out7",
+          "op": "printInt",
+          "args": [
+            "age"
+          ]
+        },
+        {
+          "kind": "assign",
+          "target": "years_msg",
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "years old."
+          }
+        },
+        {
+          "kind": "effect",
+          "target": "out8",
+          "op": "print",
+          "args": [
+            "years_msg"
+          ]
+        },
+        {
+          "kind": "assign",
+          "target": "goodbye_msg",
+          "value": {
+            "kind": "lit",
+            "type": {
+              "kind": "string"
+            },
+            "value": "Goodbye, "
+          }
+        },
+        {
+          "kind": "effect",
+          "target": "out9",
+          "op": "print",
+          "args": [
+            "goodbye_msg"
+          ]
+        },
+        {
+          "kind": "effect",
+          "target": "out10",
+          "op": "print",
+          "args": [
+            "name"
+          ]
+        }
+      ],
+      "terminator": {
+        "kind": "return"
+      }
+    }
+  ],
+  "entry": "entry",
+  "expected_output": [
+    "Welcome!",
+    "What is your name?",
+    "Hello, ",
+    "Alice",
+    "What is your age?",
+    "You are ",
+    "25",
+    "years old.",
+    "Goodbye, ",
+    "Alice"
+  ],
+  "note": "LIR representation of personalized-greeter using a single straight-line block. Uses hardcoded values (Alice, 25) for name and age rather than actual I/O effects. Demonstrates mixed-cadence output pattern with sequential effects and value reuse within a block."
+}
