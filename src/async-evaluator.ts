@@ -4,7 +4,7 @@
  
  
 /* eslint-disable @typescript-eslint/require-await */
-/* eslint-disable @typescript-eslint/await-thenable */
+ 
 
 // CAIRS Async Evaluator
 // Promise-based big-step evaluation for PIR: ρ, σ ⊢ e ⇓ v, σ'
@@ -50,6 +50,7 @@ import {
 	isError,
 	opaqueVal,
 	stringVal as stringValCtor,
+	undefinedVal,
 } from "./types.js";
 import { createAsyncChannelStore, type AsyncChannelStore } from "./async-effects.js";
 import type {
@@ -180,7 +181,31 @@ export class AsyncEvaluator {
 			nodeValues,
 		};
 
+		// Separate expression nodes and block nodes
+		// Expression nodes are evaluated first so their values are available to block nodes
+		const exprNodes: PirHybridNode[] = [];
+		const blockNodes: PirHybridNode[] = [];
 		for (const node of doc.nodes) {
+			if (isBlockNode(node)) {
+				blockNodes.push(node);
+			} else {
+				exprNodes.push(node);
+			}
+		}
+
+		// Evaluate expression nodes first
+		for (const node of exprNodes) {
+			const result = await this.evalNode(node, nodeMap, nodeValues, context);
+			nodeValues.set(node.id, result.value);
+
+			// Update state from node evaluation
+			if (result.state) {
+				context.state = result.state;
+			}
+		}
+
+		// Then evaluate block nodes (which can reference expression node values)
+		for (const node of blockNodes) {
 			if (nodeValues.has(node.id)) continue;
 
 			const result = await this.evalNode(
@@ -555,12 +580,54 @@ export class AsyncEvaluator {
 		}
 
 		if (futureValue.status === "ready") {
-			return futureValue.value ?? voidVal();
+			return this.wrapAwaitResult(futureValue.value ?? voidVal(), expr.returnIndex, 0);
 		}
 
-		// Wait for the future to complete
+		// Handle timeout
+		if (expr.timeout) {
+			const timeoutValue = await this.resolveNodeRef(expr.timeout, env, context);
+			if (timeoutValue?.kind !== "int") {
+				return errorVal(ErrorCodes.TypeError, "await timeout must be an integer");
+			}
+			const timeoutMs = timeoutValue.value;
+
+			// Create a timeout promise
+			const timeoutPromise = new Promise<Value>((resolve) => {
+				setTimeout(() => {
+					if (expr.fallback) {
+						void this.resolveNodeRef(expr.fallback, env, context).then(resolve).catch((err: unknown) => {
+							resolve(err instanceof Error ? errorVal(ErrorCodes.DomainError, err.message) : errorVal(ErrorCodes.DomainError, String(err)));
+						});
+					} else {
+						resolve(errorVal(ErrorCodes.TimeoutError, "Await timed out"));
+					}
+				}, timeoutMs);
+			});
+
+			// Race between the future and the timeout
+			const result = await Promise.race([
+				context.state.scheduler.await(futureValue.taskId),
+				timeoutPromise,
+			]);
+
+			// Check if we timed out by seeing if the result is an error or matches fallback
+			const isTimeout = isError(result) && result.code === ErrorCodes.TimeoutError;
+			return this.wrapAwaitResult(result, expr.returnIndex, isTimeout ? 1 : 0);
+		}
+
+		// No timeout - just wait for the future
 		const result = await context.state.scheduler.await(futureValue.taskId);
-		return result;
+		return this.wrapAwaitResult(result, expr.returnIndex, 0);
+	}
+
+	/**
+	 * Helper to wrap await result based on returnIndex flag
+	 */
+	private wrapAwaitResult(value: Value, returnIndex: boolean | undefined, index: number): Value {
+		if (returnIndex) {
+			return { kind: "selectResult", index, value };
+		}
+		return value;
 	}
 
 	/**
@@ -605,7 +672,11 @@ export class AsyncEvaluator {
 			return errorVal(ErrorCodes.DomainError, `Channel not found: ${channelValue.id}`);
 		}
 
-		await channel.send(valueToSend);
+		// For expression nodes (not block instructions), send is non-blocking:
+		// Start the send operation and return immediately without waiting.
+		// This allows unbuffered channels to work with sequential evaluation.
+		// The send will complete in the background when recv() is called.
+		void channel.send(valueToSend);
 		return voidVal();
 	}
 
@@ -642,17 +713,52 @@ export class AsyncEvaluator {
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
-		const futurePromises = expr.futures.map(async (futureId) => {
+		// Build promises that resolve to { index, value, kind: 'future' }
+		interface SelectResult { index: number; value: Value; kind: "future" | "timeout" }
+		const futurePromises: Promise<SelectResult>[] = expr.futures.map(async (futureId, index) => {
 			const futureValue = await this.resolveNodeRef(futureId, env, context);
 			if (!isFuture(futureValue)) {
 				throw new Error("select requires Future values");
 			}
-			return context.state.scheduler.await(futureValue.taskId);
+			const value = await context.state.scheduler.await(futureValue.taskId);
+			return { index, value, kind: "future" as const };
 		});
+
+		// Add timeout promise if specified
+		if (expr.timeout) {
+			const timeoutValue = await this.resolveNodeRef(expr.timeout, env, context);
+			if (timeoutValue?.kind !== "int") {
+				return errorVal(ErrorCodes.TypeError, "select timeout must be an integer");
+			}
+			const timeoutMs = timeoutValue.value;
+
+			// Create timeout promise
+			const timeoutPromise = new Promise<SelectResult>((resolve) => {
+				setTimeout(() => {
+					if (expr.fallback) {
+						void this.resolveNodeRef(expr.fallback, env, context).then((fallbackValue) => {
+							resolve({ index: -1, value: fallbackValue, kind: "timeout" });
+						}).catch((err: unknown) => {
+							const errVal = err instanceof Error ? errorVal(ErrorCodes.DomainError, err.message) : errorVal(ErrorCodes.DomainError, String(err));
+							resolve({ index: -1, value: errVal, kind: "timeout" });
+						});
+					} else {
+						resolve({ index: -1, value: errorVal(ErrorCodes.SelectTimeout, "Select timed out"), kind: "timeout" });
+					}
+				}, timeoutMs);
+			});
+
+			futurePromises.push(timeoutPromise);
+		}
 
 		// Race: first to complete wins
 		const result = await Promise.race(futurePromises);
-		return result;
+
+		// Return based on returnIndex flag
+		if (expr.returnIndex) {
+			return { kind: "selectResult", index: result.index, value: result.value };
+		}
+		return result.value;
 	}
 
 	/**
@@ -724,6 +830,10 @@ export class AsyncEvaluator {
 			return this.evalEffect(expr, env, context);
 		case "refCell":
 			return this.evalRefCellExpr(expr, env, context);
+		case "ref":
+			return this.evalRefExpr(expr, env, context);
+		case "try":
+			return this.evalTryExpr(expr, env, context);
 			// No default: TypeScript ensures all EirExpr cases are handled
 		}
 		// Runtime fallback for any unexpected expression kinds
@@ -817,10 +927,14 @@ export class AsyncEvaluator {
 	}
 
 	private evalLambda(
-		expr: { kind: "lambda"; params: string[]; body: string },
+		expr: { kind: "lambda"; params: (string | { name: string; optional?: boolean; default?: import("./types.js").Expr })[]; body: string },
 		env: ValueEnv,
 	): Value {
-		return closureVal(expr.params, { kind: "ref", id: expr.body }, env);
+		// Convert params to LambdaParam format
+		const lambdaParams: import("./types.js").LambdaParam[] = expr.params.map(p =>
+			typeof p === "string" ? { name: p } : p
+		);
+		return closureVal(lambdaParams, { kind: "ref", id: expr.body }, env);
 	}
 
 	private async evalCallExpr(
@@ -839,10 +953,58 @@ export class AsyncEvaluator {
 			argValues.push(await this.resolveNodeRef(argId, env, context));
 		}
 
-		// Bind parameters
+		// Check arity with optional parameter support
+		// Calculate min arity (required params) and max arity (all params)
+		let minArity = 0;
+		for (const param of fnValue.params) {
+			if (!param.optional) {
+				minArity++;
+			}
+		}
+		const maxArity = fnValue.params.length;
+
+		if (argValues.length < minArity) {
+			return errorVal(
+				ErrorCodes.ArityError,
+				`Arity error: expected at least ${minArity} args, got ${argValues.length}`,
+			);
+		}
+		if (argValues.length > maxArity) {
+			return errorVal(
+				ErrorCodes.ArityError,
+				`Arity error: expected at most ${maxArity} args, got ${argValues.length}`,
+			);
+		}
+
+		// Bind parameters with optional support
 		let newEnv = fnValue.env;
 		for (let i = 0; i < fnValue.params.length; i++) {
-			newEnv = extendValueEnv(newEnv, fnValue.params[i]!, argValues[i]!);
+			const param = fnValue.params[i]!;
+			const argValue = argValues[i];
+
+			if (argValue !== undefined) {
+				// Provided argument - use it
+				newEnv = extendValueEnv(newEnv, param.name, argValue);
+			} else if (param.optional) {
+				// Omitted optional param - check for default or use undefined
+				if (param.default !== undefined) {
+					// Evaluate default expression in closure's defining environment
+					const defaultVal = await this.evalExpr(param.default, fnValue.env, context);
+					if (isError(defaultVal)) {
+						return defaultVal;
+					}
+					newEnv = extendValueEnv(newEnv, param.name, defaultVal);
+				} else {
+					// Optional without default = undefined
+					newEnv = extendValueEnv(newEnv, param.name, undefinedVal());
+				}
+			} else {
+				// Required param not provided
+				return errorVal(
+					ErrorCodes.ArityError,
+					`Missing required parameter: ${param.name}`,
+				);
+			}
 		}
 
 		return this.resolveNodeRef((fnValue.body as { id: string }).id, newEnv, context);
@@ -861,7 +1023,8 @@ export class AsyncEvaluator {
 
 		// Create self-referential closure
 		const selfRef = closureVal(fnValue.params, fnValue.body, env);
-		const fixedEnv = extendValueEnv(env, fnValue.params[0] ?? "self", selfRef);
+		const firstParamName = fnValue.params.length > 0 ? fnValue.params[0]!.name : "self";
+		const fixedEnv = extendValueEnv(env, firstParamName, selfRef);
 		selfRef.env = fixedEnv;
 
 		return selfRef;
@@ -996,6 +1159,106 @@ export class AsyncEvaluator {
 		return cell ? cell : refCellVal(voidVal());
 	}
 
+	/**
+	 * E-Ref: Resolve node reference to its value
+	 * Looks up in nodeValues first (cached), then environment
+	 */
+	private evalRefExpr(
+		expr: { kind: "ref"; id: string },
+		env: ValueEnv,
+		context: AsyncEvalContext,
+	): Value {
+		// Look up in nodeValues first (cached node results)
+		const nodeValue = context.nodeValues.get(expr.id);
+		if (nodeValue !== undefined) {
+			return nodeValue;
+		}
+
+		// Then check environment (for parameters, let bindings)
+		const envValue = lookupValue(env, expr.id);
+		if (envValue !== undefined) {
+			return envValue;
+		}
+
+		// Check ref cells (for assignments)
+		const cell = context.state.refCells.get(expr.id);
+		if (cell?.kind === "refCell") {
+			return cell.value;
+		}
+
+		return errorVal(ErrorCodes.DomainError, "Reference not found: " + expr.id);
+	}
+
+	/**
+	 * E-Try: Error handling with try/catch/fallback
+	 * If tryBody produces error, bind to catchParam and evaluate catchBody
+	 * If tryBody succeeds and fallback exists, evaluate fallback
+	 * Otherwise return tryBody result
+	 */
+	private async evalTryExpr(
+		expr: { kind: "try"; tryBody: string; catchParam: string; catchBody: string; fallback?: string },
+		env: ValueEnv,
+		context: AsyncEvalContext,
+	): Promise<Value> {
+		const e = expr as { kind: "try"; tryBody: string; catchParam: string; catchBody: string; fallback?: string };
+
+		// Check if tryBody was already evaluated and has a value in nodeValues
+		let tryValue = context.nodeValues.get(e.tryBody);
+
+		// If not in nodeValues, evaluate it now
+		if (tryValue === undefined) {
+			const tryBodyNode = context.nodeMap.get(e.tryBody);
+			if (!tryBodyNode) {
+				return errorVal(ErrorCodes.ValidationError, "Try body node not found: " + e.tryBody);
+			}
+
+			// Evaluate the tryBody node
+			const tryResult = await this.evalNode(tryBodyNode, context.nodeMap, context.nodeValues, context);
+			tryValue = tryResult.value;
+
+			// Cache the result
+			context.nodeValues.set(e.tryBody, tryValue);
+		}
+
+		// Check if error occurred
+		if (isError(tryValue)) {
+			// ERROR PATH - bind error to catchParam and evaluate catchBody
+			const catchEnv = extendValueEnv(env, e.catchParam, tryValue);
+
+			const catchBodyNode = context.nodeMap.get(e.catchBody);
+			if (!catchBodyNode) {
+				return errorVal(ErrorCodes.ValidationError, "Catch body node not found: " + e.catchBody);
+			}
+
+			// Create a modified context with the catch environment
+			const catchContext: AsyncEvalContext = {
+				...context,
+				state: {
+					...context.state,
+					env: catchEnv,
+				},
+			};
+
+			const catchResult = await this.evalNode(catchBodyNode, catchContext.nodeMap, catchContext.nodeValues, catchContext);
+			return catchResult.value;
+		}
+
+		// SUCCESS PATH
+		if (e.fallback) {
+			// Has fallback - evaluate it
+			const fallbackNode = context.nodeMap.get(e.fallback);
+			if (!fallbackNode) {
+				return errorVal(ErrorCodes.ValidationError, "Fallback node not found: " + e.fallback);
+			}
+
+			const fallbackResult = await this.evalNode(fallbackNode, context.nodeMap, context.nodeValues, context);
+			return fallbackResult.value;
+		}
+
+		// No fallback - return tryBody result directly
+		return tryValue;
+	}
+
 	// ============================================================================
 	// Instruction Execution (CFG-based)
 	// ============================================================================
@@ -1019,6 +1282,9 @@ export class AsyncEvaluator {
 			context.state.refCells.set(instr.target, cell);
 		}
 
+		// Also store in nodeValues so instructions can find it
+		nodeValues.set(instr.target, value);
+
 		return voidVal();
 	}
 
@@ -1031,12 +1297,14 @@ export class AsyncEvaluator {
 
 		const op = lookupOperator(this._registry, instr.ns, instr.name);
 		if (!op) {
-			return errorVal(ErrorCodes.UnknownOperator, `Unknown operator: ${instr.ns}.${instr.name}`);
+			return errorVal(ErrorCodes.UnknownOperator, `Unknown operator: ${instr.ns}:${instr.name}`);
 		}
 
 		try {
-			const result = await op.fn(...argValues);
+			const result = op.fn(...argValues);
+			// Store result in both refCells (for ref operations) and nodeValues (for terminator resolution)
 			context.state.refCells.set(instr.target, { kind: "refCell", value: result });
+			nodeValues.set(instr.target, result);
 			return voidVal();
 		} catch (e) {
 			return errorVal(ErrorCodes.DomainError, String(e));
@@ -1147,7 +1415,9 @@ export class AsyncEvaluator {
 		}
 
 		const result = await context.state.scheduler.await(futureValue.taskId);
+		// Store in both refCells and nodeValues
 		context.state.refCells.set(instr.target, { kind: "refCell", value: result });
+		nodeValues.set(instr.target, result);
 		return voidVal();
 	}
 
@@ -1157,17 +1427,25 @@ export class AsyncEvaluator {
 		nodeValues: Map<string, Value>,
 		context: AsyncEvalContext,
 	): Promise<{ done: boolean; value?: Value; nextBlock?: string }> {
-		const branchPromises = term.branches.map(async (branch) => {
+		// Use a shared flag to track if continuation was executed
+		// This must be in an object to be shared across closures
+		const continuationState = { executed: false, result: undefined as Value | undefined };
+
+		// Spawn all branch tasks in parallel
+		const taskIds: string[] = [];
+		for (const branch of term.branches) {
 			const block = blockMap.get(branch.block);
 			if (!block) {
-				return {
-					taskId: branch.taskId,
-					result: errorVal(ErrorCodes.DomainError, `Fork block not found: ${branch.block}`)
-				};
+				context.state.scheduler.spawn(branch.taskId, async () =>
+					errorVal(ErrorCodes.DomainError, `Fork block not found: ${branch.block}`)
+				);
+				taskIds.push(branch.taskId);
+				continue;
 			}
 
 			context.state.scheduler.spawn(branch.taskId, async () => {
 				try {
+					// Execute branch block instructions
 					for (const instr of block.instructions) {
 						const result = await this.execInstruction(instr, context.nodeMap, nodeValues, context);
 						if (isError(result)) {
@@ -1175,27 +1453,57 @@ export class AsyncEvaluator {
 						}
 					}
 
+					// Execute branch terminator
 					const termResult = await this.execTerminator(block.terminator, blockMap, nodeValues, context);
 					if (termResult.done) {
 						return termResult.value ?? voidVal();
 					}
 
+					// If jumping to continuation, handle with lock to prevent race
+					if (termResult.nextBlock === term.continuation) {
+						// Only first task to reach continuation executes it
+						if (!continuationState.executed) {
+							continuationState.executed = true;
+							const nextBlock = blockMap.get(term.continuation);
+							if (nextBlock) {
+								// Execute continuation block
+								for (const instr of nextBlock.instructions) {
+									const result = await this.execInstruction(instr, context.nodeMap, nodeValues, context);
+									if (isError(result)) {
+										continuationState.result = result;
+										return result;
+									}
+								}
+								const nextTermResult = await this.execTerminator(nextBlock.terminator, blockMap, nodeValues, context);
+								if (nextTermResult.done) {
+									continuationState.result = nextTermResult.value ?? voidVal();
+									return continuationState.result;
+								}
+							}
+						}
+					}
+
 					return voidVal();
 				} catch (error) {
-					return errorVal(ErrorCodes.DomainError, `Fork branch error: ${String(error)}`);
+					const err = errorVal(ErrorCodes.DomainError, `Fork branch error: ${String(error)}`);
+					if (!continuationState.executed) {
+						continuationState.result = err;
+					}
+					return err;
 				}
 			});
-
-			const result = await context.state.scheduler.await(branch.taskId);
-			return { taskId: branch.taskId, result };
-		});
-
-		const results = await Promise.all(branchPromises);
-
-		for (const { taskId, result } of results) {
-			nodeValues.set(taskId, result);
+			taskIds.push(branch.taskId);
 		}
 
+		// Wait for all branch tasks to complete
+		await Promise.all(taskIds.map((id) => context.state.scheduler.await(id)));
+
+		// If continuation was already executed by a branch, return its result
+		if (continuationState.executed) {
+			return { done: true, value: continuationState.result ?? voidVal() };
+		}
+
+		// Otherwise, continue to the continuation block
 		return { done: false, nextBlock: term.continuation };
 	}
 
@@ -1265,8 +1573,10 @@ export class AsyncEvaluator {
 		}
 
 		// Check nodeValues (for already evaluated nodes)
+		// Note: Don't return cached error values - they might have failed due to missing
+		// environment bindings and should be re-evaluated with the current environment
 		const nodeValue = context.nodeValues.get(nodeId);
-		if (nodeValue) {
+		if (nodeValue && !isError(nodeValue)) {
 			return nodeValue;
 		}
 
