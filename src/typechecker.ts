@@ -556,8 +556,8 @@ function typeCheckNode(
 			const nodeThenType = nodeTypes.get(expr.then);
 			if (!nodeThenType) {
 				// Node not yet type-checked - skip validation for now
-				// Use declared type if available, or int as placeholder
-				thenType = expr.type ?? { kind: "int" };
+				// Use declared type as placeholder
+				thenType = expr.type;
 			} else {
 				thenType = nodeThenType;
 			}
@@ -577,7 +577,8 @@ function typeCheckNode(
 			const nodeElseType = nodeTypes.get(expr.else);
 			if (!nodeElseType) {
 				// Node not yet type-checked - skip validation for now
-				elseType = expr.type ?? { kind: "int" };
+				// Use declared type as placeholder
+				elseType = expr.type;
 			} else {
 				elseType = nodeElseType;
 			}
@@ -586,39 +587,19 @@ function typeCheckNode(
 			elseType = elseResult.type;
 		}
 
-		// If type is explicitly declared, use it
+		// If type is explicitly declared, validate branches against it and return it
 		const declaredType = expr.type;
-		if (declaredType) {
-			// Only validate branch types if they've been type-checked
-			if (nodeTypes.has(typeof expr.then === "string" ? expr.then : "")) {
-				if (!typeEqual(thenType, declaredType)) {
-					throw CAIRSError.typeError(declaredType, thenType, "if then branch");
-				}
+		if (nodeTypes.has(typeof expr.then === "string" ? expr.then : "")) {
+			if (!typeEqual(thenType, declaredType)) {
+				throw CAIRSError.typeError(declaredType, thenType, "if then branch");
 			}
-			if (nodeTypes.has(typeof expr.else === "string" ? expr.else : "")) {
-				if (!typeEqual(elseType, declaredType)) {
-					throw CAIRSError.typeError(declaredType, elseType, "if else branch");
-				}
-			}
-			return { type: declaredType, env };
 		}
-
-		// Infer type from branches (they must match and both be type-checked)
-		const thenIsChecked = typeof expr.then !== "string" || nodeTypes.has(expr.then);
-		const elseIsChecked = typeof expr.else !== "string" || nodeTypes.has(expr.else);
-
-		if (thenIsChecked && elseIsChecked) {
-			if (!typeEqual(thenType, elseType)) {
-				throw CAIRSError.validation(
-					"if",
-					"Branches must have the same type for type inference",
-				);
+		if (nodeTypes.has(typeof expr.else === "string" ? expr.else : "")) {
+			if (!typeEqual(elseType, declaredType)) {
+				throw CAIRSError.typeError(declaredType, elseType, "if else branch");
 			}
-			return { type: thenType, env };
 		}
-
-		// Can't infer type yet - use int type as placeholder
-		return { type: { kind: "int" }, env };
+		return { type: declaredType, env };
 	}
 
 	case "let": {
@@ -1266,14 +1247,12 @@ function typeCheckEIRNode(
 			targetType = mutableTypes.get(e.target);
 
 			// If not in mutable types, check node map
-			if (!targetType && nodeMap.has(e.target)) {
-				targetType = nodeTypes.get(e.target);
+			if (nodeMap.has(e.target)) {
+				targetType ??= nodeTypes.get(e.target);
 			}
 
 			// If not in node map, check environment
-			if (!targetType) {
-				targetType = lookupType(env, e.target);
-			}
+			targetType ??= lookupType(env, e.target);
 
 			if (!targetType) {
 				throw CAIRSError.unboundIdentifier(e.target);
@@ -1291,14 +1270,12 @@ function typeCheckEIRNode(
 			targetType = mutableTypes.get(e.target);
 
 			// Then check node map
-			if (!targetType && nodeMap.has(e.target)) {
-				targetType = nodeTypes.get(e.target);
+			if (nodeMap.has(e.target)) {
+				targetType ??= nodeTypes.get(e.target);
 			}
 
 			// Then check environment
-			if (!targetType) {
-				targetType = lookupType(env, e.target);
-			}
+			targetType ??= lookupType(env, e.target);
 
 			if (!targetType) {
 				throw CAIRSError.unboundIdentifier(e.target);
