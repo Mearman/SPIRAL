@@ -377,7 +377,7 @@ function executeInstruction(
 	}
 
 	case "effect": {
-		// LirInsEffect: op(args)
+		// LirInsEffect: target = op(args)
 		const effectOp = lookupEffect(effectRegistry, ins.op);
 		if (!effectOp) {
 			return errorVal(
@@ -412,7 +412,9 @@ function executeInstruction(
 		state.effects.push({ op: ins.op, args: argValues });
 
 		try {
-			effectOp.fn(...argValues);
+			const result = effectOp.fn(...argValues);
+			// Store the result in the target variable
+			state.vars = extendValueEnv(state.vars, ins.target, result);
 			return undefined;
 		} catch (e) {
 			if (e instanceof CAIRSError) {

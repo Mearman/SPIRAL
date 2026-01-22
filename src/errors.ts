@@ -24,6 +24,10 @@ export const ErrorCodes = {
 	// Termination errors
 	NonTermination: "NonTermination",
 
+	// Timeout errors
+	TimeoutError: "TimeoutError",
+	SelectTimeout: "SelectTimeout",
+
 	// Validation errors
 	ValidationError: "ValidationError",
 	MissingRequiredField: "MissingRequiredField",

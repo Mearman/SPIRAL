@@ -75,6 +75,7 @@ interface Task {
 	reject: (error: Error) => void;
 	status: "pending" | "completed" | "failed";
 	fn?: () => Promise<Value>;
+	result?: Value; // Cache the result for multiple awaits
 }
 
 export class DefaultTaskScheduler implements TaskScheduler {
@@ -134,6 +135,7 @@ export class DefaultTaskScheduler implements TaskScheduler {
 		fn()
 			.then((result) => {
 				task.status = "completed";
+				task.result = result; // Cache the result for multiple awaits
 				task.resolve(result);
 			})
 			.catch((error) => {
@@ -148,9 +150,14 @@ export class DefaultTaskScheduler implements TaskScheduler {
 			throw new Error(`Task ${taskId} not found`);
 		}
 
+		// If task is already completed, return cached result (for multiple awaits)
+		if (task.status === "completed" && task.result !== undefined) {
+			return task.result;
+		}
+
 		// Task is already started in spawn() - just wait for completion
 		const result = await task.promise;
-		this.tasks.delete(taskId);
+		// Don't delete the task - keep it for potential re-awaits
 		return result;
 	}
 
