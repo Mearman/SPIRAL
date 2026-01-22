@@ -558,7 +558,7 @@ function checkAcyclic(
 		let hasLambda = false;
 		for (const nodeId of path) {
 			const node = nodes.get(nodeId);
-			if (node?.expr.kind === "lambda") {
+			if (node && "expr" in node && node.expr?.kind === "lambda") {
 				hasLambda = true;
 				break;
 			}
@@ -582,6 +582,11 @@ function checkAcyclic(
 	}
 
 	visited.add(startId);
+
+	// Skip block nodes - they don't have expressions to analyze
+	if (!("expr" in node)) {
+		return;
+	}
 
 	// If this node is a lambda, collect its parameters for nested checks
 	if (node.expr.kind === "lambda") {
@@ -1070,7 +1075,9 @@ export function validateCIR(doc: unknown): ValidationResult<CIRDocument> {
 			if (typeof node.id === "string") {
 				nodeMap.set(node.id, node);
 				// Collect lambda parameters and let bindings from this node's expression
-				collectParamsAndBindings(node.expr);
+				if ("expr" in node && node.expr) {
+					collectParamsAndBindings(node.expr);
+				}
 			}
 		}
 
