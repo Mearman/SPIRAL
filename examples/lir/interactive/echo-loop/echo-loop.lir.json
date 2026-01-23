@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
   "version": "1.0.0",
   "description": "LIR representation of loop structure for echo pattern: CFG with entry, loop header, loop body, and exit. Demonstrates control flow in CFG form.",
   "nodes": [

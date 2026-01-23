@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Interactive example: demonstrates mixed-cadence I/O pattern with multiple outputs, strategic inputs, and value reuse. Reads user name and age, prints messages about them.",
   "airDefs": [],

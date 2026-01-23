@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates composition of multiple effect operations in EIR. Effects are executed sequentially and recorded in the evaluation state.",
   "airDefs": [

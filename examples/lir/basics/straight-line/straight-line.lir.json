@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates straight-line code execution in LIR. Instructions execute sequentially within a basic block, ending with a return terminator.",
   "nodes": [

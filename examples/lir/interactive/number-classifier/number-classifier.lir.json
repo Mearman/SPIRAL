@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
   "version": "1.0.0",
   "description": "LIR representation of number-classifier: demonstrates I/O effects in straight-line execution form.",
   "nodes": [

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates conditional branching in LIR using a branch terminator. The branch selects between two blocks based on a boolean condition.",
   "nodes": [

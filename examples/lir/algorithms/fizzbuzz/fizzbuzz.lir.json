@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Implements FizzBuzz logic as a CFG in LIR. For numbers 1-5, returns 'Fizz' for multiples of 3, 'Buzz' for multiples of 5, or the number as string otherwise.",
   "nodes": [

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates SSA phi node for merging values from different control flow paths. The phi instruction selects the correct value based on which predecessor was executed.",
   "nodes": [
