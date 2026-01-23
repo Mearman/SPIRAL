@@ -1,7 +1,7 @@
-// CAIRS LIR Evaluator
+// SPIRAL LIR Evaluator
 // Executes Control Flow Graph (CFG) based LIR programs
 
-import { CAIRSError, ErrorCodes, exhaustive } from "../errors.js";
+import { SPIRALError, ErrorCodes, exhaustive } from "../errors.js";
 import {
 	type Defs,
 	emptyValueEnv,
@@ -322,7 +322,7 @@ function executeInstruction(
 			state.vars = extendValueEnv(state.vars, ins.target, result);
 			return undefined;
 		} catch (e) {
-			if (e instanceof CAIRSError) {
+			if (e instanceof SPIRALError) {
 				return e.toValue();
 			}
 			return errorVal(ErrorCodes.DomainError, String(e));
@@ -414,7 +414,7 @@ function executeInstruction(
 			state.vars = extendValueEnv(state.vars, ins.target, result);
 			return undefined;
 		} catch (e) {
-			if (e instanceof CAIRSError) {
+			if (e instanceof SPIRALError) {
 				return e.toValue();
 			}
 			return errorVal(ErrorCodes.DomainError, String(e));

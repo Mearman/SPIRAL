@@ -1,7 +1,7 @@
-// CAIRS EIR to LIR Lowering
+// SPIRAL EIR to LIR Lowering
 // Converts expression-based EIR to CFG-based LIR
 
-import { CAIRSError, ErrorCodes } from "../errors.js";
+import { SPIRALError, ErrorCodes } from "../errors.js";
 import type {
 	EIRDocument,
 	EirExpr,
@@ -70,7 +70,7 @@ export function lowerEIRtoLIR(eir: EIRDocument): LIRDocument {
 
 	// Validate that result node exists
 	if (!ctx.nodeMap.has(eir.result)) {
-		throw new CAIRSError(
+		throw new SPIRALError(
 			ErrorCodes.ValidationError,
 			`Result node not found: ${eir.result}`,
 		);
@@ -386,7 +386,7 @@ function lowerEirExpr(
 		// Lower first part
 		const firstNode = ctx.nodeMap.get(e.first);
 		if (!firstNode) {
-			throw new CAIRSError(
+			throw new SPIRALError(
 				ErrorCodes.ValidationError,
 				"First node not found: " + e.first,
 			);
@@ -398,7 +398,7 @@ function lowerEirExpr(
 		// Lower then part
 		const thenNode = ctx.nodeMap.get(e.then);
 		if (!thenNode) {
-			throw new CAIRSError(
+			throw new SPIRALError(
 				ErrorCodes.ValidationError,
 				"Then node not found: " + e.then,
 			);
