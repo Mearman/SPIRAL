@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/require-await */
  
 
-// CAIRS Async Effects Unit Tests
+// SPIRAL Async Effects Unit Tests
 // Tests for AsyncChannel, AsyncMutex, AsyncRefCell, ConcurrentEffectLog
 
 import { describe, it, before } from "node:test";
