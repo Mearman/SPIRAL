@@ -1,9 +1,9 @@
-# CAIRS (**Computational Algebraic & Iterative Representation System**)
+# SPIRAL (**Stratified Progressive Intermediate Representation Architecture Language**)
 
-[![npm](https://img.shields.io/npm/v/cairs)](https://www.npmjs.com/package/cairs)
-[![Node](https://img.shields.io/node/v/cairs)](https://nodejs.org)
+[![npm](https://img.shields.io/npm/v/spiral)](https://www.npmjs.com/package/spiral)
+[![Node](https://img.shields.io/node/v/spiral)](https://nodejs.org)
 
-CAIRS is a JSON-first intermediate representation spanning AIR, CIR, EIR, PIR, and LIR. All layers support expression and CFG block forms (hybrid documents).
+SPIRAL is a JSON-first intermediate representation spanning AIR, CIR, EIR, PIR, and LIR. All layers support expression and CFG block forms (hybrid documents).
 
 ## Layers & Computational Classes
 
