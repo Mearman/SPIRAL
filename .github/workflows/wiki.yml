@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "wiki/**"
   workflow_dispatch:
   schedule:
     # Run every hour to check for external wiki changes
