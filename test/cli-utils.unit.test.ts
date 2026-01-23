@@ -1,4 +1,4 @@
-// CAIRS CLI Utilities Unit Tests
+// SPIRAL CLI Utilities Unit Tests
 // Tests for input parsing and file I/O functions
 
 import { describe, it } from "node:test";

@@ -1,4 +1,4 @@
-// CAIRS Cross-Layer Integration Tests
+// SPIRAL Cross-Layer Integration Tests
 // Tests that exercise CIR -> EIR -> PIR evaluation chain
 
 import assert from "node:assert";

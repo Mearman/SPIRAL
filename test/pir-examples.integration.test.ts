@@ -1,4 +1,4 @@
-// CAIRS PIR Integration Tests
+// SPIRAL PIR Integration Tests
 // Tests that verify PIR example documents evaluate correctly
 
 import { describe, it, before } from "node:test";

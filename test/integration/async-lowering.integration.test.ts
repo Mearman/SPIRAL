@@ -1,4 +1,4 @@
-// CAIRS Async Lowering Integration Tests
+// SPIRAL Async Lowering Integration Tests
 // Tests lowering EIR with async features to LIR
 // Tests PIR -> LIR lowering patterns
 

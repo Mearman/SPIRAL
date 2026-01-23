@@ -1,4 +1,4 @@
-// CAIRS Test Helper
+// SPIRAL Test Helper
 // Provides utilities for writing tests with relaxed type checking
 
 import type { AIRDocument, CIRDocument, Expr, Node } from "../src/types.js";

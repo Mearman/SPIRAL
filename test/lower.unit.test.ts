@@ -1,4 +1,4 @@
-// CAIRS LIR Lowering Tests
+// SPIRAL LIR Lowering Tests
 // Tests for EIR to LIR conversion
 
 import { describe, it } from "node:test";

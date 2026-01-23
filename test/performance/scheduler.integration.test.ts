@@ -1,4 +1,4 @@
-// CAIRS Scheduler Performance Tests
+// SPIRAL Scheduler Performance Tests
 // Tests concurrency modes, task cleanup, and load handling
 
 import assert from "node:assert";

@@ -1,4 +1,4 @@
-// CAIRS Performance Tests
+// SPIRAL Performance Tests
 // Measure overhead of async features vs sync equivalent
 
 import assert from "node:assert";

@@ -1,4 +1,4 @@
-// CAIRS LIR Evaluation Unit Tests
+// SPIRAL LIR Evaluation Unit Tests
 
 import assert from "node:assert";
 import { describe, it } from "node:test";

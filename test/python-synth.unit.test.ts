@@ -1,4 +1,4 @@
-// CAIRS Python Synthesizer Tests
+// SPIRAL Python Synthesizer Tests
 // Unit tests for synthesizePython functionality
 
 import assert from "node:assert";

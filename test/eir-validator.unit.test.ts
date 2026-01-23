@@ -1,4 +1,4 @@
-// CAIRS EIR Validator Tests
+// SPIRAL EIR Validator Tests
 
 import assert from "node:assert";
 import { describe, it } from "node:test";

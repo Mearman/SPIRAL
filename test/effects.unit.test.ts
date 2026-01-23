@@ -1,4 +1,4 @@
-// CAIRS Effects Tests
+// SPIRAL Effects Tests
 // Tests for effect registry and built-in effects
 
 import { describe, it } from "node:test";
