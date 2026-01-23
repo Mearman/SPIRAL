@@ -1,4 +1,4 @@
-// CAIRS CIR Substitution
+// SPIRAL CIR Substitution
 // Capture-avoiding substitution for CIR expressions
 
 import type { ValueEnv } from "../env.js";
@@ -11,14 +11,14 @@ import type { Expr, Value } from "../types.js";
 
 /**
  * Generate a fresh name that doesn't conflict with names in the given context.
- * Names are generated like "__cairs_0", "__cairs_1", etc.
+ * Names are generated like "__spiral_0", "__spiral_1", etc.
  */
 export function freshName(base: string, context: Set<string>): string {
 	let candidate = base;
 	let counter = 0;
 	while (context.has(candidate)) {
 		counter++;
-		candidate = "__cairs_" + String(counter);
+		candidate = "__spiral_" + String(counter);
 	}
 	return candidate;
 }
