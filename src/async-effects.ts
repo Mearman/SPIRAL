@@ -5,7 +5,7 @@
  
  
 
-// CAIRS Async Effects
+// SPIRAL Async Effects
 // Async runtime primitives for PIR (Parallel IR)
 // Provides AsyncChannel, AsyncRefCell, AsyncMutex, and ConcurrentEffectLog
 

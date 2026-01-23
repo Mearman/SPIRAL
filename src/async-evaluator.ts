@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/require-await */
  
 
-// CAIRS Async Evaluator
+// SPIRAL Async Evaluator
 // Promise-based big-step evaluation for PIR: ρ, σ ⊢ e ⇓ v, σ'
 // Extends EIR with async primitives (par, spawn, await, channels)
 

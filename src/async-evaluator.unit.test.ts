@@ -3,7 +3,7 @@
  
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-// CAIRS Async Evaluator Unit Tests
+// SPIRAL Async Evaluator Unit Tests
 // Tests for AsyncEvaluator class and async expression evaluation
 
 import { describe, it, before, beforeEach } from "node:test";
