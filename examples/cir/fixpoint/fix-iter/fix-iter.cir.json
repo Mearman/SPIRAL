@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/cir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
   "description": "Iterative summation using the fix combinator demonstrating tail recursion. The fix combinator enables recursion by finding the fixed point of a function: fix(f) = f(fix(f)). This example computes the sum of numbers 1 to 10 using tail recursion: fix(lambda rec. lambda (acc, n). if n > 10 then acc else rec(acc+n, n+1))(0, 1) = 55. The tail recursive structure means each iteration accumulates the result in acc and recurses with incremented n, without needing to build up a call stack.",
   "algorithm": "fix(lambda rec. lambda (acc, n). if n > 10 then acc else rec(acc+n, n+1))(0, 1)",
   "example": "Sum 1 to 10 using tail recursion with fix = 55",

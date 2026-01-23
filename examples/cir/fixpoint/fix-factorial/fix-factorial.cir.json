@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/cir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
   "description": "Factorial using the fix combinator for recursion. The fix combinator enables self-reference by computing the least fixed point of a function. fix F = F (fix F), allowing the function F to receive itself as its first parameter, enabling recursion.",
   "formula": "fix factorial_rec where factorial_rec = lambda rec. lambda n. if n <= 1 then 1 else n * rec(n-1)",
   "example": "factorial(5) = 120",
