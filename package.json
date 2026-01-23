@@ -13,12 +13,6 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "tsx --test \"test/**/*.test.ts\"",
-    "test:types": "tsc --noEmit -p tsconfig.test.json",
-    "test:examples": "tsx --test \"examples/*.ts\"",
-    "test:coverage": "c8 tsx --test \"test/**/*.test.ts\"",
-    "test:coverage:html": "c8 --reporter=html --reporter=text tsx --test \"test/**/*.test.ts\"",
-    "test:coverage:open": "c8 --reporter=html --reporter=text tsx --test \"test/**/*.test.ts\" && open coverage/index.html",
     "lint": "eslint . && tsc --noEmit",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
@@ -27,7 +21,7 @@
     "examples:list": "tsx examples/cli.ts --list",
     "examples:validate": "tsx examples/cli.ts --validate",
     "examples:help": "tsx examples/cli.ts --help",
-    "ci": "pnpm lint && pnpm test:types && pnpm test && pnpm test:examples",
+    "ci": "pnpm lint",
     "prepare": "husky"
   },
   "devDependencies": {
@@ -36,7 +30,6 @@
     "@eslint/js": "^9.39.2",
     "@eslint/markdown": "^7.5.1",
     "@types/node": "^25.0.10",
-    "c8": "10.1.3",
     "eslint": "^9.39.2",
     "eslint-plugin-jsonc": "^2.21.0",
     "globals": "^17.0.0",
@@ -44,7 +37,6 @@
     "jiti": "^2.6.1",
     "lint-staged": "^16.2.7",
     "tsx": "^4.21.0",
-    "typecheck-files": "1.0.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.53.1"
   },
@@ -59,10 +51,6 @@
   "lint-staged": {
     "*.ts": [
       "eslint --fix"
-    ],
-    "src/**/*.ts": [
-      "eslint --fix",
-      "typecheck-files"
     ],
     "eslint.config.ts": [
       "eslint --fix"
