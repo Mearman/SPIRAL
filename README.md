@@ -5,6 +5,18 @@
 
 CAIRS is a JSON-first intermediate representation spanning AIR, CIR, EIR, PIR, and LIR. All layers support expression and CFG block forms (hybrid documents).
 
+## Layers & Computational Classes
+
+| Layer | Name | Computational Class | Key Feature |
+|-------|------|---------------------|-------------|
+| **AIR** | Algebraic IR | Primitive Recursive (bounded) | Pure, no recursion, always terminates |
+| **CIR** | Computational IR | Turing-Complete | Lambdas, `fix` combinator for recursion |
+| **EIR** | Execution IR | Turing-Complete | Sequencing, mutation, loops, effects |
+| **PIR** | Parallel IR | Turing-Complete | Async/parallel primitives (`spawn`, `await`, channels) |
+| **LIR** | Low-Level IR | Turing-Complete | CFG-based, SSA with phi nodes |
+
+See [docs/Architecture.md](docs/Architecture.md) for details.
+
 ## Quick start
 ```bash
 pnpm install
