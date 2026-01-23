@@ -66,10 +66,10 @@ export default [
 	{
 		files: ["**/*.test.ts", "**/*.spec.ts"],
 		plugins: {
-			cairs: { rules: { "test-file-naming": testFileNamingRule } },
+			spiral: { rules: { "test-file-naming": testFileNamingRule } },
 		},
 		rules: {
-			"cairs/test-file-naming": "error",
+			"spiral/test-file-naming": "error",
 		},
 	},
 
