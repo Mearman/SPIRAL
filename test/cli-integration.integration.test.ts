@@ -1,4 +1,4 @@
-// CAIRS CLI Integration Tests
+// SPIRAL CLI Integration Tests
 // Tests for argument parsing and CLI option handling
 
 import { describe, it } from "node:test";

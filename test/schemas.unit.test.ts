@@ -1,4 +1,4 @@
-// CAIRS Schema Tests
+// SPIRAL Schema Tests
 // Tests for JSON schema definitions and type guards
 
 import { describe, it } from "node:test";

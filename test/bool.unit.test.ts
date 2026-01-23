@@ -1,4 +1,4 @@
-// CAIRS Bool Domain Unit Tests
+// SPIRAL Bool Domain Unit Tests
 // Tests for boolean algebra operators
 
 import assert from "node:assert";

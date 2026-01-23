@@ -1,4 +1,4 @@
-// CAIRS Sync/Async Interoperability Integration Tests
+// SPIRAL Sync/Async Interoperability Integration Tests
 // Tests sync evaluator followed by async evaluator
 // Tests validation errors for PIR expressions in AIR/CIR
 

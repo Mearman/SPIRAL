@@ -1,4 +1,4 @@
-// CAIRS Core Domain Unit Tests
+// SPIRAL Core Domain Unit Tests
 // Tests for arithmetic and comparison operators
 
 import assert from "node:assert";

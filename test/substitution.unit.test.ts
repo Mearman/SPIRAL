@@ -1,4 +1,4 @@
-// CAIRS CIR Substitution Tests
+// SPIRAL CIR Substitution Tests
 // Tests for capture-avoiding substitution, free variable collection, and alpha renaming
 
 import { describe, it } from "node:test";
@@ -22,12 +22,12 @@ describe("freshName", () => {
 
 	it("should generate fresh name if base is in context", () => {
 		const result = freshName("x", new Set(["x"]));
-		assert.strictEqual(result, "__cairs_1");
+		assert.strictEqual(result, "__spiral_1");
 	});
 
 	it("should skip already used fresh names", () => {
-		const result = freshName("x", new Set(["x", "__cairs_1"]));
-		assert.strictEqual(result, "__cairs_2");
+		const result = freshName("x", new Set(["x", "__spiral_1"]));
+		assert.strictEqual(result, "__spiral_2");
 	});
 });
 

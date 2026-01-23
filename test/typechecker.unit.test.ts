@@ -1,4 +1,4 @@
-// CAIRS TypeChecker Unit Tests
+// SPIRAL TypeChecker Unit Tests
 
 import assert from "node:assert";
 import { describe, it } from "node:test";

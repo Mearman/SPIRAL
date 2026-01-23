@@ -1,4 +1,4 @@
-// CAIRS Environment Tests
+// SPIRAL Environment Tests
 // Tests for type environment, value environment, and definitions
 
 import { describe, it } from "node:test";

@@ -1,4 +1,4 @@
-// CAIRS Timeout Performance Tests
+// SPIRAL Timeout Performance Tests
 // Tests timeout enforcement, accuracy, and fallback behavior
 
 import assert from "node:assert";

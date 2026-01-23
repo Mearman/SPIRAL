@@ -1,4 +1,4 @@
-// CAIRS Domain Operator Tests
+// SPIRAL Domain Operator Tests
 // Tests for list and set operators
 
 import { describe, it } from "node:test";

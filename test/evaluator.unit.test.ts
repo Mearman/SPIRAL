@@ -1,4 +1,4 @@
-// CAIRS Evaluator Unit Tests
+// SPIRAL Evaluator Unit Tests
 
 import assert from "node:assert";
 import { describe, it } from "node:test";

@@ -1,11 +1,11 @@
-// CAIRS Error Tests
+// SPIRAL Error Tests
 // Tests for error classes, validation results, and exhaustiveness checking
 
 import { describe, it } from "node:test";
 import assert from "node:assert";
 import {
 	ErrorCodes,
-	CAIRSError,
+	SPIRALError,
 	validResult,
 	invalidResult,
 	combineResults,
@@ -27,20 +27,20 @@ describe("ErrorCodes", () => {
 	});
 });
 
-describe("CAIRSError", () => {
+describe("SPIRALError", () => {
 	describe("constructor", () => {
 		it("should create error with code and message", () => {
-			const error = new CAIRSError(ErrorCodes.TypeError, "Test error");
+			const error = new SPIRALError(ErrorCodes.TypeError, "Test error");
 
 			assert.strictEqual(error.code, ErrorCodes.TypeError);
 			assert.strictEqual(error.message, "Test error");
-			assert.strictEqual(error.name, "CAIRSError");
+			assert.strictEqual(error.name, "SPIRALError");
 			assert.strictEqual(error.meta, undefined);
 		});
 
 		it("should create error with meta", () => {
 			const meta = new Map([["key", { kind: "int", value: 42 } as const]]);
-			const error = new CAIRSError(ErrorCodes.DomainError, "With meta", meta);
+			const error = new SPIRALError(ErrorCodes.DomainError, "With meta", meta);
 
 			assert.strictEqual(error.meta, meta);
 		});
@@ -48,7 +48,7 @@ describe("CAIRSError", () => {
 
 	describe("toValue", () => {
 		it("should convert error to value representation", () => {
-			const error = new CAIRSError(ErrorCodes.TypeError, "Test");
+			const error = new SPIRALError(ErrorCodes.TypeError, "Test");
 			const value = error.toValue();
 
 			assert.strictEqual(value.kind, "error");
@@ -57,7 +57,7 @@ describe("CAIRSError", () => {
 
 		it("should include meta in value if present", () => {
 			const meta = new Map([["key", { kind: "int", value: 42 } as const]]);
-			const error = new CAIRSError(ErrorCodes.DomainError, "Test", meta);
+			const error = new SPIRALError(ErrorCodes.DomainError, "Test", meta);
 			const value = error.toValue();
 
 			assert.strictEqual(value.meta, meta);
@@ -66,7 +66,7 @@ describe("CAIRSError", () => {
 
 	describe("factory methods", () => {
 		it("should create TypeError", () => {
-			const error = CAIRSError.typeError(intType, boolType);
+			const error = SPIRALError.typeError(intType, boolType);
 
 			assert.strictEqual(error.code, ErrorCodes.TypeError);
 			assert.ok(error.message.includes("expected int"));
@@ -74,13 +74,13 @@ describe("CAIRSError", () => {
 		});
 
 		it("should create TypeError with context", () => {
-			const error = CAIRSError.typeError(intType, boolType, "in argument");
+			const error = SPIRALError.typeError(intType, boolType, "in argument");
 
 			assert.ok(error.message.includes("in argument"));
 		});
 
 		it("should create ArityError", () => {
-			const error = CAIRSError.arityError(2, 3, "add");
+			const error = SPIRALError.arityError(2, 3, "add");
 
 			assert.strictEqual(error.code, ErrorCodes.ArityError);
 			assert.ok(error.message.includes("add"));
@@ -89,48 +89,48 @@ describe("CAIRSError", () => {
 		});
 
 		it("should create DomainError", () => {
-			const error = CAIRSError.domainError("Index out of bounds");
+			const error = SPIRALError.domainError("Index out of bounds");
 
 			assert.strictEqual(error.code, ErrorCodes.DomainError);
 			assert.ok(error.message.includes("Index out of bounds"));
 		});
 
 		it("should create DivideByZero error", () => {
-			const error = CAIRSError.divideByZero();
+			const error = SPIRALError.divideByZero();
 
 			assert.strictEqual(error.code, ErrorCodes.DivideByZero);
 			assert.ok(error.message.includes("Division by zero"));
 		});
 
 		it("should create UnknownOperator error", () => {
-			const error = CAIRSError.unknownOperator("math", "sqrt");
+			const error = SPIRALError.unknownOperator("math", "sqrt");
 
 			assert.strictEqual(error.code, ErrorCodes.UnknownOperator);
 			assert.ok(error.message.includes("math:sqrt"));
 		});
 
 		it("should create UnknownDefinition error", () => {
-			const error = CAIRSError.unknownDefinition("lib", "foo");
+			const error = SPIRALError.unknownDefinition("lib", "foo");
 
 			assert.strictEqual(error.code, ErrorCodes.UnknownDefinition);
 			assert.ok(error.message.includes("lib:foo"));
 		});
 
 		it("should create UnboundIdentifier error", () => {
-			const error = CAIRSError.unboundIdentifier("x");
+			const error = SPIRALError.unboundIdentifier("x");
 
 			assert.strictEqual(error.code, ErrorCodes.UnboundIdentifier);
 			assert.ok(error.message.includes("x"));
 		});
 
 		it("should create NonTermination error", () => {
-			const error = CAIRSError.nonTermination();
+			const error = SPIRALError.nonTermination();
 
 			assert.strictEqual(error.code, ErrorCodes.NonTermination);
 		});
 
 		it("should create ValidationError", () => {
-			const error = CAIRSError.validation("nodes[0]", "missing id");
+			const error = SPIRALError.validation("nodes[0]", "missing id");
 
 			assert.strictEqual(error.code, ErrorCodes.ValidationError);
 			assert.ok(error.message.includes("nodes[0]"));
@@ -138,7 +138,7 @@ describe("CAIRSError", () => {
 		});
 
 		it("should create ValidationError with value", () => {
-			const error = CAIRSError.validation("type", "invalid", { kind: "foo" });
+			const error = SPIRALError.validation("type", "invalid", { kind: "foo" });
 
 			assert.ok(error.message.includes("foo"));
 		});
@@ -147,14 +147,14 @@ describe("CAIRSError", () => {
 	describe("type formatting", () => {
 		it("should format complex types in errors", () => {
 			const listInt = listType(intType);
-			const error = CAIRSError.typeError(listInt, boolType);
+			const error = SPIRALError.typeError(listInt, boolType);
 
 			assert.ok(error.message.includes("list<int>"));
 		});
 
 		it("should format function types in errors", () => {
 			const fn = fnType([intType, intType], intType);
-			const error = CAIRSError.typeError(fn, boolType);
+			const error = SPIRALError.typeError(fn, boolType);
 
 			assert.ok(error.message.includes("fn(int, int) -> int"));
 		});
