@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Interactive example: reads a single line of input and outputs it multiple times in different contexts. Demonstrates single input with multiple outputs. Pattern: 1 input → many outputs.",
   "airDefs": [],

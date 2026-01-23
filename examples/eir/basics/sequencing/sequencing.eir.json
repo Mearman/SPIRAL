@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates sequential execution using the seq expression in EIR. The seq expression evaluates its first operand, then its second operand, returning the result of the second.",
   "airDefs": [

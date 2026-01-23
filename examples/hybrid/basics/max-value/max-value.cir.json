@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/cir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates hybrid documents mixing expression nodes and CFG block nodes. Expression nodes define values declaratively, while the block node uses CFG control flow to compute the maximum.",
   "airDefs": [],

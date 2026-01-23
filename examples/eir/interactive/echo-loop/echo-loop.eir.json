@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Interactive example: loops 3 times, each iteration reads an integer and echoes it back. Demonstrates for loop with interleaved I/O effects.",
   "airDefs": [

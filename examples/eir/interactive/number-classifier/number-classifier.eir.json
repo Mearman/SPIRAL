@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Interactive example: reads an integer, classifies it as zero, positive, or negative, and prints appropriate output. Demonstrates nested conditional I/O pattern with readInt and print effects.",
   "airDefs": [],

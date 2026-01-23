@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Computes Greatest Common Divisor using Euclid's algorithm as a CFG in LIR. Uses phi nodes for the loop-carried variables.",
   "nodes": [

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates iter loop for iterating over collections in EIR. The iter loop binds each element of a list to a variable and executes the body.",
   "airDefs": [

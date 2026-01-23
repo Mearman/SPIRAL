@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Interactive example: collects survey responses in a for loop. Reads 3 names from input, each preceded by a prompt. Demonstrates for loop with nested sequential effects.",
   "airDefs": [],

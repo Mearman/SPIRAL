@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates nested while loops in EIR. The outer loop controls one variable, while the inner loop runs to completion for each iteration of the outer loop.",
   "airDefs": [

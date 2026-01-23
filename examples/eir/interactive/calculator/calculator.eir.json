@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Interactive example: reads two integers and computes multiple arithmetic operations, outputting all results. Demonstrates multiple inputs and multiple outputs. Pattern: many inputs → many outputs.",
   "airDefs": [],

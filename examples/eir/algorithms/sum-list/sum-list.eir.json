@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/eir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
   "version": "1.0.0",
   "description": "Sums all elements in a list using iter loop with mutation in EIR. Demonstrates the fold/reduce pattern with mutable state.",
   "airDefs": [

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/cairs/main/lir.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
   "version": "1.0.0",
   "description": "Demonstrates a loop in LIR using a back-edge (jump to previous block). The block executes repeatedly until a condition becomes false.",
   "nodes": [
