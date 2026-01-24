@@ -1277,11 +1277,19 @@ function validateEirExpr(state: ValidationState, expr: Record<string, unknown>):
 
 	switch (kind) {
 	case "seq":
-		if (!validateId(expr.first)) {
-			addError(state, "seq expression must have valid 'first' identifier", expr);
+		if (typeof expr.first === "string") {
+			if (!validateId(expr.first)) {
+				addError(state, "seq expression must have valid 'first' identifier", expr);
+			}
+		} else {
+			validateEirExpr(state, expr.first as Record<string, unknown>);
 		}
-		if (!validateId(expr.then)) {
-			addError(state, "seq expression must have valid 'then' identifier", expr);
+		if (typeof expr.then === "string") {
+			if (!validateId(expr.then)) {
+				addError(state, "seq expression must have valid 'then' identifier", expr);
+			}
+		} else {
+			validateEirExpr(state, expr.then as Record<string, unknown>);
 		}
 		break;
 
@@ -1289,17 +1297,29 @@ function validateEirExpr(state: ValidationState, expr: Record<string, unknown>):
 		if (!validateId(expr.target)) {
 			addError(state, "assign expression must have valid 'target' identifier", expr);
 		}
-		if (!validateId(expr.value)) {
-			addError(state, "assign expression must have valid 'value' identifier", expr);
+		if (typeof expr.value === "string") {
+			if (!validateId(expr.value)) {
+				addError(state, "assign value must be valid identifier or expression", expr);
+			}
+		} else {
+			validateEirExpr(state, expr.value as Record<string, unknown>);
 		}
 		break;
 
 	case "while":
-		if (!validateId(expr.cond)) {
-			addError(state, "while expression must have valid 'cond' identifier", expr);
+		if (typeof expr.cond === "string") {
+			if (!validateId(expr.cond)) {
+				addError(state, "while expression must have valid 'cond' identifier", expr);
+			}
+		} else {
+			validateEirExpr(state, expr.cond as Record<string, unknown>);
 		}
-		if (!validateId(expr.body)) {
-			addError(state, "while expression must have valid 'body' identifier", expr);
+		if (typeof expr.body === "string") {
+			if (!validateId(expr.body)) {
+				addError(state, "while expression must have valid 'body' identifier", expr);
+			}
+		} else {
+			validateEirExpr(state, expr.body as Record<string, unknown>);
 		}
 		break;
 
@@ -1307,17 +1327,33 @@ function validateEirExpr(state: ValidationState, expr: Record<string, unknown>):
 		if (!validateId(expr.var)) {
 			addError(state, "for expression must have valid 'var' identifier", expr);
 		}
-		if (!validateId(expr.init)) {
-			addError(state, "for expression must have valid 'init' identifier", expr);
+		if (typeof expr.init === "string") {
+			if (!validateId(expr.init)) {
+				addError(state, "for expression must have valid 'init' identifier", expr);
+			}
+		} else {
+			validateEirExpr(state, expr.init as Record<string, unknown>);
 		}
-		if (!validateId(expr.cond)) {
-			addError(state, "for expression must have valid 'cond' identifier", expr);
+		if (typeof expr.cond === "string") {
+			if (!validateId(expr.cond)) {
+				addError(state, "for expression must have valid 'cond' identifier", expr);
+			}
+		} else {
+			validateEirExpr(state, expr.cond as Record<string, unknown>);
 		}
-		if (!validateId(expr.update)) {
-			addError(state, "for expression must have valid 'update' identifier", expr);
+		if (typeof expr.update === "string") {
+			if (!validateId(expr.update)) {
+				addError(state, "for expression must have valid 'update' identifier", expr);
+			}
+		} else {
+			validateEirExpr(state, expr.update as Record<string, unknown>);
 		}
-		if (!validateId(expr.body)) {
-			addError(state, "for expression must have valid 'body' identifier", expr);
+		if (typeof expr.body === "string") {
+			if (!validateId(expr.body)) {
+				addError(state, "for expression must have valid 'body' identifier", expr);
+			}
+		} else {
+			validateEirExpr(state, expr.body as Record<string, unknown>);
 		}
 		break;
 
@@ -1325,11 +1361,19 @@ function validateEirExpr(state: ValidationState, expr: Record<string, unknown>):
 		if (!validateId(expr.var)) {
 			addError(state, "iter expression must have valid 'var' identifier", expr);
 		}
-		if (!validateId(expr.iter)) {
-			addError(state, "iter expression must have valid 'iter' identifier", expr);
+		if (typeof expr.iter === "string") {
+			if (!validateId(expr.iter)) {
+				addError(state, "iter expression must have valid 'iter' identifier", expr);
+			}
+		} else {
+			validateEirExpr(state, expr.iter as Record<string, unknown>);
 		}
-		if (!validateId(expr.body)) {
-			addError(state, "iter expression must have valid 'body' identifier", expr);
+		if (typeof expr.body === "string") {
+			if (!validateId(expr.body)) {
+				addError(state, "iter expression must have valid 'body' identifier", expr);
+			}
+		} else {
+			validateEirExpr(state, expr.body as Record<string, unknown>);
 		}
 		break;
 
@@ -1341,25 +1385,43 @@ function validateEirExpr(state: ValidationState, expr: Record<string, unknown>):
 			addError(state, "effect expression must have 'args' array", expr);
 		} else {
 			for (const arg of expr.args as unknown[]) {
-				if (!validateId(arg)) {
-					addError(state, "effect args must be valid identifiers", arg);
+				if (typeof arg === "string") {
+					if (!validateId(arg)) {
+						addError(state, "effect args must be valid identifiers or expressions", arg);
+					}
+				} else {
+					validateEirExpr(state, arg as Record<string, unknown>);
 				}
 			}
 		}
 		break;
 
 	case "try":
-		if (!validateId(expr.tryBody)) {
-			addError(state, "try expression must have valid 'tryBody' identifier", expr);
+		if (typeof expr.tryBody === "string") {
+			if (!validateId(expr.tryBody)) {
+				addError(state, "try expression must have valid 'tryBody' identifier", expr);
+			}
+		} else {
+			validateEirExpr(state, expr.tryBody as Record<string, unknown>);
 		}
 		if (!validateId(expr.catchParam)) {
 			addError(state, "try expression must have valid 'catchParam' identifier", expr);
 		}
-		if (!validateId(expr.catchBody)) {
-			addError(state, "try expression must have valid 'catchBody' identifier", expr);
+		if (typeof expr.catchBody === "string") {
+			if (!validateId(expr.catchBody)) {
+				addError(state, "try expression must have valid 'catchBody' identifier", expr);
+			}
+		} else {
+			validateEirExpr(state, expr.catchBody as Record<string, unknown>);
 		}
-		if (expr.fallback !== undefined && !validateId(expr.fallback)) {
-			addError(state, "try expression fallback must be a valid identifier", expr);
+		if (expr.fallback !== undefined) {
+			if (typeof expr.fallback === "string") {
+				if (!validateId(expr.fallback)) {
+					addError(state, "try expression fallback must be a valid identifier", expr);
+				}
+			} else {
+				validateEirExpr(state, expr.fallback as Record<string, unknown>);
+			}
 		}
 		break;
 
@@ -1422,43 +1484,46 @@ function validateEirNodeReferences(
 
 	switch (kind) {
 	case "seq":
-		checkRef(expr.first, "seq.first");
-		checkRef(expr.then, "seq.then");
+		if (typeof expr.first === "string") checkRef(expr.first, "seq.first");
+		if (typeof expr.then === "string") checkRef(expr.then, "seq.then");
 		break;
 
 	case "assign":
-		checkRef(expr.value, "assign.value");
+		if (typeof expr.value === "string") checkRef(expr.value, "assign.value");
 		break;
 
 	case "while":
-		checkRef(expr.cond, "while.cond");
-		checkRef(expr.body, "while.body");
+		if (typeof expr.cond === "string") checkRef(expr.cond, "while.cond");
+		if (typeof expr.body === "string") checkRef(expr.body, "while.body");
 		break;
 
 	case "for":
-		checkRef(expr.init, "for.init");
-		checkRef(expr.cond, "for.cond");
-		checkRef(expr.update, "for.update");
-		checkRef(expr.body, "for.body");
+		if (typeof expr.init === "string") checkRef(expr.init, "for.init");
+		if (typeof expr.cond === "string") checkRef(expr.cond, "for.cond");
+		if (typeof expr.update === "string") checkRef(expr.update, "for.update");
+		if (typeof expr.body === "string") checkRef(expr.body, "for.body");
 		break;
 
 	case "iter":
-		checkRef(expr.iter, "iter.iter");
-		checkRef(expr.body, "iter.body");
+		if (typeof expr.iter === "string") checkRef(expr.iter, "iter.iter");
+		if (typeof expr.body === "string") checkRef(expr.body, "iter.body");
 		break;
 
 	case "effect":
 		if (validateArray(expr.args)) {
 			for (let i = 0; i < (expr.args as unknown[]).length; i++) {
-				checkRef((expr.args as unknown[])[i], "effect.args[" + String(i) + "]");
+				const arg = (expr.args as unknown[])[i];
+				if (typeof arg === "string") {
+					checkRef(arg, "effect.args[" + String(i) + "]");
+				}
 			}
 		}
 		break;
 
 	case "try":
-		checkRef(expr.tryBody, "try.tryBody");
-		checkRef(expr.catchBody, "try.catchBody");
-		if (expr.fallback !== undefined) {
+		if (typeof expr.tryBody === "string") checkRef(expr.tryBody, "try.tryBody");
+		if (typeof expr.catchBody === "string") checkRef(expr.catchBody, "try.catchBody");
+		if (expr.fallback !== undefined && typeof expr.fallback === "string") {
 			checkRef(expr.fallback, "try.fallback");
 		}
 		break;
