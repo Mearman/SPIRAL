@@ -7,11 +7,11 @@ import assert from "node:assert/strict";
 import {
 	validateEIR,
 	validatePIR,
-} from "../dist/validator.js";
+} from "../src/validator.js";
 import type {
 	EIRDocument,
 	PIRDocument,
-} from "../dist/types.js";
+} from "../src/types.js";
 
 //==============================================================================
 // Test Fixtures

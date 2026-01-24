@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import {
 	synthesizePython,
 	type PythonSynthOptions,
-} from "../../dist/synth/python.js";
+} from "../../src/synth/python.js";
 import type {
 	AIRDocument,
 	CIRDocument,
@@ -16,7 +16,7 @@ import type {
 	Node,
 	EirNode,
 	LirHybridNode,
-} from "../../dist/types.js";
+} from "../../src/types.js";
 
 //==============================================================================
 // Test Fixtures
