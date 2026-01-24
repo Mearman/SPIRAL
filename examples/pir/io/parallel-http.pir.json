@@ -1,0 +1,244 @@
+{
+  "$schema": "../../pir.schema.json",
+  "version": "2.0.0",
+  "capabilities": ["async", "parallel", "channels"],
+  "description": "Demonstrates parallel HTTP requests with par, select for timeout/race handling, and channel-based producer-consumer for response processing",
+  "nodes": [
+    {
+      "id": "url1",
+      "expr": {
+        "kind": "lit",
+        "type": { "kind": "string" },
+        "value": "https://api.example.com/users"
+      }
+    },
+    {
+      "id": "url2",
+      "expr": {
+        "kind": "lit",
+        "type": { "kind": "string" },
+        "value": "https://api.example.com/posts"
+      }
+    },
+    {
+      "id": "url3",
+      "expr": {
+        "kind": "lit",
+        "type": { "kind": "string" },
+        "value": "https://api.example.com/comments"
+      }
+    },
+    {
+      "id": "request1",
+      "type": { "kind": "future", "of": { "kind": "string" } },
+      "expr": {
+        "kind": "effect",
+        "op": "httpGet",
+        "args": ["url1"]
+      }
+    },
+    {
+      "id": "request2",
+      "type": { "kind": "future", "of": { "kind": "string" } },
+      "expr": {
+        "kind": "effect",
+        "op": "httpGet",
+        "args": ["url2"]
+      }
+    },
+    {
+      "id": "request3",
+      "type": { "kind": "future", "of": { "kind": "string" } },
+      "expr": {
+        "kind": "effect",
+        "op": "httpGet",
+        "args": ["url3"]
+      }
+    },
+    {
+      "id": "parallelRequests",
+      "expr": {
+        "kind": "par",
+        "branches": ["request1", "request2", "request3"]
+      }
+    },
+    {
+      "id": "timeout",
+      "expr": {
+        "kind": "lit",
+        "type": { "kind": "int" },
+        "value": 3000
+      }
+    },
+    {
+      "id": "fallbackResponse",
+      "expr": {
+        "kind": "lit",
+        "type": { "kind": "string" },
+        "value": "{\"error\": \"Request timeout\"}"
+      }
+    },
+    {
+      "id": "selectFirstResponse",
+      "expr": {
+        "kind": "select",
+        "futures": ["request1", "request2", "request3"],
+        "timeout": "timeout",
+        "fallback": "fallbackResponse",
+        "returnIndex": true
+      }
+    },
+    {
+      "id": "raceRequests",
+      "expr": {
+        "kind": "race",
+        "tasks": ["request1", "request2", "request3"]
+      }
+    },
+    {
+      "id": "responseBufferSize",
+      "expr": {
+        "kind": "lit",
+        "type": { "kind": "int" },
+        "value": 10
+      }
+    },
+    {
+      "id": "responseChannel",
+      "type": { "kind": "channel", "channelType": "mpsc", "of": { "kind": "string" } },
+      "expr": {
+        "kind": "channel",
+        "channelType": "mpsc",
+        "bufferSize": "responseBufferSize"
+      }
+    },
+    {
+      "id": "sendResponse1",
+      "expr": {
+        "kind": "send",
+        "channel": "responseChannel",
+        "value": "request1"
+      }
+    },
+    {
+      "id": "sendResponse2",
+      "expr": {
+        "kind": "send",
+        "channel": "responseChannel",
+        "value": "request2"
+      }
+    },
+    {
+      "id": "sendResponse3",
+      "expr": {
+        "kind": "send",
+        "channel": "responseChannel",
+        "value": "request3"
+      }
+    },
+    {
+      "id": "producerTask",
+      "expr": {
+        "kind": "par",
+        "branches": ["sendResponse1", "sendResponse2", "sendResponse3"]
+      }
+    },
+    {
+      "id": "producerFuture",
+      "expr": {
+        "kind": "spawn",
+        "task": "producerTask"
+      }
+    },
+    {
+      "id": "response1",
+      "expr": {
+        "kind": "recv",
+        "channel": "responseChannel"
+      }
+    },
+    {
+      "id": "response2",
+      "expr": {
+        "kind": "recv",
+        "channel": "responseChannel"
+      }
+    },
+    {
+      "id": "response3",
+      "expr": {
+        "kind": "recv",
+        "channel": "responseChannel"
+      }
+    },
+    {
+      "id": "awaitProducer",
+      "expr": {
+        "kind": "await",
+        "future": "producerFuture"
+      }
+    },
+    {
+      "id": "allResponses",
+      "expr": {
+        "kind": "seq",
+        "first": "awaitProducer",
+        "then": "response1"
+      }
+    },
+    {
+      "id": "shortTimeout",
+      "expr": {
+        "kind": "lit",
+        "type": { "kind": "int" },
+        "value": 100
+      }
+    },
+    {
+      "id": "selectWithShortTimeout",
+      "expr": {
+        "kind": "select",
+        "futures": ["request1", "request2"],
+        "timeout": "shortTimeout",
+        "fallback": "fallbackResponse",
+        "returnIndex": true
+      }
+    },
+    {
+      "id": "errorFallback",
+      "expr": {
+        "kind": "lit",
+        "type": { "kind": "string" },
+        "value": "{\"error\": \"HTTP request failed\"}"
+      }
+    },
+    {
+      "id": "safeRequest1",
+      "expr": {
+        "kind": "try",
+        "tryBody": "request1",
+        "catchParam": "err",
+        "catchBody": "errorFallback"
+      }
+    },
+    {
+      "id": "safeRequest2",
+      "expr": {
+        "kind": "try",
+        "tryBody": "request2",
+        "catchParam": "err",
+        "catchBody": "errorFallback"
+      }
+    },
+    {
+      "id": "safeParallelRequests",
+      "expr": {
+        "kind": "par",
+        "branches": ["safeRequest1", "safeRequest2"]
+      }
+    }
+  ],
+  "result": "selectFirstResponse",
+  "expected_result": "selectResult",
+  "note": "This example demonstrates async HTTP patterns. 'parallelRequests' shows concurrent requests with par. 'selectFirstResponse' races requests with 3s timeout, returning {index: n, value: response} for first complete. 'raceRequests' executes all requests in parallel. The producer-consumer pattern uses channels to collect responses. Change 'result' to: 'parallelRequests' for all concurrent requests, 'raceRequests' for parallel execution, 'selectWithShortTimeout' to see timeout behavior (returns {index: -1, value: timeout}), 'safeParallelRequests' for error-handled requests, or 'allResponses' for channel-based collection."
+}
