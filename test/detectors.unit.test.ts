@@ -12,13 +12,16 @@ import {
 	createDetectors,
 	type RaceCondition,
 	type DeadlockCycle,
-} from "../dist/detectors.js";
+} from "../src/detectors.js";
+import { intVal } from "../src/types.js";
 
 //==============================================================================
 // Test Fixtures
 //==============================================================================
 
-const TEST_VALUE = 42;
+// Helper to convert numbers to intVal for recordAccess calls
+const v = intVal;
+const TEST_VALUE = intVal(42);
 
 //==============================================================================
 // Test Suite
@@ -129,8 +132,8 @@ describe("Detectors - Unit Tests", () => {
 		describe("detectRaces", () => {
 			it("should detect W-W race between two tasks", () => {
 				const detector = new RaceDetector();
-				detector.recordAccess("task1", "shared_var", "write", 1);
-				detector.recordAccess("task2", "shared_var", "write", 2);
+				detector.recordAccess("task1", "shared_var", "write", v(1));
+				detector.recordAccess("task2", "shared_var", "write", v(2));
 
 				const races = detector.detectRaces();
 				assert.strictEqual(races.length, 1);
@@ -141,8 +144,8 @@ describe("Detectors - Unit Tests", () => {
 
 			it("should detect W-R race between two tasks", () => {
 				const detector = new RaceDetector();
-				detector.recordAccess("task1", "shared_var", "write", 1);
-				detector.recordAccess("task2", "shared_var", "read", 1);
+				detector.recordAccess("task1", "shared_var", "write", v(1));
+				detector.recordAccess("task2", "shared_var", "read", v(1));
 
 				const races = detector.detectRaces();
 				assert.strictEqual(races.length, 1);
@@ -151,8 +154,8 @@ describe("Detectors - Unit Tests", () => {
 
 			it("should detect R-W race between two tasks", () => {
 				const detector = new RaceDetector();
-				detector.recordAccess("task1", "shared_var", "read", 1);
-				detector.recordAccess("task2", "shared_var", "write", 2);
+				detector.recordAccess("task1", "shared_var", "read", v(1));
+				detector.recordAccess("task2", "shared_var", "write", v(2));
 
 				const races = detector.detectRaces();
 				assert.strictEqual(races.length, 1);
@@ -161,8 +164,8 @@ describe("Detectors - Unit Tests", () => {
 
 			it("should not detect race between same task", () => {
 				const detector = new RaceDetector();
-				detector.recordAccess("task1", "shared_var", "write", 1);
-				detector.recordAccess("task1", "shared_var", "write", 2);
+				detector.recordAccess("task1", "shared_var", "write", v(1));
+				detector.recordAccess("task1", "shared_var", "write", v(2));
 
 				const races = detector.detectRaces();
 				assert.strictEqual(races.length, 0);
@@ -170,8 +173,8 @@ describe("Detectors - Unit Tests", () => {
 
 			it("should not detect R-R as race", () => {
 				const detector = new RaceDetector();
-				detector.recordAccess("task1", "shared_var", "read", 1);
-				detector.recordAccess("task2", "shared_var", "read", 1);
+				detector.recordAccess("task1", "shared_var", "read", v(1));
+				detector.recordAccess("task2", "shared_var", "read", v(1));
 
 				const races = detector.detectRaces();
 				assert.strictEqual(races.length, 0);
@@ -180,10 +183,10 @@ describe("Detectors - Unit Tests", () => {
 			it("should respect happens-before relationship from sync points", () => {
 				const detector = new RaceDetector();
 				// task1 writes first
-				detector.recordAccess("task1", "shared_var", "write", 1);
+				detector.recordAccess("task1", "shared_var", "write", v(1));
 				// task2 syncs with task1 before reading
 				detector.recordSyncPoint("task2", ["task1"]);
-				detector.recordAccess("task2", "shared_var", "read", 1);
+				detector.recordAccess("task2", "shared_var", "read", v(1));
 
 				const races = detector.detectRaces();
 				assert.strictEqual(races.length, 0);
@@ -191,10 +194,10 @@ describe("Detectors - Unit Tests", () => {
 
 			it("should detect multiple races at different locations", () => {
 				const detector = new RaceDetector();
-				detector.recordAccess("task1", "loc1", "write", 1);
-				detector.recordAccess("task2", "loc1", "write", 2);
-				detector.recordAccess("task1", "loc2", "read", 1);
-				detector.recordAccess("task3", "loc2", "write", 2);
+				detector.recordAccess("task1", "loc1", "write", v(1));
+				detector.recordAccess("task2", "loc1", "write", v(2));
+				detector.recordAccess("task1", "loc2", "read", v(1));
+				detector.recordAccess("task3", "loc2", "write", v(2));
 
 				const races = detector.detectRaces();
 				assert.strictEqual(races.length, 2);
@@ -202,9 +205,9 @@ describe("Detectors - Unit Tests", () => {
 
 			it("should detect race involving more than two tasks", () => {
 				const detector = new RaceDetector();
-				detector.recordAccess("task1", "shared_var", "write", 1);
-				detector.recordAccess("task2", "shared_var", "write", 2);
-				detector.recordAccess("task3", "shared_var", "read", 1);
+				detector.recordAccess("task1", "shared_var", "write", v(1));
+				detector.recordAccess("task2", "shared_var", "write", v(2));
+				detector.recordAccess("task3", "shared_var", "read", v(1));
 
 				const races = detector.detectRaces();
 				// Should detect races for each unordered pair
@@ -213,8 +216,8 @@ describe("Detectors - Unit Tests", () => {
 
 			it("should generate proper race description", () => {
 				const detector = new RaceDetector();
-				detector.recordAccess("task1", "shared_var", "write", 1);
-				detector.recordAccess("task2", "shared_var", "read", 1);
+				detector.recordAccess("task1", "shared_var", "write", v(1));
+				detector.recordAccess("task2", "shared_var", "read", v(1));
 
 				const races = detector.detectRaces();
 				assert.strictEqual(races.length, 1);
@@ -227,8 +230,8 @@ describe("Detectors - Unit Tests", () => {
 
 			it("should return empty array when detection disabled", () => {
 				const detector = new RaceDetector({ enableRaceDetection: false });
-				detector.recordAccess("task1", "shared_var", "write", 1);
-				detector.recordAccess("task2", "shared_var", "write", 2);
+				detector.recordAccess("task1", "shared_var", "write", v(1));
+				detector.recordAccess("task2", "shared_var", "write", v(2));
 
 				const races = detector.detectRaces();
 				assert.strictEqual(races.length, 0);
@@ -258,8 +261,8 @@ describe("Detectors - Unit Tests", () => {
 
 			it("should detect no races after clear", () => {
 				const detector = new RaceDetector();
-				detector.recordAccess("task1", "loc1", "write", 1);
-				detector.recordAccess("task2", "loc1", "write", 2);
+				detector.recordAccess("task1", "loc1", "write", v(1));
+				detector.recordAccess("task2", "loc1", "write", v(2));
 
 				const racesBefore = detector.detectRaces();
 				assert.strictEqual(racesBefore.length, 1);
@@ -283,9 +286,9 @@ describe("Detectors - Unit Tests", () => {
 
 			it("should return accurate access count", () => {
 				const detector = new RaceDetector();
-				detector.recordAccess("task1", "loc1", "read", 1);
-				detector.recordAccess("task1", "loc2", "write", 2);
-				detector.recordAccess("task2", "loc1", "read", 1);
+				detector.recordAccess("task1", "loc1", "read", v(1));
+				detector.recordAccess("task1", "loc2", "write", v(2));
+				detector.recordAccess("task2", "loc1", "read", v(1));
 
 				const stats = detector.getStats();
 				assert.strictEqual(stats.totalAccesses, 3);
@@ -293,9 +296,9 @@ describe("Detectors - Unit Tests", () => {
 
 			it("should return accurate location count", () => {
 				const detector = new RaceDetector();
-				detector.recordAccess("task1", "loc1", "read", 1);
-				detector.recordAccess("task2", "loc2", "read", 1);
-				detector.recordAccess("task3", "loc3", "write", 1);
+				detector.recordAccess("task1", "loc1", "read", v(1));
+				detector.recordAccess("task2", "loc2", "read", v(1));
+				detector.recordAccess("task3", "loc3", "write", v(1));
 
 				const stats = detector.getStats();
 				assert.strictEqual(stats.locations, 3);
@@ -708,7 +711,7 @@ describe("Detectors - Unit Tests", () => {
 			});
 
 			const raceStats = detectors.raceDetector.getStats();
-			detectors.raceDetector.recordAccess("task1", "loc1", "write", 1);
+			detectors.raceDetector.recordAccess("task1", "loc1", "write", v(1));
 			assert.strictEqual(raceStats.totalAccesses, 0);
 
 			const deadlockStats = detectors.deadlockDetector.getStats();
@@ -720,8 +723,8 @@ describe("Detectors - Unit Tests", () => {
 			const detectors = createDetectors();
 
 			// Add some race conditions
-			detectors.raceDetector.recordAccess("task1", "shared", "write", 1);
-			detectors.raceDetector.recordAccess("task2", "shared", "write", 2);
+			detectors.raceDetector.recordAccess("task1", "shared", "write", v(1));
+			detectors.raceDetector.recordAccess("task2", "shared", "write", v(2));
 
 			// Add some deadlock conditions
 			detectors.deadlockDetector.trackLockAcquisition("task1", "lock1");
@@ -757,8 +760,8 @@ describe("Detectors - Unit Tests", () => {
 	describe("Edge Cases", () => {
 		it("should handle empty task IDs", () => {
 			const detector = new RaceDetector();
-			detector.recordAccess("", "loc1", "write", 1);
-			detector.recordAccess("task2", "loc1", "write", 2);
+			detector.recordAccess("", "loc1", "write", v(1));
+			detector.recordAccess("task2", "loc1", "write", v(2));
 
 			const races = detector.detectRaces();
 			assert.strictEqual(races.length, 1);
@@ -766,8 +769,8 @@ describe("Detectors - Unit Tests", () => {
 
 		it("should handle empty location strings", () => {
 			const detector = new RaceDetector();
-			detector.recordAccess("task1", "", "write", 1);
-			detector.recordAccess("task2", "", "write", 2);
+			detector.recordAccess("task1", "", "write", v(1));
+			detector.recordAccess("task2", "", "write", v(2));
 
 			const races = detector.detectRaces();
 			assert.strictEqual(races.length, 1);
@@ -801,7 +804,7 @@ describe("Detectors - Unit Tests", () => {
 			const detector = new RaceDetector();
 
 			// First task writes to shared location
-			detector.recordAccess("task0", "shared", "write", 0);
+			detector.recordAccess("task0", "shared", "write", v(0));
 
 			// Each subsequent task syncs with previous tasks before accessing
 			for (let i = 1; i < 100; i++) {
