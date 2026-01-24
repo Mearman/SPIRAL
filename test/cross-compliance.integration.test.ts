@@ -6,9 +6,12 @@ import * as assert from "node:assert";
 import { evaluateProgram, evaluateEIR } from "../src/evaluator.js";
 import { evaluateLIR as evaluateLIRSync } from "../src/lir/evaluator.js";
 import { evaluateLIRAsync } from "../src/lir/async-evaluator.js";
-import { emptyRegistry } from "../src/domains/registry.js";
 import { emptyDefs } from "../src/env.js";
 import { emptyEffectRegistry } from "../src/effects.js";
+import { createCoreRegistry } from "../src/domains/core.js";
+import { createBoolRegistry } from "../src/domains/bool.js";
+import { createListRegistry } from "../src/domains/list.js";
+import { createSetRegistry } from "../src/domains/set.js";
 import type { Value } from "../src/types.js";
 import {
 	COMPLIANCE_FIXTURES,
@@ -51,73 +54,73 @@ function deepEqual(actual: unknown, expected: unknown, tolerance = 0): boolean {
 	const kind = actualObj.kind as string;
 
 	switch (kind) {
-		case "int":
-		case "bool":
-		case "string":
-			return actualObj.value === expectedObj.value;
+	case "int":
+	case "bool":
+	case "string":
+		return actualObj.value === expectedObj.value;
 
-		case "float": {
-			const actualValue = typeof actualObj.value === "number" ? actualObj.value : 0;
-			const expectedValue = typeof expectedObj.value === "number" ? expectedObj.value : 0;
-			if (tolerance > 0) {
-				return Math.abs(actualValue - expectedValue) <= tolerance;
-			}
-			return actualValue === expectedValue;
+	case "float": {
+		const actualValue = typeof actualObj.value === "number" ? actualObj.value : 0;
+		const expectedValue = typeof expectedObj.value === "number" ? expectedObj.value : 0;
+		if (tolerance > 0) {
+			return Math.abs(actualValue - expectedValue) <= tolerance;
 		}
+		return actualValue === expectedValue;
+	}
 
-		case "list": {
-			const actualList = actualObj.value as unknown[];
-			const expectedList = expectedObj.value as unknown[];
-			if (!Array.isArray(actualList) || !Array.isArray(expectedList)) {
-				return false;
-			}
-			if (actualList.length !== expectedList.length) {
-				return false;
-			}
-			for (let i = 0; i < actualList.length; i++) {
-				if (!deepEqual(actualList[i]!, expectedList[i], tolerance)) {
-					return false;
-				}
-			}
-			return true;
+	case "list": {
+		const actualList = actualObj.value as unknown[];
+		const expectedList = expectedObj.value as unknown[];
+		if (!Array.isArray(actualList) || !Array.isArray(expectedList)) {
+			return false;
 		}
-
-		case "set": {
-			const actualList = actualObj.value as unknown[];
-			const expectedList = expectedObj.value as unknown[];
-			if (!Array.isArray(actualList) || !Array.isArray(expectedList)) {
-				return false;
-			}
-			if (actualList.length !== expectedList.length) {
-				return false;
-			}
-			// Sets are unordered - compare as sets
-			const actualItems = new Set();
-			const expectedItems = new Set();
-			for (const item of actualList) {
-				actualItems.add(JSON.stringify(item));
-			}
-			for (const item of expectedList) {
-				expectedItems.add(JSON.stringify(item));
-			}
-			// Check all expected items are in actual
-			for (const item of expectedItems) {
-				if (!actualItems.has(item)) {
-					return false;
-				}
-			}
-			return true;
+		if (actualList.length !== expectedList.length) {
+			return false;
 		}
+		for (let i = 0; i < actualList.length; i++) {
+			if (!deepEqual(actualList[i]!, expectedList[i], tolerance)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
-		case "void":
-			return kind === expectedObj.kind;
+	case "set": {
+		const actualList = actualObj.value as unknown[];
+		const expectedList = expectedObj.value as unknown[];
+		if (!Array.isArray(actualList) || !Array.isArray(expectedList)) {
+			return false;
+		}
+		if (actualList.length !== expectedList.length) {
+			return false;
+		}
+		// Sets are unordered - compare as sets
+		const actualItems = new Set();
+		const expectedItems = new Set();
+		for (const item of actualList) {
+			actualItems.add(JSON.stringify(item));
+		}
+		for (const item of expectedList) {
+			expectedItems.add(JSON.stringify(item));
+		}
+		// Check all expected items are in actual
+		for (const item of expectedItems) {
+			if (!actualItems.has(item)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
-		case "error":
-			return actualObj.code === expectedObj.code;
+	case "void":
+		return kind === expectedObj.kind;
 
-		default:
-			// For unknown types, fall back to JSON comparison
-			return JSON.stringify(actual) === JSON.stringify(expected);
+	case "error":
+		return actualObj.code === expectedObj.code;
+
+	default:
+		// For unknown types, fall back to JSON comparison
+		return JSON.stringify(actual) === JSON.stringify(expected);
 	}
 }
 
@@ -193,12 +196,29 @@ async function executeFixture(fixture: ComplianceFixture): Promise<Value> {
 	const inputs = loadFixtureInputs(fixture);
 
 	const layer = fixture.metadata.layer;
-	const registry = emptyRegistry();
+	// Build a complete registry with all domain operators
+	const registry = new Map();
+	// Merge core registry
+	for (const [key, op] of createCoreRegistry()) {
+		registry.set(key, op);
+	}
+	// Merge bool registry
+	for (const [key, op] of createBoolRegistry()) {
+		registry.set(key, op);
+	}
+	// Merge list registry
+	for (const [key, op] of createListRegistry()) {
+		registry.set(key, op);
+	}
+	// Merge set registry
+	for (const [key, op] of createSetRegistry()) {
+		registry.set(key, op);
+	}
 	const defs = emptyDefs();
 	const effects = emptyEffectRegistry();
 
 	// Parse inputs if provided
-	let inputMap: Map<string, Value> = new Map();
+	const inputMap: Map<string, Value> = new Map();
 	if (inputs && typeof inputs === "object") {
 		for (const [key, val] of Object.entries(inputs)) {
 			inputMap.set(key, val as Value);
@@ -206,32 +226,32 @@ async function executeFixture(fixture: ComplianceFixture): Promise<Value> {
 	}
 
 	switch (layer) {
-		case "AIR":
-		case "CIR": {
-			// AIR/CIR uses evaluateProgram
-			return evaluateProgram(doc as never, registry, defs, inputMap);
-		}
+	case "AIR":
+	case "CIR": {
+		// AIR/CIR uses evaluateProgram
+		return evaluateProgram(doc as never, registry, defs, inputMap);
+	}
 
-		case "EIR":
-		case "PIR": {
-			// EIR/PIR uses evaluateEIR
-			const { result } = evaluateEIR(doc as never, registry, defs, inputMap);
+	case "EIR":
+	case "PIR": {
+		// EIR/PIR uses evaluateEIR
+		const { result } = evaluateEIR(doc as never, registry, defs, inputMap);
+		return result;
+	}
+
+	case "LIR": {
+		// Check if this is an async LIR document (has fork terminator)
+		const isAsync = JSON.stringify(doc).includes('"kind": "fork"');
+		if (isAsync) {
+			const { result } = await evaluateLIRAsync(doc as never, registry, effects, inputMap, undefined, defs);
 			return result;
 		}
+		const { result } = evaluateLIRSync(doc as never, registry, effects, inputMap, undefined, defs);
+		return result;
+	}
 
-		case "LIR": {
-			// Check if this is an async LIR document (has fork terminator)
-			const isAsync = JSON.stringify(doc).includes('"kind": "fork"');
-			if (isAsync) {
-				const { result } = await evaluateLIRAsync(doc as never, registry, effects, inputMap, undefined, defs);
-				return result;
-			}
-			const { result } = evaluateLIRSync(doc as never, registry, effects, inputMap, undefined, defs);
-			return result;
-		}
-
-		default:
-			throw new Error(`Unknown layer: ${layer}`);
+	default:
+		throw new Error(`Unknown layer: ${layer}`);
 	}
 }
 
@@ -266,7 +286,7 @@ function verifyFixtureResult(fixture: ComplianceFixture, result: Value): void {
 	if (expected.structural) {
 		if (!deepEqual(normalizedResult, expected.value, tolerance)) {
 			assert.fail(
-				`Value mismatch:\n` +
+				"Value mismatch:\n" +
 					`  Expected: ${JSON.stringify(expected.value, null, 2)}\n` +
 					`  Actual:   ${JSON.stringify(normalizedResult, null, 2)}`
 			);
@@ -277,7 +297,7 @@ function verifyFixtureResult(fixture: ComplianceFixture, result: Value): void {
 		const expectedString = JSON.stringify(expected.value);
 		if (actualString !== expectedString) {
 			assert.fail(
-				`String representation mismatch:\n` +
+				"String representation mismatch:\n" +
 					`  Expected: ${expectedString}\n` +
 					`  Actual:   ${actualString}`
 			);
