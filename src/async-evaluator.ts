@@ -880,14 +880,14 @@ export class AsyncEvaluator {
 	}
 
 	private async evalCall(
-		expr: { kind: "call"; ns: string; name: string; args: string[] },
+		expr: { kind: "call"; ns: string; name: string; args: (string | import("./types.js").Expr)[] },
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
-		// Resolve arguments (these are node refs in PIR)
+		// Resolve arguments (these are node refs in PIR or inline expressions)
 		const argValues: Value[] = [];
-		for (const argId of expr.args) {
-			const value = await this.resolveNodeRef(argId, env, context);
+		for (const arg of expr.args) {
+			const value = await this.resolveNodeRef(arg, env, context);
 			argValues.push(value);
 		}
 
@@ -909,7 +909,7 @@ export class AsyncEvaluator {
 	}
 
 	private async evalIf(
-		expr: { kind: "if"; cond: string; then: string; else: string },
+		expr: { kind: "if"; cond: string | import("./types.js").Expr; then: string | import("./types.js").Expr; else: string | import("./types.js").Expr },
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
@@ -919,12 +919,12 @@ export class AsyncEvaluator {
 			return errorVal(ErrorCodes.TypeError, "if condition must be boolean");
 		}
 
-		const branchId = condValue.value ? expr.then : expr.else;
-		return this.resolveNodeRef(branchId, env, context);
+		const branch = condValue.value ? expr.then : expr.else;
+		return this.resolveNodeRef(branch, env, context);
 	}
 
 	private async evalLet(
-		expr: { kind: "let"; name: string; value: string; body: string },
+		expr: { kind: "let"; name: string; value: string | import("./types.js").Expr; body: string | import("./types.js").Expr },
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
@@ -945,7 +945,7 @@ export class AsyncEvaluator {
 	}
 
 	private async evalCallExpr(
-		expr: { kind: "callExpr"; fn: string; args: string[] },
+		expr: { kind: "callExpr"; fn: string; args: (string | import("./types.js").Expr)[] },
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
@@ -956,8 +956,8 @@ export class AsyncEvaluator {
 		}
 
 		const argValues: Value[] = [];
-		for (const argId of expr.args) {
-			argValues.push(await this.resolveNodeRef(argId, env, context));
+		for (const arg of expr.args) {
+			argValues.push(await this.resolveNodeRef(arg, env, context));
 		}
 
 		// Check arity with optional parameter support
@@ -1040,7 +1040,7 @@ export class AsyncEvaluator {
 	}
 
 	private async evalSeq(
-		expr: { kind: "seq"; first: string; then: string },
+		expr: { kind: "seq"; first: string | import("./types.js").Expr; then: string | import("./types.js").Expr },
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
@@ -1049,7 +1049,7 @@ export class AsyncEvaluator {
 	}
 
 	private async evalAssignExpr(
-		expr: { kind: "assign"; target: string; value: string },
+		expr: { kind: "assign"; target: string; value: string | import("./types.js").Expr },
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
@@ -1068,7 +1068,7 @@ export class AsyncEvaluator {
 	}
 
 	private async evalWhile(
-		expr: { kind: "while"; cond: string; body: string },
+		expr: { kind: "while"; cond: string | import("./types.js").Expr; body: string | import("./types.js").Expr },
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
@@ -1094,7 +1094,7 @@ export class AsyncEvaluator {
 	}
 
 	private async evalFor(
-		expr: { kind: "for"; var: string; init: string; cond: string; update: string; body: string },
+		expr: { kind: "for"; var: string; init: string | import("./types.js").Expr; cond: string | import("./types.js").Expr; update: string | import("./types.js").Expr; body: string | import("./types.js").Expr },
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
@@ -1119,7 +1119,7 @@ export class AsyncEvaluator {
 	}
 
 	private async evalIter(
-		expr: { kind: "iter"; var: string; iter: string; body: string },
+		expr: { kind: "iter"; var: string; iter: string | import("./types.js").Expr; body: string | import("./types.js").Expr },
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
@@ -1138,13 +1138,13 @@ export class AsyncEvaluator {
 	}
 
 	private async evalEffect(
-		expr: { kind: "effect"; op: string; args: string[] },
+		expr: { kind: "effect"; op: string; args: (string | import("./types.js").Expr)[] },
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
 		const argValues: Value[] = [];
-		for (const argId of expr.args) {
-			argValues.push(await this.resolveNodeRef(argId, env, context));
+		for (const arg of expr.args) {
+			argValues.push(await this.resolveNodeRef(arg, env, context));
 		}
 
 		const effect = lookupEffect(this._effectRegistry, expr.op);
@@ -1205,41 +1205,39 @@ export class AsyncEvaluator {
 	 * Otherwise return tryBody result
 	 */
 	private async evalTryExpr(
-		expr: { kind: "try"; tryBody: string; catchParam: string; catchBody: string; fallback?: string },
+		expr: { kind: "try"; tryBody: string | import("./types.js").Expr; catchParam: string; catchBody: string | import("./types.js").Expr; fallback?: string | import("./types.js").Expr },
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
-		const e = expr as { kind: "try"; tryBody: string; catchParam: string; catchBody: string; fallback?: string };
+		// Evaluate tryBody
+		let tryValue: Value | undefined;
+		if (typeof expr.tryBody === "string") {
+			// Node ID reference - check cache first
+			tryValue = context.nodeValues.get(expr.tryBody);
 
-		// Check if tryBody was already evaluated and has a value in nodeValues
-		let tryValue = context.nodeValues.get(e.tryBody);
+			// If not in nodeValues, evaluate it now
+			if (tryValue === undefined) {
+				const tryBodyNode = context.nodeMap.get(expr.tryBody);
+				if (!tryBodyNode) {
+					return errorVal(ErrorCodes.ValidationError, "Try body node not found: " + expr.tryBody);
+				}
 
-		// If not in nodeValues, evaluate it now
-		if (tryValue === undefined) {
-			const tryBodyNode = context.nodeMap.get(e.tryBody);
-			if (!tryBodyNode) {
-				return errorVal(ErrorCodes.ValidationError, "Try body node not found: " + e.tryBody);
+				// Evaluate the tryBody node
+				const tryResult = await this.evalNode(tryBodyNode, context.nodeMap, context.nodeValues, context);
+				tryValue = tryResult.value;
+
+				// Cache the result
+				context.nodeValues.set(expr.tryBody, tryValue);
 			}
-
-			// Evaluate the tryBody node
-			const tryResult = await this.evalNode(tryBodyNode, context.nodeMap, context.nodeValues, context);
-			tryValue = tryResult.value;
-
-			// Cache the result
-			context.nodeValues.set(e.tryBody, tryValue);
+		} else {
+			// Inline expression - evaluate directly
+			tryValue = await this.evalExpr(expr.tryBody, env, context);
 		}
 
 		// Check if error occurred
 		if (isError(tryValue)) {
 			// ERROR PATH - bind error to catchParam and evaluate catchBody
-			const catchEnv = extendValueEnv(env, e.catchParam, tryValue);
-
-			const catchBodyNode = context.nodeMap.get(e.catchBody);
-			if (!catchBodyNode) {
-				return errorVal(ErrorCodes.ValidationError, "Catch body node not found: " + e.catchBody);
-			}
-
-			// Create a modified context with the catch environment
+			const catchEnv = extendValueEnv(env, expr.catchParam, tryValue);
 			const catchContext: AsyncEvalContext = {
 				...context,
 				state: {
@@ -1248,20 +1246,37 @@ export class AsyncEvaluator {
 				},
 			};
 
-			const catchResult = await this.evalNode(catchBodyNode, catchContext.nodeMap, catchContext.nodeValues, catchContext);
-			return catchResult.value;
+			if (typeof expr.catchBody === "string") {
+				// Node ID reference
+				const catchBodyNode = context.nodeMap.get(expr.catchBody);
+				if (!catchBodyNode) {
+					return errorVal(ErrorCodes.ValidationError, "Catch body node not found: " + expr.catchBody);
+				}
+
+				const catchResult = await this.evalNode(catchBodyNode, catchContext.nodeMap, catchContext.nodeValues, catchContext);
+				return catchResult.value;
+			} else {
+				// Inline expression
+				return await this.evalExpr(expr.catchBody, catchEnv, catchContext);
+			}
 		}
 
 		// SUCCESS PATH
-		if (e.fallback) {
+		if (expr.fallback) {
 			// Has fallback - evaluate it
-			const fallbackNode = context.nodeMap.get(e.fallback);
-			if (!fallbackNode) {
-				return errorVal(ErrorCodes.ValidationError, "Fallback node not found: " + e.fallback);
-			}
+			if (typeof expr.fallback === "string") {
+				// Node ID reference
+				const fallbackNode = context.nodeMap.get(expr.fallback);
+				if (!fallbackNode) {
+					return errorVal(ErrorCodes.ValidationError, "Fallback node not found: " + expr.fallback);
+				}
 
-			const fallbackResult = await this.evalNode(fallbackNode, context.nodeMap, context.nodeValues, context);
-			return fallbackResult.value;
+				const fallbackResult = await this.evalNode(fallbackNode, context.nodeMap, context.nodeValues, context);
+				return fallbackResult.value;
+			} else {
+				// Inline expression
+				return await this.evalExpr(expr.fallback, env, context);
+			}
 		}
 
 		// No fallback - return tryBody result directly
@@ -1568,14 +1583,22 @@ export class AsyncEvaluator {
 
 	/**
 	 * Resolve a node reference to its value
-	 * In PIR, expressions reference other nodes by ID
+	 * In PIR, expressions reference other nodes by ID or use inline expressions
 	 * This method looks up the node and evaluates it if needed
 	 */
 	private async resolveNodeRef(
-		nodeId: string,
+		ref: string | import("./types.js").Expr,
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
+		// Handle inline expressions directly
+		if (typeof ref !== "string") {
+			return await this.evalExpr(ref, env, context);
+		}
+
+		// Node ID reference - look up the node
+		const nodeId = ref;
+
 		// Check if already in environment
 		const envValue = lookupValue(env, nodeId);
 		if (envValue) {
