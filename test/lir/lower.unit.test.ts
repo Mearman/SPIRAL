@@ -4,12 +4,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import { lowerEIRtoLIR } from "../dist/lir/lower.js";
+import { lowerEIRtoLIR } from "../../src/lir/lower.js";
 import type {
 	EIRDocument,
 	LIRDocument,
 	LirBlock,
-} from "../dist/types.js";
+} from "../../src/types.js";
 
 //==============================================================================
 // Test Fixtures

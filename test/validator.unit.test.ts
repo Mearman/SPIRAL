@@ -10,14 +10,14 @@ import {
 	validateEIR,
 	validateLIR,
 	validatePIR,
-} from "../dist/validator.js";
+} from "../src/validator.js";
 import type {
 	AIRDocument,
 	CIRDocument,
 	EIRDocument,
 	LIRDocument,
 	PIRDocument,
-} from "../dist/types.js";
+} from "../src/types.js";
 
 //==============================================================================
 // Test Fixtures - Valid Documents

@@ -12,7 +12,7 @@ import {
 	readInputsFile,
 	parseArgs,
 	type Options,
-} from "../dist/cli-utils.js";
+} from "../src/cli-utils.js";
 
 //==============================================================================
 // Test Fixtures

@@ -10,8 +10,8 @@ import {
 	collectFreeVars,
 	alphaRename,
 	substituteEnv,
-} from "../../dist/cir/substitution.js";
-import type { Expr, Value } from "../../dist/types.js";
+} from "../../src/cir/substitution.js";
+import type { Expr, Value } from "../../src/types.js";
 
 //==============================================================================
 // Test Fixtures

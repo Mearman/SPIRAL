@@ -8,13 +8,13 @@ import {
 	TypeChecker,
 	typeCheckProgram,
 	typeCheckEIRProgram,
-} from "../dist/typechecker.js";
+} from "../src/typechecker.js";
 import {
 	emptyTypeEnv,
 	extendTypeEnv,
 	emptyDefs,
 	registerDef,
-} from "../dist/env.js";
+} from "../src/env.js";
 import {
 	intType,
 	boolType,
@@ -24,13 +24,13 @@ import {
 	listType,
 	refType,
 	typeEqual,
-} from "../dist/types.js";
+} from "../src/types.js";
 import {
 	defineOperator,
 	emptyRegistry,
 	type OperatorRegistry,
-} from "../dist/domains/registry.js";
-import type { AIRDocument, EIRDocument, Type, Expr } from "../dist/types.js";
+} from "../src/domains/registry.js";
+import type { AIRDocument, EIRDocument, Type, Expr } from "../src/types.js";
 
 //==============================================================================
 // Test Helpers
