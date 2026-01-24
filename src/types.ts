@@ -305,21 +305,21 @@ export interface PirSpawnExpr {
 export interface PirAwaitExpr {
 	kind: "await";
 	future: string;
-	timeout?: string;      // Timeout in milliseconds (node reference)
-	fallback?: string;     // Fallback value on timeout (node reference)
+	timeout?: string | Expr;      // Timeout in milliseconds (node reference or inline expression)
+	fallback?: string | Expr;     // Fallback value on timeout (node reference or inline expression)
 	returnIndex?: boolean; // Return success(0)/timeout(1) index instead of value
 }
 
 export interface PirChannelExpr {
 	kind: "channel";
 	channelType: "mpsc" | "spsc" | "mpmc" | "broadcast";
-	bufferSize?: string;
+	bufferSize?: string | Expr;
 }
 
 export interface PirSendExpr {
 	kind: "send";
 	channel: string;
-	value: string;
+	value: string | Expr;
 }
 
 export interface PirRecvExpr {
@@ -330,8 +330,8 @@ export interface PirRecvExpr {
 export interface PirSelectExpr {
 	kind: "select";
 	futures: string[];
-	timeout?: string;      // Timeout in milliseconds (node reference)
-	fallback?: string;     // Fallback value on timeout (node reference)
+	timeout?: string | Expr;      // Timeout in milliseconds (node reference or inline expression)
+	fallback?: string | Expr;     // Fallback value on timeout (node reference or inline expression)
 	returnIndex?: boolean; // Return which future won (index: -1=timeout, 0..n-1=winning future)
 }
 
@@ -381,7 +381,7 @@ export interface CallExpr {
 	kind: "call";
 	ns: string;
 	name: string;
-	args: string[];
+	args: (string | Expr)[];
 }
 
 export interface IfExpr {
@@ -487,42 +487,42 @@ export interface CIRDocument {
 // EIR-specific expression types
 export interface EirSeqExpr {
 	kind: "seq";
-	first: string; // node id reference
-	then: string; // node id reference
+	first: string | Expr; // node id reference or inline expression
+	then: string | Expr; // node id reference or inline expression
 }
 
 export interface EirAssignExpr {
 	kind: "assign";
 	target: string; // mutable target identifier
-	value: string; // node id reference
+	value: string | Expr; // node id reference or inline expression
 }
 
 export interface EirWhileExpr {
 	kind: "while";
-	cond: string;
-	body: string;
+	cond: string | Expr;
+	body: string | Expr;
 }
 
 export interface EirForExpr {
 	kind: "for";
 	var: string;
-	init: string;
-	cond: string;
-	update: string;
-	body: string;
+	init: string | Expr;
+	cond: string | Expr;
+	update: string | Expr;
+	body: string | Expr;
 }
 
 export interface EirIterExpr {
 	kind: "iter";
 	var: string;
-	iter: string;
-	body: string;
+	iter: string | Expr;
+	body: string | Expr;
 }
 
 export interface EirEffectExpr {
 	kind: "effect";
 	op: string;
-	args: string[];
+	args: (string | Expr)[];
 }
 
 export interface EirRefCellExpr {
@@ -537,10 +537,10 @@ export interface EirDerefExpr {
 
 export interface EirTryExpr {
 	kind: "try";
-	tryBody: string; // Node to try
+	tryBody: string | Expr; // Node to try or inline expression
 	catchParam: string; // Error parameter name
-	catchBody: string; // Node on error
-	fallback?: string; // Node on success (optional)
+	catchBody: string | Expr; // Node on error or inline expression
+	fallback?: string | Expr; // Node on success (optional) or inline expression
 }
 
 // EIR expression type - extends CIR expressions
