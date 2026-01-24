@@ -244,24 +244,37 @@ function lowerCirExpr(
 		const processedArgs: string[] = [];
 
 		for (let i = 0; i < expr.args.length; i++) {
-			const argId = expr.args[i];
-			if (argId === undefined) {
+			const arg = expr.args[i];
+			if (arg === undefined) {
 				continue;
 			}
-			const argNode = ctx.nodeMap.get(argId);
 
-			if (argNode && isExprNode(argNode) && argNode.expr.kind === "lit") {
-				// Create a unique variable name for this literal
-				const litVarName = `${nodeId}_arg${i}_lit`;
+			if (typeof arg === "string") {
+				// Node ID reference
+				const argNode = ctx.nodeMap.get(arg);
+
+				if (argNode && isExprNode(argNode) && argNode.expr.kind === "lit") {
+					// Create a unique variable name for this literal
+					const litVarName = `${nodeId}_arg${i}_lit`;
+					instructions.push({
+						kind: "assign",
+						target: litVarName,
+						value: argNode.expr,
+					});
+					processedArgs.push(litVarName);
+				} else {
+					// Use original arg ID (will be looked up in vars)
+					processedArgs.push(arg);
+				}
+			} else {
+				// Inline expression - create an assign instruction for it
+				const argVarName = `${nodeId}_arg${i}_inline`;
 				instructions.push({
 					kind: "assign",
-					target: litVarName,
-					value: argNode.expr,
+					target: argVarName,
+					value: arg,
 				});
-				processedArgs.push(litVarName);
-			} else {
-				// Use original arg ID (will be looked up in vars)
-				processedArgs.push(argId);
+				processedArgs.push(argVarName);
 			}
 		}
 
