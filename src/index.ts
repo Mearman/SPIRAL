@@ -165,6 +165,24 @@ export {
 export type { PIRDocument } from "./types.js";
 
 //==============================================================================
+// Concurrent Execution Detectors
+//==============================================================================
+
+export {
+	RaceDetector,
+	DeadlockDetector,
+	createRaceDetector,
+	createDeadlockDetector,
+	createDetectors,
+	type DetectionOptions,
+	type RaceCondition,
+	type DeadlockCycle,
+	type DetectionResult,
+	DEFAULT_DETECTION_OPTIONS,
+	STRICT_DETECTION_OPTIONS,
+} from "./detectors.js";
+
+//==============================================================================
 // Synthesis
 //==============================================================================
 
