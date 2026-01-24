@@ -2,7 +2,15 @@
 // Effect registry and built-in effects for EIR
 
 import type { Type, Value } from "./types.js";
-import { intType, stringType, voidType, intVal, stringVal, errorVal, ErrorCodes } from "./types.js";
+import {
+	intType,
+	stringType,
+	voidType,
+	intVal,
+	stringVal,
+	errorVal,
+	ErrorCodes,
+} from "./types.js";
 
 //==============================================================================
 // Effect Operation Signature
