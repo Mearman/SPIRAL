@@ -1032,123 +1032,152 @@ function typeCheckEIRNode(
 	if (EIR_EXPRESSION_KINDS.includes(kind as typeof EIR_EXPRESSION_KINDS[number])) {
 		switch (kind) {
 		case "seq": {
-			const e = expr as unknown as { first: string; then: string };
+			const e = expr as unknown as { first: string | import("./types.js").Expr; then: string | import("./types.js").Expr };
 			// T-Seq: Γ ⊢ first : T, Γ ⊢ then : U ⇒ Γ ⊢ seq(first, then) : U
-			if (!nodeMap.has(e.first)) {
-				throw SPIRALError.validation(
-					"seq",
-					"First node not found: " + e.first,
-				);
+
+			let firstType: Type | undefined;
+			if (typeof e.first === "string") {
+				// Node ID reference
+				if (!nodeMap.has(e.first)) {
+					throw SPIRALError.validation(
+						"seq",
+						"First node not found: " + e.first,
+					);
+				}
+				firstType = nodeTypes.get(e.first);
+				if (!firstType) {
+					throw SPIRALError.validation(
+						"seq",
+						"First node not yet type-checked: " + e.first,
+					);
+				}
 			}
-			if (!nodeMap.has(e.then)) {
-				throw SPIRALError.validation(
-					"seq",
-					"Then node not found: " + e.then,
-				);
+			// For inline expressions, we skip type checking here (validated by validator)
+
+			let thenType: Type | undefined;
+			if (typeof e.then === "string") {
+				// Node ID reference
+				if (!nodeMap.has(e.then)) {
+					throw SPIRALError.validation(
+						"seq",
+						"Then node not found: " + e.then,
+					);
+				}
+				thenType = nodeTypes.get(e.then);
+				if (!thenType) {
+					throw SPIRALError.validation(
+						"seq",
+						"Then node not yet type-checked: " + e.then,
+					);
+				}
 			}
 
-			const firstType = nodeTypes.get(e.first);
-			if (!firstType) {
-				throw SPIRALError.validation(
-					"seq",
-					"First node not yet type-checked: " + e.first,
-				);
-			}
-
-			const thenType = nodeTypes.get(e.then);
-			if (!thenType) {
-				throw SPIRALError.validation(
-					"seq",
-					"Then node not yet type-checked: " + e.then,
-				);
-			}
-
-			return { type: thenType, env };
+			// Return the then type (or void if inline expression)
+			return { type: thenType ?? voidType, env };
 		}
 
 		case "assign": {
-			const e = expr as unknown as { target: string; value: string };
+			const e = expr as unknown as { target: string; value: string | import("./types.js").Expr };
 			// T-Assign: Γ ⊢ value : T ⇒ Γ ⊢ assign(target, value) : void
-			if (!nodeMap.has(e.value)) {
-				throw SPIRALError.validation(
-					"assign",
-					"Value node not found: " + e.value,
-				);
+			let valueType: Type | undefined;
+			if (typeof e.value === "string") {
+				// Node ID reference
+				if (!nodeMap.has(e.value)) {
+					throw SPIRALError.validation(
+						"assign",
+						"Value node not found: " + e.value,
+					);
+				}
+				valueType = nodeTypes.get(e.value);
+				if (!valueType) {
+					throw SPIRALError.validation(
+						"assign",
+						"Value node not yet type-checked: " + e.value,
+					);
+				}
 			}
+			// For inline expressions, we skip type checking here
 
-			const valueType = nodeTypes.get(e.value);
-			if (!valueType) {
-				throw SPIRALError.validation(
-					"assign",
-					"Value node not yet type-checked: " + e.value,
-				);
+			// Update mutable types for the target (if we have type info)
+			if (valueType) {
+				mutableTypes.set(e.target, valueType);
 			}
-
-			// Update mutable types for the target
-			mutableTypes.set(e.target, valueType);
 
 			return { type: voidType, env };
 		}
 
 		case "while": {
-			const e = expr as unknown as { cond: string; body: string };
+			const e = expr as unknown as { cond: string | import("./types.js").Expr; body: string | import("./types.js").Expr };
 			// T-While: Γ ⊢ cond : bool, Γ ⊢ body : T ⇒ Γ ⊢ while(cond, body) : void
-			if (!nodeMap.has(e.cond)) {
-				throw SPIRALError.validation(
-					"while",
-					"Condition node not found: " + e.cond,
-				);
+			if (typeof e.cond === "string") {
+				// Node ID reference
+				if (!nodeMap.has(e.cond)) {
+					throw SPIRALError.validation(
+						"while",
+						"Condition node not found: " + e.cond,
+					);
+				}
+				const condType = nodeTypes.get(e.cond);
+				if (condType && condType.kind !== "bool") {
+					throw SPIRALError.typeError(boolType, condType, "while condition");
+				}
 			}
-			if (!nodeMap.has(e.body)) {
-				throw SPIRALError.validation(
-					"while",
-					"Body node not found: " + e.body,
-				);
-			}
-
-			const condType = nodeTypes.get(e.cond);
-			if (condType && condType.kind !== "bool") {
-				throw SPIRALError.typeError(boolType, condType, "while condition");
-			}
+			// For inline expressions, we skip type checking here
 
 			return { type: voidType, env };
 		}
 
 		case "for": {
-			const e = expr as unknown as { var: string; init: string; cond: string; update: string; body: string };
+			const e = expr as unknown as { var: string; init: string | import("./types.js").Expr; cond: string | import("./types.js").Expr; update: string | import("./types.js").Expr; body: string | import("./types.js").Expr };
 			// T-For: (complex typing with var binding)
-			if (!nodeMap.has(e.init)) {
-				throw SPIRALError.validation(
-					"for",
-					"Init node not found: " + e.init,
-				);
-			}
-			if (!nodeMap.has(e.cond)) {
-				throw SPIRALError.validation(
-					"for",
-					"Condition node not found: " + e.cond,
-				);
-			}
-			if (!nodeMap.has(e.update)) {
-				throw SPIRALError.validation(
-					"for",
-					"Update node not found: " + e.update,
-				);
-			}
-			if (!nodeMap.has(e.body)) {
-				throw SPIRALError.validation(
-					"for",
-					"Body node not found: " + e.body,
-				);
+
+			let initType: Type | undefined;
+			if (typeof e.init === "string") {
+				// Node ID reference
+				if (!nodeMap.has(e.init)) {
+					throw SPIRALError.validation(
+						"for",
+						"Init node not found: " + e.init,
+					);
+				}
+				initType = nodeTypes.get(e.init);
 			}
 
-			const condType = nodeTypes.get(e.cond);
-			if (condType && condType.kind !== "bool") {
-				throw SPIRALError.typeError(boolType, condType, "for condition");
+			if (typeof e.cond === "string") {
+				// Node ID reference
+				if (!nodeMap.has(e.cond)) {
+					throw SPIRALError.validation(
+						"for",
+						"Condition node not found: " + e.cond,
+					);
+				}
+				const condType = nodeTypes.get(e.cond);
+				if (condType && condType.kind !== "bool") {
+					throw SPIRALError.typeError(boolType, condType, "for condition");
+				}
 			}
 
-			// Get the loop variable type from init
-			const initType = nodeTypes.get(e.init);
+			if (typeof e.update === "string") {
+				// Node ID reference
+				if (!nodeMap.has(e.update)) {
+					throw SPIRALError.validation(
+						"for",
+						"Update node not found: " + e.update,
+					);
+				}
+			}
+
+			if (typeof e.body === "string") {
+				// Node ID reference
+				if (!nodeMap.has(e.body)) {
+					throw SPIRALError.validation(
+						"for",
+						"Body node not found: " + e.body,
+					);
+				}
+			}
+
+			// Get the loop variable type from init (if we have type info)
 			if (initType) {
 				mutableTypes.set(e.var, initType);
 			}
@@ -1157,31 +1186,39 @@ function typeCheckEIRNode(
 		}
 
 		case "iter": {
-			const e = expr as unknown as { var: string; iter: string; body: string };
+			const e = expr as unknown as { var: string; iter: string | import("./types.js").Expr; body: string | import("./types.js").Expr };
 			// T-Iter: Γ ⊢ iter : list<T>, Γ ⊢ body : R ⇒ Γ ⊢ iter(var, iter, body) : void
-			if (!nodeMap.has(e.iter)) {
-				throw SPIRALError.validation(
-					"iter",
-					"Iter node not found: " + e.iter,
-				);
-			}
-			if (!nodeMap.has(e.body)) {
-				throw SPIRALError.validation(
-					"iter",
-					"Body node not found: " + e.body,
-				);
+
+			let iterType: Type | undefined;
+			if (typeof e.iter === "string") {
+				// Node ID reference
+				if (!nodeMap.has(e.iter)) {
+					throw SPIRALError.validation(
+						"iter",
+						"Iter node not found: " + e.iter,
+					);
+				}
+				iterType = nodeTypes.get(e.iter);
+				if (iterType && iterType.kind !== "list") {
+					throw SPIRALError.typeError(
+						listType(intType),
+						iterType,
+						"iter iterable",
+					);
+				}
 			}
 
-			const iterType = nodeTypes.get(e.iter);
-			if (iterType && iterType.kind !== "list") {
-				throw SPIRALError.typeError(
-					listType(intType),
-					iterType,
-					"iter iterable",
-				);
+			if (typeof e.body === "string") {
+				// Node ID reference
+				if (!nodeMap.has(e.body)) {
+					throw SPIRALError.validation(
+						"iter",
+						"Body node not found: " + e.body,
+					);
+				}
 			}
 
-			// Set the loop variable type
+			// Set the loop variable type (if we have type info)
 			if (iterType?.kind === "list") {
 				mutableTypes.set(e.var, iterType.of);
 			}
@@ -1190,7 +1227,7 @@ function typeCheckEIRNode(
 		}
 
 		case "effect": {
-			const e = expr as unknown as { op: string; args: string[] };
+			const e = expr as unknown as { op: string; args: (string | import("./types.js").Expr)[] };
 			// T-Effect: Look up effect signature, check args
 			const effect = effects.get(e.op);
 			if (!effect) {
@@ -1209,29 +1246,33 @@ function typeCheckEIRNode(
 				);
 			}
 
-			// Check argument types
+			// Check argument types (only for node ID references)
 			for (let i = 0; i < e.args.length; i++) {
-				const argId = e.args[i];
-				if (argId === undefined) {
+				const arg = e.args[i];
+				if (arg === undefined) {
 					throw SPIRALError.validation(
 						"effect",
 						"Missing argument id at index " + String(i),
 					);
 				}
-				const argType = nodeTypes.get(argId);
-				const expectedParamType = effect.params[i];
-				if (expectedParamType === undefined) {
-					throw SPIRALError.validation(
-						"effect",
-						"Missing parameter type at index " + String(i),
-					);
-				}
-				if (argType && !typeEqual(argType, expectedParamType)) {
-					throw SPIRALError.typeError(
-						expectedParamType,
-						argType,
-						"effect argument " + String(i),
-					);
+
+				// Only type-check node ID references, skip inline expressions
+				if (typeof arg === "string") {
+					const argType = nodeTypes.get(arg);
+					const expectedParamType = effect.params[i];
+					if (expectedParamType === undefined) {
+						throw SPIRALError.validation(
+							"effect",
+							"Missing parameter type at index " + String(i),
+						);
+					}
+					if (argType && !typeEqual(argType, expectedParamType)) {
+						throw SPIRALError.typeError(
+							expectedParamType,
+							argType,
+							"effect argument " + String(i),
+						);
+					}
 				}
 			}
 
