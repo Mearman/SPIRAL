@@ -248,7 +248,8 @@ export class AsyncChannelImpl implements AsyncChannel {
 		// If buffer has value, return immediately
 		if (this.buffer.length > 0) {
 			const value = this.buffer.shift();
-			if (!value) {
+			// Check if shift returned undefined (not false, 0, or "")
+			if (value === undefined) {
 				throw new Error("Buffer unexpectedly empty");
 			}
 
@@ -294,7 +295,8 @@ export class AsyncChannelImpl implements AsyncChannel {
 		// If buffer has value, return immediately
 		if (this.buffer.length > 0) {
 			const value = this.buffer.shift();
-			if (!value) {
+			// Check if shift returned undefined (not false, 0, or "")
+			if (value === undefined) {
 				throw new Error("Buffer unexpectedly empty");
 			}
 
