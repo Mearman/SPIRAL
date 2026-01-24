@@ -5,13 +5,8 @@ import { describe, it, before } from "node:test";
 import assert from "node:assert/strict";
 
 import {
-	AsyncEvaluator,
 	createAsyncEvaluator,
 } from "../src/async-evaluator.js";
-import {
-	createTaskScheduler,
-	type TaskScheduler,
-} from "../src/scheduler.js";
 import {
 	emptyRegistry,
 	defineOperator,
@@ -27,13 +22,12 @@ import {
 import type {
 	PIRDocument,
 	PirHybridNode,
+	PirExpr,
 	Value,
 } from "../src/types.js";
 import {
 	intVal,
 	voidVal,
-	errorVal,
-	isError,
 } from "../src/types.js";
 
 //==============================================================================
@@ -69,7 +63,7 @@ before(() => {
 		params: [{ kind: "int" }],
 		returns: { kind: "void" },
 		pure: false,
-		fn: (...args: Value[]) => {
+		fn: () => {
 			return voidVal();
 		},
 	});
@@ -77,11 +71,11 @@ before(() => {
 
 function createExprNode(
 	id: string,
-	expr: Value,
+	expr: PirExpr,
 ): PirHybridNode {
 	return {
 		id,
-		expr: expr as unknown as Parameters<typeof createExprNode>[1],
+		expr,
 	};
 }
 
@@ -91,6 +85,7 @@ function createDocument(
 ): PIRDocument {
 	return {
 		version: "1.0.0",
+		airDefs: [],
 		nodes,
 		result,
 	};
@@ -102,7 +97,7 @@ function createDocument(
 
 describe("PIR Async Evaluator - Simple Tests", () => {
 	it("should evaluate simple literal", async () => {
-		const evaluator = createAsyncEvaluator(registry, defs, effects);
+		const evaluator = createAsyncEvaluator(registry, defs(), effects);
 
 		const doc = createDocument(
 			[
@@ -121,7 +116,7 @@ describe("PIR Async Evaluator - Simple Tests", () => {
 	});
 
 	it("should evaluate simple parallel expression with 2 branches", async () => {
-		const evaluator = createAsyncEvaluator(registry, defs, effects);
+		const evaluator = createAsyncEvaluator(registry, defs(), effects);
 
 		const doc = createDocument(
 			[
@@ -158,7 +153,7 @@ describe("PIR Async Evaluator - Simple Tests", () => {
 	});
 
 	it("should spawn and await task successfully", async () => {
-		const evaluator = createAsyncEvaluator(registry, defs, effects);
+		const evaluator = createAsyncEvaluator(registry, defs(), effects);
 
 		const doc = createDocument(
 			[

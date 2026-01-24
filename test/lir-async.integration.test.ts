@@ -17,15 +17,12 @@ import {
 } from "../src/lir/async-evaluator.js";
 import {
 	intVal,
-	boolVal,
 	voidVal,
-	stringVal,
 	errorVal,
 	futureVal,
 	channelVal,
 	isError,
 	isFuture,
-	isChannel,
 	type Value,
 	type LIRDocument,
 	type LirBlock,
@@ -45,7 +42,6 @@ import {
 } from "../src/domains/registry.js";
 import {
 	emptyEffectRegistry,
-	registerEffect,
 	type EffectRegistry,
 } from "../src/effects.js";
 import {
@@ -1173,7 +1169,6 @@ describe("LIR Async CFG Execution", () => {
 			const state = createMockState();
 
 			const channelId = state.channels.create(5); // Buffered channel
-			const channel = channelVal(channelId, "mpsc");
 
 			// Producer
 			state.scheduler.spawn("producer", async () => {
