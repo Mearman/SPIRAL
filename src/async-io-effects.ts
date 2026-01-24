@@ -375,200 +375,200 @@ export function evalAsyncEffect(
 	const httpClient = config.httpClient ?? new MockHttpClient();
 
 	switch (effectName) {
-		case "asyncRead": {
-			if (args.length < 1) {
-				return errorVal(ErrorCodes.ArityError, "asyncRead requires 1 argument (filename)");
-			}
-			const filename = args[0]!;
-			if (filename.kind !== "string") {
-				return errorVal(ErrorCodes.TypeError, "asyncRead filename must be a string");
-			}
-
-			const taskId = `asyncRead_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-			state.scheduler.spawn(taskId, async () => {
-				try {
-					const content = await fileSystem.readFile(filename.value);
-					return stringVal(content);
-				} catch (e) {
-					return errorVal(ErrorCodes.DomainError, String(e));
-				}
-			});
-
-			return futureVal(taskId, "pending");
+	case "asyncRead": {
+		if (args.length < 1) {
+			return errorVal(ErrorCodes.ArityError, "asyncRead requires 1 argument (filename)");
+		}
+		const filename = args[0];
+		if (filename?.kind !== "string") {
+			return errorVal(ErrorCodes.TypeError, "asyncRead filename must be a string");
 		}
 
-		case "asyncWrite": {
-			if (args.length < 2) {
-				return errorVal(ErrorCodes.ArityError, "asyncWrite requires 2 arguments (filename, content)");
-			}
-			const filename = args[0]!;
-			const content = args[1]!;
-			if (filename.kind !== "string") {
-				return errorVal(ErrorCodes.TypeError, "asyncWrite filename must be a string");
-			}
-			if (content.kind !== "string") {
-				return errorVal(ErrorCodes.TypeError, "asyncWrite content must be a string");
-			}
+		const taskId = `asyncRead_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
-			const taskId = `asyncWrite_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+		state.scheduler.spawn(taskId, async () => {
+			try {
+				const content = await fileSystem.readFile(filename.value);
+				return stringVal(content);
+			} catch (e) {
+				return errorVal(ErrorCodes.DomainError, String(e));
+			}
+		});
 
-			state.scheduler.spawn(taskId, async () => {
-				try {
-					await fileSystem.writeFile(filename.value, content.value);
-					return voidVal();
-				} catch (e) {
-					return errorVal(ErrorCodes.DomainError, String(e));
-				}
-			});
+		return futureVal(taskId, "pending");
+	}
 
-			return futureVal(taskId, "pending");
+	case "asyncWrite": {
+		if (args.length < 2) {
+			return errorVal(ErrorCodes.ArityError, "asyncWrite requires 2 arguments (filename, content)");
+		}
+		const filename = args[0];
+		const content = args[1];
+		if (filename?.kind !== "string") {
+			return errorVal(ErrorCodes.TypeError, "asyncWrite filename must be a string");
+		}
+		if (content?.kind !== "string") {
+			return errorVal(ErrorCodes.TypeError, "asyncWrite content must be a string");
 		}
 
-		case "asyncAppend": {
-			if (args.length < 2) {
-				return errorVal(ErrorCodes.ArityError, "asyncAppend requires 2 arguments (filename, content)");
-			}
-			const filename = args[0]!;
-			const content = args[1]!;
-			if (filename.kind !== "string") {
-				return errorVal(ErrorCodes.TypeError, "asyncAppend filename must be a string");
-			}
-			if (content.kind !== "string") {
-				return errorVal(ErrorCodes.TypeError, "asyncAppend content must be a string");
-			}
+		const taskId = `asyncWrite_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
-			const taskId = `asyncAppend_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-			state.scheduler.spawn(taskId, async () => {
-				try {
-					await fileSystem.appendFile(filename.value, content.value);
-					return voidVal();
-				} catch (e) {
-					return errorVal(ErrorCodes.DomainError, String(e));
-				}
-			});
-
-			return futureVal(taskId, "pending");
-		}
-
-		case "asyncDelete": {
-			if (args.length < 1) {
-				return errorVal(ErrorCodes.ArityError, "asyncDelete requires 1 argument (filename)");
-			}
-			const filename = args[0]!;
-			if (filename.kind !== "string") {
-				return errorVal(ErrorCodes.TypeError, "asyncDelete filename must be a string");
-			}
-
-			const taskId = `asyncDelete_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-			state.scheduler.spawn(taskId, async () => {
-				try {
-					await fileSystem.deleteFile(filename.value);
-					return voidVal();
-				} catch (e) {
-					return errorVal(ErrorCodes.DomainError, String(e));
-				}
-			});
-
-			return futureVal(taskId, "pending");
-		}
-
-		case "asyncExists": {
-			if (args.length < 1) {
-				return errorVal(ErrorCodes.ArityError, "asyncExists requires 1 argument (filename)");
-			}
-			const filename = args[0]!;
-			if (filename.kind !== "string") {
-				return errorVal(ErrorCodes.TypeError, "asyncExists filename must be a string");
-			}
-
-			const taskId = `asyncExists_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-			state.scheduler.spawn(taskId, async () => {
-				try {
-					const exists = await fileSystem.exists(filename.value);
-					return intVal(exists ? 1 : 0);
-				} catch (e) {
-					return errorVal(ErrorCodes.DomainError, String(e));
-				}
-			});
-
-			return futureVal(taskId, "pending");
-		}
-
-		case "sleep": {
-			if (args.length < 1) {
-				return errorVal(ErrorCodes.ArityError, "sleep requires 1 argument (milliseconds)");
-			}
-			const ms = args[0]!;
-			if (ms.kind !== "int") {
-				return errorVal(ErrorCodes.TypeError, "sleep milliseconds must be an integer");
-			}
-
-			const taskId = `sleep_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-			state.scheduler.spawn(taskId, async () => {
-				await new Promise<void>((resolve) => setTimeout(resolve, ms.value));
+		state.scheduler.spawn(taskId, async () => {
+			try {
+				await fileSystem.writeFile(filename.value, content.value);
 				return voidVal();
-			});
+			} catch (e) {
+				return errorVal(ErrorCodes.DomainError, String(e));
+			}
+		});
 
-			return futureVal(taskId, "pending");
+		return futureVal(taskId, "pending");
+	}
+
+	case "asyncAppend": {
+		if (args.length < 2) {
+			return errorVal(ErrorCodes.ArityError, "asyncAppend requires 2 arguments (filename, content)");
+		}
+		const filename = args[0];
+		const content = args[1];
+		if (filename?.kind !== "string") {
+			return errorVal(ErrorCodes.TypeError, "asyncAppend filename must be a string");
+		}
+		if (content?.kind !== "string") {
+			return errorVal(ErrorCodes.TypeError, "asyncAppend content must be a string");
 		}
 
-		case "httpGet": {
-			if (args.length < 1) {
-				return errorVal(ErrorCodes.ArityError, "httpGet requires 1 argument (url)");
+		const taskId = `asyncAppend_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+		state.scheduler.spawn(taskId, async () => {
+			try {
+				await fileSystem.appendFile(filename.value, content.value);
+				return voidVal();
+			} catch (e) {
+				return errorVal(ErrorCodes.DomainError, String(e));
 			}
-			const url = args[0]!;
-			if (url.kind !== "string") {
-				return errorVal(ErrorCodes.TypeError, "httpGet url must be a string");
-			}
+		});
 
-			const taskId = `httpGet_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+		return futureVal(taskId, "pending");
+	}
 
-			state.scheduler.spawn(taskId, async () => {
-				try {
-					const body = await httpClient.get(url.value);
-					return stringVal(body);
-				} catch (e) {
-					return errorVal(ErrorCodes.DomainError, String(e));
-				}
-			});
-
-			return futureVal(taskId, "pending");
+	case "asyncDelete": {
+		if (args.length < 1) {
+			return errorVal(ErrorCodes.ArityError, "asyncDelete requires 1 argument (filename)");
+		}
+		const filename = args[0];
+		if (filename?.kind !== "string") {
+			return errorVal(ErrorCodes.TypeError, "asyncDelete filename must be a string");
 		}
 
-		case "httpPost": {
-			if (args.length < 2) {
-				return errorVal(ErrorCodes.ArityError, "httpPost requires 2 arguments (url, body)");
-			}
-			const url = args[0]!;
-			const body = args[1]!;
-			if (url.kind !== "string") {
-				return errorVal(ErrorCodes.TypeError, "httpPost url must be a string");
-			}
-			if (body.kind !== "string") {
-				return errorVal(ErrorCodes.TypeError, "httpPost body must be a string");
-			}
+		const taskId = `asyncDelete_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
-			const taskId = `httpPost_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+		state.scheduler.spawn(taskId, async () => {
+			try {
+				await fileSystem.deleteFile(filename.value);
+				return voidVal();
+			} catch (e) {
+				return errorVal(ErrorCodes.DomainError, String(e));
+			}
+		});
 
-			state.scheduler.spawn(taskId, async () => {
-				try {
-					const responseBody = await httpClient.post(url.value, body.value);
-					return stringVal(responseBody);
-				} catch (e) {
-					return errorVal(ErrorCodes.DomainError, String(e));
-				}
-			});
+		return futureVal(taskId, "pending");
+	}
 
-			return futureVal(taskId, "pending");
+	case "asyncExists": {
+		if (args.length < 1) {
+			return errorVal(ErrorCodes.ArityError, "asyncExists requires 1 argument (filename)");
+		}
+		const filename = args[0];
+		if (filename?.kind !== "string") {
+			return errorVal(ErrorCodes.TypeError, "asyncExists filename must be a string");
 		}
 
-		default:
-			return errorVal(ErrorCodes.UnknownOperator, `Unknown async effect: ${effectName}`);
+		const taskId = `asyncExists_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+		state.scheduler.spawn(taskId, async () => {
+			try {
+				const exists = await fileSystem.exists(filename.value);
+				return intVal(exists ? 1 : 0);
+			} catch (e) {
+				return errorVal(ErrorCodes.DomainError, String(e));
+			}
+		});
+
+		return futureVal(taskId, "pending");
+	}
+
+	case "sleep": {
+		if (args.length < 1) {
+			return errorVal(ErrorCodes.ArityError, "sleep requires 1 argument (milliseconds)");
+		}
+		const ms = args[0];
+		if (ms?.kind !== "int") {
+			return errorVal(ErrorCodes.TypeError, "sleep milliseconds must be an integer");
+		}
+
+		const taskId = `sleep_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+		state.scheduler.spawn(taskId, async () => {
+			await new Promise<void>((resolve) => setTimeout(resolve, ms.value));
+			return voidVal();
+		});
+
+		return futureVal(taskId, "pending");
+	}
+
+	case "httpGet": {
+		if (args.length < 1) {
+			return errorVal(ErrorCodes.ArityError, "httpGet requires 1 argument (url)");
+		}
+		const url = args[0];
+		if (url?.kind !== "string") {
+			return errorVal(ErrorCodes.TypeError, "httpGet url must be a string");
+		}
+
+		const taskId = `httpGet_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+		state.scheduler.spawn(taskId, async () => {
+			try {
+				const body = await httpClient.get(url.value);
+				return stringVal(body);
+			} catch (e) {
+				return errorVal(ErrorCodes.DomainError, String(e));
+			}
+		});
+
+		return futureVal(taskId, "pending");
+	}
+
+	case "httpPost": {
+		if (args.length < 2) {
+			return errorVal(ErrorCodes.ArityError, "httpPost requires 2 arguments (url, body)");
+		}
+		const url = args[0];
+		const body = args[1];
+		if (url?.kind !== "string") {
+			return errorVal(ErrorCodes.TypeError, "httpPost url must be a string");
+		}
+		if (body?.kind !== "string") {
+			return errorVal(ErrorCodes.TypeError, "httpPost body must be a string");
+		}
+
+		const taskId = `httpPost_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+		state.scheduler.spawn(taskId, async () => {
+			try {
+				const responseBody = await httpClient.post(url.value, body.value);
+				return stringVal(responseBody);
+			} catch (e) {
+				return errorVal(ErrorCodes.DomainError, String(e));
+			}
+		});
+
+		return futureVal(taskId, "pending");
+	}
+
+	default:
+		return errorVal(ErrorCodes.UnknownOperator, `Unknown async effect: ${effectName}`);
 	}
 }
 

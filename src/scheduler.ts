@@ -499,7 +499,7 @@ export class DeterministicScheduler implements TaskScheduler {
 
 export class AsyncBarrier {
 	private count: number;
-	private waiting: Array<() => void> = [];
+	private waiting: (() => void)[] = [];
 	private releaseInProgress = false;
 
 	constructor(count: number) {
