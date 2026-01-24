@@ -9,7 +9,7 @@ import {
 	type AsyncEvalState,
 } from "../src/async-io-effects.js";
 import { createTaskScheduler } from "../src/scheduler.js";
-import { stringVal, intVal, voidVal, type Value } from "../src/types.js";
+import { stringVal, intVal } from "../src/types.js";
 
 describe("async-io-effects", () => {
 	it("should create an in-memory file system", () => {
