@@ -101,8 +101,8 @@ export interface DeadlockCycle {
  * 3. No happens-before ordering exists between the accesses
  */
 export class RaceDetector {
-	private accesses: Map<string, MemoryAccess[]> = new Map();
-	private syncPoints: Map<string, Set<string>> = new Map();
+	private accesses = new Map<string, MemoryAccess[]>();
+	private syncPoints = new Map<string, Set<string>>();
 	private readonly _options: DetectionOptions;
 	private accessCounter = 0;
 
@@ -311,7 +311,7 @@ export class RaceDetector {
 	): string {
 		return `Potential data race at location "${location}": ` +
 			`task "${task1}" performs ${type1} and task "${task2}" performs ${type2} ` +
-			`without happens-before ordering. This could lead to undefined behavior.`;
+			"without happens-before ordering. This could lead to undefined behavior.";
 	}
 
 	/**
@@ -330,7 +330,7 @@ export class RaceDetector {
 		totalAccesses: number;
 		locations: number;
 		syncPoints: number;
-	} {
+		} {
 		let totalAccesses = 0;
 		for (const accesses of this.accesses.values()) {
 			totalAccesses += accesses.length;
@@ -358,8 +358,8 @@ export class RaceDetector {
  * 3. The cycle has no external resolver
  */
 export class DeadlockDetector {
-	private lockHolders: Map<string, string> = new Map(); // lockId -> taskId
-	private waitGraph: Map<string, Set<string>> = new Map(); // taskId -> Set of lockIds waiting for
+	private lockHolders = new Map<string, string>(); // lockId -> taskId
+	private waitGraph = new Map<string, Set<string>>(); // taskId -> Set of lockIds waiting for
 	private acquisitionHistory: LockAcquisition[] = [];
 	private readonly _options: DetectionOptions;
 	private readonly _defaultTimeout: number;
@@ -422,7 +422,7 @@ export class DeadlockDetector {
 		// Update the most recent acquisition for this task/lock
 		for (let i = this.acquisitionHistory.length - 1; i >= 0; i--) {
 			const acquisition = this.acquisitionHistory[i];
-			if (acquisition && acquisition.taskId === taskId && acquisition.lockId === lockId && !acquisition.acquired) {
+			if (acquisition?.taskId === taskId && acquisition.lockId === lockId && !acquisition.acquired) {
 				acquisition.acquired = true;
 				break;
 			}
@@ -588,7 +588,8 @@ export class DeadlockDetector {
 
 		// Remove locks this task was waiting for
 		if (waitingLocks) {
-			for (const _ of waitingLocks) {
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			for (const __ of waitingLocks) {
 				lockPath.pop();
 			}
 		}
@@ -601,8 +602,8 @@ export class DeadlockDetector {
 		const locks: string[] = [];
 
 		for (let i = 0; i < cycle.length; i++) {
-			const currentTask = cycle[i]!;
-			const nextTask = cycle[(i + 1) % cycle.length]!;
+			const currentTask = cycle[i] ?? "";
+			const nextTask = cycle[(i + 1) % cycle.length] ?? "";
 
 			// Find the lock that currentTask is waiting for that nextTask holds
 			const waitingLocks = this.waitGraph.get(currentTask);
@@ -628,7 +629,7 @@ export class DeadlockDetector {
 
 		for (let i = 0; i < cycle.length; i++) {
 			const task = cycle[i];
-			const lock = locks[i] || "?";
+			const lock = locks[i] ?? "?";
 			const nextTask = cycle[(i + 1) % cycle.length];
 
 			description += `task "${task}" is waiting for lock "${lock}" held by task "${nextTask}"`;
@@ -687,7 +688,7 @@ export class DeadlockDetector {
 		heldLocks: number;
 		waitingTasks: number;
 		totalAcquisitions: number;
-	} {
+		} {
 		let waitingTasks = 0;
 		for (const waiters of this.waitGraph.values()) {
 			waitingTasks += waiters.size;
