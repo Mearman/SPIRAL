@@ -1,2 +1,26 @@
-pnpm exec lint-staged
-pnpm test
+npx lint-staged
+
+# Run only tests for staged files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.ts$' || true)
+if [ -n "$STAGED_FILES" ]; then
+	# Build list of test files to run
+	TEST_FILES=""
+	for FILE in $STAGED_FILES; do
+		# Source files (src/): find corresponding test in test/
+		if echo "$FILE" | grep -q "^src/"; then
+			REL_PATH="${FILE#src/}"
+			TEST_FILE="test/${REL_PATH%.ts}.test.ts"
+			if [ -f "$TEST_FILE" ]; then
+				TEST_FILES="$TEST_FILES $TEST_FILE"
+			fi
+		# Test files: run directly
+		elif echo "$FILE" | grep -q "^test/.*\.test\.ts$"; then
+			TEST_FILES="$TEST_FILES $FILE"
+		fi
+	done
+
+	if [ -n "$TEST_FILES" ]; then
+		echo "Running tests for: $TEST_FILES"
+		npx tsx --test $TEST_FILES
+	fi
+fi

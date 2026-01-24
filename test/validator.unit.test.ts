@@ -695,31 +695,6 @@ const validRecursiveWithLambda = {
 };
 
 //==============================================================================
-// Helper Functions
-//==============================================================================
-
-function assertValidationError(
-	result: { valid: boolean; errors: Array<{ path: string; message: string }> },
-	expectedPathPattern: string,
-	expectedMessagePattern: string,
-): void {
-	assert.ok(!result.valid, "Expected validation to fail");
-	assert.ok(
-		result.errors.length > 0,
-		"Expected at least one validation error",
-	);
-	const error = result.errors.find(
-		(e) =>
-			e.path.includes(expectedPathPattern) ||
-			e.message.includes(expectedMessagePattern),
-	);
-	assert.ok(
-		error,
-		`Expected error matching path "${expectedPathPattern}" or message "${expectedMessagePattern}", got: ${JSON.stringify(result.errors)}`,
-	);
-}
-
-//==============================================================================
 // Test Suite
 //==============================================================================
 

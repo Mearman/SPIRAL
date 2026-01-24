@@ -10,8 +10,6 @@ import {
 	createRaceDetector,
 	createDeadlockDetector,
 	createDetectors,
-	type RaceCondition,
-	type DeadlockCycle,
 } from "../src/detectors.js";
 import { intVal } from "../src/types.js";
 

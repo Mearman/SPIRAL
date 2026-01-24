@@ -459,17 +459,6 @@ const eirEmptyNodes: EIRDocument = {
 //==============================================================================
 
 /**
- * Get the main block node from an LIR document.
- */
-function getMainBlock(lir: LIRDocument): LirBlock | undefined {
-	const mainNode = lir.nodes[0];
-	if (mainNode && "blocks" in mainNode && mainNode.blocks.length > 0) {
-		return mainNode.blocks[0];
-	}
-	return undefined;
-}
-
-/**
  * Get all blocks from an LIR document.
  */
 function getAllBlocks(lir: LIRDocument): LirBlock[] {
@@ -478,14 +467,6 @@ function getAllBlocks(lir: LIRDocument): LirBlock[] {
 		return mainNode.blocks;
 	}
 	return [];
-}
-
-/**
- * Find a block by ID from an LIR document.
- */
-function findBlock(lir: LIRDocument, blockId: string): LirBlock | undefined {
-	const blocks = getAllBlocks(lir);
-	return blocks.find((b) => b.id === blockId);
 }
 
 //==============================================================================
