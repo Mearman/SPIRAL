@@ -22,8 +22,6 @@ import {
 	voidType,
 	fnType as fnTypeCtor,
 	listType,
-	refType,
-	typeEqual,
 } from "../src/types.js";
 import {
 	defineOperator,

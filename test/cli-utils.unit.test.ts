@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPIRAL CLI Utilities - Unit Tests
 
-import { describe, it, mock, before, after } from "node:test";
+import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { writeFile, unlink, mkdir } from "node:fs/promises";
 import { join } from "node:path";

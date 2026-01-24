@@ -9,32 +9,6 @@ import assert from "node:assert/strict";
 import * as spiral from "../src/index.js";
 
 //==============================================================================
-// Test Utilities
-//==============================================================================
-
-/**
- * Helper to check if an export exists and is of expected type
- */
-function assertExport<T>(
-	actual: unknown,
-	expectedType: string,
-	message: string
-): asserts actual is T {
-	if (expectedType === "function") {
-		assert.strictEqual(typeof actual, "function", message);
-	} else if (expectedType === "object") {
-		assert.strictEqual(typeof actual, "object", message);
-		assert.ok(actual !== null, message);
-	} else if (expectedType === "boolean") {
-		assert.strictEqual(typeof actual, "boolean", message);
-	} else if (expectedType === "number") {
-		assert.strictEqual(typeof actual, "number", message);
-	} else if (expectedType === "string") {
-		assert.strictEqual(typeof actual, "string", message);
-	}
-}
-
-//==============================================================================
 // Test Suite
 //==============================================================================
 
