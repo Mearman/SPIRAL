@@ -253,7 +253,7 @@ function validateExpr(
 			// Validate inline expression args
 			if (typeof arg === "object" && arg !== null && "kind" in arg) {
 				pushPath(state, "args");
-				const argValid = validateExpr(state, arg as Record<string, unknown>, false);
+				const argValid = validateExpr(state, arg as Record<string, unknown>, allowCIR);
 				popPath(state);
 				if (!argValid) return false;
 			}
@@ -480,7 +480,7 @@ function validateExpr(
 			// Validate inline expression args
 			if (typeof arg === "object" && arg !== null && "kind" in arg) {
 				pushPath(state, "args");
-				const argValid = validateExpr(state, arg as Record<string, unknown>, false);
+				const argValid = validateExpr(state, arg as Record<string, unknown>, allowCIR);
 				popPath(state);
 				if (!argValid) return false;
 			}
@@ -600,7 +600,7 @@ function checkAcyclic(
 			// This is recursion through a lambda, which is allowed
 			return;
 		}
-		addError(state, "Cyclic reference detected: " + path.join(" -> "));
+		addError(state, "Reference cycle detected: " + path.join(" -> "));
 		return;
 	}
 
@@ -913,17 +913,19 @@ export function validateAIR(doc: unknown): ValidationResult<AIRDocument> {
 		popPath(state);
 	} else {
 		// Check that result references a valid node
-		const nodeIds = new Set(
-			(d.nodes as { id: string }[] | undefined)?.map((n) => n.id) ?? [],
-		);
-		if (!nodeIds.has(String(d.result))) {
-			pushPath(state, "result");
-			addError(
-				state,
-				"Result references non-existent node: " + String(d.result),
-				d.result,
+		if (validateArray(d.nodes)) {
+			const nodeIds = new Set(
+				(d.nodes as { id: string }[]).map((n) => n.id),
 			);
-			popPath(state);
+			if (!nodeIds.has(String(d.result))) {
+				pushPath(state, "result");
+				addError(
+					state,
+					"Result references non-existent node: " + String(d.result),
+					d.result,
+				);
+				popPath(state);
+			}
 		}
 	}
 
@@ -1307,14 +1309,18 @@ function validateEirExpr(state: ValidationState, expr: Record<string, unknown>):
 		break;
 
 	case "while":
-		if (typeof expr.cond === "string") {
+		if (expr.cond === undefined) {
+			addError(state, "while expression must have 'cond' property", expr);
+		} else if (typeof expr.cond === "string") {
 			if (!validateId(expr.cond)) {
 				addError(state, "while expression must have valid 'cond' identifier", expr);
 			}
 		} else {
 			validateEirExpr(state, expr.cond as Record<string, unknown>);
 		}
-		if (typeof expr.body === "string") {
+		if (expr.body === undefined) {
+			addError(state, "while expression must have 'body' property", expr);
+		} else if (typeof expr.body === "string") {
 			if (!validateId(expr.body)) {
 				addError(state, "while expression must have valid 'body' identifier", expr);
 			}
@@ -2103,11 +2109,13 @@ export function validatePIR(doc: unknown): ValidationResult<import("./types.js")
 	const d = doc as Record<string, unknown>;
 
 	// Check version (PIR uses version 2.x.x)
+	pushPath(state, "version");
 	if (d.version !== undefined && typeof d.version !== "string") {
 		addError(state, "version must be a string", d.version);
 	} else if (typeof d.version === "string" && !(/^2\.\d+\.\d+$/.exec(d.version))) {
 		addError(state, "PIR version must match 2.x.x format", d.version);
 	}
+	popPath(state);
 
 	// Check airDefs (optional, should be array if present)
 	if (d.airDefs !== undefined && !Array.isArray(d.airDefs)) {
