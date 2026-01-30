@@ -1106,7 +1106,7 @@ describe("TypeChecker", () => {
 						id: "result",
 						expr: {
 							kind: "deref",
-							target: "x",
+							target: "ref",
 						},
 					},
 				],
@@ -1518,9 +1518,11 @@ describe("TypeChecker", () => {
 				args: [],
 			};
 
-			// Should return void type for unknown operator
-			const result = checker.typeCheck(callExpr, env);
-			assert.strictEqual(result.type.kind, "void");
+			// Unknown operators throw an error
+			assert.throws(
+				() => checker.typeCheck(callExpr, env),
+				/Unknown operator: unknown:op/,
+			);
 		});
 	});
 });

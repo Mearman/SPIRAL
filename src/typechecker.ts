@@ -943,6 +943,7 @@ const EIR_EXPRESSION_KINDS = [
 	"effect",
 	"refCell",
 	"deref",
+	"try",
 ] as const;
 
 /**
@@ -1331,6 +1332,36 @@ function typeCheckEIRNode(
 			}
 
 			return { type: targetType.of, env };
+		}
+
+		case "try": {
+			const e = expr as unknown as { tryBody: string | import("./types.js").Expr; catchParam: string; catchBody: string | import("./types.js").Expr; fallback?: string | import("./types.js").Expr };
+			// T-Try: Γ ⊢ tryBody : T, Γ,catchParam:error ⊢ catchBody : T ⇒ Γ ⊢ try(tryBody, catchParam, catchBody) : T
+
+			let tryBodyType: Type | undefined;
+			if (typeof e.tryBody === "string") {
+				if (!nodeMap.has(e.tryBody)) {
+					throw SPIRALError.validation(
+						"try",
+						"Try body node not found: " + e.tryBody,
+					);
+				}
+				tryBodyType = nodeTypes.get(e.tryBody);
+			}
+
+			let catchBodyType: Type | undefined;
+			if (typeof e.catchBody === "string") {
+				if (!nodeMap.has(e.catchBody)) {
+					throw SPIRALError.validation(
+						"try",
+						"Catch body node not found: " + e.catchBody,
+					);
+				}
+				catchBodyType = nodeTypes.get(e.catchBody);
+			}
+
+			// Return the catch body type (recovery path), falling back to try body type
+			return { type: catchBodyType ?? tryBodyType ?? voidType, env };
 		}
 
 		default:
