@@ -1502,7 +1502,7 @@ describe("TypeChecker", () => {
 
 			assert.throws(
 				() => checker.typeCheck(invalidExpr, env),
-				/Unknown expression kind/,
+				/Unexpected value/,
 			);
 		});
 
