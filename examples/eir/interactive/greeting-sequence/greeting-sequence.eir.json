@@ -82,5 +82,6 @@
     }
   ],
   "result": "finalSeq",
-  "note": "Interactive example: demonstrates sequential output of multiple messages without any input processing. Shows how seq orders multiple effects."
+  "note": "Interactive example: demonstrates sequential output of multiple messages without any input processing. Shows how seq orders multiple effects.",
+  "expected_result": null
 }

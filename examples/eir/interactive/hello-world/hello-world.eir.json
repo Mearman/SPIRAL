@@ -26,5 +26,6 @@
     }
   ],
   "result": "greeting",
-  "note": "Interactive example: simple greeting with no input processing. Demonstrates the simplest I/O pattern."
+  "note": "Interactive example: simple greeting with no input processing. Demonstrates the simplest I/O pattern.",
+  "expected_result": null
 }

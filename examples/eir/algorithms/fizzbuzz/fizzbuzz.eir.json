@@ -6,56 +6,182 @@
     {
       "ns": "core",
       "name": "mod",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "add",
-      "params": ["a", "b"],
-      "result": { "kind": "int" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "int"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "eq",
-      "params": ["a", "b"],
-      "result": { "kind": "bool" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "bool"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "core",
       "name": "gt",
-      "params": ["a", "b"],
-      "result": { "kind": "bool" },
-      "body": { "kind": "ref", "id": "a" }
+      "params": [
+        "a",
+        "b"
+      ],
+      "result": {
+        "kind": "bool"
+      },
+      "body": {
+        "kind": "ref",
+        "id": "a"
+      }
     },
     {
       "ns": "list",
       "name": "cons",
-      "params": ["x", "xs"],
-      "result": { "kind": "list", "of": { "kind": "string" } },
-      "body": { "kind": "ref", "id": "xs" }
+      "params": [
+        "x",
+        "xs"
+      ],
+      "result": {
+        "kind": "list",
+        "of": {
+          "kind": "string"
+        }
+      },
+      "body": {
+        "kind": "ref",
+        "id": "xs"
+      }
     }
   ],
   "nodes": [
-    { "id": "zero", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }},
-    { "id": "one", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }},
-    { "id": "three", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 3 }},
-    { "id": "five", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }},
-    { "id": "fifteen", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 15 }},
-    { "id": "n", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 15 }},
-    { "id": "emptyList", "expr": { "kind": "lit", "type": { "kind": "list", "of": { "kind": "string" }}, "value": [] }},
-    { "id": "initI", "expr": { "kind": "assign", "target": "i", "value": "one" }},
-    { "id": "initResult", "expr": { "kind": "assign", "target": "result", "value": "emptyList" }},
+    {
+      "id": "zero",
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 0
+      }
+    },
+    {
+      "id": "one",
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 1
+      }
+    },
+    {
+      "id": "three",
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 3
+      }
+    },
+    {
+      "id": "five",
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 5
+      }
+    },
+    {
+      "id": "fifteen",
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 15
+      }
+    },
+    {
+      "id": "n",
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "int"
+        },
+        "value": 15
+      }
+    },
+    {
+      "id": "emptyList",
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "list",
+          "of": {
+            "kind": "string"
+          }
+        },
+        "value": []
+      }
+    },
+    {
+      "id": "initI",
+      "expr": {
+        "kind": "assign",
+        "target": "i",
+        "value": "one"
+      }
+    },
+    {
+      "id": "initResult",
+      "expr": {
+        "kind": "assign",
+        "target": "result",
+        "value": "emptyList"
+      }
+    },
     {
       "id": "loopCond",
       "expr": {
         "kind": "call",
         "ns": "core",
         "name": "gt",
-        "args": ["n", "i"]
+        "args": [
+          "n",
+          "i"
+        ]
       }
     },
     {
@@ -64,7 +190,10 @@
         "kind": "call",
         "ns": "core",
         "name": "mod",
-        "args": ["i", "fifteen"]
+        "args": [
+          "i",
+          "fifteen"
+        ]
       }
     },
     {
@@ -73,7 +202,10 @@
         "kind": "call",
         "ns": "core",
         "name": "eq",
-        "args": ["mod15Result", "zero"]
+        "args": [
+          "mod15Result",
+          "zero"
+        ]
       }
     },
     {
@@ -82,7 +214,10 @@
         "kind": "call",
         "ns": "core",
         "name": "mod",
-        "args": ["i", "three"]
+        "args": [
+          "i",
+          "three"
+        ]
       }
     },
     {
@@ -91,7 +226,10 @@
         "kind": "call",
         "ns": "core",
         "name": "eq",
-        "args": ["mod3Result", "zero"]
+        "args": [
+          "mod3Result",
+          "zero"
+        ]
       }
     },
     {
@@ -100,7 +238,10 @@
         "kind": "call",
         "ns": "core",
         "name": "mod",
-        "args": ["i", "five"]
+        "args": [
+          "i",
+          "five"
+        ]
       }
     },
     {
@@ -109,24 +250,51 @@
         "kind": "call",
         "ns": "core",
         "name": "eq",
-        "args": ["mod5Result", "zero"]
+        "args": [
+          "mod5Result",
+          "zero"
+        ]
       }
     },
     {
       "id": "fizzBuzzLiteral",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "FizzBuzz" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "FizzBuzz"
+      }
     },
     {
       "id": "fizzLiteral",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "Fizz" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "Fizz"
+      }
     },
     {
       "id": "buzzLiteral",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "Buzz" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "Buzz"
+      }
     },
     {
       "id": "oneLiteral",
-      "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "1" }
+      "expr": {
+        "kind": "lit",
+        "type": {
+          "kind": "string"
+        },
+        "value": "1"
+      }
     },
     {
       "id": "checkBuzz",
@@ -135,7 +303,9 @@
         "cond": "isMult5",
         "then": "buzzLiteral",
         "else": "oneLiteral",
-        "type": { "kind": "string" }
+        "type": {
+          "kind": "string"
+        }
       }
     },
     {
@@ -145,7 +315,9 @@
         "cond": "isMult3",
         "then": "fizzLiteral",
         "else": "checkBuzz",
-        "type": { "kind": "string" }
+        "type": {
+          "kind": "string"
+        }
       }
     },
     {
@@ -155,7 +327,9 @@
         "cond": "isMult15",
         "then": "fizzBuzzLiteral",
         "else": "checkFizz",
-        "type": { "kind": "string" }
+        "type": {
+          "kind": "string"
+        }
       }
     },
     {
@@ -164,7 +338,10 @@
         "kind": "call",
         "ns": "list",
         "name": "cons",
-        "args": ["fizzBuzzValue", "result"]
+        "args": [
+          "fizzBuzzValue",
+          "result"
+        ]
       }
     },
     {
@@ -173,7 +350,10 @@
         "kind": "call",
         "ns": "core",
         "name": "add",
-        "args": ["i", "one"]
+        "args": [
+          "i",
+          "one"
+        ]
       }
     },
     {
@@ -223,5 +403,21 @@
       }
     }
   ],
-  "result": "output"
+  "result": "output",
+  "expected_result": [
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1"
+  ]
 }
