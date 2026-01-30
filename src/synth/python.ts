@@ -176,6 +176,8 @@ function synthesizeExpr(
 ): string {
 	const kind = expr.kind;
 	const refToPython = (nodeId: string): string => `v_${sanitizeId(nodeId)}`;
+	const refOrInline = (val: string | Expr | EirExpr): string =>
+		typeof val === "string" ? refToPython(val) : synthesizeExpr(state, val, mutableCells, cellInitLines);
 
 	switch (kind) {
 	case "lit": {
@@ -302,8 +304,8 @@ function synthesizeExpr(
 
 	case "assign": {
 		const target = (expr as { target: string }).target;
-		const valueId = (expr as { value: string }).value;
-		const value = refToPython(valueId);
+		const rawValue = (expr as { value: string | Expr }).value;
+		const value = refOrInline(rawValue);
 
 		if (!mutableCells.has(target)) {
 			const cellName = `_cell_${state.varIndex++}`;
@@ -322,9 +324,9 @@ function synthesizeExpr(
 
 	case "iter": {
 		const varName = (expr as { var: string }).var;
-		const iterId = (expr as { iter: string }).iter;
-		const bodyId = (expr as { body: string }).body;
-		return `[(lambda ${varName}: ${refToPython(bodyId)})(item) for item in ${refToPython(iterId)}][-1]`;
+		const iterVal = (expr as { iter: string | Expr }).iter;
+		const bodyVal = (expr as { body: string | Expr }).body;
+		return `[(lambda ${varName}: ${refOrInline(bodyVal)})(item) for item in ${refOrInline(iterVal)}][-1]`;
 	}
 
 	case "effect": {
@@ -485,7 +487,10 @@ function formatUnknownValue(value: unknown): string {
 	if (typeof value === "number") return String(value);
 	if (typeof value === "string") return `"${value}"`;
 	if (Array.isArray(value)) return `[${value.map(formatUnknownValue).join(", ")}]`;
-	// Fallback for objects (shouldn't happen in valid tests)
+	// Handle Value objects (objects with a 'kind' property)
+	if (typeof value === "object" && "kind" in value) {
+		return formatLiteral(value as Value);
+	}
 	return JSON.stringify(value);
 }
 
