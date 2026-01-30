@@ -14,8 +14,6 @@ import type {
 	EIRDocument,
 	LIRDocument,
 	Node,
-	EirNode,
-	LirHybridNode,
 } from "../../src/types.js";
 
 //==============================================================================
@@ -75,11 +73,20 @@ const airBooleanDoc: AIRDocument = {
 			expr: { kind: "lit", type: { kind: "bool" }, value: { kind: "bool", value: false } },
 		},
 		{
-			id: "result",
+			id: "andResult",
 			expr: {
 				kind: "call",
 				ns: "bool",
 				name: "and",
+				args: ["a", "b"],
+			},
+		},
+		{
+			id: "result",
+			expr: {
+				kind: "call",
+				ns: "bool",
+				name: "or",
 				args: ["a", "b"],
 			},
 		},
@@ -469,17 +476,17 @@ describe("Python Synthesizer - Unit Tests", () => {
 		it("should include LIR execution engine", () => {
 			const result = synthesizePython(lirDoc);
 			assert.ok(result.includes("while True:"));
-			assert.ok(result.includes('kind == "assign"'));
-			assert.ok(result.includes('kind == "op"'));
-			assert.ok(result.includes('kind == "phi"'));
+			assert.ok(result.includes("kind == 'assign'"));
+			assert.ok(result.includes("kind == 'op'"));
+			assert.ok(result.includes("kind == 'phi'"));
 		});
 
 		it("should handle LIR terminators", () => {
 			const result = synthesizePython(lirDoc);
-			assert.ok(result.includes('kind == "jump"'));
-			assert.ok(result.includes('kind == "branch"'));
-			assert.ok(result.includes('kind == "return"'));
-			assert.ok(result.includes('kind == "exit"'));
+			assert.ok(result.includes("term['kind'] == 'jump'"));
+			assert.ok(result.includes("term['kind'] == 'branch'"));
+			assert.ok(result.includes("term['kind'] == 'return'"));
+			assert.ok(result.includes("term['kind'] == 'exit'"));
 		});
 	});
 
