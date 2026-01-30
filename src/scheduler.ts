@@ -403,7 +403,7 @@ export class DeterministicScheduler implements TaskScheduler {
 			this.completedTasks.set(task.id, result);
 			task.resolve(result);
 		} catch (error) {
-			task.reject(error as Error);
+			task.reject(error instanceof Error ? error : new Error(String(error)));
 		}
 
 		// Continue with next task in queue (sequential mode)
@@ -440,7 +440,7 @@ export class DeterministicScheduler implements TaskScheduler {
 					this.completedTasks.set(task.id, result);
 					task.resolve(result);
 				} catch (error) {
-					task.reject(error as Error);
+					task.reject(error instanceof Error ? error : new Error(String(error)));
 				}
 			}),
 		);
@@ -476,7 +476,7 @@ export class DeterministicScheduler implements TaskScheduler {
 					this.completedTasks.set(task.id, result);
 					task.resolve(result);
 				} catch (error) {
-					task.reject(error as Error);
+					task.reject(error instanceof Error ? error : new Error(String(error)));
 				}
 			}
 

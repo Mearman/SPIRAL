@@ -37,7 +37,7 @@ export interface Options {
 export function parseInputString(input: string): (string | number)[] {
 	try {
 		// Try parsing as JSON first (handles arrays like [1, 2, 3])
-		const parsed = JSON.parse(input) as unknown;
+		const parsed: unknown = JSON.parse(input);
 		if (Array.isArray(parsed)) {
 			return parsed.map((v) => (typeof v === "number" ? v : String(v)));
 		}
@@ -67,7 +67,7 @@ export function parseInputString(input: string): (string | number)[] {
 export async function readInputsFile(filePath: string): Promise<(string | number)[] | null> {
 	try {
 		const content = await readFile(filePath, "utf-8");
-		const parsed = JSON.parse(content) as unknown;
+		const parsed: unknown = JSON.parse(content);
 		if (Array.isArray(parsed)) {
 			return parsed.map((v) => (typeof v === "number" ? v : String(v)));
 		}
