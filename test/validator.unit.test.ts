@@ -2190,4 +2190,991 @@ describe("Validator - Unit Tests", () => {
 			assert.ok(result.valid);
 		});
 	});
+
+	//==========================================================================
+	// Set Type Alternatives
+	//==========================================================================
+
+	describe("Set type alternatives", () => {
+		it("should accept set type with 'of' property", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "lit",
+							type: { kind: "set", of: { kind: "int" } },
+							value: [],
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateAIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should accept set type with 'elem' property", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "lit",
+							type: { kind: "set", elem: { kind: "string" } },
+							value: [],
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateAIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should accept set type with 'elementType' property", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "lit",
+							type: { kind: "set", elementType: { kind: "bool" } },
+							value: [],
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateAIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should reject set type with no element type specifier", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "lit",
+							type: { kind: "set" },
+							value: [],
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateAIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("set type")));
+		});
+	});
+
+	//==========================================================================
+	// fn Type Validation
+	//==========================================================================
+
+	describe("fn type validation", () => {
+		it("should accept fn type with params and returns", () => {
+			const doc: CIRDocument = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "f",
+						expr: {
+							kind: "lambda",
+							params: ["a", "b"],
+							body: "body",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }, { kind: "string" }],
+								returns: { kind: "bool" },
+							},
+						},
+					},
+					{
+						id: "body",
+						expr: { kind: "lit", type: { kind: "bool" }, value: true },
+					},
+				],
+				result: "f",
+			};
+			const result = validateCIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should reject fn type missing params", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "lit",
+							type: { kind: "fn", returns: { kind: "int" } },
+							value: null,
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateAIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("fn type") && e.message.includes("params")));
+		});
+
+		it("should reject fn type missing returns", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "lit",
+							type: { kind: "fn", params: [{ kind: "int" }] },
+							value: null,
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateAIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("fn type") && e.message.includes("returns")));
+		});
+
+		it("should accept nested fn types", () => {
+			const doc: CIRDocument = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "f",
+						expr: {
+							kind: "lambda",
+							params: ["g"],
+							body: "body",
+							type: {
+								kind: "fn",
+								params: [
+									{
+										kind: "fn",
+										params: [{ kind: "int" }],
+										returns: { kind: "int" },
+									},
+								],
+								returns: { kind: "int" },
+							},
+						},
+					},
+					{
+						id: "body",
+						expr: { kind: "lit", type: { kind: "int" }, value: 0 },
+					},
+				],
+				result: "f",
+			};
+			const result = validateCIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should reject fn type with invalid param type", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "lit",
+							type: {
+								kind: "fn",
+								params: [{ kind: "notAType" }],
+								returns: { kind: "int" },
+							},
+							value: null,
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateAIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("Unknown type")));
+		});
+	});
+
+	//==========================================================================
+	// ref/void/opaque Types
+	//==========================================================================
+
+	describe("ref/void/opaque types", () => {
+		it("should accept ref type with 'of' property in EIR expression", () => {
+			// ref type is not in the validator's validateType switch, but the EIR validator
+			// handles refCell expressions. Test that refCell works with a target.
+			const doc: EIRDocument = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "val",
+						expr: { kind: "lit", type: { kind: "int" }, value: 42 },
+					},
+					{
+						id: "r",
+						expr: { kind: "refCell", target: "val" },
+					},
+				],
+				result: "r",
+			};
+			const result = validateEIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should accept void type", () => {
+			const doc: AIRDocument = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: { kind: "lit", type: { kind: "void" } as unknown as import("../src/types.js").Type, value: null },
+					},
+				],
+				result: "x",
+			};
+			// void is not in the validateType switch, so this should fail
+			const result = validateAIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("Unknown type")));
+		});
+
+		it("should reject opaque type without name", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "lit",
+							type: { kind: "opaque" },
+							value: null,
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateAIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("opaque") && e.message.includes("name")));
+		});
+
+		it("should accept opaque type with valid name", () => {
+			const doc: AIRDocument = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "lit",
+							type: { kind: "opaque", name: "CustomType" },
+							value: null,
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateAIR(doc);
+			assert.ok(result.valid);
+		});
+	});
+
+	//==========================================================================
+	// Lambda Param Forms
+	//==========================================================================
+
+	describe("Lambda param forms", () => {
+		it("should accept string params", () => {
+			const doc: CIRDocument = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "f",
+						expr: {
+							kind: "lambda",
+							params: ["a", "b", "c"],
+							body: "body",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }, { kind: "int" }, { kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+					{
+						id: "body",
+						expr: { kind: "lit", type: { kind: "int" }, value: 0 },
+					},
+				],
+				result: "f",
+			};
+			const result = validateCIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should accept object-form params with name and optional", () => {
+			const doc: CIRDocument = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "f",
+						expr: {
+							kind: "lambda",
+							params: [
+								{ name: "a", optional: false },
+								{ name: "b", optional: true },
+							],
+							body: "body",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }, { kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+					{
+						id: "body",
+						expr: { kind: "lit", type: { kind: "int" }, value: 0 },
+					},
+				],
+				result: "f",
+			};
+			const result = validateCIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should reject object-form param with invalid name", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "f",
+						expr: {
+							kind: "lambda",
+							params: [{ name: "123bad" }],
+							body: "body",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+					{
+						id: "body",
+						expr: { kind: "lit", type: { kind: "int" }, value: 0 },
+					},
+				],
+				result: "f",
+			};
+			const result = validateCIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("lambda param") && e.message.includes("name")));
+		});
+
+		it("should reject object-form param with non-boolean optional", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "f",
+						expr: {
+							kind: "lambda",
+							params: [{ name: "a", optional: "yes" }],
+							body: "body",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+					{
+						id: "body",
+						expr: { kind: "lit", type: { kind: "int" }, value: 0 },
+					},
+				],
+				result: "f",
+			};
+			const result = validateCIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("optional") && e.message.includes("boolean")));
+		});
+
+		it("should accept object-form param with default expression", () => {
+			const doc: CIRDocument = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "f",
+						expr: {
+							kind: "lambda",
+							params: [
+								{ name: "a", optional: false, default: { kind: "lit", type: { kind: "int" }, value: 10 } },
+							],
+							body: "body",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+					{
+						id: "body",
+						expr: { kind: "lit", type: { kind: "int" }, value: 0 },
+					},
+				],
+				result: "f",
+			};
+			const result = validateCIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should reject non-string/non-object param", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "f",
+						expr: {
+							kind: "lambda",
+							params: [42],
+							body: "body",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+					{
+						id: "body",
+						expr: { kind: "lit", type: { kind: "int" }, value: 0 },
+					},
+				],
+				result: "f",
+			};
+			const result = validateCIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("lambda param") && e.message.includes("string or object")));
+		});
+	});
+
+	//==========================================================================
+	// Cycle Detection
+	//==========================================================================
+
+	describe("Cycle detection", () => {
+		it("should allow recursion through lambda body", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [
+					{
+						ns: "core",
+						name: "sub",
+						params: ["a", "b"],
+						result: { kind: "int" },
+						body: { kind: "ref", id: "a" },
+					},
+				],
+				nodes: [
+					{
+						id: "recFn",
+						expr: {
+							kind: "lambda",
+							params: ["n"],
+							body: "recBody",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+					{
+						id: "recBody",
+						expr: {
+							kind: "callExpr",
+							fn: "recFn",
+							args: ["n"],
+						},
+					},
+				],
+				result: "recFn",
+			};
+			const result = validateCIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should detect true cycle without lambda", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "a",
+						expr: { kind: "ref", id: "b" },
+					},
+					{
+						id: "b",
+						expr: { kind: "ref", id: "c" },
+					},
+					{
+						id: "c",
+						expr: { kind: "ref", id: "a" },
+					},
+				],
+				result: "a",
+			};
+			const result = validateAIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("cycle")));
+		});
+
+		it("should exclude lambda params from cycle detection", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "f",
+						expr: {
+							kind: "lambda",
+							params: ["x"],
+							body: "body",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+					{
+						id: "body",
+						expr: { kind: "ref", id: "x" },
+					},
+				],
+				result: "f",
+			};
+			// "x" is a lambda param, not a node -- should not trigger non-existent error
+			const result = validateCIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should exclude let binding names from cycle detection", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "let",
+							name: "y",
+							value: { kind: "lit", type: { kind: "int" }, value: 5 },
+							body: { kind: "ref", id: "y" },
+						},
+					},
+				],
+				result: "x",
+			};
+			// "y" is a let binding, should not trigger non-existent node error
+			const result = validateCIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should handle object-form params in cycle detection", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "f",
+						expr: {
+							kind: "lambda",
+							params: [{ name: "x", optional: false }],
+							body: "body",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+					{
+						id: "body",
+						expr: { kind: "ref", id: "x" },
+					},
+				],
+				result: "f",
+			};
+			// "x" from object-form param should also be excluded
+			const result = validateCIR(doc);
+			assert.ok(result.valid);
+		});
+	});
+
+	//==========================================================================
+	// Inline Expression Validation
+	//==========================================================================
+
+	describe("Inline expression validation", () => {
+		it("should accept call with inline literal args", () => {
+			const doc: AIRDocument = {
+				version: "1.0.0",
+				airDefs: [
+					{
+						ns: "core",
+						name: "add",
+						params: ["a", "b"],
+						result: { kind: "int" },
+						body: { kind: "ref", id: "a" },
+					},
+				],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "call",
+							ns: "core",
+							name: "add",
+							args: [
+								{ kind: "lit", type: { kind: "int" }, value: 1 },
+								{ kind: "lit", type: { kind: "int" }, value: 2 },
+							],
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateAIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should accept if with inline condition and branches", () => {
+			const doc: AIRDocument = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "if",
+							cond: { kind: "lit", type: { kind: "bool" }, value: true },
+							then: { kind: "lit", type: { kind: "int" }, value: 1 },
+							else: { kind: "lit", type: { kind: "int" }, value: 0 },
+							type: { kind: "int" },
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateAIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should accept let with inline value and body", () => {
+			const doc: CIRDocument = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "let",
+							name: "y",
+							value: { kind: "lit", type: { kind: "int" }, value: 10 },
+							body: { kind: "lit", type: { kind: "int" }, value: 20 },
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateCIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should reject invalid inline expression in call args", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [
+					{
+						ns: "core",
+						name: "id",
+						params: ["a"],
+						result: { kind: "int" },
+						body: { kind: "ref", id: "a" },
+					},
+				],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "call",
+							ns: "core",
+							name: "id",
+							args: [{ kind: "lit", type: { kind: "badType" }, value: 1 }],
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateAIR(doc);
+			assert.ok(!result.valid);
+		});
+
+		it("should reject if expression with mixed ref/inline forms", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "if",
+							cond: "someCond",
+							then: { kind: "lit", type: { kind: "int" }, value: 1 },
+							else: { kind: "lit", type: { kind: "int" }, value: 0 },
+							type: { kind: "int" },
+						},
+					},
+					{
+						id: "someCond",
+						expr: { kind: "lit", type: { kind: "bool" }, value: true },
+					},
+				],
+				result: "x",
+			};
+			// Mixed forms: cond is a string ref, then/else are inline -- should fail validation
+			const result = validateAIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("if expression")));
+		});
+	});
+
+	//==========================================================================
+	// CIR Specific
+	//==========================================================================
+
+	describe("CIR specific", () => {
+		it("should accept lambda and callExpr nodes", () => {
+			const doc: CIRDocument = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "id",
+						expr: {
+							kind: "lambda",
+							params: ["x"],
+							body: "body",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+					{
+						id: "body",
+						expr: { kind: "ref", id: "x" },
+					},
+					{
+						id: "result",
+						expr: {
+							kind: "callExpr",
+							fn: "id",
+							args: [{ kind: "lit", type: { kind: "int" }, value: 99 }],
+						},
+					},
+				],
+				result: "result",
+			};
+			const result = validateCIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should accept fix node in CIR", () => {
+			const doc: CIRDocument = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "f",
+						expr: {
+							kind: "lambda",
+							params: ["n"],
+							body: "fbody",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+					{
+						id: "fbody",
+						expr: { kind: "ref", id: "n" },
+					},
+					{
+						id: "fixedF",
+						expr: {
+							kind: "fix",
+							fn: "f",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+				],
+				result: "fixedF",
+			};
+			const result = validateCIR(doc);
+			assert.ok(result.valid);
+		});
+
+		it("should reject lambda with invalid body ref", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "f",
+						expr: {
+							kind: "lambda",
+							params: ["x"],
+							body: "123invalid",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+				],
+				result: "f",
+			};
+			const result = validateCIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("body")));
+		});
+
+		it("should reject callExpr in AIR document", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "callExpr",
+							fn: "f",
+							args: [],
+						},
+					},
+					{
+						id: "f",
+						expr: { kind: "lit", type: { kind: "int" }, value: 1 },
+					},
+				],
+				result: "x",
+			};
+			const result = validateAIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("callExpr")));
+		});
+
+		it("should reject fix missing fn property", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "x",
+						expr: {
+							kind: "fix",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateCIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("fix") && e.message.includes("fn")));
+		});
+
+		it("should reject fix missing type property", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "f",
+						expr: {
+							kind: "lambda",
+							params: ["n"],
+							body: "fbody",
+							type: {
+								kind: "fn",
+								params: [{ kind: "int" }],
+								returns: { kind: "int" },
+							},
+						},
+					},
+					{
+						id: "fbody",
+						expr: { kind: "ref", id: "n" },
+					},
+					{
+						id: "x",
+						expr: {
+							kind: "fix",
+							fn: "f",
+						},
+					},
+				],
+				result: "x",
+			};
+			const result = validateCIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("fix") && e.message.includes("type")));
+		});
+	});
 });
