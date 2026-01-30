@@ -4,8 +4,17 @@
 import { SPIRALError, ErrorCodes } from "../errors.js";
 import type {
 	EIRDocument,
+	EirAssignExpr,
+	EirDerefExpr,
+	EirEffectExpr,
 	EirExpr,
+	EirForExpr,
 	EirHybridNode,
+	EirIterExpr,
+	EirRefCellExpr,
+	EirSeqExpr,
+	EirTryExpr,
+	EirWhileExpr,
 	Expr,
 	HybridNode,
 	LIRDocument,
@@ -172,6 +181,28 @@ interface BlockResult {
   exit: string;
 }
 
+/** EIR-only expression kinds (not shared with Expr) */
+const EIR_KINDS = new Set(["seq", "assign", "while", "for", "iter", "effect", "refCell", "deref", "try"]);
+
+/**
+ * Extract a string node reference from a field that may be string | Expr.
+ * EIR fields like `first`, `cond`, `body` etc. are typed as `string | Expr`
+ * but in the lowering context they are expected to be node ID strings.
+ */
+function asStringRef(value: string | Expr): string {
+	if (typeof value === "string") {
+		return value;
+	}
+	// Inline expressions are not supported as node references in lowering;
+	// return a placeholder to avoid runtime errors
+	return JSON.stringify(value);
+}
+
+/** Type guard: checks if an EirExpr is an EIR-specific expression (not a base Expr) */
+function isEirOnlyExpr(expr: EirExpr): expr is EirOnlyExpr {
+	return EIR_KINDS.has(expr.kind);
+}
+
 /**
  * Lower a single node to one or more blocks.
  * Returns the entry and exit block ids.
@@ -190,17 +221,12 @@ function lowerNode(
 
 	const expr = node.expr;
 
-	// Check for EIR-specific expressions
-	const kind = expr.kind as string;
-	const EIR_KINDS = ["seq", "assign", "while", "for", "iter", "effect", "refCell", "deref"];
-
-	if (EIR_KINDS.includes(kind)) {
-		return lowerEirExpr(expr as unknown as EirExpr, node.id, currentBlock, ctx, nextBlock);
+	if (isEirOnlyExpr(expr)) {
+		return lowerEirExpr(expr, node.id, currentBlock, ctx, nextBlock);
 	}
 
 	// For CIR expressions, create a simple assignment block
-	// The kind check above ensures expr is actually a CIR Expr, not EIR-specific
-	return lowerCirExpr(expr as Expr, node.id, currentBlock, ctx, nextBlock);
+	return lowerCirExpr(expr, node.id, currentBlock, ctx, nextBlock);
 }
 
 /**
@@ -379,29 +405,31 @@ function lowerCirExpr(
 	return { entry: currentBlock, exit: currentBlock };
 }
 
+/** EIR-only expression type (excludes base Expr) */
+type EirOnlyExpr = EirSeqExpr | EirAssignExpr | EirWhileExpr | EirForExpr | EirIterExpr | EirEffectExpr | EirRefCellExpr | EirDerefExpr | EirTryExpr;
+
 /**
  * Lower an EIR expression to CFG form.
  */
 function lowerEirExpr(
-	expr: EirExpr,
+	expr: EirOnlyExpr,
 	nodeId: string,
 	currentBlock: string,
 	ctx: LoweringContext,
 	nextBlock: string | null,
 ): BlockResult {
-	const kind = expr.kind as string;
-
-	switch (kind) {
+	switch (expr.kind) {
 	case "seq": {
 		// seq(first, then): execute first, then then
-		const e = expr as unknown as { first: string; then: string };
+		const firstRef = asStringRef(expr.first);
+		const thenRef = asStringRef(expr.then);
 
 		// Lower first part
-		const firstNode = ctx.nodeMap.get(e.first);
+		const firstNode = ctx.nodeMap.get(firstRef);
 		if (!firstNode) {
 			throw new SPIRALError(
 				ErrorCodes.ValidationError,
-				"First node not found: " + e.first,
+				"First node not found: " + firstRef,
 			);
 		}
 
@@ -409,11 +437,11 @@ function lowerEirExpr(
 		lowerNode(firstNode, currentBlock, ctx, midBlock);
 
 		// Lower then part
-		const thenNode = ctx.nodeMap.get(e.then);
+		const thenNode = ctx.nodeMap.get(thenRef);
 		if (!thenNode) {
 			throw new SPIRALError(
 				ErrorCodes.ValidationError,
-				"Then node not found: " + e.then,
+				"Then node not found: " + thenRef,
 			);
 		}
 
@@ -422,13 +450,12 @@ function lowerEirExpr(
 
 	case "assign": {
 		// assign(target, value): assign instruction
-		const e = expr as unknown as { target: string; value: string };
-
+		const valueRef = asStringRef(expr.value);
 		const instructions: LirInstruction[] = [
 			{
 				kind: "assign",
-				target: e.target,
-				value: { kind: "var", name: e.value },
+				target: expr.target,
+				value: { kind: "var", name: valueRef },
 			},
 		];
 
@@ -445,8 +472,8 @@ function lowerEirExpr(
 
 	case "while": {
 		// while(cond, body): loop with condition check
-		const e = expr as unknown as { cond: string; body: string };
-
+		const condRef = asStringRef(expr.cond);
+		const bodyRef = asStringRef(expr.body);
 		const headerId = freshBlock(ctx);
 		const bodyId = freshBlock(ctx);
 		const exitId = nextBlock ?? freshBlock(ctx);
@@ -464,14 +491,14 @@ function lowerEirExpr(
 			instructions: [],
 			terminator: {
 				kind: "branch",
-				cond: e.cond,
+				cond: condRef,
 				then: bodyId,
 				else: exitId,
 			},
 		});
 
 		// Body block: execute body, jump back to header
-		const bodyNode = ctx.nodeMap.get(e.body);
+		const bodyNode = ctx.nodeMap.get(bodyRef);
 		if (bodyNode) {
 			lowerNode(bodyNode, bodyId, ctx, headerId);
 			// Ensure body block jumps back to header
@@ -501,14 +528,10 @@ function lowerEirExpr(
 
 	case "for": {
 		// for(var, init, cond, update, body): C-style for loop
-		const e = expr as unknown as {
-        var: string;
-        init: string;
-        cond: string;
-        update: string;
-        body: string;
-      };
-
+		const initRef = asStringRef(expr.init);
+		const condRef = asStringRef(expr.cond);
+		const updateRef = asStringRef(expr.update);
+		const bodyRef = asStringRef(expr.body);
 		const initId = currentBlock;
 		const headerId = freshBlock(ctx);
 		const bodyId = freshBlock(ctx);
@@ -516,7 +539,7 @@ function lowerEirExpr(
 		const exitId = nextBlock ?? freshBlock(ctx);
 
 		// Init block
-		const initNode = ctx.nodeMap.get(e.init);
+		const initNode = ctx.nodeMap.get(initRef);
 		if (initNode) {
 			lowerNode(initNode, initId, ctx, headerId);
 		} else {
@@ -533,14 +556,14 @@ function lowerEirExpr(
 			instructions: [],
 			terminator: {
 				kind: "branch",
-				cond: e.cond,
+				cond: condRef,
 				then: bodyId,
 				else: exitId,
 			},
 		});
 
 		// Body block
-		const bodyNode = ctx.nodeMap.get(e.body);
+		const bodyNode = ctx.nodeMap.get(bodyRef);
 		if (bodyNode) {
 			lowerNode(bodyNode, bodyId, ctx, updateId);
 		} else {
@@ -552,7 +575,7 @@ function lowerEirExpr(
 		}
 
 		// Update block
-		const updateNode = ctx.nodeMap.get(e.update);
+		const updateNode = ctx.nodeMap.get(updateRef);
 		if (updateNode) {
 			lowerNode(updateNode, updateId, ctx, headerId);
 		} else {
@@ -577,10 +600,10 @@ function lowerEirExpr(
 
 	case "iter": {
 		// iter(var, iter, body): iterate over list/set
-		const e = expr as unknown as { var: string; iter: string; body: string };
-
 		// Simplified lowering: create a while-like structure
 		// In a full implementation, this would use iterator protocol
+		const iterRef = asStringRef(expr.iter);
+		const bodyRef = asStringRef(expr.body);
 		const headerId = freshBlock(ctx);
 		const bodyId = freshBlock(ctx);
 		const exitId = nextBlock ?? freshBlock(ctx);
@@ -598,13 +621,13 @@ function lowerEirExpr(
 			instructions: [],
 			terminator: {
 				kind: "branch",
-				cond: e.iter, // Placeholder: should check if iterator has more elements
+				cond: iterRef, // Placeholder: should check if iterator has more elements
 				then: bodyId,
 				else: exitId,
 			},
 		});
 
-		const bodyNode = ctx.nodeMap.get(e.body);
+		const bodyNode = ctx.nodeMap.get(bodyRef);
 		if (bodyNode) {
 			lowerNode(bodyNode, bodyId, ctx, headerId);
 		}
@@ -622,14 +645,12 @@ function lowerEirExpr(
 
 	case "effect": {
 		// effect(op, args): effect instruction
-		const e = expr as unknown as { op: string; args: string[] };
-
 		const instructions: LirInstruction[] = [
 			{
 				kind: "effect",
 				target: nodeId, // Store effect result in the node
-				op: e.op,
-				args: e.args,
+				op: expr.op,
+				args: expr.args.map(asStringRef),
 			},
 		];
 
@@ -647,14 +668,12 @@ function lowerEirExpr(
 	case "refCell":
 	case "deref": {
 		// Reference cell operations
-		const e = expr as unknown as { target: string };
-
 		const instructions: LirInstruction[] = [];
-		if (kind === "deref") {
+		if (expr.kind === "deref") {
 			instructions.push({
 				kind: "assign",
 				target: nodeId,
-				value: { kind: "var", name: e.target + "_ref" },
+				value: { kind: "var", name: expr.target + "_ref" },
 			});
 		}
 
