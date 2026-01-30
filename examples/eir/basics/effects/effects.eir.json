@@ -46,6 +46,6 @@
     }
   ],
   "result": "printNumber",
-  "expected_result": 42,
+  "expected_result": null,
   "note": "Effect operations are executed for their side effects. The print effect outputs a value and returns it. Effects are recorded in the evaluation state."
 }

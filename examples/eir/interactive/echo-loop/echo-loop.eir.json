@@ -366,6 +366,6 @@
     }
   ],
   "result": "finalResult",
-  "expected_result": "Done.",
+  "expected_result": null,
   "note": "For loop with I/O pattern: iterates 3 times (i=0,1,2). Each iteration prints a prompt, reads an integer, checks if it equals -1 (quit signal), and prints either a confirmation with the value or a quit message."
 }

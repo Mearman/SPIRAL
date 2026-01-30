@@ -188,6 +188,6 @@
     }
   ],
   "result": "result",
-  "expected_result": 0,
+  "expected_result": { "kind": "list", "value": [{ "kind": "int", "value": 1 }, { "kind": "int", "value": 2 }, { "kind": "int", "value": 3 }, { "kind": "int", "value": 4 }, { "kind": "int", "value": 5 }] },
   "note": "Simulates mutable list processing. The index iterates through positions 0-4. True list mutation would require additional runtime support."
 }

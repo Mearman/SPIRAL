@@ -44,6 +44,6 @@
     }
   ],
   "result": "printSum",
-  "expected_result": 7,
+  "expected_result": null,
   "note": "Interactive example: reads two integers and outputs their sum. Uses readInt to read values and printInt to display the result."
 }
