@@ -111,10 +111,10 @@ export default [
 				"error",
 				{ allowNumberAndString: true },
 			],
-			// Forbid non-null assertions (use proper type guards instead)
+			// Forbid all type assertions (use proper type guards instead)
 			"@typescript-eslint/no-non-null-assertion": "error",
-			// Disable rule that demands ! over as (contradicts no-non-null-assertion)
 			"@typescript-eslint/non-nullable-type-assertion-style": "off",
+			"@typescript-eslint/consistent-type-assertions": ["error", { assertionStyle: "never" }],
 			indent: ["error", "tab"],
 			quotes: ["error", "double", { avoidEscape: true }],
 		},
