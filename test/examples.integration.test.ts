@@ -16,6 +16,7 @@ import {
 	createDefaultEffectRegistry,
 	createQueuedEffectRegistry,
 } from "../src/effects.js";
+import { createAsyncIOConfig } from "../src/async-io-effects.js";
 import { createCoreRegistry } from "../src/domains/core.js";
 import { createBoolRegistry } from "../src/domains/bool.js";
 import { createListRegistry } from "../src/domains/list.js";
@@ -162,7 +163,8 @@ async function executeExample(example: ExampleInfo): Promise<Value> {
 
 	case "PIR": {
 		const effects = buildEffectRegistry(example);
-		const asyncEval = new AsyncEvaluator(registry, defs, effects);
+		const asyncIOConfig = createAsyncIOConfig();
+		const asyncEval = new AsyncEvaluator(registry, defs, effects, asyncIOConfig);
 		return asyncEval.evaluateDocument(doc as never);
 	}
 
@@ -300,9 +302,8 @@ describe("Example Auto-Discovery", () => {
 });
 
 // Examples with pre-existing evaluation issues (evaluator doesn't support these constructs yet)
-const KNOWN_EVALUATION_ISSUES = new Set([
-	"examples/pir/io/parallel-http.pir.json", // select requires Future values not yet produced by evaluator
-	"examples/lir/async/fork-join.lir.json", // fork terminator not implemented in LIR evaluator
+const KNOWN_EVALUATION_ISSUES = new Set<string>([
+	"examples/pir/io/async-file-ops.pir.json", // async IO effects return futures; example doesn't await them
 ]);
 
 describe("Example Validation", () => {
