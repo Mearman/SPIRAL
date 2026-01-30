@@ -74,16 +74,16 @@
   },
   "lint-staged": {
     "*.ts": [
-      "eslint --fix"
+      "eslint --fix --cache"
     ],
     "eslint.config.ts": [
-      "eslint --fix"
+      "eslint --fix --cache"
     ],
     "*.json": [
-      "eslint --fix"
+      "eslint --fix --cache"
     ],
     "*.md": [
-      "eslint --fix"
+      "eslint --fix --cache"
     ]
   }
 }
