@@ -1,5 +1,6 @@
 // SPIRAL Type Definitions
-// Implements Value, Type, and Expression AST domains
+// Document-serializable types are re-exported from zod-schemas.ts (single source of truth).
+// Runtime-only types (Value, ClosureVal, EvalState, etc.) remain here as manual interfaces.
 
 //==============================================================================
 // Error Codes
@@ -19,112 +20,94 @@ export const ErrorCodes = {
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
 
 //==============================================================================
-// Type Domain (Γ - static types)
+// Type Domain (re-exported from Zod schemas)
 //==============================================================================
 
-// Forward declarations for EIR types (must be before Type union)
-export interface RefType {
-	kind: "ref";
-	of: Type;
-}
-
-export interface VoidType {
-	kind: "void";
-}
-
-// Forward declarations for PIR types (must be before Type union)
-export interface FutureType {
-	kind: "future";
-	of: Type;
-}
-
-export interface ChannelType {
-	kind: "channel";
-	channelType: "mpsc" | "spsc" | "mpmc" | "broadcast";
-	of: Type;
-}
-
-export interface TaskType {
-	kind: "task";
-	returns: Type;
-}
-
-export interface AsyncFnType {
-	kind: "async";
-	params: Type[];
-	returns: FutureType;
-}
-
-export type Type =
-	| BoolType
-	| IntType
-	| FloatType
-	| StringType
-	| SetType
-	| ListType
-	| MapType
-	| OptionType
-	| OpaqueType
-	| FnType // CIR only
-	| RefType // EIR reference cell type
-	| VoidType // EIR void type
-	| FutureType // PIR future type
-	| ChannelType // PIR channel type
-	| TaskType // PIR task type
-	| AsyncFnType; // PIR async function type
-
-export interface BoolType {
-	kind: "bool";
-}
-
-export interface IntType {
-	kind: "int";
-}
-
-export interface FloatType {
-	kind: "float";
-}
-
-export interface StringType {
-	kind: "string";
-}
-
-export interface SetType {
-	kind: "set";
-	of: Type;
-}
-
-export interface ListType {
-	kind: "list";
-	of: Type;
-}
-
-export interface MapType {
-	kind: "map";
-	key: Type;
-	value: Type;
-}
-
-export interface OptionType {
-	kind: "option";
-	of: Type;
-}
-
-export interface OpaqueType {
-	kind: "opaque";
-	name: string;
-}
-
-export interface FnType {
-	kind: "fn";
-	params: Type[];
-	returns: Type;
-	optionalParams?: boolean[]; // Track which params are optional (same length as params)
-}
+export type {
+	Type,
+	BoolType, IntType, FloatType, StringType, VoidType,
+	SetType, ListType, MapType, OptionType, OpaqueType, FnType,
+	RefType, FutureType, ChannelType, TaskType, AsyncFnType,
+} from "./zod-schemas.js";
 
 //==============================================================================
-// Value Domain (v - runtime values)
+// Expression Domain (re-exported from Zod schemas)
 //==============================================================================
+
+export type {
+	Expr,
+	LitExpr, RefExpr, VarExpr, CallExpr, IfExpr, LetExpr,
+	AirRefExpr, PredicateExpr,
+	LambdaExpr, CallFnExpr, FixExpr, DoExpr,
+	EirSeqExpr, EirAssignExpr, EirWhileExpr, EirForExpr, EirIterExpr,
+	EirEffectExpr, EirRefCellExpr, EirDerefExpr, EirTryExpr,
+	PirParExpr, PirSpawnExpr, PirAwaitExpr, PirChannelExpr,
+	PirSendExpr, PirRecvExpr, PirSelectExpr, PirRaceExpr,
+	EirExpr, PirExpr,
+} from "./zod-schemas.js";
+
+//==============================================================================
+// AIR Definition (re-exported from Zod schemas)
+//==============================================================================
+
+export type { AIRDef, FunctionSignature, LambdaParam } from "./zod-schemas.js";
+
+//==============================================================================
+// Node & Document Types (re-exported from Zod schemas)
+//==============================================================================
+
+export type {
+	Node, ExprNode, BlockNode, HybridNode,
+	AirHybridNode, CirHybridNode, EirHybridNode, LirHybridNode, PirHybridNode,
+	EirNode, PirNode,
+	AIRDocument, CIRDocument, EIRDocument, LIRDocument, PIRDocument,
+} from "./zod-schemas.js";
+
+//==============================================================================
+// LIR Types (re-exported from Zod schemas)
+//==============================================================================
+
+export type {
+	LirInstruction, LirInsAssign, LirInsCall, LirInsOp, LirInsPhi, LirInsEffect, LirInsAssignRef,
+	LirTerminator, LirTermJump, LirTermBranch, LirTermReturn, LirTermExit,
+	LirBlock,
+} from "./zod-schemas.js";
+
+//==============================================================================
+// Layer-Specific Block/Instruction Types (re-exported from Zod schemas)
+//==============================================================================
+
+export type {
+	AirInstruction, AirInsAssign, AirInsOp, AirInsPhi,
+	CirInstruction,
+	EirInstruction, EirInsEffect, EirInsAssignRef,
+	AirBlock, CirBlock, EirBlock,
+} from "./zod-schemas.js";
+
+//==============================================================================
+// PIR Block/Instruction/Terminator Types (re-exported from Zod schemas)
+//==============================================================================
+
+export type {
+	PirInstruction, PirInsSpawn, PirInsChannelOp, PirInsAwait,
+	PirBlock,
+	PirTerminator, PirTermFork, PirTermJoin, PirTermSuspend,
+} from "./zod-schemas.js";
+
+//==============================================================================
+// Value Domain (v - runtime values) — kept as manual interfaces
+// These contain non-JSON-serializable types (Set, Map, ValueEnv)
+//==============================================================================
+
+import type { ValueEnv } from "./env.js";
+import type {
+	Expr, Type, LambdaParam, PirExpr,
+	BoolType, IntType, FloatType, StringType,
+	SetType, ListType, MapType, OptionType, OpaqueType, FnType,
+	VoidType, RefType, FutureType, ChannelType, TaskType, AsyncFnType,
+	HybridNode, BlockNode, ExprNode,
+	PirParExpr, PirSpawnExpr, PirAwaitExpr,
+} from "./zod-schemas.js";
 
 // Forward declarations for EIR values (must be before Value union)
 export interface VoidVal {
@@ -201,21 +184,6 @@ export interface OpaqueVal {
 	value: unknown;
 }
 
-//==============================================================================
-// Lambda Parameter Types (CIR optional parameters)
-//==============================================================================
-
-/**
- * Lambda parameter with optional and default support
- * Like TypeScript: optional and default are independent flags
- */
-export interface LambdaParam {
-	name: string;
-	type?: Type; // Type annotation (optional)
-	optional?: boolean; // Can this param be omitted?
-	default?: Expr; // Default value expression (evaluated in defining env)
-}
-
 /**
  * Closure value with optional parameters support
  */
@@ -234,7 +202,7 @@ export interface ErrorVal {
 }
 
 //==============================================================================
-// EIR Evaluation State and Effects
+// EIR Evaluation State and Effects — kept as manual interfaces (runtime only)
 //==============================================================================
 
 /**
@@ -288,460 +256,6 @@ export function createEvalState(
 }
 
 //==============================================================================
-// Expression AST (e - syntactic expressions)
-//==============================================================================
-
-// Forward declarations for PIR expression types (defined later in detail)
-export interface PirParExpr {
-	kind: "par";
-	branches: string[];
-}
-
-export interface PirSpawnExpr {
-	kind: "spawn";
-	task: string;
-}
-
-export interface PirAwaitExpr {
-	kind: "await";
-	future: string;
-	timeout?: string | Expr;      // Timeout in milliseconds (node reference or inline expression)
-	fallback?: string | Expr;     // Fallback value on timeout (node reference or inline expression)
-	returnIndex?: boolean; // Return success(0)/timeout(1) index instead of value
-}
-
-export interface PirChannelExpr {
-	kind: "channel";
-	channelType: "mpsc" | "spsc" | "mpmc" | "broadcast";
-	bufferSize?: string | Expr;
-}
-
-export interface PirSendExpr {
-	kind: "send";
-	channel: string;
-	value: string | Expr;
-}
-
-export interface PirRecvExpr {
-	kind: "recv";
-	channel: string;
-}
-
-export interface PirSelectExpr {
-	kind: "select";
-	futures: string[];
-	timeout?: string | Expr;      // Timeout in milliseconds (node reference or inline expression)
-	fallback?: string | Expr;     // Fallback value on timeout (node reference or inline expression)
-	returnIndex?: boolean; // Return which future won (index: -1=timeout, 0..n-1=winning future)
-}
-
-export interface PirRaceExpr {
-	kind: "race";
-	tasks: string[];
-}
-
-export type Expr =
-	| LitExpr
-	| RefExpr
-	| VarExpr
-	| CallExpr
-	| IfExpr
-	| LetExpr
-	| AirRefExpr
-	| PredicateExpr
-	| LambdaExpr // CIR only
-	| CallFnExpr // CIR only (distinguished from operator Call)
-	| FixExpr // CIR only
-	| DoExpr        // CIR+ do expression (sequence)
-	| PirParExpr // PIR parallel composition
-	| PirSpawnExpr // PIR spawn task
-	| PirAwaitExpr // PIR await future
-	| PirChannelExpr // PIR create channel
-	| PirSendExpr // PIR send to channel
-	| PirRecvExpr // PIR receive from channel
-	| PirSelectExpr // PIR select on futures
-	| PirRaceExpr; // PIR race on tasks
-
-export interface LitExpr {
-	kind: "lit";
-	type: Type;
-	value: unknown;
-}
-
-export interface RefExpr {
-	kind: "ref";
-	id: string;
-}
-
-export interface VarExpr {
-	kind: "var";
-	name: string;
-}
-
-export interface CallExpr {
-	kind: "call";
-	ns: string;
-	name: string;
-	args: (string | Expr)[];
-}
-
-export interface IfExpr {
-	kind: "if";
-	cond: string;
-	then: string;
-	else: string;
-	type: Type;
-}
-
-export interface LetExpr {
-	kind: "let";
-	name: string;
-	value: string;
-	body: string;
-}
-
-export interface AirRefExpr {
-	kind: "airRef";
-	ns: string;
-	name: string;
-	args: string[];
-}
-
-export interface PredicateExpr {
-	kind: "predicate";
-	name: string;
-	value: string;
-}
-
-export interface LambdaExpr {
-	kind: "lambda";
-	params: string[];
-	body: string;
-	type: Type;
-}
-
-export interface CallFnExpr {
-	kind: "callExpr";
-	fn: string;
-	args: string[];
-}
-
-export interface FixExpr {
-	kind: "fix";
-	fn: string;
-	type: Type;
-}
-
-export interface DoExpr {
-	kind: "do";
-	exprs: (string | Expr)[];
-}
-
-//==============================================================================
-// AIR Definition (airDef)
-//==============================================================================
-
-export interface AIRDef {
-	ns: string;
-	name: string;
-	params: string[];
-	result: Type;
-	body: Expr;
-}
-
-//==============================================================================
-// Document Structure
-//==============================================================================
-
-export interface FunctionSignature {
-	ns: string;
-	name: string;
-	params: Type[];
-	returns: Type;
-	pure: boolean;
-}
-
-/** Expression-only node type (used by ExprNode) */
-export interface Node<E = Expr> {
-	id: string;
-	expr: E;
-}
-
-export interface AIRDocument {
-	version: string;
-	capabilities?: string[];
-	functionSigs?: FunctionSignature[];
-	airDefs: AIRDef[];
-	nodes: AirHybridNode[];
-	result: string;
-}
-
-export interface CIRDocument {
-	version: string;
-	capabilities?: string[];
-	functionSigs?: FunctionSignature[];
-	airDefs: AIRDef[];
-	nodes: CirHybridNode[];
-	result: string;
-}
-
-//==============================================================================
-// EIR Types (Expression-based Imperative Representation)
-// Extends CIR with sequencing, mutation, effects, and loops
-//==============================================================================
-
-// EIR-specific expression types
-export interface EirSeqExpr {
-	kind: "seq";
-	first: string | Expr; // node id reference or inline expression
-	then: string | Expr; // node id reference or inline expression
-}
-
-export interface EirAssignExpr {
-	kind: "assign";
-	target: string; // mutable target identifier
-	value: string | Expr; // node id reference or inline expression
-}
-
-export interface EirWhileExpr {
-	kind: "while";
-	cond: string | Expr;
-	body: string | Expr;
-}
-
-export interface EirForExpr {
-	kind: "for";
-	var: string;
-	init: string | Expr;
-	cond: string | Expr;
-	update: string | Expr;
-	body: string | Expr;
-}
-
-export interface EirIterExpr {
-	kind: "iter";
-	var: string;
-	iter: string | Expr;
-	body: string | Expr;
-}
-
-export interface EirEffectExpr {
-	kind: "effect";
-	op: string;
-	args: (string | Expr)[];
-}
-
-export interface EirRefCellExpr {
-	kind: "refCell";
-	target: string;
-}
-
-export interface EirDerefExpr {
-	kind: "deref";
-	target: string;
-}
-
-export interface EirTryExpr {
-	kind: "try";
-	tryBody: string | Expr; // Node to try or inline expression
-	catchParam: string; // Error parameter name
-	catchBody: string | Expr; // Node on error or inline expression
-	fallback?: string | Expr; // Node on success (optional) or inline expression
-}
-
-// EIR expression type - extends CIR expressions
-export type EirExpr = Expr | EirSeqExpr | EirAssignExpr | EirWhileExpr | EirForExpr | EirIterExpr | EirEffectExpr | EirRefCellExpr | EirDerefExpr | EirTryExpr;
-
-// EIR expression-only node type alias
-export type EirNode = Node<EirExpr>;
-
-export interface EIRDocument {
-	version: string;
-	capabilities?: string[];
-	functionSigs?: FunctionSignature[];
-	airDefs: AIRDef[];
-	// EIR documents can use seq, assign, loop (while/for/iter), effect, refCell, deref
-	// Hybrid nodes allow mixing expression and block nodes
-	nodes: EirHybridNode[];
-	result: string;
-}
-
-//==============================================================================
-// LIR Types (Low-level Intermediate Representation)
-// CFG-based representation with basic blocks, instructions, terminators
-//==============================================================================
-
-// LIR Instructions
-export interface LirInsAssign {
-	kind: "assign";
-	target: string;
-	value: Expr; // Can be CIR expression
-}
-
-export interface LirInsCall {
-	kind: "call";
-	target: string;
-	callee: string;
-	args: string[];
-}
-
-export interface LirInsOp {
-	kind: "op";
-	target: string;
-	ns: string;
-	name: string;
-	args: string[];
-}
-
-export interface LirInsPhi {
-	kind: "phi";
-	target: string;
-	sources: { block: string; id: string }[];
-}
-
-export interface LirInsEffect {
-	kind: "effect";
-	target: string;
-	op: string;
-	args: string[];
-}
-
-export interface LirInsAssignRef {
-	kind: "assignRef";
-	target: string; // ref cell identifier
-	value: string; // node id to assign
-}
-
-export type LirInstruction =
-	| LirInsAssign
-	| LirInsCall
-	| LirInsOp
-	| LirInsPhi
-	| LirInsEffect
-	| LirInsAssignRef;
-
-// LIR Terminators
-export interface LirTermJump {
-	kind: "jump";
-	to: string;
-}
-
-export interface LirTermBranch {
-	kind: "branch";
-	cond: string;
-	then: string;
-	else: string;
-}
-
-export interface LirTermReturn {
-	kind: "return";
-	value?: string;
-}
-
-export interface LirTermExit {
-	kind: "exit";
-	code?: string;
-}
-
-export type LirTerminator =
-	| LirTermJump
-	| LirTermBranch
-	| LirTermReturn
-	| LirTermExit;
-
-// LIR Basic Block
-export interface LirBlock {
-	id: string;
-	instructions: LirInstruction[];
-	terminator: LirTerminator;
-}
-
-//==============================================================================
-// Layer-Specific Block Instruction Types
-//==============================================================================
-
-// AIR blocks: pure operations only
-export interface AirInsAssign {
-	kind: "assign";
-	target: string;
-	value: Expr; // AIR expressions only
-}
-
-export interface AirInsOp {
-	kind: "op";
-	target: string;
-	ns: string;
-	name: string;
-	args: string[];
-}
-
-export type AirInsPhi = LirInsPhi; // Phi nodes for CFG merge points
-
-export type AirInstruction = AirInsAssign | AirInsOp | AirInsPhi;
-
-// CIR blocks: extend AIR (lambda/callExpr/fix allowed in assign values)
-export type CirInstruction = AirInstruction;
-
-// EIR blocks: extend CIR with effect and assignRef
-export type EirInsEffect = LirInsEffect;
-export type EirInsAssignRef = LirInsAssignRef;
-export type EirInstruction = CirInstruction | EirInsEffect | EirInsAssignRef;
-
-// Layer-specific block types
-export interface AirBlock {
-	id: string;
-	instructions: AirInstruction[];
-	terminator: LirTerminator;
-}
-
-export interface CirBlock {
-	id: string;
-	instructions: CirInstruction[];
-	terminator: LirTerminator;
-}
-
-export interface EirBlock {
-	id: string;
-	instructions: EirInstruction[];
-	terminator: LirTerminator;
-}
-
-//==============================================================================
-// Hybrid Node Types
-// Nodes can contain either an expression (expr) OR a block structure (blocks+entry)
-//==============================================================================
-
-/** Expression-based node (traditional AIR/CIR/EIR structure) */
-export interface ExprNode<E = Expr> {
-	id: string;
-	type?: Type;
-	expr: E;
-}
-
-/** Block-based node (CFG structure) */
-export interface BlockNode<B = LirBlock> {
-	id: string;
-	type?: Type;
-	blocks: B[];
-	entry: string;
-}
-
-/** Hybrid node - either expression-based or block-based */
-export type HybridNode<E = Expr, B = LirBlock> = ExprNode<E> | BlockNode<B>;
-
-/** AIR hybrid node: expression or AIR blocks */
-export type AirHybridNode = HybridNode<Expr, AirBlock>;
-
-/** CIR hybrid node: CIR expression or CIR blocks */
-export type CirHybridNode = HybridNode<Expr, CirBlock>;
-
-/** EIR hybrid node: EIR expression or EIR blocks */
-export type EirHybridNode = HybridNode<EirExpr, EirBlock>;
-
-/** LIR hybrid node: typically block-based but can reference expr nodes */
-export type LirHybridNode = HybridNode;
-
-//==============================================================================
 // Type Guards for Hybrid Nodes
 //==============================================================================
 
@@ -754,26 +268,6 @@ export function isBlockNode<E, B>(node: HybridNode<E, B>): node is BlockNode<B> 
 export function isExprNode<E, B>(node: HybridNode<E, B>): node is ExprNode<E> {
 	return "expr" in node && !("blocks" in node);
 }
-
-//==============================================================================
-// LIR Document
-//==============================================================================
-
-/** LIR document - uses unified nodes/result structure */
-export interface LIRDocument {
-	version: string;
-	capabilities?: string[];
-	functionSigs?: FunctionSignature[];
-	airDefs?: AIRDef[];
-	nodes: LirHybridNode[];
-	result: string;
-}
-
-//==============================================================================
-// Related Types
-//==============================================================================
-
-import type { ValueEnv } from "./env.js";
 
 //==============================================================================
 // Value Hashing for Set/Map keys
@@ -982,39 +476,8 @@ export const voidType: VoidType = { kind: "void" };
 export const refType = (of: Type): RefType => ({ kind: "ref", of });
 
 //==============================================================================
-// PIR Types (Parallel Intermediate Representation)
-// Extends EIR with async primitives (par, spawn, await, channels)
+// PIR Value Domain — kept as manual interfaces (runtime only)
 //==============================================================================
-
-//------------------------------------------------------------------------------
-// PIR Type Domain
-//------------------------------------------------------------------------------
-
-export interface FutureType {
-	kind: "future";
-	of: Type;
-}
-
-export interface ChannelType {
-	kind: "channel";
-	channelType: "mpsc" | "spsc" | "mpmc" | "broadcast";
-	of: Type;
-}
-
-export interface TaskType {
-	kind: "task";
-	returns: Type;
-}
-
-export interface AsyncFnType {
-	kind: "async";
-	params: Type[];
-	returns: FutureType;
-}
-
-//------------------------------------------------------------------------------
-// PIR Value Domain
-//------------------------------------------------------------------------------
 
 export interface FutureVal {
 	kind: "future";
@@ -1041,103 +504,9 @@ export interface SelectResultVal {
 	value: Value;
 }
 
-// PIR expression type - extends EIR expressions
-// Note: Individual PirParExpr, etc. are defined earlier in the file before Expr union
-export type PirExpr =
-	| EirExpr
-	| PirParExpr
-	| PirSpawnExpr
-	| PirAwaitExpr
-	| PirChannelExpr
-	| PirSendExpr
-	| PirRecvExpr
-	| PirSelectExpr
-	| PirRaceExpr;
-
-//------------------------------------------------------------------------------
-// PIR Block/Instruction Types (CFG-based async)
-//------------------------------------------------------------------------------
-
-export interface PirInsSpawn {
-	kind: "spawn";
-	target: string;
-	entry: string;
-	args?: string[];
-}
-
-export interface PirInsChannelOp {
-	kind: "channelOp";
-	op: "send" | "recv" | "trySend" | "tryRecv";
-	target?: string;
-	channel: string;
-	value?: string;
-}
-
-export interface PirInsAwait {
-	kind: "await";
-	target: string;
-	future: string;
-}
-
-export type PirInstruction = EirInstruction | PirInsSpawn | PirInsChannelOp | PirInsAwait;
-
-export interface PirBlock {
-	id: string;
-	instructions: PirInstruction[];
-	terminator: PirTerminator;
-}
-
-//------------------------------------------------------------------------------
-// PIR Terminators (CFG-based async)
-//------------------------------------------------------------------------------
-
-export interface PirTermFork {
-	kind: "fork";
-	branches: { block: string; taskId: string }[];
-	continuation: string;
-}
-
-export interface PirTermJoin {
-	kind: "join";
-	tasks: string[];
-	results?: string[];
-	to: string;
-}
-
-export interface PirTermSuspend {
-	kind: "suspend";
-	future: string;
-	resumeBlock: string;
-}
-
-export type PirTerminator = LirTerminator | PirTermFork | PirTermJoin | PirTermSuspend;
-
-//------------------------------------------------------------------------------
-// PIR Hybrid Node Types
-//------------------------------------------------------------------------------
-
-/** PIR expression-only node type */
-export type PirNode = Node<PirExpr>;
-
-/** PIR hybrid node: PIR expression or PIR blocks */
-export type PirHybridNode = HybridNode<PirExpr, PirBlock>;
-
-//------------------------------------------------------------------------------
-// PIR Document
-//------------------------------------------------------------------------------
-
-export interface PIRDocument {
-	version: string;
-	capabilities?: string[];
-	functionSigs?: FunctionSignature[];
-	airDefs: AIRDef[];
-	nodes: PirHybridNode[];
-	result: string;
-}
-
-//------------------------------------------------------------------------------
-// Async Evaluation State (extends EIR EvalState)
-//------------------------------------------------------------------------------
+//==============================================================================
+// Async Evaluation State — kept as manual interfaces (runtime only)
+//==============================================================================
 
 export interface AsyncEvalState extends EvalState {
 	taskId: string;
@@ -1155,9 +524,9 @@ export interface TaskState {
 	error?: ErrorVal;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 // PIR Value Constructors
-//------------------------------------------------------------------------------
+//==============================================================================
 
 export const futureVal = (
 	taskId: string,
@@ -1180,9 +549,9 @@ export const taskVal = (id: string, returnType: Type): TaskVal => ({
 	returnType,
 });
 
-//------------------------------------------------------------------------------
+//==============================================================================
 // PIR Type Constructors
-//------------------------------------------------------------------------------
+//==============================================================================
 
 export const futureType = (of: Type): FutureType => ({ kind: "future", of });
 
@@ -1200,7 +569,7 @@ export const asyncFnType = (params: Type[], returns: Type): AsyncFnType => ({
 });
 
 //==============================================================================
-// Async Runtime Types (imported from async-effects.ts to avoid circular deps)
+// Async Runtime Types — kept as manual interfaces (runtime only)
 //==============================================================================
 
 /**
