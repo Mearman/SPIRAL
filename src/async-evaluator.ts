@@ -22,7 +22,6 @@ import {
 import { ErrorCodes } from "./errors.js";
 import {
 	type BlockNode,
-	type EirExpr,
 	isBlockNode,
 	type Type,
 	type Value,
@@ -53,7 +52,7 @@ import {
 	stringVal as stringValCtor,
 	undefinedVal,
 } from "./types.js";
-import { createAsyncChannelStore, type AsyncChannelStore } from "./async-effects.js";
+import { createAsyncChannelStore, AsyncChannelStore } from "./async-effects.js";
 import { evalAsyncEffect, type AsyncIOEffectConfig } from "./async-io-effects.js";
 import type {
 	PirParExpr,
@@ -64,6 +63,9 @@ import type {
 	PirRecvExpr,
 	PirSelectExpr,
 	PirRaceExpr,
+	PirInstruction,
+	PirTerminator,
+	PirInsChannelOp,
 } from "./types.js";
 import type { TaskScheduler as TaskSchedulerImport } from "./scheduler.js";
 import { createTaskScheduler } from "./scheduler.js";
@@ -97,7 +99,7 @@ interface AsyncEvalContext {
 // PIR Expression Kinds
 //==============================================================================
 
-const PIR_EXPRESSION_KINDS = [
+const PIR_EXPRESSION_KINDS: ReadonlySet<string> = new Set([
 	"par",
 	"spawn",
 	"await",
@@ -106,7 +108,7 @@ const PIR_EXPRESSION_KINDS = [
 	"recv",
 	"select",
 	"race",
-] as const;
+]);
 
 //==============================================================================
 // Async Evaluator Class
@@ -361,26 +363,24 @@ export class AsyncEvaluator {
 	 * Execute a PIR instruction
 	 */
 	async execInstruction(
-		instr: unknown,
+		instr: PirInstruction,
 		nodeMap: Map<string, PirHybridNode>,
 		nodeValues: Map<string, Value>,
 		context: AsyncEvalContext,
 	): Promise<Value> {
-		const kind = (instr as { kind: string }).kind;
-
-		switch (kind) {
+		switch (instr.kind) {
 		case "assign":
-			return this.execAssign(instr as { kind: "assign"; target: string; value: Expr }, nodeValues, context);
+			return this.execAssign(instr, nodeValues, context);
 		case "op":
-			return this.execOp(instr as { kind: "op"; target: string; ns: string; name: string; args: string[] }, nodeValues, context);
+			return this.execOp(instr, nodeValues, context);
 		case "spawn":
-			return this.execSpawn(instr as { kind: "spawn"; target: string; entry: string; args?: string[] }, nodeMap, nodeValues, context);
+			return this.execSpawn(instr, nodeMap, nodeValues, context);
 		case "channelOp":
-			return this.execChannelOp(instr as { kind: "channelOp"; op: string; channel: string; value?: string }, nodeValues, context);
+			return this.execChannelOp(instr, nodeValues, context);
 		case "await":
-			return this.execAwait(instr as { kind: "await"; target: string; future: string }, nodeValues, context);
+			return this.execAwait(instr, nodeValues, context);
 		default:
-			return errorVal(ErrorCodes.UnknownOperator, `Unknown instruction: ${kind}`);
+			return errorVal(ErrorCodes.UnknownOperator, `Unknown instruction: ${instr.kind}`);
 		}
 	}
 
@@ -388,37 +388,33 @@ export class AsyncEvaluator {
 	 * Execute terminator (returns { done, value?, nextBlock })
 	 */
 	async execTerminator(
-		term: unknown,
+		term: PirTerminator,
 		blockMap: Map<string, PirBlock>,
 		nodeValues: Map<string, Value>,
 		context: AsyncEvalContext,
 	): Promise<{ done: boolean; value?: Value; nextBlock?: string }> {
-		const kind = (term as { kind: string }).kind;
-
-		switch (kind) {
+		switch (term.kind) {
 		case "jump":
-			return { done: false, nextBlock: (term as { kind: "jump"; to: string }).to };
+			return { done: false, nextBlock: term.to };
 		case "branch": {
-			const t = term as { kind: "branch"; cond: string; then: string; else: string };
-			const condValue = nodeValues.get(t.cond);
+			const condValue = nodeValues.get(term.cond);
 			if (condValue?.kind !== "bool") {
 				return { done: true, value: errorVal(ErrorCodes.TypeError, "Branch condition must be boolean") };
 			}
-			return { done: false, nextBlock: condValue.value ? t.then : t.else };
+			return { done: false, nextBlock: condValue.value ? term.then : term.else };
 		}
 		case "return": {
-			const t = term as { kind: "return"; value?: string };
-			const returnValue = t.value ? nodeValues.get(t.value) ?? voidVal() : voidVal();
+			const returnValue = term.value ? nodeValues.get(term.value) ?? voidVal() : voidVal();
 			return { done: true, value: returnValue };
 		}
 		case "fork":
-			return this.execFork(term as { kind: "fork"; branches: { block: string; taskId: string }[]; continuation: string }, blockMap, nodeValues, context);
+			return this.execFork(term, blockMap, nodeValues, context);
 		case "join":
-			return this.execJoin(term as { kind: "join"; tasks: string[]; results?: string[]; to: string }, nodeValues, context);
+			return this.execJoin(term, nodeValues, context);
 		case "suspend":
-			return this.execSuspend(term as { kind: "suspend"; future: string; resumeBlock: string }, nodeValues, context);
+			return this.execSuspend(term, nodeValues, context);
 		default:
-			return { done: true, value: errorVal(ErrorCodes.UnknownOperator, `Unknown terminator: ${kind}`) };
+			return { done: true, value: errorVal(ErrorCodes.UnknownOperator, `Unknown terminator: ${term.kind}`) };
 		}
 	}
 
@@ -433,13 +429,12 @@ export class AsyncEvaluator {
 		await context.state.scheduler.checkGlobalSteps();
 
 		// Check for PIR-specific expressions first
-		const kind = expr.kind as string;
-		if (PIR_EXPRESSION_KINDS.includes(kind as (typeof PIR_EXPRESSION_KINDS)[number])) {
+		if (PIR_EXPRESSION_KINDS.has(expr.kind)) {
 			return this.evalPirExpr(expr, env, context);
 		}
 
 		// Delegate to EIR evaluation for non-PIR expressions
-		return this.evalEirExpr(expr as EirExpr, env, context);
+		return this.evalEirExpr(expr, env, context);
 	}
 
 	/**
@@ -795,7 +790,7 @@ export class AsyncEvaluator {
 	 * Evaluate EIR expressions (delegated from async context)
 	 */
 	async evalEirExpr(
-		expr: EirExpr,
+		expr: PirExpr,
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
@@ -1019,7 +1014,10 @@ export class AsyncEvaluator {
 			}
 		}
 
-		return this.resolveNodeRef((fnValue.body as { id: string }).id, newEnv, context);
+		if (fnValue.body.kind !== "ref") {
+			return errorVal(ErrorCodes.TypeError, "callExpr closure body must be a ref expression");
+		}
+		return this.resolveNodeRef(fnValue.body.id, newEnv, context);
 	}
 
 	private async evalFix(
@@ -1165,7 +1163,7 @@ export class AsyncEvaluator {
 
 			// Check for async effect sentinel — delegate to async handler
 			if (this._asyncIOConfig && isError(result) &&
-				(result as { message?: string }).message?.includes("evalAsyncEffect")) {
+				result.message?.includes("evalAsyncEffect")) {
 				return evalAsyncEffect(expr.op, context.state, this._asyncIOConfig, ...argValues);
 			}
 
@@ -1380,7 +1378,7 @@ export class AsyncEvaluator {
 			context.state.env,
 			instr.args
 				? instr.args
-					.map((argId, i) => [argId, argValues[i]] as [string, Value | undefined])
+					.map((argId, i): [string, Value | undefined] => [argId, argValues[i]])
 					.filter((pair): pair is [string, Value] => pair[1] !== undefined)
 				: []
 		);
@@ -1413,7 +1411,7 @@ export class AsyncEvaluator {
 	}
 
 	private async execChannelOp(
-		instr: { kind: "channelOp"; op: string; channel: string; value?: string },
+		instr: PirInsChannelOp,
 		nodeValues: Map<string, Value>,
 		context: AsyncEvalContext,
 	): Promise<Value> {
@@ -1438,9 +1436,8 @@ export class AsyncEvaluator {
 		}
 		case "recv": {
 			const received = await channel.recv();
-			const recvInstr = instr as { kind: "channelOp"; op: string; channel: string; target?: string };
-			if (recvInstr.target) {
-				context.state.refCells.set(recvInstr.target, { kind: "refCell", value: received });
+			if (instr.target) {
+				context.state.refCells.set(instr.target, { kind: "refCell", value: received });
 			}
 			return voidVal();
 		}
@@ -1474,7 +1471,7 @@ export class AsyncEvaluator {
 	): Promise<{ done: boolean; value?: Value; nextBlock?: string }> {
 		// Use a shared flag to track if continuation was executed
 		// This must be in an object to be shared across closures
-		const continuationState = { executed: false, result: undefined as Value | undefined };
+		const continuationState: { executed: boolean; result: Value | undefined } = { executed: false, result: undefined };
 
 		// Spawn all branch tasks in parallel
 		const taskIds: string[] = [];
@@ -1656,7 +1653,10 @@ export class AsyncEvaluator {
 	 * Get channels as AsyncChannelStore (handles unknown type from circular dependency)
 	 */
 	private getChannels(state: AsyncEvalState): AsyncChannelStore {
-		return state.channels as AsyncChannelStore;
+		if (!(state.channels instanceof AsyncChannelStore)) {
+			throw new Error("AsyncEvalState.channels must be an AsyncChannelStore instance");
+		}
+		return state.channels;
 	}
 }
 
