@@ -292,5 +292,6 @@
     "Goodbye, ",
     "Alice"
   ],
-  "note": "Mixed-cadence I/O pattern: outputs multiple prompts and messages, interleaved with two input reads. Demonstrates value capture and reuse (name used twice, age used once) via readName and readAge nodes referenced in later print effects. Sequential execution chains effects through nested seq expressions."
+  "note": "Mixed-cadence I/O pattern: outputs multiple prompts and messages, interleaved with two input reads. Demonstrates value capture and reuse (name used twice, age used once) via readName and readAge nodes referenced in later print effects. Sequential execution chains effects through nested seq expressions.",
+  "expected_result": null
 }

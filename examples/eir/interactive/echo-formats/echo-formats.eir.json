@@ -60,5 +60,6 @@
     }
   ],
   "result": "finalSeq",
-  "note": "Interactive example: reads one line of input and echoes it three times. Demonstrates the 1 input → many outputs pattern."
+  "note": "Interactive example: reads one line of input and echoes it three times. Demonstrates the 1 input → many outputs pattern.",
+  "expected_result": null
 }

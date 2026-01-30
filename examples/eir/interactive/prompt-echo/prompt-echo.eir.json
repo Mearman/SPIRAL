@@ -24,5 +24,6 @@
     }
   ],
   "result": "echoOutput",
-  "note": "Interactive example: reads a line of text from input and echoes it to output."
+  "note": "Interactive example: reads a line of text from input and echoes it to output.",
+  "expected_result": null
 }

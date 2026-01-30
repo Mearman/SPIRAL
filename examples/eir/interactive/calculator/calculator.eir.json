@@ -104,5 +104,6 @@
     }
   ],
   "result": "finalSeq",
-  "note": "Interactive example: reads two integers and outputs their sum, difference, and product. Demonstrates the many inputs → many outputs pattern with computation between input and output."
+  "note": "Interactive example: reads two integers and outputs their sum, difference, and product. Demonstrates the many inputs → many outputs pattern with computation between input and output.",
+  "expected_result": null
 }
