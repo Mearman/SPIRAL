@@ -117,6 +117,14 @@ export default [
 			"@typescript-eslint/consistent-type-assertions": ["error", { assertionStyle: "never" }],
 			indent: ["error", "tab"],
 			quotes: ["error", "double", { avoidEscape: true }],
+			// File and function size/complexity limits
+			"max-lines": ["warn", { max: 300, skipBlankLines: true, skipComments: true }],
+			"max-lines-per-function": ["warn", { max: 50, skipBlankLines: true, skipComments: true }],
+			"max-statements": ["warn", 10],
+			complexity: ["warn", { max: 10 }],
+			"max-depth": ["warn", { max: 4 }],
+			"max-params": ["warn", { max: 3 }],
+			"max-nested-callbacks": ["warn", { max: 3 }],
 		},
 	},
 
