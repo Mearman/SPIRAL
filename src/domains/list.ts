@@ -2,7 +2,6 @@
 // List operators
 
 import { ErrorCodes } from "../errors.js";
-import type { Type } from "../types.js";
 import {
 	errorVal,
 	intType,
@@ -28,7 +27,7 @@ import {
 
 // length(list<A>) -> int
 const length: Operator = defineOperator("list", "length")
-	.setParams(listType({ kind: "int" } as Type)) // Generic placeholder
+	.setParams(listType(intType)) // Generic placeholder
 	.setReturns(intType)
 	.setPure(true)
 	.setImpl((a) => {
@@ -43,10 +42,10 @@ const length: Operator = defineOperator("list", "length")
 // concat(list<A>, list<A>) -> list<A>
 const concat: Operator = defineOperator("list", "concat")
 	.setParams(
-		listType({ kind: "int" } as Type),
-		listType({ kind: "int" } as Type),
+		listType(intType),
+		listType(intType),
 	)
-	.setReturns(listType({ kind: "int" } as Type))
+	.setReturns(listType(intType))
 	.setPure(true)
 	.setImpl((a, b) => {
 		if (isError(a)) return a;
@@ -60,8 +59,8 @@ const concat: Operator = defineOperator("list", "concat")
 
 // nth(list<A>, int) -> A
 const nth: Operator = defineOperator("list", "nth")
-	.setParams(listType({ kind: "int" } as Type), intType)
-	.setReturns({ kind: "int" } as Type)
+	.setParams(listType(intType), intType)
+	.setReturns(intType)
 	.setPure(true)
 	.setImpl((a, b) => {
 		if (isError(a)) return a;
@@ -89,8 +88,8 @@ const nth: Operator = defineOperator("list", "nth")
 
 // reverse(list<A>) -> list<A>
 const reverse: Operator = defineOperator("list", "reverse")
-	.setParams(listType({ kind: "int" } as Type))
-	.setReturns(listType({ kind: "int" } as Type))
+	.setParams(listType(intType))
+	.setReturns(listType(intType))
 	.setPure(true)
 	.setImpl((a) => {
 		if (isError(a)) return a;
@@ -104,8 +103,8 @@ const reverse: Operator = defineOperator("list", "reverse")
 // slice(list<A>, int) -> list<A>
 // Returns elements from index onwards (like xs.slice(n))
 const slice: Operator = defineOperator("list", "slice")
-	.setParams(listType({ kind: "int" } as Type), intType)
-	.setReturns(listType({ kind: "int" } as Type))
+	.setParams(listType(intType), intType)
+	.setReturns(listType(intType))
 	.setPure(true)
 	.setImpl((a, b) => {
 		if (isError(a)) return a;
@@ -127,8 +126,8 @@ const slice: Operator = defineOperator("list", "slice")
 // cons(A, list<A>) -> list<A>
 // Prepends element to the front of the list
 const cons: Operator = defineOperator("list", "cons")
-	.setParams({ kind: "int" } as Type, listType({ kind: "int" } as Type))
-	.setReturns(listType({ kind: "int" } as Type))
+	.setParams(intType, listType(intType))
+	.setReturns(listType(intType))
 	.setPure(true)
 	.setImpl((a, b) => {
 		if (isError(a)) return a;
