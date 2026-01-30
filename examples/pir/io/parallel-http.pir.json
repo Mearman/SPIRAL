@@ -239,6 +239,14 @@
     }
   ],
   "result": "selectFirstResponse",
-  "expected_result": "selectResult",
+  "expected_result": {
+    "kind": "selectResult",
+    "index": 0,
+    "value": {
+      "kind": "error",
+      "code": "DomainError",
+      "message": "Error: HTTP 404: Not Found"
+    }
+  },
   "note": "This example demonstrates async HTTP patterns. 'parallelRequests' shows concurrent requests with par. 'selectFirstResponse' races requests with 3s timeout, returning {index: n, value: response} for first complete. 'raceRequests' executes all requests in parallel. The producer-consumer pattern uses channels to collect responses. Change 'result' to: 'parallelRequests' for all concurrent requests, 'raceRequests' for parallel execution, 'selectWithShortTimeout' to see timeout behavior (returns {index: -1, value: timeout}), 'safeParallelRequests' for error-handled requests, or 'allResponses' for channel-based collection."
 }
