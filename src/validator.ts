@@ -632,10 +632,12 @@ function checkAcyclic(
 					paramSet.add(p);
 				}
 			}
-			// Add this lambda's parameters
+			// Add this lambda's parameters (string or {name: string} form)
 			for (const p of params) {
 				if (typeof p === "string") {
 					paramSet.add(p);
+				} else if (typeof p === "object" && p !== null && typeof (p as Record<string, unknown>).name === "string") {
+					paramSet.add((p as Record<string, unknown>).name as string);
 				}
 			}
 			// Recursively check with the new parameter set
@@ -762,10 +764,12 @@ function collectRefsAndLetBindings(
 		const lambdaParams = expr.params;
 		if (Array.isArray(lambdaParams)) {
 			const paramSet = new Set(params ?? []);
-			// Add this lambda's parameters
+			// Add this lambda's parameters (string or {name: string} form)
 			for (const p of lambdaParams) {
 				if (typeof p === "string") {
 					paramSet.add(p);
+				} else if (typeof p === "object" && p !== null && typeof (p as Record<string, unknown>).name === "string") {
+					paramSet.add((p as Record<string, unknown>).name as string);
 				}
 			}
 			// Recursively collect refs from body, excluding lambda parameters
@@ -1081,7 +1085,11 @@ export function validateCIR(doc: unknown): ValidationResult<CIRDocument> {
 				const params = expr.params;
 				if (Array.isArray(params)) {
 					for (const p of params) {
-						if (typeof p === "string") allParamsAndBindings.add(p);
+						if (typeof p === "string") {
+							allParamsAndBindings.add(p);
+						} else if (typeof p === "object" && p !== null && typeof (p as Record<string, unknown>).name === "string") {
+							allParamsAndBindings.add((p as Record<string, unknown>).name as string);
+						}
 					}
 				}
 				// Recurse into body if it's an inline expression
@@ -2006,6 +2014,29 @@ function validateLirTerminator(state: ValidationState, term: unknown): void {
 		// code is optional
 		break;
 
+	case "fork":
+		if (!Array.isArray(t.branches) || t.branches.length < 1) {
+			addError(state, "fork terminator must have at least 1 branch", t.branches);
+		} else {
+			for (const branch of t.branches) {
+				if (!validateObject(branch)) {
+					addError(state, "fork branch must be an object", branch);
+				} else {
+					const b = branch as Record<string, unknown>;
+					if (!validateId(b.block)) {
+						addError(state, "fork branch must have valid 'block' identifier", branch);
+					}
+					if (!validateId(b.taskId)) {
+						addError(state, "fork branch must have valid 'taskId' identifier", branch);
+					}
+				}
+			}
+		}
+		if (!validateId(t.continuation)) {
+			addError(state, "fork terminator must have valid 'continuation' identifier", t.continuation);
+		}
+		break;
+
 	default:
 		addError(state, "Unknown terminator kind: " + kind, term);
 		break;
@@ -2239,7 +2270,7 @@ function validatePIRExpr(expr: unknown, state: ValidationState): void {
 	// PIR-specific expression kinds
 	const pirKinds = ["par", "spawn", "await", "channel", "send", "recv", "select", "race"];
 	// EIR expression kinds (PIR extends EIR)
-	const eirKinds = ["lit", "var", "call", "if", "let", "lambda", "callExpr", "fix", "seq", "assign", "while", "for", "iter", "effect", "refCell"];
+	const eirKinds = ["lit", "var", "call", "if", "let", "lambda", "callExpr", "fix", "seq", "assign", "while", "for", "iter", "effect", "refCell", "try"];
 
 	const validKinds = [...pirKinds, ...eirKinds];
 	if (!validKinds.includes(kind)) {
@@ -2287,6 +2318,34 @@ function validatePIRExpr(expr: unknown, state: ValidationState): void {
 	case "race":
 		if (!Array.isArray(e.tasks) || e.tasks.length < 2) {
 			addError(state, "race expression must have at least 2 tasks", e.tasks);
+		}
+		break;
+	case "try":
+		if (typeof e.tryBody === "string") {
+			if (!validateId(e.tryBody)) {
+				addError(state, "try expression must have valid 'tryBody' identifier", expr);
+			}
+		} else {
+			validatePIRExpr(e.tryBody, state);
+		}
+		if (!validateId(e.catchParam)) {
+			addError(state, "try expression must have valid 'catchParam' identifier", expr);
+		}
+		if (typeof e.catchBody === "string") {
+			if (!validateId(e.catchBody)) {
+				addError(state, "try expression must have valid 'catchBody' identifier", expr);
+			}
+		} else {
+			validatePIRExpr(e.catchBody, state);
+		}
+		if (e.fallback !== undefined) {
+			if (typeof e.fallback === "string") {
+				if (!validateId(e.fallback)) {
+					addError(state, "try expression fallback must be a valid identifier", expr);
+				}
+			} else {
+				validatePIRExpr(e.fallback, state);
+			}
 		}
 		break;
 	}
