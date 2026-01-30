@@ -2845,6 +2845,161 @@ describe("Validator - Unit Tests", () => {
 	});
 
 	//==========================================================================
+	// Topological Sort
+	//==========================================================================
+
+	describe("Topological sort", () => {
+		it("should accept forward references after topological sort", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [
+					{
+						ns: "core",
+						name: "add",
+						params: ["a", "b"],
+						result: { kind: "int" },
+						body: { kind: "ref", id: "a" },
+					},
+				],
+				nodes: [
+					{
+						id: "result",
+						expr: {
+							kind: "call",
+							ns: "core",
+							name: "add",
+							args: ["a", "b"],
+						},
+					},
+					{
+						id: "a",
+						expr: { kind: "lit", type: { kind: "int" }, value: 1 },
+					},
+					{
+						id: "b",
+						expr: { kind: "lit", type: { kind: "int" }, value: 2 },
+					},
+				],
+				result: "result",
+			};
+			const result = validateAIR(doc);
+			assert.ok(
+				result.valid,
+				`Expected valid but got errors: ${JSON.stringify(result.errors)}`,
+			);
+		});
+
+		it("should still reject true cycles (A -> B -> A)", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "a",
+						expr: { kind: "ref", id: "b" },
+					},
+					{
+						id: "b",
+						expr: { kind: "ref", id: "a" },
+					},
+				],
+				result: "a",
+			};
+			const result = validateAIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("cycle")));
+		});
+
+		it("should accept forward reference chain (A -> B -> C, defined in reverse)", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "a",
+						expr: { kind: "ref", id: "b" },
+					},
+					{
+						id: "b",
+						expr: { kind: "ref", id: "c" },
+					},
+					{
+						id: "c",
+						expr: { kind: "lit", type: { kind: "int" }, value: 42 },
+					},
+				],
+				result: "a",
+			};
+			const result = validateAIR(doc);
+			assert.ok(
+				result.valid,
+				`Expected valid but got errors: ${JSON.stringify(result.errors)}`,
+			);
+		});
+
+		it("should still reject self-referencing node (cycle)", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{
+						id: "a",
+						expr: { kind: "ref", id: "a" },
+					},
+				],
+				result: "a",
+			};
+			const result = validateAIR(doc);
+			assert.ok(!result.valid);
+			assert.ok(result.errors.some((e) => e.message.includes("cycle")));
+		});
+
+		it("should accept diamond dependency regardless of order", () => {
+			const doc = {
+				version: "1.0.0",
+				airDefs: [
+					{
+						ns: "core",
+						name: "add",
+						params: ["a", "b"],
+						result: { kind: "int" },
+						body: { kind: "ref", id: "a" },
+					},
+				],
+				nodes: [
+					{
+						id: "a",
+						expr: {
+							kind: "call",
+							ns: "core",
+							name: "add",
+							args: ["b", "c"],
+						},
+					},
+					{
+						id: "b",
+						expr: { kind: "ref", id: "d" },
+					},
+					{
+						id: "c",
+						expr: { kind: "ref", id: "d" },
+					},
+					{
+						id: "d",
+						expr: { kind: "lit", type: { kind: "int" }, value: 10 },
+					},
+				],
+				result: "a",
+			};
+			const result = validateAIR(doc);
+			assert.ok(
+				result.valid,
+				`Expected valid but got errors: ${JSON.stringify(result.errors)}`,
+			);
+		});
+	});
+
+	//==========================================================================
 	// Inline Expression Validation
 	//==========================================================================
 
