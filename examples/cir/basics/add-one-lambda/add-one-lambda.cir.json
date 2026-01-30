@@ -123,5 +123,6 @@
       }
     }
   ],
-  "result": "doubleNested"
+  "result": "doubleNested",
+  "expected_result": 8
 }
