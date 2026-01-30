@@ -7,7 +7,7 @@
       "name": "contains",
       "params": [
         "set",
-        "elem"
+        "of"
       ],
       "result": {
         "kind": "bool"
@@ -28,7 +28,7 @@
         "kind": "lit",
         "type": {
           "kind": "set",
-          "elem": {
+          "of": {
             "kind": "int"
           }
         },
@@ -65,7 +65,7 @@
         "kind": "lit",
         "type": {
           "kind": "set",
-          "elem": {
+          "of": {
             "kind": "int"
           }
         },
