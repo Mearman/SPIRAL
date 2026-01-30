@@ -7,7 +7,7 @@
 
 export type {
 	AIRDef, AIRDocument,
-	CIRDocument, EIRDocument, Expr, FunctionSignature, Node, Type, Value,
+	CIRDocument, DoExpr, EIRDocument, Expr, FunctionSignature, Node, Type, Value,
 	// EIR/LIR Types
 	EvalState, Effect,
 	LIRDocument, LirBlock, LirInstruction, LirTerminator,
@@ -105,6 +105,8 @@ export { createBoolRegistry } from "./domains/bool.js";
 export { createListRegistry } from "./domains/list.js";
 
 export { createSetRegistry } from "./domains/set.js";
+
+export { createStringRegistry } from "./domains/string.js";
 
 export {
 	defineOperator, lookupOperator, registerOperator, type OperatorBuilder
@@ -213,3 +215,9 @@ export {
 	isEIRSchema,
 	isLIRSchema,
 } from "./schemas.js";
+
+//==============================================================================
+// Ingest
+//==============================================================================
+
+export { ingestTypeScript, type TypeScriptIngestOptions } from "./ingest/typescript.js";
