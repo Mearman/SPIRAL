@@ -63,7 +63,7 @@
     },
     {
       "id": "writeOp",
-      "type": { "kind": "future", "of": { "kind": "unit" } },
+      "type": { "kind": "future", "of": { "kind": "void" } },
       "expr": {
         "kind": "effect",
         "op": "asyncWrite",
