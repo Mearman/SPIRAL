@@ -744,20 +744,36 @@ export async function executeForkTerminator(
 			continue;
 		}
 
-		// Spawn task for this branch
+		// Spawn task for this branch — follow CFG through multiple blocks
 		state.scheduler.spawn(branch.taskId, () => (async () => {
-			// Execute the branch block
-			for (const instr of block.instructions) {
-				const result = await executeInstructionAsync(instr, state, registry, effectRegistry);
-				if (result && isError(result)) {
-					return result;
-				}
-			}
+			let currentBlockId: string | undefined = branch.block;
 
-			// Execute branch terminator
-			const termResult = await executeTerminatorAsync(block.terminator, state, blocks, nodeMap, registry, effectRegistry);
-			if (typeof termResult !== "string") {
-				return termResult; // Return value or error
+			while (currentBlockId) {
+				const currentBlock = blocks.find((b) => b.id === currentBlockId);
+				if (!currentBlock) {
+					return errorVal(ErrorCodes.DomainError, `Fork branch block not found: ${currentBlockId}`);
+				}
+
+				// Execute instructions
+				for (const instr of currentBlock.instructions) {
+					const result = await executeInstructionAsync(instr, state, registry, effectRegistry);
+					if (result && isError(result)) {
+						return result;
+					}
+				}
+
+				// Execute terminator
+				const termResult = await executeTerminatorAsync(
+					currentBlock.terminator, state, blocks, nodeMap, registry, effectRegistry
+				);
+
+				if (typeof termResult !== "string") {
+					return termResult; // Return value or error — branch done
+				}
+
+				// Follow jump to next block
+				state.predecessor = currentBlockId;
+				currentBlockId = termResult;
 			}
 
 			return voidVal();
