@@ -54,6 +54,7 @@ import {
 	undefinedVal,
 } from "./types.js";
 import { createAsyncChannelStore, type AsyncChannelStore } from "./async-effects.js";
+import { evalAsyncEffect, type AsyncIOEffectConfig } from "./async-io-effects.js";
 import type {
 	PirParExpr,
 	PirSpawnExpr,
@@ -115,15 +116,18 @@ export class AsyncEvaluator {
 	private readonly _registry: OperatorRegistry;
 	private readonly _defs: Defs;
 	private readonly _effectRegistry: EffectRegistry;
+	private readonly _asyncIOConfig: AsyncIOEffectConfig | undefined;
 
 	constructor(
 		registry: OperatorRegistry,
 		defs: Defs,
 		effectRegistry: EffectRegistry = emptyEffectRegistry(),
+		asyncIOConfig?: AsyncIOEffectConfig,
 	) {
 		this._registry = registry;
 		this._defs = defs;
 		this._effectRegistry = effectRegistry;
+		this._asyncIOConfig = asyncIOConfig;
 	}
 
 	get registry(): OperatorRegistry {
@@ -1149,11 +1153,23 @@ export class AsyncEvaluator {
 
 		const effect = lookupEffect(this._effectRegistry, expr.op);
 		if (!effect) {
+			// Try async IO effects if config is available
+			if (this._asyncIOConfig) {
+				return evalAsyncEffect(expr.op, context.state, this._asyncIOConfig, ...argValues);
+			}
 			return errorVal(ErrorCodes.UnknownOperator, `Unknown effect: ${expr.op}`);
 		}
 
 		try {
-			return effect.fn(...argValues);
+			const result = effect.fn(...argValues);
+
+			// Check for async effect sentinel — delegate to async handler
+			if (this._asyncIOConfig && isError(result) &&
+				(result as { message?: string }).message?.includes("evalAsyncEffect")) {
+				return evalAsyncEffect(expr.op, context.state, this._asyncIOConfig, ...argValues);
+			}
+
+			return result;
 		} catch (e) {
 			return errorVal(ErrorCodes.DomainError, String(e));
 		}
