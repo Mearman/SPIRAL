@@ -136,6 +136,9 @@ function substituteExpr(
 	case "fix":
 		return { ...expr };
 
+	case "do":
+		return { ...expr };
+
 	// PIR expressions - no substitution needed (they use string refs)
 	case "par":
 	case "spawn":
@@ -208,6 +211,9 @@ export function collectFreeVars(expr: Expr, boundVars: Set<string>): string[] {
 		return [];
 
 	case "fix":
+		return [];
+
+	case "do":
 		return [];
 
 	// PIR expressions - no free variables (they use string refs)
@@ -332,6 +338,9 @@ function alphaRenameExpr(
 		return { ...expr };
 
 	case "fix":
+		return { ...expr };
+
+	case "do":
 		return { ...expr };
 
 	// PIR expressions - no renaming needed (they use string refs)
