@@ -507,8 +507,11 @@ describe("LIR Lowering - Unit Tests", () => {
 		});
 
 		it("should handle empty nodes array", () => {
-			const lir = lowerEIRtoLIR(eirEmptyNodes);
-			assert.ok(lir.nodes.length > 0, "Should create fallback block");
+			// Empty nodes array means the result node cannot be found
+			assert.throws(
+				() => lowerEIRtoLIR(eirEmptyNodes),
+				/Result node not found/,
+			);
 		});
 
 		it("should throw error when result node is missing", () => {
@@ -623,15 +626,17 @@ describe("LIR Lowering - Unit Tests", () => {
 			const lir = lowerEIRtoLIR(eirWithAssign);
 			const blocks = getAllBlocks(lir);
 
-			// Should have an assign instruction with target
-			const assignInstr = blocks
+			// Should have an assign instruction targeting "x" from the EIR assign expr
+			// (the first assign found may be the literal node "value", so filter for target "x")
+			const allAssigns = blocks
 				.flatMap((b) => b.instructions)
-				.find((i) => i.kind === "assign");
+				.filter((i) => i.kind === "assign");
 
-			assert.ok(assignInstr, "Should have an assign instruction");
-			if (assignInstr && assignInstr.kind === "assign") {
-				assert.strictEqual(assignInstr.target, "x");
-			}
+			assert.ok(allAssigns.length > 0, "Should have assign instructions");
+			const eirAssign = allAssigns.find(
+				(i) => i.kind === "assign" && i.target === "x",
+			);
+			assert.ok(eirAssign, "Should have an assign instruction targeting 'x'");
 		});
 
 		it("should lower while expression to loop structure", () => {
