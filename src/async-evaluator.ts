@@ -1219,7 +1219,7 @@ export class AsyncEvaluator {
 	 * Otherwise return tryBody result
 	 */
 	private async evalTryExpr(
-		expr: { kind: "try"; tryBody: string | import("./types.js").Expr; catchParam: string; catchBody: string | import("./types.js").Expr; fallback?: string | import("./types.js").Expr },
+		expr: { kind: "try"; tryBody: string | import("./types.js").Expr; catchParam: string; catchBody: string | import("./types.js").Expr; fallback?: string | import("./types.js").Expr | undefined },
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	): Promise<Value> {
@@ -1351,7 +1351,7 @@ export class AsyncEvaluator {
 	}
 
 	private async execSpawn(
-		instr: { kind: "spawn"; target: string; entry: string; args?: string[] },
+		instr: { kind: "spawn"; target: string; entry: string; args?: string[] | undefined },
 		nodeMap: Map<string, PirHybridNode>,
 		nodeValues: Map<string, Value>,
 		context: AsyncEvalContext,
@@ -1550,7 +1550,7 @@ export class AsyncEvaluator {
 	}
 
 	private async execJoin(
-		term: { kind: "join"; tasks: string[]; results?: string[]; to: string },
+		term: { kind: "join"; tasks: string[]; results?: string[] | undefined; to: string },
 		_nodeValues: Map<string, Value>,
 		context: AsyncEvalContext,
 	): Promise<{ done: boolean; value?: Value; nextBlock?: string }> {
