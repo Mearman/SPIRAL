@@ -824,7 +824,7 @@ describe("Validator - Unit Tests", () => {
 		});
 
 		it("should accept valid recursion through lambda", () => {
-			const result = validateAIR(validRecursiveWithLambda);
+			const result = validateCIR(validRecursiveWithLambda);
 			assert.ok(result.valid);
 		});
 	});
