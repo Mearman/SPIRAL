@@ -56,6 +56,21 @@ const OPERATOR_MAP: Record<string, OperatorMapping> = {
 };
 
 /**
+ * Type guard: checks whether a Document is a LIR document
+ * by verifying it has nodes with block structure.
+ */
+function isLIRDocument(doc: Document): doc is LIRDocument {
+	return "nodes" in doc && doc.nodes.some((n) => "blocks" in n && "entry" in n);
+}
+
+/**
+ * Type guard: checks whether a Document is an expression-based document (AIR/CIR/EIR).
+ */
+function isExprBasedDocument(doc: Document): doc is AIRDocument | CIRDocument | EIRDocument {
+	return "nodes" in doc && "airDefs" in doc && Array.isArray(doc.airDefs);
+}
+
+/**
  * Main entry point for Python synthesis
  */
 export function synthesizePython(doc: Document, opts: PythonSynthOptions = {}): string {
@@ -64,12 +79,12 @@ export function synthesizePython(doc: Document, opts: PythonSynthOptions = {}): 
 	// Detect IR layer and dispatch
 	// LIR documents have nodes containing block nodes (CFG-based)
 	// Check if any node has blocks/entry (block node structure)
-	if ("nodes" in doc && doc.nodes.some((n) => "blocks" in n && "entry" in n)) {
-		return synthesizeLIR(doc as LIRDocument, { moduleName });
+	if (isLIRDocument(doc)) {
+		return synthesizeLIR(doc, { moduleName });
 	}
 	// Expression-based documents (AIR/CIR/EIR) with nodes
-	if ("nodes" in doc && "airDefs" in doc) {
-		return synthesizeExprBased(doc as AIRDocument | CIRDocument | EIRDocument, { moduleName });
+	if (isExprBasedDocument(doc)) {
+		return synthesizeExprBased(doc, { moduleName });
 	}
 
 	throw new Error("Unrecognized document format");
@@ -181,8 +196,7 @@ function synthesizeExpr(
 
 	switch (kind) {
 	case "lit": {
-		const litExpr = expr as unknown as { value: unknown; type: { kind: string } };
-		const rawValue = litExpr.value;
+		const rawValue = expr.value;
 
 		// Handle raw primitive values
 		if (rawValue === null || rawValue === undefined) {
@@ -199,34 +213,32 @@ function synthesizeExpr(
 		}
 		if (Array.isArray(rawValue)) {
 			// Handle raw arrays (list literals)
-			return `[${(rawValue as unknown[]).map((v) => formatUnknownValue(v)).join(", ")}]`;
+			return `[${rawValue.map((v: unknown) => formatUnknownValue(v)).join(", ")}]`;
 		}
 		// For complex Value objects, delegate to formatLiteral
-		return formatLiteral(rawValue as Value);
+		if (typeof rawValue === "object" && isValue(rawValue)) {
+			return formatLiteral(rawValue);
+		}
+		return formatUnknownValue(rawValue);
 	}
 
 	case "ref": {
-		const id = (expr as { id: string }).id;
-		return refToPython(id);
+		return refToPython(expr.id);
 	}
 
 	case "var": {
-		const name = (expr as { name: string }).name;
-		return name;
+		return expr.name;
 	}
 
 	case "call": {
-		const ns = (expr as { ns: string }).ns;
-		const opName = (expr as { name: string }).name;
-		const args = (expr as { args: string[] }).args;
-		const qualName = `${ns}:${opName}`;
+		const qualName = `${expr.ns}:${expr.name}`;
 		const mapping = OPERATOR_MAP[qualName];
 
 		if (!mapping) {
 			throw new Error(`Unsupported operator: ${qualName}`);
 		}
 
-		const argCodes = args.map(refToPython);
+		const argCodes = expr.args.map(a => refOrInline(a));
 
 		if (mapping.customImpl) {
 			return mapping.customImpl(argCodes);
@@ -243,97 +255,81 @@ function synthesizeExpr(
 	}
 
 	case "if": {
-		const condId = (expr as { cond: string }).cond;
-		const thenId = (expr as { then: string }).then;
-		const elseId = (expr as { else: string }).else;
-		return `(${refToPython(thenId)} if ${refToPython(condId)} else ${refToPython(elseId)})`;
+		return `(${refToPython(expr.then)} if ${refToPython(expr.cond)} else ${refToPython(expr.else)})`;
 	}
 
 	case "let": {
-		const name = (expr as { name: string }).name;
-		const valueId = (expr as { value: string }).value;
-		const bodyId = (expr as { body: string }).body;
-		return `(lambda ${name}: ${refToPython(bodyId)})(${refToPython(valueId)})`;
+		return `(lambda ${expr.name}: ${refToPython(expr.body)})(${refToPython(expr.value)})`;
 	}
 
 	case "airRef": {
-		const ns = (expr as { ns: string }).ns;
-		const opName = (expr as { name: string }).name;
-		const args = (expr as { args: string[] }).args;
-		const qualName = `${ns}:${opName}`;
+		const qualName = `${expr.ns}:${expr.name}`;
 		const airDef = state.airDefs.get(qualName);
 
 		if (!airDef) {
 			throw new Error(`Unknown AIR definition: ${qualName}`);
 		}
 
-		const argCodes = args.map(refToPython);
-		return `air_${ns}_${opName}(${argCodes.join(", ")})`;
+		const argCodes = expr.args.map(refToPython);
+		return `air_${expr.ns}_${expr.name}(${argCodes.join(", ")})`;
 	}
 
 	case "lambda": {
-		const params = (expr as { params: string[] }).params;
-		const bodyId = (expr as { body: string }).body;
-		const paramNames = params.join(", ");
-		return `(lambda ${paramNames}: ${refToPython(bodyId)})`;
+		const paramNames = expr.params.join(", ");
+		return `(lambda ${paramNames}: ${refToPython(expr.body)})`;
 	}
 
 	case "callExpr": {
-		const fnId = (expr as { fn: string }).fn;
-		const args = (expr as { args: string[] }).args;
-		const argCodes = args.map(refToPython);
-		return `${refToPython(fnId)}(${argCodes.join(", ")})`;
+		const argCodes = expr.args.map(refToPython);
+		return `${refToPython(expr.fn)}(${argCodes.join(", ")})`;
 	}
 
 	case "fix": {
-		const fnId = (expr as { fn: string }).fn;
 		const varName = freshVar(state);
-		return `(lambda ${varName}: ${refToPython(fnId)}(${varName}))(${varName})`;
+		return `(lambda ${varName}: ${refToPython(expr.fn)}(${varName}))(${varName})`;
+	}
+
+	case "do": {
+		const exprs = expr.exprs;
+		if (exprs.length === 0) return "None";
+		const first = exprs[0];
+		if (exprs.length === 1 && first !== undefined) return refOrInline(first);
+		// Use Python tuple trick: (expr1, expr2, ..., exprN)[-1] to evaluate all and return last
+		const exprCodes = exprs.map(e => refOrInline(e));
+		return `(${exprCodes.join(", ")})[-1]`;
 	}
 
 	case "predicate": {
-		const name = (expr as { name: string }).name;
-		return `(lambda ${name}: True)`;
+		return `(lambda ${expr.name}: True)`;
 	}
 
 	case "seq": {
-		const firstId = (expr as { first: string }).first;
-		const thenId = (expr as { then: string }).then;
-		return `(lambda _: ${refToPython(thenId)})(${refToPython(firstId)})`;
+		return `(lambda _: ${refOrInline(expr.then)})(${refOrInline(expr.first)})`;
 	}
 
 	case "assign": {
-		const target = (expr as { target: string }).target;
-		const rawValue = (expr as { value: string | Expr }).value;
-		const value = refOrInline(rawValue);
+		const value = refOrInline(expr.value);
 
-		if (!mutableCells.has(target)) {
+		if (!mutableCells.has(expr.target)) {
 			const cellName = `_cell_${state.varIndex++}`;
-			cellInitLines.push(`${cellName} = {"${target}": ${value}}`);
-			mutableCells.set(target, cellName);
+			cellInitLines.push(`${cellName} = {"${expr.target}": ${value}}`);
+			mutableCells.set(expr.target, cellName);
 		}
 
 		return "None";
 	}
 
 	case "while": {
-		const condId = (expr as { cond: string }).cond;
-		const bodyId = (expr as { body: string }).body;
-		return `(lambda _: (${refToPython(bodyId)}, None)[1] if ${refToPython(condId)} else None)(None)`;
+		return `(lambda _: (${refOrInline(expr.body)}, None)[1] if ${refOrInline(expr.cond)} else None)(None)`;
 	}
 
 	case "iter": {
-		const varName = (expr as { var: string }).var;
-		const iterVal = (expr as { iter: string | Expr }).iter;
-		const bodyVal = (expr as { body: string | Expr }).body;
-		return `[(lambda ${varName}: ${refOrInline(bodyVal)})(item) for item in ${refOrInline(iterVal)}][-1]`;
+		return `[(lambda ${expr.var}: ${refOrInline(expr.body)})(item) for item in ${refOrInline(expr.iter)}][-1]`;
 	}
 
 	case "effect": {
-		const op = (expr as { op: string }).op;
-		const args = (expr as { args: string[] }).args;
-		const argCodes = args.map(refToPython);
-		return `print("${op}", ${argCodes.join(", ")})`;
+		const argCodes = expr.args.map(a => refOrInline(a));
+		return `print("${expr.op}", ${argCodes.join(", ")})`;
 	}
 
 	default: {
@@ -480,6 +476,11 @@ function freshVar(state: ExprSynthState): string {
 	return `_v${state.varIndex++}`;
 }
 
+/** Type guard: checks if an unknown value has a 'kind' property consistent with Value */
+function isValue(value: object): value is Value {
+	return "kind" in value;
+}
+
 // Helper function to format unknown values (from raw test data)
 function formatUnknownValue(value: unknown): string {
 	if (value === null || value === undefined) return "None";
@@ -488,8 +489,8 @@ function formatUnknownValue(value: unknown): string {
 	if (typeof value === "string") return `"${value}"`;
 	if (Array.isArray(value)) return `[${value.map(formatUnknownValue).join(", ")}]`;
 	// Handle Value objects (objects with a 'kind' property)
-	if (typeof value === "object" && "kind" in value) {
-		return formatLiteral(value as Value);
+	if (typeof value === "object" && isValue(value)) {
+		return formatLiteral(value);
 	}
 	return JSON.stringify(value);
 }
@@ -534,20 +535,21 @@ function formatLiteral(value: Value): string {
 	return `"<unknown:${value.kind}>"`;
 }
 
-function pythonExpr(expr: Expr | { kind: string; [key: string]: unknown }): string {
-	const kind = expr.kind;
-	switch (kind) {
+function pythonExpr(expr: Expr): string {
+	switch (expr.kind) {
 	case "ref":
-		return `v_${sanitizeId((expr as { id: string }).id)}`;
+		return `v_${sanitizeId(expr.id)}`;
 	case "var":
-		return (expr as { name: string }).name;
-	case "lit":
-		return formatLiteral((expr as { value: Value }).value);
+		return expr.name;
+	case "lit": {
+		const litValue = expr.value;
+		if (typeof litValue === "object" && litValue !== null && isValue(litValue)) {
+			return formatLiteral(litValue);
+		}
+		return formatUnknownValue(litValue);
+	}
 	case "call": {
-		const ns = (expr as { ns: string }).ns;
-		const opName = (expr as { name: string }).name;
-		const args = (expr as { args: (string | Expr)[] }).args;
-		const qualName = `${ns}:${opName}`;
+		const qualName = `${expr.ns}:${expr.name}`;
 		const mapping = OPERATOR_MAP[qualName];
 
 		if (!mapping) {
@@ -555,7 +557,7 @@ function pythonExpr(expr: Expr | { kind: string; [key: string]: unknown }): stri
 		}
 
 		// Args can be strings (node refs) or inline Expr objects (in AIR defs)
-		const argCodes = args.map((arg) => {
+		const argCodes = expr.args.map((arg) => {
 			if (typeof arg === "string") {
 				return `v_${sanitizeId(arg)}`;
 			}
