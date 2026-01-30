@@ -284,6 +284,24 @@ const fixExprSchema = {
 	additionalProperties: false,
 };
 
+const doExprSchema = {
+	type: "object",
+	required: ["kind", "exprs"],
+	properties: {
+		kind: { const: "do" },
+		exprs: {
+			type: "array",
+			items: {
+				oneOf: [
+					{ type: "string", pattern: "^[a-zA-Z_][a-zA-Z0-9_]*$" },
+					{ $ref: "#/definitions/expr" },
+				],
+			},
+		},
+	},
+	additionalProperties: false,
+};
+
 const airExprSchema = {
 	oneOf: [
 		litExprSchema,
@@ -310,6 +328,7 @@ const cirExprSchema = {
 		lambdaExprSchema,
 		callFnExprSchema,
 		fixExprSchema,
+		doExprSchema,
 	],
 };
 
@@ -594,6 +613,7 @@ const eirExprSchema = {
 		lambdaExprSchema,
 		callFnExprSchema,
 		fixExprSchema,
+		doExprSchema,
 		seqExprSchema,
 		assignExprSchema,
 		whileExprSchema,

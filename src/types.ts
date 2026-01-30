@@ -352,6 +352,7 @@ export type Expr =
 	| LambdaExpr // CIR only
 	| CallFnExpr // CIR only (distinguished from operator Call)
 	| FixExpr // CIR only
+	| DoExpr        // CIR+ do expression (sequence)
 	| PirParExpr // PIR parallel composition
 	| PirSpawnExpr // PIR spawn task
 	| PirAwaitExpr // PIR await future
@@ -429,6 +430,11 @@ export interface FixExpr {
 	kind: "fix";
 	fn: string;
 	type: Type;
+}
+
+export interface DoExpr {
+	kind: "do";
+	exprs: (string | Expr)[];
 }
 
 //==============================================================================
@@ -840,21 +846,27 @@ export function typeEqual(a: Type, b: Type): boolean {
 	case "option":
 	case "ref":
 	case "future":
-	case "channel":
-		return typeEqual(a.of, (b as SetType | ListType | OptionType | RefType | FutureType | ChannelType).of);
-	case "map":
+	case "channel": {
+		if (b.kind !== "set" && b.kind !== "list" && b.kind !== "option" && b.kind !== "ref" && b.kind !== "future" && b.kind !== "channel") return false;
+		return typeEqual(a.of, b.of);
+	}
+	case "map": {
+		if (b.kind !== "map") return false;
 		return (
-			typeEqual(a.key, (b as MapType).key) &&
-				typeEqual(a.value, (b as MapType).value)
+			typeEqual(a.key, b.key) &&
+				typeEqual(a.value, b.value)
 		);
-	case "opaque":
-		return a.name === (b as OpaqueType).name;
+	}
+	case "opaque": {
+		if (b.kind !== "opaque") return false;
+		return a.name === b.name;
+	}
 	case "fn": {
-		const fnB = b as FnType;
-		if (a.params.length !== fnB.params.length) return false;
+		if (b.kind !== "fn") return false;
+		if (a.params.length !== b.params.length) return false;
 		for (let i = 0; i < a.params.length; i++) {
 			const paramA = a.params[i];
-			const paramB = fnB.params[i];
+			const paramB = b.params[i];
 			if (paramA === undefined || paramB === undefined) {
 				return false;
 			}
@@ -862,17 +874,18 @@ export function typeEqual(a: Type, b: Type): boolean {
 				return false;
 			}
 		}
-		return typeEqual(a.returns, fnB.returns);
+		return typeEqual(a.returns, b.returns);
 	}
 	case "task": {
-		return typeEqual(a.returns, (b as TaskType).returns);
+		if (b.kind !== "task") return false;
+		return typeEqual(a.returns, b.returns);
 	}
 	case "async": {
-		const asyncB = b as AsyncFnType;
-		if (a.params.length !== asyncB.params.length) return false;
+		if (b.kind !== "async") return false;
+		if (a.params.length !== b.params.length) return false;
 		for (let i = 0; i < a.params.length; i++) {
 			const paramA = a.params[i];
-			const paramB = asyncB.params[i];
+			const paramB = b.params[i];
 			if (paramA === undefined || paramB === undefined) {
 				return false;
 			}
@@ -880,7 +893,7 @@ export function typeEqual(a: Type, b: Type): boolean {
 				return false;
 			}
 		}
-		return typeEqual(a.returns, asyncB.returns);
+		return typeEqual(a.returns, b.returns);
 	}
 	}
 }
