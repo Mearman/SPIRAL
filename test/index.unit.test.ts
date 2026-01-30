@@ -68,7 +68,7 @@ describe("Main Index Exports - Unit Tests", () => {
 		});
 
 		it("should export Defs, TypeEnv, ValueEnv types from env.js", () => {
-			assert.ok("Defs" in spiral || spiral.emptyDefs, "Defs should be available");
+			assert.ok("Defs" in spiral || spiral.emptyTypeEnv, "Defs should be available");
 			assert.ok("TypeEnv" in spiral || spiral.emptyTypeEnv, "TypeEnv should be available");
 			assert.ok("ValueEnv" in spiral || spiral.emptyValueEnv, "ValueEnv should be available");
 		});
@@ -133,40 +133,36 @@ describe("Main Index Exports - Unit Tests", () => {
 	//==========================================================================
 
 	describe("Type Constructor Exports", () => {
-		// Primitive types
+		// Primitive types (these are constants, not functions)
 		it("should export boolType", () => {
-			const boolT = spiral.boolType();
-			assert.deepStrictEqual(boolT, { kind: "bool" });
+			assert.deepStrictEqual(spiral.boolType, { kind: "bool" });
 		});
 
 		it("should export intType", () => {
-			const intT = spiral.intType();
-			assert.deepStrictEqual(intT, { kind: "int" });
+			assert.deepStrictEqual(spiral.intType, { kind: "int" });
 		});
 
 		it("should export floatType", () => {
-			const floatT = spiral.floatType();
-			assert.deepStrictEqual(floatT, { kind: "float" });
+			assert.deepStrictEqual(spiral.floatType, { kind: "float" });
 		});
 
 		it("should export stringType", () => {
-			const stringT = spiral.stringType();
-			assert.deepStrictEqual(stringT, { kind: "string" });
+			assert.deepStrictEqual(spiral.stringType, { kind: "string" });
 		});
 
 		// Composite types
 		it("should export listType", () => {
-			const listT = spiral.listType(spiral.intType());
+			const listT = spiral.listType(spiral.intType);
 			assert.deepStrictEqual(listT, { kind: "list", of: { kind: "int" } });
 		});
 
 		it("should export setType", () => {
-			const setT = spiral.setType(spiral.intType());
+			const setT = spiral.setType(spiral.intType);
 			assert.deepStrictEqual(setT, { kind: "set", of: { kind: "int" } });
 		});
 
 		it("should export mapType", () => {
-			const mapT = spiral.mapType(spiral.stringType(), spiral.intType());
+			const mapT = spiral.mapType(spiral.stringType, spiral.intType);
 			assert.deepStrictEqual(mapT, {
 				kind: "map",
 				key: { kind: "string" },
@@ -175,15 +171,15 @@ describe("Main Index Exports - Unit Tests", () => {
 		});
 
 		it("should export optionType", () => {
-			const optionT = spiral.optionType(spiral.intType());
+			const optionT = spiral.optionType(spiral.intType);
 			assert.deepStrictEqual(optionT, { kind: "option", of: { kind: "int" } });
 		});
 
 		it("should export fnType", () => {
-			const fnT = spiral.fnType([spiral.intType()], spiral.intType());
+			const fnT = spiral.fnType([spiral.intType], spiral.intType);
 			assert.strictEqual(fnT.kind, "fn");
 			assert.ok("params" in fnT);
-			assert.ok("result" in fnT);
+			assert.ok("returns" in fnT);
 		});
 
 		it("should export opaqueType", () => {
@@ -193,12 +189,11 @@ describe("Main Index Exports - Unit Tests", () => {
 
 		// EIR-specific types
 		it("should export voidType", () => {
-			const voidT = spiral.voidType();
-			assert.deepStrictEqual(voidT, { kind: "void" });
+			assert.deepStrictEqual(spiral.voidType, { kind: "void" });
 		});
 
 		it("should export refType", () => {
-			const refT = spiral.refType(spiral.intType());
+			const refT = spiral.refType(spiral.intType);
 			assert.deepStrictEqual(refT, { kind: "ref", of: { kind: "int" } });
 		});
 
@@ -231,21 +226,21 @@ describe("Main Index Exports - Unit Tests", () => {
 		});
 
 		it("should export setVal", () => {
-			const setV = spiral.setVal([spiral.intVal(1), spiral.intVal(2)]);
+			const setV = spiral.setVal(new Set(["1", "2"]));
 			assert.strictEqual(setV.kind, "set");
 			assert.ok("value" in setV);
 		});
 
 		it("should export mapVal", () => {
-			const mapV = spiral.mapVal([["a", spiral.intVal(1)]]);
+			const mapV = spiral.mapVal(new Map([["a", spiral.intVal(1)]]));
 			assert.strictEqual(mapV.kind, "map");
 			assert.ok("value" in mapV);
 		});
 
 		it("should export optionVal", () => {
-			const some = spiral.optionVal("some", spiral.intVal(42));
+			const some = spiral.optionVal(spiral.intVal(42));
 			assert.strictEqual(some.kind, "option");
-			const none = spiral.optionVal("none");
+			const none = spiral.optionVal(null);
 			assert.strictEqual(none.kind, "option");
 		});
 
@@ -255,7 +250,11 @@ describe("Main Index Exports - Unit Tests", () => {
 		});
 
 		it("should export closureVal", () => {
-			const closureV = spiral.closureVal(["x"], { kind: "var", name: "x" }, {});
+			const closureV = spiral.closureVal(
+				[{ name: "x" }],
+				{ kind: "var", name: "x" },
+				new Map()
+			);
 			assert.strictEqual(closureV.kind, "closure");
 			assert.ok("params" in closureV);
 			assert.ok("body" in closureV);
@@ -269,12 +268,12 @@ describe("Main Index Exports - Unit Tests", () => {
 
 		it("should export voidVal", () => {
 			const voidV = spiral.voidVal();
-			assert.deepStrictEqual(voidV, { kind: "void", value: null });
+			assert.deepStrictEqual(voidV, { kind: "void" });
 		});
 
 		it("should export refCellVal", () => {
 			const refV = spiral.refCellVal(spiral.intVal(42));
-			assert.strictEqual(refV.kind, "ref");
+			assert.strictEqual(refV.kind, "refCell");
 			assert.ok("value" in refV);
 		});
 	});
@@ -286,15 +285,19 @@ describe("Main Index Exports - Unit Tests", () => {
 	describe("Type Guards and Utilities", () => {
 		it("should export isPrimitiveType", () => {
 			assert.strictEqual(typeof spiral.isPrimitiveType, "function");
-			assert.ok(spiral.isPrimitiveType(spiral.intType()));
-			assert.ok(spiral.isPrimitiveType(spiral.boolType()));
-			assert.ok(spiral.isPrimitiveType(spiral.stringType()));
-			assert.ok(!spiral.isPrimitiveType(spiral.listType(spiral.intType())));
+			assert.ok(spiral.isPrimitiveType(spiral.intType));
+			assert.ok(spiral.isPrimitiveType(spiral.boolType));
+			assert.ok(spiral.isPrimitiveType(spiral.stringType));
+			assert.ok(!spiral.isPrimitiveType(spiral.listType(spiral.intType)));
 		});
 
 		it("should export isClosure", () => {
 			assert.strictEqual(typeof spiral.isClosure, "function");
-			const closure = spiral.closureVal(["x"], { kind: "var", name: "x" }, {});
+			const closure = spiral.closureVal(
+				[{ name: "x" }],
+				{ kind: "var", name: "x" },
+				new Map()
+			);
 			assert.ok(spiral.isClosure(closure));
 			assert.ok(!spiral.isClosure(spiral.intVal(42)));
 		});
@@ -322,8 +325,8 @@ describe("Main Index Exports - Unit Tests", () => {
 
 		it("should export typeEqual", () => {
 			assert.strictEqual(typeof spiral.typeEqual, "function");
-			assert.ok(spiral.typeEqual(spiral.intType(), spiral.intType()));
-			assert.ok(!spiral.typeEqual(spiral.intType(), spiral.stringType()));
+			assert.ok(spiral.typeEqual(spiral.intType, spiral.intType));
+			assert.ok(!spiral.typeEqual(spiral.intType, spiral.stringType));
 		});
 
 		it("should export hashValue", () => {
@@ -355,7 +358,7 @@ describe("Main Index Exports - Unit Tests", () => {
 	describe("Error Handling Exports", () => {
 		it("should export SPIRALError class", () => {
 			assert.ok(typeof spiral.SPIRALError === "function");
-			const error = new spiral.SPIRALError("Test error", "TEST_ERROR");
+			const error = new spiral.SPIRALError("TEST_ERROR", "Test error");
 			assert.strictEqual(error.message, "Test error");
 			assert.strictEqual(error.code, "TEST_ERROR");
 		});
@@ -406,23 +409,22 @@ describe("Main Index Exports - Unit Tests", () => {
 			assert.ok(typeof env === "object");
 		});
 
-		it("should export emptyDefs (alias for emptyTypeEnv)", () => {
-			assert.strictEqual(typeof spiral.emptyDefs, "function");
-			const defs = spiral.emptyDefs();
-			assert.ok(typeof defs === "object");
+		it("should export defKey and emptyDefs for definitions", () => {
+			assert.strictEqual(typeof spiral.defKey, "function");
+			assert.strictEqual(typeof spiral.emptyTypeEnv, "function");
 		});
 
 		it("should export extendTypeEnv", () => {
 			assert.strictEqual(typeof spiral.extendTypeEnv, "function");
 			const env = spiral.emptyTypeEnv();
-			const extended = spiral.extendTypeEnv(env, "x", spiral.intType());
+			const extended = spiral.extendTypeEnv(env, "x", spiral.intType);
 			assert.ok(typeof extended === "object");
 		});
 
 		it("should export extendTypeEnvMany", () => {
 			assert.strictEqual(typeof spiral.extendTypeEnvMany, "function");
 			const env = spiral.emptyTypeEnv();
-			const entries = [["x", spiral.intType()], ["y", spiral.boolType()]];
+			const entries: [string, spiral.Type][] = [["x", spiral.intType], ["y", spiral.boolType]];
 			const extended = spiral.extendTypeEnvMany(env, entries);
 			assert.ok(typeof extended === "object");
 		});
@@ -437,14 +439,14 @@ describe("Main Index Exports - Unit Tests", () => {
 		it("should export extendValueEnvMany", () => {
 			assert.strictEqual(typeof spiral.extendValueEnvMany, "function");
 			const env = spiral.emptyValueEnv();
-			const entries = [["x", spiral.intVal(1)], ["y", spiral.intVal(2)]];
+			const entries: [string, spiral.Value][] = [["x", spiral.intVal(1)], ["y", spiral.intVal(2)]];
 			const extended = spiral.extendValueEnvMany(env, entries);
 			assert.ok(typeof extended === "object");
 		});
 
 		it("should export lookupType", () => {
 			assert.strictEqual(typeof spiral.lookupType, "function");
-			const env = spiral.extendTypeEnv(spiral.emptyTypeEnv(), "x", spiral.intType());
+			const env = spiral.extendTypeEnv(spiral.emptyTypeEnv(), "x", spiral.intType);
 			const result = spiral.lookupType(env, "x");
 			assert.ok(result);
 		});
@@ -467,7 +469,7 @@ describe("Main Index Exports - Unit Tests", () => {
 		it("should export defKey", () => {
 			assert.strictEqual(typeof spiral.defKey, "function");
 			const key = spiral.defKey("core", "add");
-			assert.strictEqual(key, "core/add");
+			assert.strictEqual(key, "core:add");
 		});
 	});
 
@@ -622,7 +624,7 @@ describe("Main Index Exports - Unit Tests", () => {
 
 		it("should export freshName", () => {
 			assert.strictEqual(typeof spiral.freshName, "function");
-			const name = spiral.freshName("x");
+			const name = spiral.freshName("x", new Set<string>());
 			assert.strictEqual(typeof name, "string");
 		});
 	});
@@ -863,8 +865,8 @@ describe("Main Index Exports - Unit Tests", () => {
 		});
 
 		it("should successfully create and use type constructors", () => {
-			const intT = spiral.intType();
-			const boolT = spiral.boolType();
+			const intT = spiral.intType;
+			const boolT = spiral.boolType;
 			const listT = spiral.listType(intT);
 
 			assert.strictEqual(intT.kind, "int");
@@ -888,7 +890,7 @@ describe("Main Index Exports - Unit Tests", () => {
 			const typeEnv = spiral.extendTypeEnv(
 				spiral.emptyTypeEnv(),
 				"x",
-				spiral.intType()
+				spiral.intType
 			);
 
 			const valueEnv = spiral.extendValueEnv(
@@ -923,11 +925,15 @@ describe("Main Index Exports - Unit Tests", () => {
 		});
 
 		it("should successfully use type guards", () => {
-			assert.ok(spiral.isPrimitiveType(spiral.intType()));
-			assert.ok(spiral.isPrimitiveType(spiral.boolType()));
-			assert.ok(!spiral.isPrimitiveType(spiral.listType(spiral.intType())));
+			assert.ok(spiral.isPrimitiveType(spiral.intType));
+			assert.ok(spiral.isPrimitiveType(spiral.boolType));
+			assert.ok(!spiral.isPrimitiveType(spiral.listType(spiral.intType)));
 
-			const closure = spiral.closureVal(["x"], { kind: "var", name: "x" }, {});
+			const closure = spiral.closureVal(
+				[{ name: "x" }],
+				{ kind: "var", name: "x" },
+				new Map()
+			);
 			assert.ok(spiral.isClosure(closure));
 
 			const error = spiral.errorVal("TEST", "test error");
@@ -944,7 +950,7 @@ describe("Main Index Exports - Unit Tests", () => {
 		});
 
 		it("should successfully create SPIRALError instances", () => {
-			const error = new spiral.SPIRALError("Test error", "TEST_CODE");
+			const error = new spiral.SPIRALError("TEST_CODE", "Test error");
 			assert.strictEqual(error.message, "Test error");
 			assert.strictEqual(error.code, "TEST_CODE");
 			assert.ok(error instanceof spiral.SPIRALError);
