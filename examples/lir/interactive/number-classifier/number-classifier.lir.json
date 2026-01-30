@@ -44,5 +44,6 @@
     }
   ],
   "result": "main",
-  "note": "Simplified LIR number-classifier demonstrating I/O sequencing. Note: Due to SSA form constraints in the LIR evaluator, effect target values cannot be used in subsequent operations. For conditional branching with effect results, see the EIR version which has full expression capabilities."
+  "note": "Simplified LIR number-classifier demonstrating I/O sequencing. Note: Due to SSA form constraints in the LIR evaluator, effect target values cannot be used in subsequent operations. For conditional branching with effect results, see the EIR version which has full expression capabilities.",
+  "expected_result": null
 }
