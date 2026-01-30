@@ -80,7 +80,7 @@ describe("Schemas - Unit Tests", () => {
 			assert.ok(airSchema.properties.version);
 			assert.strictEqual(airSchema.properties.version.type, "string");
 			assert.ok(airSchema.properties.version.pattern);
-			assert.match(airSchema.properties.version.pattern, /\\d+\\.\\d+\\.\\d+/);
+			assert.match(airSchema.properties.version.pattern, /\\d\+\\.\\d\+\\.\\d\+/);
 		});
 
 		it("should have nodes property as array", () => {
@@ -538,8 +538,8 @@ describe("Schemas - Unit Tests", () => {
 		});
 
 		it("LIR instruction schema should have oneOf", () => {
-			assert.ok(lirSchema.definitions);
-			assert.ok(lirSchema.blocks);
+			assert.ok(lirSchema.properties);
+			assert.ok(lirSchema.properties.blocks);
 			const itemsSchema = lirSchema.properties.blocks.items;
 			assert.ok(itemsSchema);
 			assert.ok(itemsSchema.properties);
@@ -549,8 +549,8 @@ describe("Schemas - Unit Tests", () => {
 		});
 
 		it("LIR terminator schema should have oneOf", () => {
-			assert.ok(lirSchema.definitions);
-			assert.ok(lirSchema.blocks);
+			assert.ok(lirSchema.properties);
+			assert.ok(lirSchema.properties.blocks);
 			const itemsSchema = lirSchema.properties.blocks.items;
 			assert.ok(itemsSchema);
 			assert.ok(itemsSchema.properties);
