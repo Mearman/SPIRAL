@@ -210,5 +210,6 @@
     "Goodbye, ",
     "Alice"
   ],
-  "note": "LIR representation of personalized-greeter using a single straight-line block. Uses hardcoded values (Alice, 25) for name and age rather than actual I/O effects. Demonstrates mixed-cadence output pattern with sequential effects and value reuse within a block."
+  "note": "LIR representation of personalized-greeter using a single straight-line block. Uses hardcoded values (Alice, 25) for name and age rather than actual I/O effects. Demonstrates mixed-cadence output pattern with sequential effects and value reuse within a block.",
+  "expected_result": null
 }
