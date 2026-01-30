@@ -2,8 +2,8 @@
 // Boolean algebra operators
 
 import { SPIRALError } from "../errors.js";
-import type { Type, Value } from "../types.js";
-import { boolType, boolVal, isError } from "../types.js";
+import type { Value } from "../types.js";
+import { boolType, boolVal, isError, opaqueType } from "../types.js";
 import {
 	defineOperator,
 	Operator,
@@ -18,7 +18,7 @@ import {
 function expectBool(v: Value): boolean {
 	if (v.kind === "bool") return v.value;
 	if (v.kind === "error") throw SPIRALError.domainError(v.message ?? v.code);
-	throw SPIRALError.typeError(boolType, { kind: v.kind } as Type);
+	throw SPIRALError.typeError(boolType, opaqueType(v.kind));
 }
 
 //==============================================================================

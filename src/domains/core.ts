@@ -2,7 +2,7 @@
 // Arithmetic and comparison operators
 
 import { SPIRALError, ErrorCodes } from "../errors.js";
-import type { Type, Value } from "../types.js";
+import type { Value } from "../types.js";
 import {
 	boolType,
 	boolVal,
@@ -12,6 +12,7 @@ import {
 	intType,
 	intVal,
 	isError,
+	opaqueType,
 } from "../types.js";
 import {
 	defineOperator,
@@ -27,14 +28,14 @@ import {
 function expectInt(v: Value): number {
 	if (v.kind === "int") return v.value;
 	if (v.kind === "error") throw SPIRALError.domainError(v.message ?? v.code);
-	throw SPIRALError.typeError(intType, { kind: v.kind } as Type);
+	throw SPIRALError.typeError(intType, opaqueType(v.kind));
 }
 
 function getNumeric(v: Value): number {
 	if (v.kind === "int") return v.value;
 	if (v.kind === "float") return v.value;
 	if (v.kind === "error") throw SPIRALError.domainError(v.message ?? v.code);
-	throw SPIRALError.typeError(floatType, { kind: v.kind } as Type);
+	throw SPIRALError.typeError(floatType, opaqueType(v.kind));
 }
 
 //==============================================================================

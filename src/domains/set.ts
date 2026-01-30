@@ -2,7 +2,6 @@
 // Set operators
 
 import { ErrorCodes } from "../errors.js";
-import type { Type } from "../types.js";
 import {
 	boolType,
 	boolVal,
@@ -27,8 +26,8 @@ import {
 
 // union(set<A>, set<A>) -> set<A>
 const union: Operator = defineOperator("set", "union")
-	.setParams(setType({ kind: "int" } as Type), setType({ kind: "int" } as Type))
-	.setReturns(setType({ kind: "int" } as Type))
+	.setParams(setType(intType), setType(intType))
+	.setReturns(setType(intType))
 	.setPure(true)
 	.setImpl((a, b) => {
 		if (isError(a)) return a;
@@ -42,8 +41,8 @@ const union: Operator = defineOperator("set", "union")
 
 // intersect(set<A>, set<A>) -> set<A>
 const intersect: Operator = defineOperator("set", "intersect")
-	.setParams(setType({ kind: "int" } as Type), setType({ kind: "int" } as Type))
-	.setReturns(setType({ kind: "int" } as Type))
+	.setParams(setType(intType), setType(intType))
+	.setReturns(setType(intType))
 	.setPure(true)
 	.setImpl((a, b) => {
 		if (isError(a)) return a;
@@ -63,8 +62,8 @@ const intersect: Operator = defineOperator("set", "intersect")
 
 // difference(set<A>, set<A>) -> set<A>
 const difference: Operator = defineOperator("set", "difference")
-	.setParams(setType({ kind: "int" } as Type), setType({ kind: "int" } as Type))
-	.setReturns(setType({ kind: "int" } as Type))
+	.setParams(setType(intType), setType(intType))
+	.setReturns(setType(intType))
 	.setPure(true)
 	.setImpl((a, b) => {
 		if (isError(a)) return a;
@@ -84,7 +83,7 @@ const difference: Operator = defineOperator("set", "difference")
 
 // contains(set<A>, A) -> bool
 const contains: Operator = defineOperator("set", "contains")
-	.setParams(setType({ kind: "int" } as Type), { kind: "int" } as Type)
+	.setParams(setType(intType), intType)
 	.setReturns(boolType)
 	.setPure(true)
 	.setImpl((a, b) => {
@@ -99,7 +98,7 @@ const contains: Operator = defineOperator("set", "contains")
 
 // subset(set<A>, set<A>) -> bool
 const subset: Operator = defineOperator("set", "subset")
-	.setParams(setType({ kind: "int" } as Type), setType({ kind: "int" } as Type))
+	.setParams(setType(intType), setType(intType))
 	.setReturns(boolType)
 	.setPure(true)
 	.setImpl((a, b) => {
@@ -119,8 +118,8 @@ const subset: Operator = defineOperator("set", "subset")
 
 // add(set<A>, A) -> set<A>
 const add: Operator = defineOperator("set", "add")
-	.setParams(setType({ kind: "int" } as Type), { kind: "int" } as Type)
-	.setReturns(setType({ kind: "int" } as Type))
+	.setParams(setType(intType), intType)
+	.setReturns(setType(intType))
 	.setPure(true)
 	.setImpl((a, b) => {
 		if (isError(a)) return a;
@@ -134,8 +133,8 @@ const add: Operator = defineOperator("set", "add")
 
 // remove(set<A>, A) -> set<A>
 const remove: Operator = defineOperator("set", "remove")
-	.setParams(setType({ kind: "int" } as Type), { kind: "int" } as Type)
-	.setReturns(setType({ kind: "int" } as Type))
+	.setParams(setType(intType), intType)
+	.setReturns(setType(intType))
 	.setPure(true)
 	.setImpl((a, b) => {
 		if (isError(a)) return a;
@@ -151,7 +150,7 @@ const remove: Operator = defineOperator("set", "remove")
 
 // size(set<A>) -> int
 const size: Operator = defineOperator("set", "size")
-	.setParams(setType({ kind: "int" } as Type))
+	.setParams(setType(intType))
 	.setReturns(intType)
 	.setPure(true)
 	.setImpl((a) => {
