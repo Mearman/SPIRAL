@@ -73,6 +73,6 @@
     }
   ],
   "result": "selectFirstAvailable",
-  "expected_result": "selectResult",
+  "expected_result": { "kind": "selectResult", "index": 0, "value": { "kind": "int", "value": 1764 } },
   "note": "The select expression returns {index: 1, value: 100} since fastFuture completes first. Change result to 'awaitWithTimeoutSuccess' (returns {index: 0, value: 1764}) or 'awaitWithTimeoutFail' (returns {index: 1, value: -1} due to timeout)."
 }

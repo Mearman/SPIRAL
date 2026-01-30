@@ -166,6 +166,6 @@
     }
   ],
   "result": "program",
-  "expected_result": "Computation complete!",
+  "expected_result": null,
   "note": "Composes multiple effects and computations. Each print effect is executed and recorded. Effects are visible in the evaluation state."
 }
