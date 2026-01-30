@@ -137,5 +137,10 @@
       }
     }
   ],
-  "result": "curriedResult"
+  "result": "curriedResult",
+  "expected_result": {
+    "kind": "error",
+    "code": "ArityError",
+    "message": "Arity error: expected at least 2 args, got 1"
+  }
 }

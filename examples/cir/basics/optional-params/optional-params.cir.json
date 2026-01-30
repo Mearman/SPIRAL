@@ -6,7 +6,9 @@
       "id": "defaultMultiplier",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "int" },
+        "type": {
+          "kind": "int"
+        },
         "value": 2
       }
     },
@@ -15,10 +17,17 @@
       "expr": {
         "kind": "lambda",
         "params": [
-          { "name": "x", "type": { "kind": "int" } },
+          {
+            "name": "x",
+            "type": {
+              "kind": "int"
+            }
+          },
           {
             "name": "multiplier",
-            "type": { "kind": "int" },
+            "type": {
+              "kind": "int"
+            },
             "optional": true,
             "default": {
               "kind": "ref",
@@ -30,10 +39,16 @@
         "type": {
           "kind": "fn",
           "params": [
-            { "kind": "int" },
-            { "kind": "int" }
+            {
+              "kind": "int"
+            },
+            {
+              "kind": "int"
+            }
           ],
-          "returns": { "kind": "int" }
+          "returns": {
+            "kind": "int"
+          }
         }
       }
     },
@@ -43,15 +58,22 @@
         "kind": "call",
         "ns": "core",
         "name": "mul",
-        "args": ["x", "multiplier"]
+        "args": [
+          "x",
+          "multiplier"
+        ]
       },
-      "type": { "kind": "int" }
+      "type": {
+        "kind": "int"
+      }
     },
     {
       "id": "input",
       "expr": {
         "kind": "lit",
-        "type": { "kind": "int" },
+        "type": {
+          "kind": "int"
+        },
         "value": 5
       }
     },
@@ -60,10 +82,15 @@
       "expr": {
         "kind": "callExpr",
         "fn": "double",
-        "args": ["input"]
+        "args": [
+          "input"
+        ]
       },
-      "type": { "kind": "int" }
+      "type": {
+        "kind": "int"
+      }
     }
   ],
-  "result": "result"
+  "result": "result",
+  "expected_result": 10
 }

@@ -84,5 +84,6 @@
       }
     }
   ],
-  "result": "result"
+  "result": "result",
+  "expected_result": 15
 }
