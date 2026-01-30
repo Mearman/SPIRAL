@@ -168,5 +168,6 @@
       }
     }
   ],
-  "result": "gteFalse"
+  "result": "gteFalse",
+  "expected_result": false
 }

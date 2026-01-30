@@ -226,5 +226,6 @@
       }
     }
   ],
-  "result": "precedenceResult"
+  "result": "precedenceResult",
+  "expected_result": true
 }

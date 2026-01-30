@@ -237,5 +237,6 @@
       }
     }
   ],
-  "result": "basicIntersect"
+  "result": "basicIntersect",
+  "expected_result": { "kind": "set", "value": [] }
 }

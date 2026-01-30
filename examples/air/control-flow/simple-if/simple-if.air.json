@@ -154,5 +154,6 @@
     "if true then 100 else 0 → 100",
     "if false then 100 else 0 → 0",
     "if (age >= 18) then 'adult' else 'minor' → 'adult' (when age = 20)"
-  ]
+  ],
+  "expected_result": 100
 }

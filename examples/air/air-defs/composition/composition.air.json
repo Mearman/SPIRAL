@@ -321,5 +321,6 @@
       }
     }
   ],
-  "result": "composed"
+  "result": "composed",
+  "expected_result": 15
 }

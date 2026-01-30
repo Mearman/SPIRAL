@@ -189,5 +189,6 @@
       }
     }
   ],
-  "result": "nestedComputation"
+  "result": "nestedComputation",
+  "expected_result": 343
 }

@@ -103,5 +103,10 @@
       }
     }
   ],
-  "result": "reverse123"
+  "result": "reverse123",
+  "expected_result": [
+    3,
+    2,
+    1
+  ]
 }
