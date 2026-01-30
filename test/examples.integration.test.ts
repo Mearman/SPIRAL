@@ -299,18 +299,15 @@ describe("Example Auto-Discovery", () => {
 	});
 });
 
-// Examples with pre-existing validation issues (tracked separately)
-const KNOWN_VALIDATION_ISSUES = new Set([
-	"examples/pir/io/parallel-http.pir.json", // uses unsupported "try" expression in PIR
-	"examples/pir/io/async-file-ops.pir.json", // uses unsupported "try" expression in PIR
-	"examples/lir/async/fork-join.lir.json", // uses unsupported "fork" terminator
-	"examples/cir/basics/optional-params/optional-params.cir.json", // references non-existent nodes
+// Examples with pre-existing evaluation issues (evaluator doesn't support these constructs yet)
+const KNOWN_EVALUATION_ISSUES = new Set([
+	"examples/pir/io/parallel-http.pir.json", // select requires Future values not yet produced by evaluator
+	"examples/lir/async/fork-join.lir.json", // fork terminator not implemented in LIR evaluator
 ]);
 
 describe("Example Validation", () => {
 	for (const example of examples) {
-		const isKnownIssue = KNOWN_VALIDATION_ISSUES.has(example.relativePath);
-		it(`validates ${example.relativePath}`, { skip: isKnownIssue }, () => {
+		it(`validates ${example.relativePath}`, () => {
 			const validate = getValidator(example.layer);
 			const result = validate(example.doc);
 			assert.ok(
@@ -326,13 +323,13 @@ describe("Example Validation", () => {
 describe("Example Evaluation", () => {
 	const evaluable = examples.filter((e) => {
 		if (!e.hasExpectedResult) return false;
-		// Skip evaluation for examples that fail validation (pre-existing issues)
 		const validate = getValidator(e.layer);
 		return validate(e.doc).valid;
 	});
 
 	for (const example of evaluable) {
-		it(`evaluates ${example.relativePath} -> ${JSON.stringify(example.expectedResult)}`, async () => {
+		const isKnownIssue = KNOWN_EVALUATION_ISSUES.has(example.relativePath);
+		it(`evaluates ${example.relativePath} -> ${JSON.stringify(example.expectedResult)}`, { skip: isKnownIssue }, async () => {
 			const actual = await executeExample(example);
 			const expected = rawToValue(example.expectedResult);
 
