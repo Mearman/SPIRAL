@@ -411,7 +411,9 @@ function executeInstruction(
 		try {
 			const result = effectOp.fn(...argValues);
 			// Store the result in the target variable
-			state.vars = extendValueEnv(state.vars, ins.target, result);
+			if (ins.target) {
+				state.vars = extendValueEnv(state.vars, ins.target, result);
+			}
 			return undefined;
 		} catch (e) {
 			if (e instanceof SPIRALError) {
@@ -501,8 +503,9 @@ function executeTerminator(
 
 	case "exit": {
 		// LirTermExit: exit with optional code
-		if (term.code) {
-			const codeValue = lookupValue(state.vars, term.code);
+		if (term.code !== undefined) {
+			const codeStr = typeof term.code === "number" ? String(term.code) : term.code;
+			const codeValue = lookupValue(state.vars, codeStr);
 			if (codeValue) {
 				return codeValue;
 			}

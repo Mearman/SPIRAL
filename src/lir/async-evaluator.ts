@@ -456,8 +456,10 @@ async function executeInstructionAsync(
 
 		try {
 			const result = effectOp.fn(...argValues);
-			state.vars = extendValueEnv(state.vars, ins.target, result);
-			state.refCells.set(ins.target, { kind: "refCell", value: result });
+			if (ins.target) {
+				state.vars = extendValueEnv(state.vars, ins.target, result);
+				state.refCells.set(ins.target, { kind: "refCell", value: result });
+			}
 			return undefined;
 		} catch (e) {
 			if (e instanceof SPIRALError) {
@@ -689,8 +691,9 @@ async function executeTerminatorAsync(
 
 	case "exit": {
 		// LirTermExit: exit with optional code
-		if (term.code) {
-			const codeValue = lookupValue(state.vars, term.code);
+		if (term.code !== undefined) {
+			const codeStr = typeof term.code === "number" ? String(term.code) : term.code;
+			const codeValue = lookupValue(state.vars, codeStr);
 			if (codeValue) {
 				return codeValue;
 			}
