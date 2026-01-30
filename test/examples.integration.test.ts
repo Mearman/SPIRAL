@@ -303,7 +303,6 @@ describe("Example Auto-Discovery", () => {
 
 // Examples with pre-existing evaluation issues (evaluator doesn't support these constructs yet)
 const KNOWN_EVALUATION_ISSUES = new Set<string>([
-	"examples/pir/io/async-file-ops.pir.json", // async IO effects return futures; example doesn't await them
 ]);
 
 describe("Example Validation", () => {

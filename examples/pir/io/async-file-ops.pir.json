@@ -79,10 +79,24 @@
       }
     },
     {
+      "id": "awaitRead1",
+      "expr": {
+        "kind": "await",
+        "future": "readOp1"
+      }
+    },
+    {
+      "id": "awaitRead2",
+      "expr": {
+        "kind": "await",
+        "future": "readOp2"
+      }
+    },
+    {
       "id": "safeRead1",
       "expr": {
         "kind": "try",
-        "tryBody": "readOp1",
+        "tryBody": "awaitRead1",
         "catchParam": "err",
         "catchBody": "errorFallback"
       }
@@ -91,7 +105,7 @@
       "id": "safeRead2",
       "expr": {
         "kind": "try",
-        "tryBody": "readOp2",
+        "tryBody": "awaitRead2",
         "catchParam": "err",
         "catchBody": "errorFallback"
       }
