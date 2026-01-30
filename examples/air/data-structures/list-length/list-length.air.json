@@ -101,5 +101,6 @@
       }
     }
   ],
-  "result": "stringListLength"
+  "result": "stringListLength",
+  "expected_result": 3
 }

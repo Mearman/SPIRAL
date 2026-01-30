@@ -393,5 +393,6 @@
       }
     }
   ],
-  "result": "tripleCheck_positive"
+  "result": "tripleCheck_positive",
+  "expected_result": "zero"
 }

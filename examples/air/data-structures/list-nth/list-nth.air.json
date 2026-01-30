@@ -108,5 +108,6 @@
       }
     }
   ],
-  "result": "nth2"
+  "result": "nth2",
+  "expected_result": 30
 }

@@ -348,5 +348,6 @@
       }
     }
   ],
-  "result": "grade55"
+  "result": "grade55",
+  "expected_result": "B"
 }

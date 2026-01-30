@@ -334,5 +334,6 @@
       }
     }
   ],
-  "result": "combined"
+  "result": "combined",
+  "expected_result": 72
 }
