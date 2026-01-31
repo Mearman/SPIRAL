@@ -43,6 +43,7 @@ const OPERATOR_MAP: Record<string, OperatorMapping> = {
 	"bool:not": { pythonOp: "not", customImpl: (args) => `(not ${args[0]})` },
 	"list:length": { pythonOp: "len", customImpl: (args) => `len(${args[0]})` },
 	"list:concat": { pythonOp: "+", customImpl: (args) => `(${args[0]} + ${args[1]})` },
+	"string:concat": { pythonOp: "+", customImpl: (args) => `(${args[0]} + ${args[1]})` },
 };
 
 function isLIRDocument(doc: Document): doc is LIRDocument {
