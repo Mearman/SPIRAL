@@ -180,18 +180,21 @@ export class SPIRALError extends Error {
 // Type Formatting (for error messages)
 //==============================================================================
 
-function formatType(t: Type): string {
-	switch (t.kind) {
+function formatSimpleType(kind: string): string | null {
+	switch (kind) {
 	case "bool":
-		return "bool";
 	case "int":
-		return "int";
 	case "float":
-		return "float";
 	case "string":
-		return "string";
 	case "void":
-		return "void";
+		return kind;
+	default:
+		return null;
+	}
+}
+
+function formatCompoundType(t: Type): string {
+	switch (t.kind) {
 	case "set":
 		return "set<" + formatType(t.of) + ">";
 	case "list":
@@ -205,15 +208,14 @@ function formatType(t: Type): string {
 	case "opaque":
 		return "opaque(" + t.name + ")";
 	case "fn":
-		return (
-			"fn(" +
-				t.params.map(formatType).join(", ") +
-				") -> " +
-				formatType(t.returns)
-		);
+		return "fn(" + t.params.map(formatType).join(", ") + ") -> " + formatType(t.returns);
 	default:
 		return "unknown";
 	}
+}
+
+function formatType(t: Type): string {
+	return formatSimpleType(t.kind) ?? formatCompoundType(t);
 }
 
 //==============================================================================
