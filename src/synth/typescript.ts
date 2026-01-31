@@ -94,6 +94,8 @@ interface ExprSynthState {
 	lines: string[];
 	varIndex: number;
 	airDefs: Map<string, AIRDef>;
+	nodeMap: Map<string, Node | EirNode>;
+	inlinedNodes: Set<string>;
 }
 
 function synthesizeExprBased(
@@ -105,11 +107,20 @@ function synthesizeExprBased(
 		lines: [],
 		varIndex: 0,
 		airDefs: new Map(),
+		nodeMap: new Map(),
+		inlinedNodes: new Set(),
 	};
 
 	// Build AIR def lookup
 	for (const airDef of doc.airDefs) {
 		state.airDefs.set(`${airDef.ns}:${airDef.name}`, airDef);
+	}
+
+	// Build node lookup for body inlining
+	for (const node of doc.nodes) {
+		if (isExprNode(node)) {
+			state.nodeMap.set(node.id, node);
+		}
 	}
 
 	// Header
@@ -126,6 +137,19 @@ function synthesizeExprBased(
 	if (doc.airDefs.length > 0) {
 		emitAirDefs(state, doc.airDefs);
 		state.lines.push("");
+	}
+
+	// Pre-scan: mark body nodes that need inlining into lambda/let scopes
+	for (const node of doc.nodes) {
+		if (!isExprNode(node)) continue;
+		const expr = node.expr;
+		if (expr.kind === "lambda" || expr.kind === "let") {
+			const bodyId = expr.body;
+			const bodyNode = state.nodeMap.get(bodyId);
+			if (bodyNode && exprHasFreeVars(bodyNode.expr)) {
+				state.inlinedNodes.add(bodyId);
+			}
+		}
 	}
 
 	// Emit node bindings
@@ -169,6 +193,11 @@ function emitNodeBinding(
 	mutableCells: Map<string, boolean>,
 	cellInitLines: string[],
 ): void {
+	// Skip nodes that were inlined into lambda/let bodies
+	if (state.inlinedNodes.has(node.id)) {
+		return;
+	}
+
 	const varName = `v_${sanitizeId(node.id)}`;
 
 	// Skip already emitted
@@ -256,6 +285,12 @@ function synthesizeExpr(
 	}
 
 	case "let": {
+		const bodyNode = state.nodeMap.get(expr.body);
+		if (bodyNode && exprHasFreeVars(bodyNode.expr)) {
+			state.inlinedNodes.add(expr.body);
+			const bodyCode = synthesizeExpr(state, bodyNode.expr, mutableCells, cellInitLines);
+			return `((${expr.name}: any) => ${bodyCode})(${refToTs(expr.value)})`;
+		}
 		return `((${expr.name}: any) => ${refToTs(expr.body)})(${refToTs(expr.value)})`;
 	}
 
@@ -273,6 +308,14 @@ function synthesizeExpr(
 
 	case "lambda": {
 		const paramNames = expr.params.map(p => `${p}: any`).join(", ");
+		const bodyNode = state.nodeMap.get(expr.body);
+		// Inline the body if its expression contains free var references
+		// (which would be out of scope as a top-level binding)
+		if (bodyNode && exprHasFreeVars(bodyNode.expr)) {
+			state.inlinedNodes.add(expr.body);
+			const bodyCode = synthesizeExpr(state, bodyNode.expr, mutableCells, cellInitLines);
+			return `((${paramNames}) => ${bodyCode})`;
+		}
 		return `((${paramNames}) => ${refToTs(expr.body)})`;
 	}
 
@@ -471,6 +514,48 @@ function synthesizeLIR(doc: LIRDocument, opts: TypeScriptSynthOptions): string {
 //==============================================================================
 // Utilities
 //==============================================================================
+
+/**
+ * Check whether an expression (or any of its inline sub-expressions)
+ * contains a "var" reference. Var references are lambda/let parameter
+ * names that only exist inside a function scope — emitting them as
+ * top-level bindings would produce a ReferenceError.
+ */
+function exprHasFreeVars(expr: Expr | EirExpr): boolean {
+	if (expr.kind === "var") return true;
+
+	// Check inline sub-expressions (non-string fields that are Expr objects)
+	if (expr.kind === "call") {
+		return expr.args.some(a => typeof a !== "string" && exprHasFreeVars(a));
+	}
+	if (expr.kind === "do") {
+		return expr.exprs.some(e => typeof e !== "string" && exprHasFreeVars(e));
+	}
+	if (expr.kind === "seq") {
+		return (typeof expr.first !== "string" && exprHasFreeVars(expr.first)) ||
+			(typeof expr.then !== "string" && exprHasFreeVars(expr.then));
+	}
+	if (expr.kind === "effect") {
+		return expr.args.some(a => typeof a !== "string" && exprHasFreeVars(a));
+	}
+	if (expr.kind === "assign") {
+		return typeof expr.value !== "string" && exprHasFreeVars(expr.value);
+	}
+	if (expr.kind === "while") {
+		return (typeof expr.cond !== "string" && exprHasFreeVars(expr.cond)) ||
+			(typeof expr.body !== "string" && exprHasFreeVars(expr.body));
+	}
+	if (expr.kind === "iter") {
+		return (typeof expr.iter !== "string" && exprHasFreeVars(expr.iter)) ||
+			(typeof expr.body !== "string" && exprHasFreeVars(expr.body));
+	}
+	if (expr.kind === "callExpr") {
+		return (typeof expr.fn !== "string" && exprHasFreeVars(expr.fn)) ||
+			expr.args.some(a => typeof a !== "string" && exprHasFreeVars(a));
+	}
+
+	return false;
+}
 
 function sanitizeId(id: string): string {
 	return id.replace(/[^a-zA-Z0-9_]/g, "_");
