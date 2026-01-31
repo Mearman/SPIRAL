@@ -89,71 +89,66 @@ export async function readInputsFile(filePath: string): Promise<(string | number
  *   - Options with values: --inputs <val>, --inputs-file <path>
  *   - Subcommand style: list, help, validate
  */
-export function parseArgs(args: string[]): { path: string | null; options: Options } {
-	const options: Options = {
-		verbose: false,
-		validate: false,
-		help: false,
-		list: false,
-		synth: false,
+function normalizeArgs(args: string[]): string[] {
+	const subcommands: Record<string, string> = {
+		list: "--list",
+		validate: "--validate",
+		help: "--help",
 	};
-	let path: string | null = null;
+	return args.flatMap((arg) => [subcommands[arg] ?? arg]);
+}
 
-	const normalized = args.flatMap((arg) => {
-		// Support subcommand style: `examples list`, `examples validate <path>`
-		if (arg === "list") return ["--list"];
-		if (arg === "validate") return ["--validate"];
-		if (arg === "help") return ["--help"];
-		return [arg];
-	});
+function consumeNextArg(normalized: string[], i: number): string | undefined {
+	if (i + 1 < normalized.length) {
+		const nextArg = normalized[i + 1];
+		if (nextArg && !nextArg.startsWith("-")) return nextArg;
+	}
+	return undefined;
+}
+
+function processFlag(options: Options, arg: string): boolean {
+	switch (arg) {
+	case "--verbose": case "-v": options.verbose = true; return true;
+	case "--validate": options.validate = true; return true;
+	case "--help": case "-h": options.help = true; return true;
+	case "--list": case "-l": options.list = true; return true;
+	case "--synth": options.synth = true; return true;
+	default: return false;
+	}
+}
+
+function processValueOption(options: Options, arg: string, nextVal: string): void {
+	if (arg === "--inputs") options.inputs = nextVal;
+	else if (arg === "--inputs-file") options.inputsFile = nextVal;
+}
+
+interface ArgContext {
+	options: Options;
+	normalized: string[];
+	i: number;
+}
+
+function processArg(ctx: ArgContext, arg: string): { i: number; path?: string } {
+	if (processFlag(ctx.options, arg)) return { i: ctx.i };
+	if (arg === "--inputs" || arg === "--inputs-file") {
+		const nextVal = consumeNextArg(ctx.normalized, ctx.i);
+		if (nextVal) { processValueOption(ctx.options, arg, nextVal); return { i: ctx.i + 1 }; }
+		return { i: ctx.i };
+	}
+	return !arg.startsWith("-") ? { i: ctx.i, path: arg } : { i: ctx.i };
+}
+
+export function parseArgs(args: string[]): { path: string | null; options: Options } {
+	const normalized = normalizeArgs(args);
+	const options: Options = { verbose: false, validate: false, help: false, list: false, synth: false };
+	let path: string | null = null;
 
 	for (let i = 0; i < normalized.length; i++) {
 		const arg = normalized[i];
-		if (arg === undefined) {
-			break;
-		}
-		switch (arg) {
-		case "--verbose":
-		case "-v":
-			options.verbose = true;
-			break;
-		case "--validate":
-			options.validate = true;
-			break;
-		case "--help":
-		case "-h":
-			options.help = true;
-			break;
-		case "--list":
-		case "-l":
-			options.list = true;
-			break;
-		case "--synth":
-			options.synth = true;
-			break;
-		case "--inputs":
-			if (i + 1 < normalized.length) {
-				const nextArg = normalized[i + 1];
-				if (nextArg && !nextArg.startsWith("-")) {
-					options.inputs = nextArg;
-					i++;
-				}
-			}
-			break;
-		case "--inputs-file":
-			if (i + 1 < normalized.length) {
-				const nextArg = normalized[i + 1];
-				if (nextArg && !nextArg.startsWith("-")) {
-					options.inputsFile = nextArg;
-					i++;
-				}
-			}
-			break;
-		default:
-			if (!arg.startsWith("-")) {
-				path = arg;
-			}
-		}
+		if (arg === undefined) break;
+		const result = processArg({ options, normalized, i }, arg);
+		i = result.i;
+		if (result.path !== undefined) path = result.path;
 	}
 
 	return { path, options };
