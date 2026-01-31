@@ -2,6 +2,9 @@
 // Race condition and deadlock detection for PIR async/parallel execution
 
 import type { Value } from "./types.js";
+import { DeadlockDetector } from "./deadlock-detector.js";
+export { DeadlockDetector } from "./deadlock-detector.js";
+export type { DeadlockCycle } from "./deadlock-detector.js";
 
 //==============================================================================
 // Detection Options
@@ -54,6 +57,16 @@ interface MemoryAccess {
 }
 
 /**
+ * Context for recording a memory access
+ */
+interface RecordAccessContext {
+	taskId: string;
+	location: string;
+	type: "read" | "write";
+	value: Value;
+}
+
+/**
  * Race condition report
  */
 export interface RaceCondition {
@@ -61,29 +74,6 @@ export interface RaceCondition {
 	tasks: [string, string];
 	accessTypes: ["read" | "write", "read" | "write"];
 	conflictType: "W-W" | "W-R" | "R-W";
-	description: string;
-}
-
-//==============================================================================
-// Lock Acquisition Tracking
-//==============================================================================
-
-/**
- * Represents a lock acquisition event
- */
-interface LockAcquisition {
-	taskId: string;
-	lockId: string;
-	timestamp: number;
-	acquired: boolean;
-}
-
-/**
- * Deadlock cycle report
- */
-export interface DeadlockCycle {
-	cycle: string[];
-	locks: string[];
 	description: string;
 }
 
@@ -116,44 +106,44 @@ export class RaceDetector {
 
 	/**
 	 * Record a memory access from a task
-	 * @param taskId - Task performing the access
-	 * @param location - Memory location being accessed
-	 * @param type - Access type (read or write)
-	 * @param value - Value being read or written
+	 * @param args - Tuple of [taskId, location, type, value]
 	 */
-	recordAccess(taskId: string, location: string, type: "read" | "write", value: Value): void {
-		if (!this._options.enableRaceDetection) {
-			return;
-		}
+	recordAccess(
+		...args: [string, string, "read" | "write", Value]
+	): void {
+		const [taskId, location, type, value] = args;
+		this.recordAccessFromContext({ taskId, location, type, value });
+	}
 
-		const access: MemoryAccess = {
-			taskId,
-			location,
-			type,
-			value,
+	private recordAccessFromContext(ctx: RecordAccessContext): void {
+		if (!this._options.enableRaceDetection) return;
+		const access = this.buildAccess(ctx);
+		this.storeAccess(access);
+		this.maybeAutoDetectRaces();
+	}
+
+	private buildAccess(ctx: RecordAccessContext): MemoryAccess {
+		const previousSyncs = this.syncPoints.get(ctx.taskId);
+		return {
+			...ctx,
 			timestamp: Date.now(),
-			happensBefore: new Set(),
+			happensBefore: previousSyncs ? new Set(previousSyncs) : new Set(),
 		};
+	}
 
-		// Establish happens-before from previous sync points
-		const previousSyncs = this.syncPoints.get(taskId);
-		if (previousSyncs) {
-			access.happensBefore = new Set(previousSyncs);
+	private storeAccess(access: MemoryAccess): void {
+		if (!this.accesses.has(access.location)) {
+			this.accesses.set(access.location, []);
 		}
-
-		// Store access
-		if (!this.accesses.has(location)) {
-			this.accesses.set(location, []);
-		}
-		this.accesses.get(location)?.push(access);
+		this.accesses.get(access.location)?.push(access);
 		this.accessCounter++;
+	}
 
-		// Auto-detect if enabled
-		if (this._options.autoDetect && this.accessCounter % 100 === 0) {
-			const races = this.detectRaces();
-			if (races.length > 0) {
-				console.warn(`[RaceDetector] Detected ${races.length} potential race conditions`);
-			}
+	private maybeAutoDetectRaces(): void {
+		if (!this._options.autoDetect || this.accessCounter % 100 !== 0) return;
+		const races = this.detectRaces();
+		if (races.length > 0) {
+			console.warn(`[RaceDetector] Detected ${races.length} potential race conditions`);
 		}
 	}
 
@@ -164,20 +154,9 @@ export class RaceDetector {
 	 * @param syncTaskIds - Tasks being synchronized with
 	 */
 	recordSyncPoint(taskId: string, syncTaskIds: string[]): void {
-		if (!this._options.enableRaceDetection) {
-			return;
-		}
-
-		// Record that taskId happens-after all syncTaskIds
-		let syncSet = this.syncPoints.get(taskId);
-		if (!syncSet) {
-			syncSet = new Set();
-			this.syncPoints.set(taskId, syncSet);
-		}
-
-		for (const syncTaskId of syncTaskIds) {
-			syncSet.add(syncTaskId);
-		}
+		if (!this._options.enableRaceDetection) return;
+		const syncSet = getOrCreateSet(this.syncPoints, taskId);
+		for (const id of syncTaskIds) syncSet.add(id);
 	}
 
 	/**
@@ -185,30 +164,28 @@ export class RaceDetector {
 	 * @returns Array of detected race conditions
 	 */
 	detectRaces(): RaceCondition[] {
-		if (!this._options.enableRaceDetection) {
-			return [];
-		}
-
+		if (!this._options.enableRaceDetection) return [];
 		const races: RaceCondition[] = [];
-
 		for (const [location, accesses] of this.accesses) {
-			// Check all pairs of accesses for potential races
-			for (let i = 0; i < accesses.length; i++) {
-				for (let j = i + 1; j < accesses.length; j++) {
-					const access1 = accesses[i];
-					const access2 = accesses[j];
+			this.detectRacesAtLocation(location, accesses, races);
+		}
+		return races;
+	}
 
-					if (!access1 || !access2) continue;
-
-					const race = this.checkPairForRace(location, access1, access2);
-					if (race) {
-						races.push(race);
-					}
-				}
+	private detectRacesAtLocation(
+		location: string,
+		accesses: MemoryAccess[],
+		races: RaceCondition[],
+	): void {
+		for (let i = 0; i < accesses.length; i++) {
+			for (let j = i + 1; j < accesses.length; j++) {
+				const a1 = accesses[i];
+				const a2 = accesses[j];
+				if (!a1 || !a2) continue;
+				const race = this.checkPairForRace(location, a1, a2);
+				if (race) races.push(race);
 			}
 		}
-
-		return races;
 	}
 
 	/**
@@ -216,102 +193,32 @@ export class RaceDetector {
 	 */
 	private checkPairForRace(
 		location: string,
-		access1: MemoryAccess,
-		access2: MemoryAccess,
+		a1: MemoryAccess,
+		a2: MemoryAccess,
 	): RaceCondition | null {
-		// Same task - not a race
-		if (access1.taskId === access2.taskId) {
-			return null;
-		}
-
-		// Check if there's a happens-before relationship
-		if (this.hasHappensBefore(access1, access2)) {
-			return null;
-		}
-
-		// Determine conflict type
-		const conflictType = this.getConflictType(access1, access2);
-
-		// Only W-W, W-R, and R-W are races
-		if (conflictType === null) {
-			return null;
-		}
-
-		const description = this.generateRaceDescription(
-			location,
-			access1.taskId,
-			access2.taskId,
-			access1.type,
-			access2.type,
-		);
-
+		if (a1.taskId === a2.taskId) return null;
+		if (this.hasHappensBefore(a1, a2)) return null;
+		const conflictType = getConflictType(a1.type, a2.type);
+		if (conflictType === null) return null;
 		return {
 			location,
-			tasks: [access1.taskId, access2.taskId],
-			accessTypes: [access1.type, access2.type],
+			tasks: [a1.taskId, a2.taskId],
+			accessTypes: [a1.type, a2.type],
 			conflictType,
-			description,
+			description: describeRace(location, a1, a2),
 		};
 	}
 
 	/**
 	 * Check if there's a happens-before relationship between two accesses
 	 */
-	private hasHappensBefore(access1: MemoryAccess, access2: MemoryAccess): boolean {
-		// Check if access1 happens-before access2
-		if (access2.happensBefore.has(access1.taskId)) {
-			return true;
+	private hasHappensBefore(a1: MemoryAccess, a2: MemoryAccess): boolean {
+		if (a2.happensBefore.has(a1.taskId)) return true;
+		if (a1.happensBefore.has(a2.taskId)) return true;
+		for (const id of a1.happensBefore) {
+			if (a2.happensBefore.has(id)) return true;
 		}
-
-		// Check if access2 happens-before access1
-		if (access1.happensBefore.has(access2.taskId)) {
-			return true;
-		}
-
-		// Check transitive happens-before
-		for (const ancestorId of access1.happensBefore) {
-			if (access2.happensBefore.has(ancestorId)) {
-				return true;
-			}
-		}
-
 		return false;
-	}
-
-	/**
-	 * Get the conflict type between two accesses
-	 * Returns null if no conflict (R-R)
-	 */
-	private getConflictType(
-		access1: MemoryAccess,
-		access2: MemoryAccess,
-	): "W-W" | "W-R" | "R-W" | null {
-		if (access1.type === "write" && access2.type === "write") {
-			return "W-W";
-		}
-		if (access1.type === "write" && access2.type === "read") {
-			return "W-R";
-		}
-		if (access1.type === "read" && access2.type === "write") {
-			return "R-W";
-		}
-		// R-R is not a race
-		return null;
-	}
-
-	/**
-	 * Generate a human-readable race description
-	 */
-	private generateRaceDescription(
-		location: string,
-		task1: string,
-		task2: string,
-		type1: "read" | "write",
-		type2: "read" | "write",
-	): string {
-		return `Potential data race at location "${location}": ` +
-			`task "${task1}" performs ${type1} and task "${task2}" performs ${type2} ` +
-			"without happens-before ordering. This could lead to undefined behavior.";
 	}
 
 	/**
@@ -332,10 +239,7 @@ export class RaceDetector {
 		syncPoints: number;
 		} {
 		let totalAccesses = 0;
-		for (const accesses of this.accesses.values()) {
-			totalAccesses += accesses.length;
-		}
-
+		for (const a of this.accesses.values()) totalAccesses += a.length;
 		return {
 			totalAccesses,
 			locations: this.accesses.size,
@@ -345,361 +249,44 @@ export class RaceDetector {
 }
 
 //==============================================================================
-// Deadlock Detector
+// Shared Helpers
 //==============================================================================
 
 /**
- * DeadlockDetector tracks lock acquisitions across concurrent tasks
- * Uses wait-for graph analysis to detect circular wait conditions
- *
- * A deadlock occurs when:
- * 1. A cycle exists in the wait-for graph
- * 2. All tasks in the cycle are blocked waiting for locks
- * 3. The cycle has no external resolver
+ * Get or create a Set in a Map
  */
-export class DeadlockDetector {
-	private lockHolders = new Map<string, string>(); // lockId -> taskId
-	private waitGraph = new Map<string, Set<string>>(); // taskId -> Set of lockIds waiting for
-	private acquisitionHistory: LockAcquisition[] = [];
-	private readonly _options: DetectionOptions;
-	private readonly _defaultTimeout: number;
-
-	constructor(options: DetectionOptions = {}) {
-		this._options = {
-			enableDeadlockDetection: true,
-			deadlockTimeout: 5000,
-			...options,
-		};
-		this._defaultTimeout = this._options.deadlockTimeout ?? 5000;
+function getOrCreateSet<K, V>(map: Map<K, Set<V>>, key: K): Set<V> {
+	let set = map.get(key);
+	if (!set) {
+		set = new Set();
+		map.set(key, set);
 	}
+	return set;
+}
 
-	/**
-	 * Track a lock acquisition attempt
-	 * @param taskId - Task attempting to acquire the lock
-	 * @param lockId - Lock being acquired
-	 */
-	trackLockAcquisition(taskId: string, lockId: string): void {
-		if (!this._options.enableDeadlockDetection) {
-			return;
-		}
+/**
+ * Get the conflict type between two accesses
+ * Returns null if no conflict (R-R)
+ */
+function getConflictType(
+	t1: "read" | "write",
+	t2: "read" | "write",
+): "W-W" | "W-R" | "R-W" | null {
+	if (t1 === "write" && t2 === "write") return "W-W";
+	if (t1 === "write" && t2 === "read") return "W-R";
+	if (t1 === "read" && t2 === "write") return "R-W";
+	return null;
+}
 
-		const acquisition: LockAcquisition = {
-			taskId,
-			lockId,
-			timestamp: Date.now(),
-			acquired: false, // Initially not acquired
-		};
-
-		this.acquisitionHistory.push(acquisition);
-
-		// Record that task is waiting for lock
-		let waitingFor = this.waitGraph.get(taskId);
-		if (!waitingFor) {
-			waitingFor = new Set();
-			this.waitGraph.set(taskId, waitingFor);
-		}
-		waitingFor.add(lockId);
-
-		// Auto-detect if enabled
-		if (this._options.autoDetect) {
-			const deadlocks = this.detectDeadlock();
-			if (deadlocks.length > 0) {
-				console.warn(`[DeadlockDetector] Detected ${deadlocks.length} potential deadlocks`);
-			}
-		}
-	}
-
-	/**
-	 * Track a successful lock acquisition
-	 * @param taskId - Task that acquired the lock
-	 * @param lockId - Lock that was acquired
-	 */
-	trackLockAcquired(taskId: string, lockId: string): void {
-		if (!this._options.enableDeadlockDetection) {
-			return;
-		}
-
-		// Update the most recent acquisition for this task/lock
-		for (let i = this.acquisitionHistory.length - 1; i >= 0; i--) {
-			const acquisition = this.acquisitionHistory[i];
-			if (acquisition?.taskId === taskId && acquisition.lockId === lockId && !acquisition.acquired) {
-				acquisition.acquired = true;
-				break;
-			}
-		}
-
-		// Record that task now holds the lock
-		this.lockHolders.set(lockId, taskId);
-
-		// Remove from wait graph
-		const waitingFor = this.waitGraph.get(taskId);
-		if (waitingFor) {
-			waitingFor.delete(lockId);
-			if (waitingFor.size === 0) {
-				this.waitGraph.delete(taskId);
-			}
-		}
-	}
-
-	/**
-	 * Track a lock release
-	 * @param taskId - Task releasing the lock
-	 * @param lockId - Lock being released
-	 */
-	trackLockRelease(taskId: string, lockId: string): void {
-		if (!this._options.enableDeadlockDetection) {
-			return;
-		}
-
-		// Remove from lock holders
-		if (this.lockHolders.get(lockId) === taskId) {
-			this.lockHolders.delete(lockId);
-		}
-	}
-
-	/**
-	 * Detect deadlock cycles using wait-for graph analysis
-	 * @returns Array of detected deadlock cycles
-	 */
-	detectDeadlock(): DeadlockCycle[] {
-		if (!this._options.enableDeadlockDetection) {
-			return [];
-		}
-
-		const cycles: DeadlockCycle[] = [];
-		const visited = new Set<string>();
-		const recStack = new Set<string>();
-		const path: string[] = [];
-		const lockPath: string[] = [];
-
-		// Build task dependency graph: task -> tasks it's waiting for
-		const taskGraph = this.buildTaskDependencyGraph();
-
-		// DFS to detect cycles
-		for (const taskId of taskGraph.keys()) {
-			if (!visited.has(taskId)) {
-				this.detectCyclesDFS(
-					taskId,
-					taskGraph,
-					visited,
-					recStack,
-					path,
-					lockPath,
-					cycles,
-				);
-			}
-		}
-
-		return cycles;
-	}
-
-	/**
-	 * Build a task dependency graph from lock holders and waiters
-	 * Returns: Map<taskId, Set<taskId>> where edges represent waiting relationships
-	 */
-	private buildTaskDependencyGraph(): Map<string, Set<string>> {
-		const taskGraph = new Map<string, Set<string>>();
-
-		// For each lock, find who holds it and who's waiting for it
-		const lockWaiters = new Map<string, string[]>();
-
-		// Build map of lock -> tasks waiting for it
-		for (const [taskId, waitingLocks] of this.waitGraph) {
-			for (const lockId of waitingLocks) {
-				if (!lockWaiters.has(lockId)) {
-					lockWaiters.set(lockId, []);
-				}
-				lockWaiters.get(lockId)?.push(taskId);
-			}
-		}
-
-		// Create edges: waiting task -> holding task
-		for (const [lockId, waiters] of lockWaiters) {
-			const holder = this.lockHolders.get(lockId);
-			if (holder) {
-				for (const waiter of waiters) {
-					let dependencies = taskGraph.get(waiter);
-					if (!dependencies) {
-						dependencies = new Set();
-						taskGraph.set(waiter, dependencies);
-					}
-					dependencies.add(holder);
-				}
-			}
-		}
-
-		return taskGraph;
-	}
-
-	/**
-	 * DFS-based cycle detection in task dependency graph
-	 */
-	private detectCyclesDFS(
-		taskId: string,
-		graph: Map<string, Set<string>>,
-		visited: Set<string>,
-		recStack: Set<string>,
-		path: string[],
-		lockPath: string[],
-		cycles: DeadlockCycle[],
-	): void {
-		visited.add(taskId);
-		recStack.add(taskId);
-		path.push(taskId);
-
-		// Add locks this task is waiting for
-		const waitingLocks = this.waitGraph.get(taskId);
-		if (waitingLocks) {
-			for (const lockId of waitingLocks) {
-				lockPath.push(lockId);
-			}
-		}
-
-		const dependencies = graph.get(taskId);
-		if (dependencies) {
-			for (const depId of dependencies) {
-				if (!visited.has(depId)) {
-					this.detectCyclesDFS(
-						depId,
-						graph,
-						visited,
-						recStack,
-						path,
-						lockPath,
-						cycles,
-					);
-				} else if (recStack.has(depId)) {
-					// Found a cycle - extract it
-					const cycleStart = path.indexOf(depId);
-					const cycle = path.slice(cycleStart);
-					const locks = this.extractLocksForCycle(cycle);
-
-					cycles.push({
-						cycle,
-						locks,
-						description: this.generateDeadlockDescription(cycle, locks),
-					});
-				}
-			}
-		}
-
-		recStack.delete(taskId);
-		path.pop();
-
-		// Remove locks this task was waiting for
-		if (waitingLocks) {
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			for (const __ of waitingLocks) {
-				lockPath.pop();
-			}
-		}
-	}
-
-	/**
-	 * Extract locks involved in a deadlock cycle
-	 */
-	private extractLocksForCycle(cycle: string[]): string[] {
-		const locks: string[] = [];
-
-		for (let i = 0; i < cycle.length; i++) {
-			const currentTask = cycle[i] ?? "";
-			const nextTask = cycle[(i + 1) % cycle.length] ?? "";
-
-			// Find the lock that currentTask is waiting for that nextTask holds
-			const waitingLocks = this.waitGraph.get(currentTask);
-			if (waitingLocks) {
-				for (const lockId of waitingLocks) {
-					const holder = this.lockHolders.get(lockId);
-					if (holder && holder === nextTask) {
-						locks.push(lockId);
-						break;
-					}
-				}
-			}
-		}
-
-		return locks;
-	}
-
-	/**
-	 * Generate a human-readable deadlock description
-	 */
-	private generateDeadlockDescription(cycle: string[], locks: string[]): string {
-		let description = "Deadlock detected: ";
-
-		for (let i = 0; i < cycle.length; i++) {
-			const task = cycle[i];
-			const lock = locks[i] ?? "?";
-			const nextTask = cycle[(i + 1) % cycle.length];
-
-			description += `task "${task}" is waiting for lock "${lock}" held by task "${nextTask}"`;
-
-			if (i < cycle.length - 1) {
-				description += ", ";
-			}
-		}
-
-		description += ". This circular wait condition will never resolve without intervention.";
-
-		return description;
-	}
-
-	/**
-	 * Detect deadlock with timeout
-	 * Returns as soon as a deadlock is detected or timeout expires
-	 */
-	async detectDeadlockWithTimeout(timeoutMs?: number): Promise<DeadlockCycle[]> {
-		const timeout = timeoutMs ?? this._defaultTimeout;
-
-		return new Promise((resolve) => {
-			const startTime = Date.now();
-
-			const checkDeadline = () => {
-				if (Date.now() - startTime >= timeout) {
-					resolve([]);
-					return;
-				}
-
-				const deadlocks = this.detectDeadlock();
-				if (deadlocks.length > 0) {
-					resolve(deadlocks);
-				} else {
-					setTimeout(checkDeadline, 100);
-				}
-			};
-
-			checkDeadline();
-		});
-	}
-
-	/**
-	 * Clear all tracking state
-	 */
-	clear(): void {
-		this.lockHolders.clear();
-		this.waitGraph.clear();
-		this.acquisitionHistory = [];
-	}
-
-	/**
-	 * Get statistics about lock tracking
-	 */
-	getStats(): {
-		heldLocks: number;
-		waitingTasks: number;
-		totalAcquisitions: number;
-		} {
-		let waitingTasks = 0;
-		for (const waiters of this.waitGraph.values()) {
-			waitingTasks += waiters.size;
-		}
-
-		return {
-			heldLocks: this.lockHolders.size,
-			waitingTasks,
-			totalAcquisitions: this.acquisitionHistory.length,
-		};
-	}
+/**
+ * Generate a human-readable race description
+ */
+function describeRace(location: string, a1: MemoryAccess, a2: MemoryAccess): string {
+	return (
+		`Potential data race at location "${location}": ` +
+		`task "${a1.taskId}" performs ${a1.type} and task "${a2.taskId}" performs ${a2.type} ` +
+		"without happens-before ordering. This could lead to undefined behavior."
+	);
 }
 
 //==============================================================================
@@ -711,7 +298,7 @@ export class DeadlockDetector {
  */
 export interface DetectionResult {
 	races: RaceCondition[];
-	deadlocks: DeadlockCycle[];
+	deadlocks: import("./deadlock-detector.js").DeadlockCycle[];
 	timestamp: number;
 }
 
