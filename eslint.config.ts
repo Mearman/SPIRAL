@@ -48,6 +48,52 @@ const testFileNamingRule: Rule.RuleModule = {
 	},
 };
 
+// JSON Schema key ordering (reused for root and nested schema objects)
+const jsonSchemaKeyOrder = [
+	"$schema",
+	"$id",
+	"$ref",
+	"$defs",
+	"title",
+	"description",
+	"type",
+	"const",
+	"enum",
+	"default",
+	"properties",
+	"patternProperties",
+	"additionalProperties",
+	"required",
+	"items",
+	"additionalItems",
+	"contains",
+	"minItems",
+	"maxItems",
+	"uniqueItems",
+	"oneOf",
+	"anyOf",
+	"allOf",
+	"not",
+	"if",
+	"then",
+	"else",
+	"discriminator",
+	"minimum",
+	"maximum",
+	"exclusiveMinimum",
+	"exclusiveMaximum",
+	"multipleOf",
+	"minLength",
+	"maxLength",
+	"pattern",
+	"format",
+];
+
+// Extract the jsonc plugin for reuse in file-specific overrides.
+// The recommended config's plugin registration is scoped to **/*.json, so
+// override blocks with different file patterns need the plugin explicitly.
+const jsoncPlugin = { jsonc: jsonc };
+
 export default [
 	// Global ignores
 	{
@@ -56,6 +102,10 @@ export default [
 			"node_modules/**",
 			"coverage/**",
 			"wiki/**",
+			".pytest_cache/**",
+			".claude/**",
+			"CLAUDE.md", // symlink to README.md
+			"AGENTS.md", // symlink to README.md
 			"*.config.js",
 			"*.config.mjs",
 			"*.config.ts", // Ignore config file to avoid parsing issues
@@ -205,17 +255,202 @@ export default [
 		},
 	},
 
-	// JSON files - explicitly scope to .json files only
+	// JSON files - scope ALL jsonc configs to .json files only, exclude markdown code blocks
 	...jsonc.configs["flat/recommended-with-json"].map((config) => ({
 		...config,
 		files: ["**/*.json"],
+		ignores: ["**/*.md/**"],
 	})),
 	{
 		files: ["**/*.json"],
+		ignores: ["**/*.md/**"],
 		rules: {
-			"jsonc/sort-keys": "off",
-			"jsonc/indent": ["error", 2],
+			"jsonc/indent": ["error", "tab"],
 			"jsonc/quotes": ["error", "double"],
+			// Default: sort keys alphabetically
+			"jsonc/sort-keys": ["error",
+				{
+					pathPattern: ".*",
+					order: { type: "asc" },
+				},
+			],
+		},
+	},
+
+	// package.json - conventional field ordering
+	{
+		files: ["package.json"],
+		plugins: jsoncPlugin,
+		rules: {
+			"jsonc/sort-keys": ["error",
+				{
+					pathPattern: "^$",
+					order: [
+						"name",
+						"version",
+						"private",
+						"description",
+						"keywords",
+						"license",
+						"author",
+						"contributors",
+						"funding",
+						"repository",
+						"homepage",
+						"bugs",
+						"type",
+						"main",
+						"module",
+						"types",
+						"exports",
+						"typesVersions",
+						"bin",
+						"files",
+						"directories",
+						"man",
+						"scripts",
+						"dependencies",
+						"devDependencies",
+						"peerDependencies",
+						"optionalDependencies",
+						"bundleDependencies",
+						"engines",
+						"os",
+						"cpu",
+						"packageManager",
+						"publishConfig",
+						"config",
+						"workspaces",
+						"overrides",
+						"resolutions",
+						"c8",
+						"lint-staged",
+					],
+				},
+				{
+					pathPattern: "^(?:dependencies|devDependencies|peerDependencies|optionalDependencies|bundleDependencies|overrides|resolutions)$",
+					order: { type: "asc" },
+				},
+				{
+					pathPattern: "^scripts$",
+					order: { type: "asc" },
+				},
+				{
+					pathPattern: ".",
+					order: { type: "asc" },
+				},
+			],
+		},
+	},
+
+	// JSON Schema files - schema field ordering
+	{
+		files: ["*.schema.json"],
+		plugins: jsoncPlugin,
+		rules: {
+			"jsonc/sort-keys": ["error",
+				{
+					pathPattern: "^$",
+					order: jsonSchemaKeyOrder,
+				},
+				{
+					pathPattern: ".",
+					hasProperties: ["$ref"],
+					order: [
+						"$ref",
+					],
+				},
+				{
+					pathPattern: ".",
+					hasProperties: ["kind"],
+					order: [
+						"kind",
+						"type",
+						"const",
+						"enum",
+					],
+				},
+				{
+					pathPattern: ".",
+					hasProperties: ["type"],
+					order: jsonSchemaKeyOrder,
+				},
+				{
+					pathPattern: ".",
+					order: { type: "asc" },
+				},
+			],
+		},
+	},
+
+	// SPIRAL document files - semantic field ordering
+	{
+		files: [
+			"examples/**/*.json",
+			"!examples/**/*.inputs.json",
+		],
+		plugins: jsoncPlugin,
+		rules: {
+			"jsonc/sort-keys": ["error",
+				{
+					pathPattern: "^$",
+					order: [
+						"$schema",
+						"version",
+						"description",
+						"airDefs",
+						"nodes",
+						"result",
+						"expected_result",
+						"note",
+					],
+				},
+				{
+					pathPattern: "^airDefs\\[\\d+\\]$",
+					order: [
+						"ns",
+						"name",
+						"params",
+						"result",
+						"body",
+					],
+				},
+				{
+					pathPattern: "^nodes\\[\\d+\\]$",
+					order: [
+						"id",
+						"expr",
+						"blocks",
+						"entry",
+					],
+				},
+				{
+					pathPattern: ".",
+					hasProperties: ["kind"],
+					order: [
+						"kind",
+						"type",
+						"id",
+						"ns",
+						"name",
+						"op",
+						"target",
+						"value",
+						"params",
+						"args",
+						"fn",
+						"body",
+						"cond",
+						"then",
+						"else",
+						"returns",
+					],
+				},
+				{
+					pathPattern: ".",
+					order: { type: "asc" },
+				},
+			],
 		},
 	},
 
@@ -228,9 +463,14 @@ export default [
 	{
 		files: ["**/*.md"],
 		ignores: [".tmp/**/*.md"],
+		plugins: jsoncPlugin,
 		rules: {
 			// Allow code blocks without language (many are pseudo-code or math notation)
 			"markdown/fenced-code-language": "off",
+			// Disable jsonc/sort-keys for markdown files - the markdown processor
+			// extracts JSON code blocks which inherit parent rules, but the jsonc
+			// parser isn't available in that context causing crashes
+			"jsonc/sort-keys": "off",
 		},
 	},
 ] satisfies ConfigArray;
