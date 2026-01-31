@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
-
 // SPIRAL Task Scheduler
 // Cooperative task scheduling for async/parallel execution
 
