@@ -1,20 +1,21 @@
 // SPIRAL Type Checker
-// Implements typing rules: Γ ⊢ e : τ
+// Implements typing rules: Gamma |- e : tau
 
 import { lookupOperator, type OperatorRegistry } from "./domains/registry.js";
-import { TypeEnv, emptyTypeEnv, extendTypeEnv, lookupDef, lookupType, type Defs } from "./env.js";
-import { SPIRALError, exhaustive } from "./errors.js";
-import type { AIRDocument, AirHybridNode, EirHybridNode, Expr, Type } from "./types.js";
-import { isBlockNode, isExprNode } from "./types.js";
+import { type TypeEnv, emptyTypeEnv, lookupDef, type Defs } from "./env.js";
+import { SPIRALError } from "./errors.js";
+import type { AIRDocument, Expr, Type } from "./types.js";
 import {
 	boolType,
 	fnType as fnTypeCtor,
 	intType,
-	listType,
-	refType,
 	typeEqual,
 	voidType,
 } from "./types.js";
+import type { AIRCheckContext, EIRCheckContext } from "./typechecker/context.js";
+import { collectLambdaParamsAndLetBindings, identifyBoundNodes } from "./typechecker/bound-nodes.js";
+import { typeCheckNode } from "./typechecker/air-checker.js";
+import { typeCheckEIRNode } from "./typechecker/eir-checker.js";
 
 //==============================================================================
 // Type Checking Result
@@ -26,7 +27,7 @@ export interface TypeCheckResult {
 }
 
 //==============================================================================
-// Type Checker
+// Type Checker Class
 //==============================================================================
 
 export class TypeChecker {
@@ -38,276 +39,190 @@ export class TypeChecker {
 		this.defs = defs;
 	}
 
-	/**
-	 * Type check an expression: Γ ⊢ e : τ
-	 */
 	typeCheck(expr: Expr, env: TypeEnv): TypeCheckResult {
-		switch (expr.kind) {
-		case "lit":
-			return this.typeCheckLit(expr, env);
-		case "var":
-			return this.typeCheckVar(expr, env);
-		case "ref":
-			return this.typeCheckRef(expr, env);
-		case "call":
-			return this.typeCheckCall(expr, env);
-		case "if":
-			return this.typeCheckIf(expr, env);
-		case "let":
-			return this.typeCheckLet(expr, env);
-		case "airRef":
-			return this.typeCheckAirRef(expr, env);
-		case "predicate":
-			return this.typeCheckPredicate(expr, env);
-		case "lambda":
-			return this.typeCheckLambda(expr, env);
-		case "callExpr":
-			return this.typeCheckCallExpr(expr, env);
-		case "fix":
-			return this.typeCheckFix(expr, env);
-		case "do":
-			return this.typeCheckDo(expr, env);
-		// PIR expressions - minimal type checking for now
-		case "par":
-		case "spawn":
-		case "await":
-		case "channel":
-		case "send":
-		case "recv":
-		case "select":
-		case "race":
-			return { type: voidType, env };
-		default:
-			return exhaustive(expr);
-		}
+		return dispatchExpr(this, expr, env);
 	}
 
-	/**
-	 * T-Lit: Γ ⊢ lit(t, v) : t
-	 */
-	private typeCheckLit(
-		expr: { kind: "lit"; type: Type; value: unknown },
-		env: TypeEnv,
-	): TypeCheckResult {
+	getRegistry(): OperatorRegistry {
+		return this.registry;
+	}
+
+	getDefs(): Defs {
+		return this.defs;
+	}
+}
+
+//==============================================================================
+// Expression Type Dispatch
+//==============================================================================
+
+/** Simple expression kinds that return directly. */
+function dispatchSimpleExpr(expr: Expr, env: TypeEnv): TypeCheckResult | undefined {
+	switch (expr.kind) {
+	case "lit":
 		return { type: expr.type, env };
-	}
-
-	/**
-	 * T-Var: Γ(x) = τ
-	 *          -------
-	 *          Γ ⊢ var(x) : τ
-	 *
-	 * Note: For var expressions that reference let-bound variables, we defer
-	 * strict type checking and return a default type. The actual type is determined
-	 * when the let expression is processed with the extended environment.
-	 */
-	private typeCheckVar(
-		expr: { kind: "var"; name: string },
-		env: TypeEnv,
-	): TypeCheckResult {
-		const type = lookupType(env, expr.name);
-		if (!type) {
-			// Variable not found in environment - this might be a let-bound variable
-			// Return a default type for now; the actual type will be resolved when
-			// the let expression is processed with the extended environment
-			return { type: intType, env };
-		}
-		return { type, env };
-	}
-
-	/**
-	 * T-Ref: refs are type-checked by looking up the target node
-	 *        The actual typing is done during program type checking
-	 */
-	private typeCheckRef(
-		expr: { kind: "ref"; id: string },
-		env: TypeEnv,
-	): TypeCheckResult {
-		// Check if this is a variable reference (let-bound or lambda param)
-		const varType = env.get(expr.id);
-		if (varType) {
-			return { type: varType, env };
-		}
-
-		// Otherwise, this is a node reference to be resolved during program type checking
-		throw new Error("Ref must be resolved during program type checking");
-	}
-
-	/**
-	 * T-Call: find operator signature and check argument types
-	 */
-	private typeCheckCall(
-		expr: { kind: "call"; ns: string; name: string; args: (string | Expr)[] },
-		env: TypeEnv,
-	): TypeCheckResult {
-		const op = lookupOperator(this.registry, expr.ns, expr.name);
-		if (!op) {
-			throw SPIRALError.unknownOperator(expr.ns, expr.name);
-		}
-
-		// Check arity
-		if (op.params.length !== expr.args.length) {
-			throw SPIRALError.arityError(
-				op.params.length,
-				expr.args.length,
-				expr.ns + ":" + expr.name,
-			);
-		}
-
-		// Type check each argument
-		for (let i = 0; i < expr.args.length; i++) {
-			const arg = expr.args[i];
-			const expectedType = op.params[i];
-
-			if (arg === undefined || expectedType === undefined) {
-				continue; // Should not happen due to arity check above
-			}
-
-			if (typeof arg === "string") {
-				// Node reference - type is checked during program type checking
-				// No additional checking needed here
-				continue;
-			}
-
-			// Inline expression - type check it
-			if ("kind" in arg) {
-				const argResult = this.typeCheck(arg, env);
-				if (!typeEqual(argResult.type, expectedType)) {
-					throw SPIRALError.typeError(
-						expectedType,
-						argResult.type,
-						`argument ${i + 1} of ${expr.ns}:${expr.name}`,
-					);
-				}
-			}
-		}
-
-		return { type: op.returns, env };
-	}
-
-	/**
-	 * T-If: Γ ⊢ cond : bool    Γ ⊢ then : τ    Γ ⊢ else : τ
-	 *       ---------------------------------------------
-	 *                    Γ ⊢ if(cond, then, else) : τ
-	 */
-	private typeCheckIf(
-		expr: { kind: "if"; cond: string; then: string; else: string; type: Type },
-		env: TypeEnv,
-	): TypeCheckResult {
-		// Branch types are checked during program type checking
+	case "if":
 		return { type: expr.type, env };
-	}
-
-	/**
-	 * T-Let: Γ ⊢ value : τ1    Γ, x:τ1 ⊢ body : τ2
-	 *        -------------------------------------
-	 *              Γ ⊢ let(x, value, body) : τ2
-	 */
-	private typeCheckLet(
-		_expr: { kind: "let"; name: string; value: string; body: string },
-		env: TypeEnv,
-	): TypeCheckResult {
-		// Value and body types are checked during program type checking
-		// This is a placeholder - actual typing is done by the program checker
+	case "let":
 		return { type: intType, env };
-	}
-
-	/**
-	 * T-AirRef: look up airDef signature and check argument types
-	 */
-	private typeCheckAirRef(
-		expr: { kind: "airRef"; ns: string; name: string; args: string[] },
-		env: TypeEnv,
-	): TypeCheckResult {
-		const def = lookupDef(this.defs, expr.ns, expr.name);
-		if (!def) {
-			throw SPIRALError.unknownDefinition(expr.ns, expr.name);
-		}
-
-		// Check arity
-		if (def.params.length !== expr.args.length) {
-			throw SPIRALError.arityError(
-				def.params.length,
-				expr.args.length,
-				expr.ns + ":" + expr.name,
-			);
-		}
-
-		// Arguments are node refs, their types are checked during program type checking
-		return { type: def.result, env };
-	}
-
-	/**
-	 * T-Pred: predicates always produce bool type
-	 */
-	private typeCheckPredicate(
-		_expr: { kind: "predicate"; name: string; value: string },
-		env: TypeEnv,
-	): TypeCheckResult {
-		// Predicates return bool
+	case "predicate":
 		return { type: boolType, env };
-	}
-
-	/**
-	 * T-Λ (Lambda): Γ, x1:τ1, ..., xn:τn ⊢ body : τ_return
-	 *               ----------------------------------------
-	 *           Γ ⊢ lambda([x1,...,xn], body) : fn(τ1,...,τn) -> τ_return
-	 */
-	private typeCheckLambda(
-		expr: { kind: "lambda"; params: string[]; body: string; type: Type },
-		env: TypeEnv,
-	): TypeCheckResult {
-		// Lambda type should be a FnType
-		if (expr.type.kind !== "fn") {
-			throw SPIRALError.typeError(fnTypeCtor([], intType), expr.type, "lambda");
-		}
+	case "callExpr":
+		return { type: intType, env };
+	case "fix":
 		return { type: expr.type, env };
+	default:
+		return undefined;
 	}
+}
 
-	/**
-	 * T-CallExpr: Γ ⊢ fn : fn(τ1,...,τn) -> τ    Γ ⊢ args[i] : τi
-	 *             --------------------------------------------------
-	 *                     Γ ⊢ callExpr(fn, args) : τ
-	 */
-	private typeCheckCallExpr(
-		_expr: { kind: "callExpr"; fn: string; args: string[] },
-		env: TypeEnv,
-	): TypeCheckResult {
-		// Fn and arg types are checked during program type checking
+/** PIR expression kinds that all return void. */
+function isPirExpr(expr: Expr): boolean {
+	switch (expr.kind) {
+	case "par":
+	case "spawn":
+	case "await":
+	case "channel":
+	case "send":
+	case "recv":
+	case "select":
+	case "race":
+		return true;
+	default:
+		return false;
+	}
+}
+
+function dispatchExpr(checker: TypeChecker, expr: Expr, env: TypeEnv): TypeCheckResult {
+	const simple = dispatchSimpleExpr(expr, env);
+	if (simple) return simple;
+	if (isPirExpr(expr)) return { type: voidType, env };
+
+	switch (expr.kind) {
+	case "var":
+		return typeCheckVar(expr, env);
+	case "ref":
+		return typeCheckRef(expr, env);
+	case "call":
+		return typeCheckCall(checker, expr, env);
+	case "airRef":
+		return typeCheckAirRef(checker, expr, env);
+	case "lambda":
+		return typeCheckLambda(expr, env);
+	case "do":
+		return typeCheckDo(checker, expr, env);
+	default:
+		throw new Error("Unhandled expression kind: " + expr.kind);
+	}
+}
+
+function typeCheckVar(
+	expr: { kind: "var"; name: string },
+	env: TypeEnv,
+): TypeCheckResult {
+	const type = env.get(expr.name);
+	if (!type) {
 		return { type: intType, env };
 	}
+	return { type, env };
+}
 
-	/**
-	 * T-Fix: Γ ⊢ fn : fn(τ) -> τ
-	 *        -----------------
-	 *        Γ ⊢ fix(fn) : τ
-	 */
-	private typeCheckFix(
-		expr: { kind: "fix"; fn: string; type: Type },
-		env: TypeEnv,
-	): TypeCheckResult {
-		// Fix requires the function type to be of the form fn(τ) -> τ
-		// This is checked during program type checking
-		return { type: expr.type, env };
+function typeCheckRef(
+	expr: { kind: "ref"; id: string },
+	env: TypeEnv,
+): TypeCheckResult {
+	const varType = env.get(expr.id);
+	if (varType) {
+		return { type: varType, env };
+	}
+	throw new Error("Ref must be resolved during program type checking");
+}
+
+interface CallArgCheckInput {
+	checker: TypeChecker;
+	args: (string | Expr)[];
+	params: Type[];
+	env: TypeEnv;
+	opName: string;
+}
+
+function typeCheckCall(
+	checker: TypeChecker,
+	expr: { kind: "call"; ns: string; name: string; args: (string | Expr)[] },
+	env: TypeEnv,
+): TypeCheckResult {
+	const op = lookupOperator(checker.getRegistry(), expr.ns, expr.name);
+	if (!op) {
+		throw SPIRALError.unknownOperator(expr.ns, expr.name);
 	}
 
-	private typeCheckDo(
-		expr: { kind: "do"; exprs: (string | Expr)[] },
-		env: TypeEnv,
-	): TypeCheckResult {
-		if (expr.exprs.length === 0) {
-			return { type: voidType, env };
-		}
-		let lastResult: TypeCheckResult = { type: voidType, env };
-		for (const e of expr.exprs) {
-			if (typeof e === "string") {
-				// Node reference - resolved during program type checking
-				throw new Error("Do expr refs must be resolved during program type checking");
+	if (op.params.length !== expr.args.length) {
+		throw SPIRALError.arityError(op.params.length, expr.args.length, expr.ns + ":" + expr.name);
+	}
+
+	checkCallArgs({ checker, args: expr.args, params: op.params, env, opName: expr.ns + ":" + expr.name });
+
+	return { type: op.returns, env };
+}
+
+function checkCallArgs(input: CallArgCheckInput): void {
+	for (let i = 0; i < input.args.length; i++) {
+		const arg = input.args[i];
+		const expectedType = input.params[i];
+		if (arg === undefined || expectedType === undefined) continue;
+		if (typeof arg === "string") continue;
+		if ("kind" in arg) {
+			const argResult = input.checker.typeCheck(arg, input.env);
+			if (!typeEqual(argResult.type, expectedType)) {
+				throw SPIRALError.typeError(expectedType, argResult.type, `argument ${i + 1} of ${input.opName}`);
 			}
-			lastResult = this.typeCheck(e, env);
 		}
-		return lastResult;
 	}
+}
+
+function typeCheckAirRef(
+	checker: TypeChecker,
+	expr: { kind: "airRef"; ns: string; name: string; args: string[] },
+	env: TypeEnv,
+): TypeCheckResult {
+	const def = lookupDef(checker.getDefs(), expr.ns, expr.name);
+	if (!def) {
+		throw SPIRALError.unknownDefinition(expr.ns, expr.name);
+	}
+
+	if (def.params.length !== expr.args.length) {
+		throw SPIRALError.arityError(def.params.length, expr.args.length, expr.ns + ":" + expr.name);
+	}
+
+	return { type: def.result, env };
+}
+
+function typeCheckLambda(
+	expr: { kind: "lambda"; params: string[]; body: string; type: Type },
+	env: TypeEnv,
+): TypeCheckResult {
+	if (expr.type.kind !== "fn") {
+		throw SPIRALError.typeError(fnTypeCtor([], intType), expr.type, "lambda");
+	}
+	return { type: expr.type, env };
+}
+
+function typeCheckDo(
+	checker: TypeChecker,
+	expr: { kind: "do"; exprs: (string | Expr)[] },
+	env: TypeEnv,
+): TypeCheckResult {
+	if (expr.exprs.length === 0) {
+		return { type: voidType, env };
+	}
+	let lastResult: TypeCheckResult = { type: voidType, env };
+	for (const e of expr.exprs) {
+		if (typeof e === "string") {
+			throw new Error("Do expr refs must be resolved during program type checking");
+		}
+		lastResult = checker.typeCheck(e, env);
+	}
+	return lastResult;
 }
 
 //==============================================================================
@@ -315,114 +230,7 @@ export class TypeChecker {
 //==============================================================================
 
 /**
- * Collect all lambda parameters and let binding names from a CIR program.
- * This is used to recognize valid identifiers during type checking.
- */
-function collectLambdaParamsAndLetBindings(
-	nodes: AirHybridNode[],
-): Set<string> {
-	const params = new Set<string>();
-
-	const collectFromExpr = (expr: Expr): void => {
-		if (expr.kind === "lambda") {
-			for (const p of expr.params) {
-				params.add(p);
-			}
-		} else if (expr.kind === "let") {
-			params.add(expr.name);
-		}
-	};
-
-	for (const node of nodes) {
-		// Only collect from expr nodes
-		if (isExprNode(node)) {
-			collectFromExpr(node.expr);
-		}
-	}
-
-	return params;
-}
-
-/**
- * Identify "bound nodes" - nodes that are only reachable through lambda bodies.
- * These should be skipped during top-level type checking and processed when
- * their containing lambda is checked.
- */
-function identifyBoundNodes(
-	nodes: AirHybridNode[],
-	nodeMap: Map<string, AirHybridNode>,
-): Set<string> {
-	const boundNodes = new Set<string>();
-	const lambdaBodies = new Set<string>();
-
-	// First pass: collect all lambda body node IDs and their transitive dependencies
-	const collectLambdaBodyDeps = (nodeId: string, visited: Set<string>): void => {
-		if (visited.has(nodeId)) return;
-		visited.add(nodeId);
-		boundNodes.add(nodeId);
-
-		const node = nodeMap.get(nodeId);
-		if (!node) return;
-
-		// Block nodes don't have expressions to traverse
-		if (isBlockNode(node)) return;
-
-		const expr = node.expr;
-		// Collect references from the expression
-		if (expr.kind === "lambda") {
-			collectLambdaBodyDeps(expr.body, visited);
-		} else if (expr.kind === "let") {
-			if (typeof expr.value === "string") {
-				collectLambdaBodyDeps(expr.value, visited);
-			}
-			if (typeof expr.body === "string") {
-				collectLambdaBodyDeps(expr.body, visited);
-			}
-		} else if (expr.kind === "if") {
-			if (typeof expr.cond === "string") collectLambdaBodyDeps(expr.cond, visited);
-			if (typeof expr.then === "string") collectLambdaBodyDeps(expr.then, visited);
-			if (typeof expr.else === "string") collectLambdaBodyDeps(expr.else, visited);
-		} else if (expr.kind === "callExpr") {
-			if (nodeMap.has(expr.fn)) collectLambdaBodyDeps(expr.fn, visited);
-			for (const argId of expr.args) {
-				if (nodeMap.has(argId)) collectLambdaBodyDeps(argId, visited);
-			}
-		} else if (expr.kind === "call") {
-			for (const arg of expr.args) {
-				if (typeof arg === "string" && nodeMap.has(arg)) {
-					collectLambdaBodyDeps(arg, visited);
-				}
-			}
-		} else if (expr.kind === "ref") {
-			if (nodeMap.has(expr.id)) collectLambdaBodyDeps(expr.id, visited);
-		}
-	};
-
-	// Collect lambda bodies first
-	for (const node of nodes) {
-		if (isExprNode(node) && node.expr.kind === "lambda") {
-			lambdaBodies.add(node.expr.body);
-		}
-	}
-
-	// For each lambda body, collect all transitive dependencies as bound nodes
-	for (const bodyId of lambdaBodies) {
-		collectLambdaBodyDeps(bodyId, new Set<string>());
-	}
-
-	// Remove lambda nodes themselves - they're not bound, only their bodies are
-	for (const node of nodes) {
-		if (isExprNode(node) && node.expr.kind === "lambda") {
-			boundNodes.delete(node.id);
-		}
-	}
-
-	return boundNodes;
-}
-
-/**
  * Type check a full AIR/CIR program.
- * Resolves all node references and ensures type consistency.
  */
 export function typeCheckProgram(
 	doc: AIRDocument,
@@ -433,984 +241,100 @@ export function typeCheckProgram(
 	const nodeTypes = new Map<string, Type>();
 	const nodeEnvs = new Map<string, TypeEnv>();
 
-	// Build a map of nodes for easy lookup
-	const nodeMap = new Map<string, AirHybridNode>();
+	const nodeMap = new Map<string, import("./types.js").AirHybridNode>();
 	for (const node of doc.nodes) {
 		nodeMap.set(node.id, node);
 	}
 
-	// Collect lambda parameters and let bindings for identifier recognition
 	const lambdaParams = collectLambdaParamsAndLetBindings(doc.nodes);
-
-	// Identify bound nodes (nodes only reachable through lambda bodies)
 	const boundNodes = identifyBoundNodes(doc.nodes, nodeMap);
 
-	// Type check each node in order, skipping bound nodes at top level
+	return typeCheckProgramNodes(
+		{ checker, nodeMap, nodeTypes, nodeEnvs, env: emptyTypeEnv(), lambdaParams, boundNodes },
+		doc,
+	);
+}
+
+function typeCheckProgramNodes(
+	ctx: AIRCheckContext,
+	doc: AIRDocument,
+): { nodeTypes: Map<string, Type>; resultType: Type } {
 	for (const node of doc.nodes) {
-		// Skip bound nodes - they'll be type-checked with their lambda context
-		if (boundNodes.has(node.id)) {
-			continue;
-		}
+		if (ctx.boundNodes.has(node.id)) continue;
 
 		const env = emptyTypeEnv();
-
-		// Type check the expression
-		const result = typeCheckNode(
-			checker,
-			node,
-			nodeMap,
-			nodeTypes,
-			nodeEnvs,
-			env,
-			lambdaParams,
-			boundNodes,
-		);
-		nodeTypes.set(node.id, result.type);
-		nodeEnvs.set(node.id, result.env);
+		const result = typeCheckNode({ ...ctx, env }, node);
+		ctx.nodeTypes.set(node.id, result.type);
+		ctx.nodeEnvs.set(node.id, result.env);
 	}
 
-	// Get the result type
-	const resultType = nodeTypes.get(doc.result);
+	const resultType = ctx.nodeTypes.get(doc.result);
 	if (!resultType) {
-		throw SPIRALError.validation(
-			"result",
-			"Result node not found: " + doc.result,
-		);
+		throw SPIRALError.validation("result", "Result node not found: " + doc.result);
 	}
 
-	return { nodeTypes, resultType };
-}
-
-/**
- * Type check a single node, resolving references.
- */
-function typeCheckNode(
-	checker: TypeChecker,
-	node: AirHybridNode,
-	nodeMap: ReadonlyMap<string, { id: string }>,
-	nodeTypes: Map<string, Type>,
-	_nodeEnvs: Map<string, TypeEnv>,
-	env: TypeEnv,
-	lambdaParams: Set<string>,
-	boundNodes: Set<string>,
-): TypeCheckResult {
-	// Handle block nodes - return the declared type or infer from return terminator
-	if (isBlockNode(node)) {
-		// For now, use the node's declared type or default to int
-		return { type: node.type ?? intType, env };
-	}
-
-	const expr = node.expr;
-
-	switch (expr.kind) {
-	case "lit": {
-		return checker.typeCheck(expr, env);
-	}
-
-	case "var": {
-		return checker.typeCheck(expr, env);
-	}
-
-	case "ref": {
-		// Look up the referenced node's type
-		const targetType = nodeTypes.get(expr.id);
-		if (!targetType) {
-			throw SPIRALError.validation(
-				"ref",
-				"Referenced node not found: " + expr.id,
-			);
-		}
-		return { type: targetType, env };
-	}
-
-	case "call": {
-		// Check arguments - can be node refs (strings) or inline expressions
-		for (const arg of expr.args) {
-			if (typeof arg === "string") {
-				// Node reference - check it exists in nodeMap
-				// Skip if not found - could be a lambda parameter or other runtime binding
-				const argNode = nodeMap.get(arg);
-				if (argNode) {
-					// Node exists, will be type-checked when processed
-				}
-				// If argNode is null, it might be a lambda parameter - skip validation
-			}
-			// Inline expressions will be type-checked by checker.typeCheck()
-		}
-		return checker.typeCheck(expr, env);
-	}
-
-	case "if": {
-		// Support both node references (strings) and inline expressions (objects)
-		// For node references, we require expr.type to be declared
-		// For inline expressions, type is inferred from branches
-
-		// Widen to string | Expr to support both node references and inline expressions
-		const condVal: string | Expr = expr.cond;
-		const thenVal: string | Expr = expr.then;
-		const elseVal: string | Expr = expr.else;
-
-		let condType: Type;
-		if (typeof condVal === "string") {
-			// Node reference - can also be a lambda param or let-bound variable
-			const condIsNode = nodeMap.has(condVal);
-			const condIsParam = lambdaParams.has(condVal);
-			if (!condIsNode && !condIsParam) {
-				throw SPIRALError.validation(
-					"if",
-					"Condition node not found: " + condVal,
-				);
-			}
-			const nodeCondType = nodeTypes.get(condVal);
-			// If not yet type-checked, use bool as placeholder
-			condType = nodeCondType ?? boolType;
-		} else {
-			// Inline expression
-			const condResult = checker.typeCheck(condVal, env);
-			condType = condResult.type;
-		}
-
-		// Only validate condition type if we have a real type (not placeholder)
-		if (nodeTypes.has(typeof condVal === "string" ? condVal : "")) {
-			if (condType.kind !== "bool") {
-				throw SPIRALError.typeError(boolType, condType, "if condition");
-			}
-		}
-
-		let thenType: Type;
-		if (typeof thenVal === "string") {
-			if (!nodeMap.has(thenVal)) {
-				throw SPIRALError.validation(
-					"if",
-					"Then branch node not found: " + thenVal,
-				);
-			}
-			const nodeThenType = nodeTypes.get(thenVal);
-			if (!nodeThenType) {
-				// Node not yet type-checked - skip validation for now
-				// Use declared type as placeholder
-				thenType = expr.type;
-			} else {
-				thenType = nodeThenType;
-			}
-		} else {
-			const thenResult = checker.typeCheck(thenVal, env);
-			thenType = thenResult.type;
-		}
-
-		let elseType: Type;
-		if (typeof elseVal === "string") {
-			if (!nodeMap.has(elseVal)) {
-				throw SPIRALError.validation(
-					"if",
-					"Else branch node not found: " + elseVal,
-				);
-			}
-			const nodeElseType = nodeTypes.get(elseVal);
-			if (!nodeElseType) {
-				// Node not yet type-checked - skip validation for now
-				// Use declared type as placeholder
-				elseType = expr.type;
-			} else {
-				elseType = nodeElseType;
-			}
-		} else {
-			const elseResult = checker.typeCheck(elseVal, env);
-			elseType = elseResult.type;
-		}
-
-		// If type is explicitly declared, validate branches against it and return it
-		const declaredType = expr.type;
-		if (nodeTypes.has(typeof thenVal === "string" ? thenVal : "")) {
-			if (!typeEqual(thenType, declaredType)) {
-				throw SPIRALError.typeError(declaredType, thenType, "if then branch");
-			}
-		}
-		if (nodeTypes.has(typeof elseVal === "string" ? elseVal : "")) {
-			if (!typeEqual(elseType, declaredType)) {
-				throw SPIRALError.typeError(declaredType, elseType, "if else branch");
-			}
-		}
-		return { type: declaredType, env };
-	}
-
-	case "let": {
-		// Support both node references (strings) and inline expressions (objects)
-		// Widen to string | Expr to support both forms
-		const letValue: string | Expr = expr.value;
-		const letBody: string | Expr = expr.body;
-		let valueType: Type;
-
-		if (typeof letValue === "string") {
-			// Node reference - look up in nodeMap/nodeTypes
-			const valueIsNode = nodeMap.has(letValue);
-			const valueIsParam = lambdaParams.has(letValue);
-			const valueIsBound = boundNodes.has(letValue);
-
-			if (!valueIsNode && !valueIsParam) {
-				throw SPIRALError.validation(
-					"let",
-					"Value node not found: " + letValue,
-				);
-			}
-
-			// If value is a bound node that hasn't been type-checked yet,
-			// or if it's a lambda param, use a placeholder
-			const nodeValueType = nodeTypes.get(letValue);
-			if (!nodeValueType) {
-				if (valueIsBound || valueIsParam) {
-					// Bound node or lambda param - defer type checking
-					valueType = intType; // placeholder
-				} else {
-					throw SPIRALError.validation(
-						"let",
-						"Value node not yet type-checked: " + letValue,
-					);
-				}
-			} else {
-				valueType = nodeValueType;
-			}
-		} else {
-			// Inline expression - type check it directly
-			const valueResult = checker.typeCheck(
-				letValue,
-				env,
-			);
-			valueType = valueResult.type;
-		}
-
-		const extendedEnv = extendTypeEnv(env, expr.name, valueType);
-
-		// Get the body type
-		let bodyType: Type;
-		if (typeof letBody === "string") {
-			// Node reference - look up in nodeMap/nodeTypes
-			const bodyIsNode = nodeMap.has(letBody);
-			const bodyIsParam = lambdaParams.has(letBody);
-			const bodyIsBound = boundNodes.has(letBody);
-
-			if (!bodyIsNode && !bodyIsParam) {
-				throw SPIRALError.validation("let", "Body node not found: " + letBody);
-			}
-
-			const nodeBodyType = nodeTypes.get(letBody);
-			if (!nodeBodyType) {
-				if (bodyIsBound || bodyIsParam) {
-					// Bound node or lambda param - defer type checking
-					bodyType = intType; // placeholder
-				} else {
-					throw SPIRALError.validation(
-						"let",
-						"Body node not yet type-checked: " + letBody,
-					);
-				}
-			} else {
-				bodyType = nodeBodyType;
-			}
-		} else {
-			// Inline expression - type check it directly
-			const bodyResult = checker.typeCheck(
-				letBody,
-				extendedEnv,
-			);
-			bodyType = bodyResult.type;
-		}
-
-		return { type: bodyType, env: extendedEnv };
-	}
-
-	case "airRef": {
-		// Check arguments exist
-		for (const argId of expr.args) {
-			const argNode = nodeMap.get(argId);
-			if (!argNode) {
-				throw SPIRALError.validation(
-					"airRef",
-					"Argument node not found: " + argId,
-				);
-			}
-			if (!nodeTypes.has(argId)) {
-				throw SPIRALError.validation(
-					"airRef",
-					"Argument node not yet type-checked: " + argId,
-				);
-			}
-		}
-		return checker.typeCheck(expr, env);
-	}
-
-	case "predicate": {
-		// Check value node exists
-		if (!nodeMap.has(expr.value)) {
-			throw SPIRALError.validation(
-				"predicate",
-				"Value node not found: " + expr.value,
-			);
-		}
-		return { type: boolType, env };
-	}
-
-	case "lambda": {
-		// Lambda body must be a node reference
-		if (!nodeMap.has(expr.body)) {
-			throw SPIRALError.validation(
-				"lambda",
-				"Body node not found: " + expr.body,
-			);
-		}
-
-		if (expr.type.kind !== "fn") {
-			throw SPIRALError.typeError(
-				{ kind: "fn", params: [], returns: intType },
-				expr.type,
-				"lambda",
-			);
-		}
-
-		const lambdaType = expr.type;
-		// Create environment with parameter types
-		let lambdaEnv = env;
-		for (let i = 0; i < expr.params.length; i++) {
-			const paramType = lambdaType.params[i];
-			if (paramType === undefined) {
-				throw SPIRALError.validation(
-					"lambda",
-					"Missing parameter type at index " + i,
-				);
-			}
-			const paramName = expr.params[i];
-			if (paramName === undefined) {
-				throw SPIRALError.validation(
-					"lambda",
-					"Missing parameter name at index " + i,
-				);
-			}
-			lambdaEnv = extendTypeEnv(lambdaEnv, paramName, paramType);
-		}
-
-		// Check that body type matches return type
-		const bodyType = nodeTypes.get(expr.body);
-		if (bodyType && !typeEqual(bodyType, lambdaType.returns)) {
-			throw SPIRALError.typeError(lambdaType.returns, bodyType, "lambda body");
-		}
-
-		return { type: expr.type, env };
-	}
-
-	case "callExpr": {
-		// Check function exists - can be a node OR a lambda parameter
-		const fnIsNode = nodeMap.has(expr.fn);
-		const fnIsParam = lambdaParams.has(expr.fn);
-		const fnIsBound = boundNodes.has(expr.fn);
-
-		if (!fnIsNode && !fnIsParam) {
-			throw SPIRALError.validation(
-				"callExpr",
-				"Function node not found: " + expr.fn,
-			);
-		}
-
-		// Check arguments exist - can be nodes OR lambda params
-		for (const argId of expr.args) {
-			const argIsNode = nodeMap.has(argId);
-			const argIsParam = lambdaParams.has(argId);
-			if (!argIsNode && !argIsParam) {
-				throw SPIRALError.validation(
-					"callExpr",
-					"Argument node not found: " + argId,
-				);
-			}
-		}
-
-		// If fn or args are bound nodes or lambda params, we can't fully type-check here
-		// Just trust the declared type on the containing lambda
-		if (fnIsParam || fnIsBound) {
-			// Function is a lambda parameter - we can get its type from the environment
-			const fnTypeFromEnv = lookupType(env, expr.fn);
-			if (fnTypeFromEnv) {
-				if (fnTypeFromEnv.kind !== "fn") {
-					throw SPIRALError.typeError(
-						fnTypeCtor([], intType),
-						fnTypeFromEnv,
-						"callExpr function",
-					);
-				}
-				return { type: fnTypeFromEnv.returns, env };
-			}
-			// Can't determine type - return int as placeholder
-			return { type: intType, env };
-		}
-
-		// Get function type from node types
-		const fnType = nodeTypes.get(expr.fn);
-		if (!fnType) {
-			throw SPIRALError.validation(
-				"callExpr",
-				"Function node not yet type-checked: " + expr.fn,
-			);
-		}
-		if (fnType.kind !== "fn") {
-			throw SPIRALError.typeError(
-				fnTypeCtor([], intType),
-				fnType,
-				"callExpr function",
-			);
-		}
-		// Support partial application (currying)
-		if (expr.args.length > fnType.params.length) {
-			throw SPIRALError.arityError(
-				fnType.params.length,
-				expr.args.length,
-				"callExpr (too many arguments)",
-			);
-		}
-
-		// Check each argument type
-		for (let i = 0; i < expr.args.length; i++) {
-			const argId = expr.args[i];
-			if (argId === undefined) {
-				throw SPIRALError.validation(
-					"callExpr",
-					"Missing argument id at index " + i,
-				);
-			}
-			// Skip type check for lambda params
-			if (lambdaParams.has(argId)) {
-				continue;
-			}
-			const argType = nodeTypes.get(argId);
-			const expectedParamType = fnType.params[i];
-			if (expectedParamType === undefined) {
-				throw SPIRALError.validation(
-					"callExpr",
-					"Missing parameter type at index " + i,
-				);
-			}
-			if (argType && !typeEqual(argType, expectedParamType)) {
-				throw SPIRALError.typeError(
-					expectedParamType,
-					argType,
-					"callExpr argument " + String(i),
-				);
-			}
-		}
-
-		// Handle partial application (currying)
-		if (expr.args.length < fnType.params.length) {
-			// Return a function type with remaining parameters
-			const remainingParams = fnType.params.slice(expr.args.length);
-			return { type: fnTypeCtor(remainingParams, fnType.returns), env };
-		}
-
-		return { type: fnType.returns, env };
-	}
-
-	case "fix": {
-		// Check function node exists
-		if (!nodeMap.has(expr.fn)) {
-			throw SPIRALError.validation(
-				"fix",
-				"Function node not found: " + expr.fn,
-			);
-		}
-
-		// Get function type and verify it has the form fn(τ) -> τ
-		const fnType = nodeTypes.get(expr.fn);
-		if (!fnType) {
-			throw SPIRALError.validation(
-				"fix",
-				"Function node not yet type-checked: " + expr.fn,
-			);
-		}
-		if (fnType.kind !== "fn") {
-			throw SPIRALError.typeError(
-				fnTypeCtor([], intType),
-				fnType,
-				"fix function",
-			);
-		}
-		if (fnType.params.length !== 1) {
-			throw SPIRALError.arityError(1, fnType.params.length, "fix");
-		}
-		const firstParam = fnType.params[0];
-		if (firstParam === undefined) {
-			throw SPIRALError.validation("fix", "Missing parameter type");
-		}
-		if (!typeEqual(firstParam, fnType.returns)) {
-			throw SPIRALError.typeError(firstParam, fnType.returns, "fix");
-		}
-		if (!typeEqual(fnType.returns, expr.type)) {
-			throw SPIRALError.typeError(expr.type, fnType.returns, "fix");
-		}
-
-		return { type: expr.type, env };
-	}
-
-	case "do": {
-		if (expr.exprs.length === 0) {
-			return { type: voidType, env };
-		}
-		// Return the type of the last expression
-		// For node references, look up in nodeTypes; for inline, type check
-		let lastType: Type = voidType;
-		for (const e of expr.exprs) {
-			if (typeof e === "string") {
-				const nodeType = nodeTypes.get(e);
-				if (nodeType) {
-					lastType = nodeType;
-				}
-			} else {
-				const result = checker.typeCheck(e, env);
-				lastType = result.type;
-			}
-		}
-		return { type: lastType, env };
-	}
-
-	// PIR expressions - minimal type checking for now
-	case "par":
-	case "spawn":
-	case "await":
-	case "channel":
-	case "send":
-	case "recv":
-	case "select":
-	case "race":
-		// PIR expressions are not yet fully type-checked
-		// Return void as default type
-		return { type: voidType, env };
-
-	default:
-		return exhaustive(expr);
-	}
+	return { nodeTypes: ctx.nodeTypes, resultType };
 }
 
 //==============================================================================
-// EIR Type Checking (Expression-based Imperative Representation)
+// EIR Type Checking
 //==============================================================================
+
+/** Input for EIR program type checking. */
+export interface EIRProgramInput {
+	doc: import("./types.js").EIRDocument;
+	registry: OperatorRegistry;
+	defs: Defs;
+	effects: import("./effects.js").EffectRegistry;
+}
 
 /**
  * Type check an EIR program with mutation and effects.
  */
 export function typeCheckEIRProgram(
-	doc: import("./types.js").EIRDocument,
-	registry: OperatorRegistry,
-	defs: Defs,
-	effects: import("./effects.js").EffectRegistry,
+	input: EIRProgramInput,
 ): { nodeTypes: Map<string, Type>; resultType: Type } {
-	const checker = new TypeChecker(registry, defs);
-	const nodeTypes = new Map<string, Type>();
-	const nodeEnvs = new Map<string, TypeEnv>();
-
-	// Build a map of nodes for easy lookup
-	const nodeMap = new Map<string, EirHybridNode>();
-	for (const node of doc.nodes) {
-		nodeMap.set(node.id, node);
-	}
-
-	// Track mutable variable types (for ref cells)
-	const mutableTypes = new Map<string, Type>();
-
-	// EIR doesn't use lambdas in the same way as CIR, but the fallthrough needs these
-	const lambdaParams = new Set<string>();
-	const boundNodes = new Set<string>();
-
-	// Type check each node in order
-	for (const node of doc.nodes) {
-		const env = emptyTypeEnv();
-
-		const result = typeCheckEIRNode(
-			checker,
-			node,
-			nodeMap,
-			nodeTypes,
-			nodeEnvs,
-			mutableTypes,
-			env,
-			effects,
-			registry,
-			lambdaParams,
-			boundNodes,
-		);
-		nodeTypes.set(node.id, result.type);
-		nodeEnvs.set(node.id, result.env);
-	}
-
-	// Get the result type
-	const resultType = nodeTypes.get(doc.result);
-	if (!resultType) {
-		throw SPIRALError.validation(
-			"result",
-			"Result node not found: " + doc.result,
-		);
-	}
-
-	return { nodeTypes, resultType };
+	return runEIRTypeCheck(input);
 }
 
-/**
- * Type check a single EIR node
- */
-function typeCheckEIRNode(
-	checker: TypeChecker,
-	node: EirHybridNode,
-	nodeMap: Map<string, EirHybridNode>,
-	nodeTypes: Map<string, Type>,
-	nodeEnvs: Map<string, TypeEnv>,
-	mutableTypes: Map<string, Type>,
-	env: TypeEnv,
-	effects: import("./effects.js").EffectRegistry,
-	_registry: OperatorRegistry,
-	lambdaParams: Set<string>,
-	boundNodes: Set<string>,
-): TypeCheckResult {
-	// Handle block nodes
-	if (isBlockNode(node)) {
-		return { type: node.type ?? intType, env };
+function runEIRTypeCheck(
+	input: EIRProgramInput,
+): { nodeTypes: Map<string, Type>; resultType: Type } {
+	const checker = new TypeChecker(input.registry, input.defs);
+	const ctx: EIRCheckContext = {
+		checker,
+		nodeMap: new Map<string, import("./types.js").EirHybridNode>(),
+		nodeTypes: new Map<string, Type>(),
+		nodeEnvs: new Map<string, TypeEnv>(),
+		mutableTypes: new Map<string, Type>(),
+		env: emptyTypeEnv(),
+		effects: input.effects,
+		lambdaParams: new Set<string>(),
+		boundNodes: new Set<string>(),
+	};
+
+	for (const node of input.doc.nodes) {
+		ctx.nodeMap.set(node.id, node);
 	}
 
-	const expr = node.expr;
+	return typeCheckEIRProgramNodes(ctx, input.doc);
+}
 
-	// Switch on expr.kind to let TypeScript narrow EirExpr to specific types
-	switch (expr.kind) {
-	case "seq": {
-		// T-Seq: Γ ⊢ first : T, Γ ⊢ then : U ⇒ Γ ⊢ seq(first, then) : U
-
-		let firstType: Type | undefined;
-		if (typeof expr.first === "string") {
-			// Node ID reference
-			if (!nodeMap.has(expr.first)) {
-				throw SPIRALError.validation(
-					"seq",
-					"First node not found: " + expr.first,
-				);
-			}
-			firstType = nodeTypes.get(expr.first);
-			if (!firstType) {
-				throw SPIRALError.validation(
-					"seq",
-					"First node not yet type-checked: " + expr.first,
-				);
-			}
-		}
-		// For inline expressions, we skip type checking here (validated by validator)
-
-		let thenType: Type | undefined;
-		if (typeof expr.then === "string") {
-			// Node ID reference
-			if (!nodeMap.has(expr.then)) {
-				throw SPIRALError.validation(
-					"seq",
-					"Then node not found: " + expr.then,
-				);
-			}
-			thenType = nodeTypes.get(expr.then);
-			if (!thenType) {
-				throw SPIRALError.validation(
-					"seq",
-					"Then node not yet type-checked: " + expr.then,
-				);
-			}
-		}
-
-		// Return the then type (or void if inline expression)
-		return { type: thenType ?? voidType, env };
+function typeCheckEIRProgramNodes(
+	ctx: EIRCheckContext,
+	doc: import("./types.js").EIRDocument,
+): { nodeTypes: Map<string, Type>; resultType: Type } {
+	for (const node of doc.nodes) {
+		const env = emptyTypeEnv();
+		const result = typeCheckEIRNode({ ...ctx, env }, node);
+		ctx.nodeTypes.set(node.id, result.type);
+		ctx.nodeEnvs.set(node.id, result.env);
 	}
 
-	case "assign": {
-		// T-Assign: Γ ⊢ value : T ⇒ Γ ⊢ assign(target, value) : void
-		let valueType: Type | undefined;
-		if (typeof expr.value === "string") {
-			// Node ID reference
-			if (!nodeMap.has(expr.value)) {
-				throw SPIRALError.validation(
-					"assign",
-					"Value node not found: " + expr.value,
-				);
-			}
-			valueType = nodeTypes.get(expr.value);
-			if (!valueType) {
-				throw SPIRALError.validation(
-					"assign",
-					"Value node not yet type-checked: " + expr.value,
-				);
-			}
-		}
-		// For inline expressions, we skip type checking here
-
-		// Update mutable types for the target (if we have type info)
-		if (valueType) {
-			mutableTypes.set(expr.target, valueType);
-		}
-
-		return { type: voidType, env };
+	const resultType = ctx.nodeTypes.get(doc.result);
+	if (!resultType) {
+		throw SPIRALError.validation("result", "Result node not found: " + doc.result);
 	}
 
-	case "while": {
-		// T-While: Γ ⊢ cond : bool, Γ ⊢ body : T ⇒ Γ ⊢ while(cond, body) : void
-		if (typeof expr.cond === "string") {
-			// Node ID reference
-			if (!nodeMap.has(expr.cond)) {
-				throw SPIRALError.validation(
-					"while",
-					"Condition node not found: " + expr.cond,
-				);
-			}
-			const condType = nodeTypes.get(expr.cond);
-			if (condType && condType.kind !== "bool") {
-				throw SPIRALError.typeError(boolType, condType, "while condition");
-			}
-		}
-		// For inline expressions, we skip type checking here
-
-		return { type: voidType, env };
-	}
-
-	case "for": {
-		// T-For: (complex typing with var binding)
-
-		let initType: Type | undefined;
-		if (typeof expr.init === "string") {
-			// Node ID reference
-			if (!nodeMap.has(expr.init)) {
-				throw SPIRALError.validation(
-					"for",
-					"Init node not found: " + expr.init,
-				);
-			}
-			initType = nodeTypes.get(expr.init);
-		}
-
-		if (typeof expr.cond === "string") {
-			// Node ID reference
-			if (!nodeMap.has(expr.cond)) {
-				throw SPIRALError.validation(
-					"for",
-					"Condition node not found: " + expr.cond,
-				);
-			}
-			const condType = nodeTypes.get(expr.cond);
-			if (condType && condType.kind !== "bool") {
-				throw SPIRALError.typeError(boolType, condType, "for condition");
-			}
-		}
-
-		if (typeof expr.update === "string") {
-			// Node ID reference
-			if (!nodeMap.has(expr.update)) {
-				throw SPIRALError.validation(
-					"for",
-					"Update node not found: " + expr.update,
-				);
-			}
-		}
-
-		if (typeof expr.body === "string") {
-			// Node ID reference
-			if (!nodeMap.has(expr.body)) {
-				throw SPIRALError.validation(
-					"for",
-					"Body node not found: " + expr.body,
-				);
-			}
-		}
-
-		// Get the loop variable type from init (if we have type info)
-		if (initType) {
-			mutableTypes.set(expr.var, initType);
-		}
-
-		return { type: voidType, env };
-	}
-
-	case "iter": {
-		// T-Iter: Γ ⊢ iter : list<T>, Γ ⊢ body : R ⇒ Γ ⊢ iter(var, iter, body) : void
-
-		let iterType: Type | undefined;
-		if (typeof expr.iter === "string") {
-			// Node ID reference
-			if (!nodeMap.has(expr.iter)) {
-				throw SPIRALError.validation(
-					"iter",
-					"Iter node not found: " + expr.iter,
-				);
-			}
-			iterType = nodeTypes.get(expr.iter);
-			if (iterType && iterType.kind !== "list") {
-				throw SPIRALError.typeError(
-					listType(intType),
-					iterType,
-					"iter iterable",
-				);
-			}
-		}
-
-		if (typeof expr.body === "string") {
-			// Node ID reference
-			if (!nodeMap.has(expr.body)) {
-				throw SPIRALError.validation(
-					"iter",
-					"Body node not found: " + expr.body,
-				);
-			}
-		}
-
-		// Set the loop variable type (if we have type info)
-		if (iterType?.kind === "list") {
-			mutableTypes.set(expr.var, iterType.of);
-		}
-
-		return { type: voidType, env };
-	}
-
-	case "effect": {
-		// T-Effect: Look up effect signature, check args
-		const effect = effects.get(expr.op);
-		if (!effect) {
-			throw SPIRALError.validation(
-				"effect",
-				"Unknown effect operation: " + expr.op,
-			);
-		}
-
-		// Check arity
-		if (effect.params.length !== expr.args.length) {
-			throw SPIRALError.arityError(
-				effect.params.length,
-				expr.args.length,
-				"effect:" + expr.op,
-			);
-		}
-
-		// Check argument types (only for node ID references)
-		for (let i = 0; i < expr.args.length; i++) {
-			const arg = expr.args[i];
-			if (arg === undefined) {
-				throw SPIRALError.validation(
-					"effect",
-					"Missing argument id at index " + String(i),
-				);
-			}
-
-			// Only type-check node ID references, skip inline expressions
-			if (typeof arg === "string") {
-				const argType = nodeTypes.get(arg);
-				const expectedParamType = effect.params[i];
-				if (expectedParamType === undefined) {
-					throw SPIRALError.validation(
-						"effect",
-						"Missing parameter type at index " + String(i),
-					);
-				}
-				if (argType && !typeEqual(argType, expectedParamType)) {
-					throw SPIRALError.typeError(
-						expectedParamType,
-						argType,
-						"effect argument " + String(i),
-					);
-				}
-			}
-		}
-
-		return { type: effect.returns, env };
-	}
-
-	case "refCell": {
-		// T-RefCell: Γ ⊢ target : T ⇒ Γ ⊢ refCell(target) : ref<T>
-		let targetType: Type | undefined;
-
-		// Check if target is a mutable variable
-		targetType = mutableTypes.get(expr.target);
-
-		// If not in mutable types, check node map
-		if (nodeMap.has(expr.target)) {
-			targetType ??= nodeTypes.get(expr.target);
-		}
-
-		// If not in node map, check environment
-		targetType ??= lookupType(env, expr.target);
-
-		if (!targetType) {
-			throw SPIRALError.unboundIdentifier(expr.target);
-		}
-
-		return { type: refType(targetType), env };
-	}
-
-	case "deref": {
-		// T-Deref: Γ ⊢ target : ref<T> ⇒ Γ ⊢ deref(target) : T
-		let targetType: Type | undefined;
-
-		// Check mutable types first
-		targetType = mutableTypes.get(expr.target);
-
-		// Then check node map
-		if (nodeMap.has(expr.target)) {
-			targetType ??= nodeTypes.get(expr.target);
-		}
-
-		// Then check environment
-		targetType ??= lookupType(env, expr.target);
-
-		if (!targetType) {
-			throw SPIRALError.unboundIdentifier(expr.target);
-		}
-
-		if (targetType.kind !== "ref") {
-			throw SPIRALError.typeError(
-				refType(intType),
-				targetType,
-				"deref target",
-			);
-		}
-
-		return { type: targetType.of, env };
-	}
-
-	case "try": {
-		// T-Try: Γ ⊢ tryBody : T, Γ,catchParam:error ⊢ catchBody : T ⇒ Γ ⊢ try(tryBody, catchParam, catchBody) : T
-
-		let tryBodyType: Type | undefined;
-		if (typeof expr.tryBody === "string") {
-			if (!nodeMap.has(expr.tryBody)) {
-				throw SPIRALError.validation(
-					"try",
-					"Try body node not found: " + expr.tryBody,
-				);
-			}
-			tryBodyType = nodeTypes.get(expr.tryBody);
-		}
-
-		let catchBodyType: Type | undefined;
-		if (typeof expr.catchBody === "string") {
-			if (!nodeMap.has(expr.catchBody)) {
-				throw SPIRALError.validation(
-					"try",
-					"Catch body node not found: " + expr.catchBody,
-				);
-			}
-			catchBodyType = nodeTypes.get(expr.catchBody);
-		}
-
-		// Return the catch body type (recovery path), falling back to try body type
-		return { type: catchBodyType ?? tryBodyType ?? voidType, env };
-	}
-
-	default: {
-		// Fall through to CIR/AIR type checking for base Expr kinds
-		// After handling all EIR-specific kinds above, expr is narrowed to Expr
-		const baseExpr: Expr = expr;
-		const baseNode: AirHybridNode = { id: node.id, type: node.type, expr: baseExpr };
-		return typeCheckNode(
-			checker,
-			baseNode,
-			nodeMap,
-			nodeTypes,
-			nodeEnvs,
-			env,
-			lambdaParams,
-			boundNodes,
-		);
-	}
-	}
+	return { nodeTypes: ctx.nodeTypes, resultType };
 }

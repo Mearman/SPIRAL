@@ -83,7 +83,7 @@ export { combineResults, invalidResult, validResult } from "./errors.js";
 
 export { TypeChecker, typeCheckProgram } from "./typechecker.js";
 
-export { typeCheckEIRProgram } from "./typechecker.js";
+export { typeCheckEIRProgram, type EIRProgramInput } from "./typechecker.js";
 
 //==============================================================================
 // Evaluation
