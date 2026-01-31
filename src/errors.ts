@@ -37,6 +37,12 @@ export const ErrorCodes = {
 	DuplicateNodeId: "DuplicateNodeId",
 	InvalidResultReference: "InvalidResultReference",
 	CyclicReference: "CyclicReference",
+
+	// Layer enforcement errors
+	InvalidExprForLayer: "InvalidExprForLayer",
+	UnreachableBlock: "UnreachableBlock",
+	PhiSourceMismatch: "PhiSourceMismatch",
+	InvalidPirRef: "InvalidPirRef",
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
