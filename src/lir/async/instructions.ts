@@ -1,7 +1,7 @@
 // SPIRAL LIR Async Evaluator - Instruction Dispatch
 
 import { ErrorCodes, exhaustive } from "../../errors.js";
-import type { LirInstruction, PirInstruction, Value } from "../../types.js";
+import type { LirInstruction, EirInstruction, Value } from "../../types.js";
 import { errorVal } from "../../types.js";
 import type { InstructionContext } from "./types.js";
 import {
@@ -16,14 +16,14 @@ import {
 	executeSpawnInstruction,
 	executeChannelOpInstruction,
 	executeAwaitInstruction,
-} from "./pir-instructions.js";
+} from "./async-instructions.js";
 
-// Re-export PIR instruction handlers for public API
+// Re-export async instruction handlers for public API
 export {
 	executeSpawnInstruction,
 	executeChannelOpInstruction,
 	executeAwaitInstruction,
-} from "./pir-instructions.js";
+} from "./async-instructions.js";
 
 //==============================================================================
 // Instruction Dispatch
@@ -52,7 +52,7 @@ function dispatchLirInstruction(
 }
 
 function dispatchAsyncInstruction(
-	ins: LirInstruction | PirInstruction,
+	ins: LirInstruction | EirInstruction,
 	ctx: InstructionContext,
 ): Promise<Value | undefined> | Value | undefined {
 	switch (ins.kind) {
@@ -72,7 +72,7 @@ function dispatchAsyncInstruction(
  * Returns undefined on success, or an error Value on failure.
  */
 export async function executeInstructionAsync(
-	ins: LirInstruction | PirInstruction,
+	ins: LirInstruction | EirInstruction,
 	ctx: InstructionContext,
 ): Promise<Value | undefined> {
 	return dispatchAsyncInstruction(ins, ctx);
@@ -87,7 +87,7 @@ export async function executeInstructionAsync(
  * Returns undefined on success, or an error Value on failure.
  */
 export async function executeBlockAsync(
-	block: { instructions: (LirInstruction | PirInstruction)[] },
+	block: { instructions: (LirInstruction | EirInstruction)[] },
 	ctx: InstructionContext,
 ): Promise<Value | undefined> {
 	for (const ins of block.instructions) {

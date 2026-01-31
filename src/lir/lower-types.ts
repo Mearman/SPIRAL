@@ -3,7 +3,6 @@
 import { SPIRALError, ErrorCodes } from "../errors.js";
 import type {
 	EirHybridNode,
-	PirHybridNode,
 	Expr,
 	LirBlock,
 	LirInstruction,
@@ -16,7 +15,7 @@ import type {
 export interface LoweringContext {
 	blocks: LirBlock[];
 	nextBlockId: number;
-	nodeMap: Map<string, EirHybridNode | PirHybridNode>;
+	nodeMap: Map<string, EirHybridNode>;
 }
 
 export interface BlockResult {
