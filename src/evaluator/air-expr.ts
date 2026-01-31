@@ -130,17 +130,17 @@ function resolveNodeValue(ctx: AirEvalCtx, node: AirHybridNode, env: ValueEnv): 
 	return evalExprWithNodeMap(ctx, node.expr, env);
 }
 
+function resolveSingleArg(ctx: AirEvalCtx, arg: string | Expr, env: ValueEnv): Value {
+	if (typeof arg !== "string") return evalExprWithNodeMap(ctx, arg, env);
+	const val = resolveOneArg(ctx, arg, env);
+	if (!val) return errorVal(ErrorCodes.DomainError, "Argument not found: " + arg);
+	return val;
+}
+
 function resolveArgs(ctx: AirEvalCtx, args: (string | Expr)[], env: ValueEnv): Value[] | Value {
 	const values: Value[] = [];
 	for (const arg of args) {
-		if (typeof arg !== "string") {
-			const val = evalExprWithNodeMap(ctx, arg, env);
-			if (isError(val)) return val;
-			values.push(val);
-			continue;
-		}
-		const val = resolveOneArg(ctx, arg, env);
-		if (!val) return errorVal(ErrorCodes.DomainError, "Argument not found: " + arg);
+		const val = resolveSingleArg(ctx, arg, env);
 		if (isError(val)) return val;
 		values.push(val);
 	}
