@@ -1,128 +1,128 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
-  "version": "1.0.0",
-  "airDefs": [
-    {
-      "ns": "core",
-      "name": "add",
-      "params": [
-        "a",
-        "b"
-      ],
-      "result": {
-        "kind": "int"
-      },
-      "body": {
-        "kind": "ref",
-        "id": "a"
-      }
-    }
-  ],
-  "nodes": [
-    {
-      "id": "one",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 1
-      }
-    },
-    {
-      "id": "five",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 5
-      }
-    },
-    {
-      "id": "ten",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 10
-      }
-    },
-    {
-      "id": "addOne",
-      "expr": {
-        "kind": "lambda",
-        "params": [
-          "x"
-        ],
-        "body": "xPlusOne",
-        "type": {
-          "kind": "fn",
-          "params": [
-            {
-              "kind": "int"
-            }
-          ],
-          "returns": {
-            "kind": "int"
-          }
-        }
-      }
-    },
-    {
-      "id": "xPlusOne",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "add",
-        "args": [
-          "x",
-          "one"
-        ]
-      }
-    },
-    {
-      "id": "applyToFive",
-      "expr": {
-        "kind": "callExpr",
-        "fn": "addOne",
-        "args": [
-          "five"
-        ]
-      }
-    },
-    {
-      "id": "applyToTen",
-      "expr": {
-        "kind": "callExpr",
-        "fn": "addOne",
-        "args": [
-          "ten"
-        ]
-      }
-    },
-    {
-      "id": "nestedCall",
-      "expr": {
-        "kind": "callExpr",
-        "fn": "addOne",
-        "args": [
-          "applyToFive"
-        ]
-      }
-    },
-    {
-      "id": "doubleNested",
-      "expr": {
-        "kind": "callExpr",
-        "fn": "addOne",
-        "args": [
-          "nestedCall"
-        ]
-      }
-    }
-  ],
-  "result": "doubleNested",
-  "expected_result": 8
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"airDefs": [
+		{
+			"ns": "core",
+			"name": "add",
+			"params": [
+				"a",
+				"b"
+			],
+			"result": {
+				"kind": "int"
+			},
+			"body": {
+				"kind": "ref",
+				"id": "a"
+			}
+		}
+	],
+	"nodes": [
+		{
+			"id": "one",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 1
+			}
+		},
+		{
+			"id": "five",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 5
+			}
+		},
+		{
+			"id": "ten",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 10
+			}
+		},
+		{
+			"id": "addOne",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"x"
+				],
+				"body": "xPlusOne"
+			}
+		},
+		{
+			"id": "xPlusOne",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "add",
+				"args": [
+					"x",
+					"one"
+				]
+			}
+		},
+		{
+			"id": "applyToFive",
+			"expr": {
+				"kind": "callExpr",
+				"args": [
+					"five"
+				],
+				"fn": "addOne"
+			}
+		},
+		{
+			"id": "applyToTen",
+			"expr": {
+				"kind": "callExpr",
+				"args": [
+					"ten"
+				],
+				"fn": "addOne"
+			}
+		},
+		{
+			"id": "nestedCall",
+			"expr": {
+				"kind": "callExpr",
+				"args": [
+					"applyToFive"
+				],
+				"fn": "addOne"
+			}
+		},
+		{
+			"id": "doubleNested",
+			"expr": {
+				"kind": "callExpr",
+				"args": [
+					"nestedCall"
+				],
+				"fn": "addOne"
+			}
+		}
+	],
+	"result": "doubleNested",
+	"expected_result": 8
 }

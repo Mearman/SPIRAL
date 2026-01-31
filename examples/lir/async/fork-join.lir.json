@@ -1,279 +1,279 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
-  "version": "2.0.0",
-  "capabilities": ["async", "parallel"],
-  "description": "Demonstrates fork-join parallel execution in LIR. Forks into 3 parallel branches to compute (a+b), (c*d), and (e-f) simultaneously, then joins and sums all results. Phi nodes merge values from async branches.",
-  "nodes": [
-    {
-      "id": "main",
-      "blocks": [
-        {
-          "id": "entry",
-          "instructions": [
-            {
-              "kind": "assign",
-              "target": "a",
-              "value": {
-                "kind": "lit",
-                "type": {
-                  "kind": "int"
-                },
-                "value": 10
-              }
-            },
-            {
-              "kind": "assign",
-              "target": "b",
-              "value": {
-                "kind": "lit",
-                "type": {
-                  "kind": "int"
-                },
-                "value": 20
-              }
-            },
-            {
-              "kind": "assign",
-              "target": "c",
-              "value": {
-                "kind": "lit",
-                "type": {
-                  "kind": "int"
-                },
-                "value": 5
-              }
-            },
-            {
-              "kind": "assign",
-              "target": "d",
-              "value": {
-                "kind": "lit",
-                "type": {
-                  "kind": "int"
-                },
-                "value": 4
-              }
-            },
-            {
-              "kind": "assign",
-              "target": "e",
-              "value": {
-                "kind": "lit",
-                "type": {
-                  "kind": "int"
-                },
-                "value": 100
-              }
-            },
-            {
-              "kind": "assign",
-              "target": "f",
-              "value": {
-                "kind": "lit",
-                "type": {
-                  "kind": "int"
-                },
-                "value": 30
-              }
-            }
-          ],
-          "terminator": {
-            "kind": "fork",
-            "branches": [
-              {
-                "block": "branch1",
-                "taskId": "task1"
-              },
-              {
-                "block": "branch2",
-                "taskId": "task2"
-              },
-              {
-                "block": "branch3",
-                "taskId": "task3"
-              }
-            ],
-            "continuation": "joinPoint"
-          }
-        },
-        {
-          "id": "branch1",
-          "instructions": [
-            {
-              "kind": "op",
-              "target": "sumResult",
-              "ns": "core",
-              "name": "add",
-              "args": [
-                "a",
-                "b"
-              ]
-            }
-          ],
-          "terminator": {
-            "kind": "jump",
-            "to": "branch1Complete"
-          }
-        },
-        {
-          "id": "branch1Complete",
-          "instructions": [
-            {
-              "kind": "phi",
-              "target": "branch1Value",
-              "sources": [
-                {
-                  "block": "branch1",
-                  "id": "sumResult"
-                }
-              ]
-            }
-          ],
-          "terminator": {
-            "kind": "return",
-            "value": "branch1Value"
-          }
-        },
-        {
-          "id": "branch2",
-          "instructions": [
-            {
-              "kind": "op",
-              "target": "productResult",
-              "ns": "core",
-              "name": "mul",
-              "args": [
-                "c",
-                "d"
-              ]
-            }
-          ],
-          "terminator": {
-            "kind": "jump",
-            "to": "branch2Complete"
-          }
-        },
-        {
-          "id": "branch2Complete",
-          "instructions": [
-            {
-              "kind": "phi",
-              "target": "branch2Value",
-              "sources": [
-                {
-                  "block": "branch2",
-                  "id": "productResult"
-                }
-              ]
-            }
-          ],
-          "terminator": {
-            "kind": "return",
-            "value": "branch2Value"
-          }
-        },
-        {
-          "id": "branch3",
-          "instructions": [
-            {
-              "kind": "op",
-              "target": "diffResult",
-              "ns": "core",
-              "name": "sub",
-              "args": [
-                "e",
-                "f"
-              ]
-            }
-          ],
-          "terminator": {
-            "kind": "jump",
-            "to": "branch3Complete"
-          }
-        },
-        {
-          "id": "branch3Complete",
-          "instructions": [
-            {
-              "kind": "phi",
-              "target": "branch3Value",
-              "sources": [
-                {
-                  "block": "branch3",
-                  "id": "diffResult"
-                }
-              ]
-            }
-          ],
-          "terminator": {
-            "kind": "return",
-            "value": "branch3Value"
-          }
-        },
-        {
-          "id": "joinPoint",
-          "instructions": [
-            {
-              "kind": "phi",
-              "target": "result1",
-              "sources": [
-                {
-                  "block": "branch1Complete",
-                  "id": "branch1Value"
-                }
-              ]
-            },
-            {
-              "kind": "phi",
-              "target": "result2",
-              "sources": [
-                {
-                  "block": "branch2Complete",
-                  "id": "branch2Value"
-                }
-              ]
-            },
-            {
-              "kind": "phi",
-              "target": "result3",
-              "sources": [
-                {
-                  "block": "branch3Complete",
-                  "id": "branch3Value"
-                }
-              ]
-            },
-            {
-              "kind": "op",
-              "target": "partialSum",
-              "ns": "core",
-              "name": "add",
-              "args": [
-                "result1",
-                "result2"
-              ]
-            },
-            {
-              "kind": "op",
-              "target": "finalResult",
-              "ns": "core",
-              "name": "add",
-              "args": [
-                "partialSum",
-                "result3"
-              ]
-            }
-          ],
-          "terminator": {
-            "kind": "return",
-            "value": "finalResult"
-          }
-        }
-      ],
-      "entry": "entry"
-    }
-  ],
-  "result": "main",
-  "expected_result": 120,
-  "note": "Parallel computation: task1 computes 10+20=30, task2 computes 5*4=20, task3 computes 100-30=70. Join merges all: 30+20+70=120. The fork terminator spawns 3 branches concurrently, each branch performs independent computation, phi nodes merge values at completion points, and final result combines all parallel outputs."
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
+	"version": "2.0.0",
+	"capabilities": ["async", "parallel"],
+	"description": "Demonstrates fork-join parallel execution in LIR. Forks into 3 parallel branches to compute (a+b), (c*d), and (e-f) simultaneously, then joins and sums all results. Phi nodes merge values from async branches.",
+	"nodes": [
+		{
+			"id": "main",
+			"blocks": [
+				{
+					"id": "entry",
+					"instructions": [
+						{
+							"kind": "assign",
+							"target": "a",
+							"value": {
+								"kind": "lit",
+								"type": {
+									"kind": "int"
+								},
+								"value": 10
+							}
+						},
+						{
+							"kind": "assign",
+							"target": "b",
+							"value": {
+								"kind": "lit",
+								"type": {
+									"kind": "int"
+								},
+								"value": 20
+							}
+						},
+						{
+							"kind": "assign",
+							"target": "c",
+							"value": {
+								"kind": "lit",
+								"type": {
+									"kind": "int"
+								},
+								"value": 5
+							}
+						},
+						{
+							"kind": "assign",
+							"target": "d",
+							"value": {
+								"kind": "lit",
+								"type": {
+									"kind": "int"
+								},
+								"value": 4
+							}
+						},
+						{
+							"kind": "assign",
+							"target": "e",
+							"value": {
+								"kind": "lit",
+								"type": {
+									"kind": "int"
+								},
+								"value": 100
+							}
+						},
+						{
+							"kind": "assign",
+							"target": "f",
+							"value": {
+								"kind": "lit",
+								"type": {
+									"kind": "int"
+								},
+								"value": 30
+							}
+						}
+					],
+					"terminator": {
+						"kind": "fork",
+						"branches": [
+							{
+								"block": "branch1",
+								"taskId": "task1"
+							},
+							{
+								"block": "branch2",
+								"taskId": "task2"
+							},
+							{
+								"block": "branch3",
+								"taskId": "task3"
+							}
+						],
+						"continuation": "joinPoint"
+					}
+				},
+				{
+					"id": "branch1",
+					"instructions": [
+						{
+							"kind": "op",
+							"ns": "core",
+							"name": "add",
+							"target": "sumResult",
+							"args": [
+								"a",
+								"b"
+							]
+						}
+					],
+					"terminator": {
+						"kind": "jump",
+						"to": "branch1Complete"
+					}
+				},
+				{
+					"id": "branch1Complete",
+					"instructions": [
+						{
+							"kind": "phi",
+							"target": "branch1Value",
+							"sources": [
+								{
+									"block": "branch1",
+									"id": "sumResult"
+								}
+							]
+						}
+					],
+					"terminator": {
+						"kind": "return",
+						"value": "branch1Value"
+					}
+				},
+				{
+					"id": "branch2",
+					"instructions": [
+						{
+							"kind": "op",
+							"ns": "core",
+							"name": "mul",
+							"target": "productResult",
+							"args": [
+								"c",
+								"d"
+							]
+						}
+					],
+					"terminator": {
+						"kind": "jump",
+						"to": "branch2Complete"
+					}
+				},
+				{
+					"id": "branch2Complete",
+					"instructions": [
+						{
+							"kind": "phi",
+							"target": "branch2Value",
+							"sources": [
+								{
+									"block": "branch2",
+									"id": "productResult"
+								}
+							]
+						}
+					],
+					"terminator": {
+						"kind": "return",
+						"value": "branch2Value"
+					}
+				},
+				{
+					"id": "branch3",
+					"instructions": [
+						{
+							"kind": "op",
+							"ns": "core",
+							"name": "sub",
+							"target": "diffResult",
+							"args": [
+								"e",
+								"f"
+							]
+						}
+					],
+					"terminator": {
+						"kind": "jump",
+						"to": "branch3Complete"
+					}
+				},
+				{
+					"id": "branch3Complete",
+					"instructions": [
+						{
+							"kind": "phi",
+							"target": "branch3Value",
+							"sources": [
+								{
+									"block": "branch3",
+									"id": "diffResult"
+								}
+							]
+						}
+					],
+					"terminator": {
+						"kind": "return",
+						"value": "branch3Value"
+					}
+				},
+				{
+					"id": "joinPoint",
+					"instructions": [
+						{
+							"kind": "phi",
+							"target": "result1",
+							"sources": [
+								{
+									"block": "branch1Complete",
+									"id": "branch1Value"
+								}
+							]
+						},
+						{
+							"kind": "phi",
+							"target": "result2",
+							"sources": [
+								{
+									"block": "branch2Complete",
+									"id": "branch2Value"
+								}
+							]
+						},
+						{
+							"kind": "phi",
+							"target": "result3",
+							"sources": [
+								{
+									"block": "branch3Complete",
+									"id": "branch3Value"
+								}
+							]
+						},
+						{
+							"kind": "op",
+							"ns": "core",
+							"name": "add",
+							"target": "partialSum",
+							"args": [
+								"result1",
+								"result2"
+							]
+						},
+						{
+							"kind": "op",
+							"ns": "core",
+							"name": "add",
+							"target": "finalResult",
+							"args": [
+								"partialSum",
+								"result3"
+							]
+						}
+					],
+					"terminator": {
+						"kind": "return",
+						"value": "finalResult"
+					}
+				}
+			],
+			"entry": "entry"
+		}
+	],
+	"result": "main",
+	"expected_result": 120,
+	"note": "Parallel computation: task1 computes 10+20=30, task2 computes 5*4=20, task3 computes 100-30=70. Join merges all: 30+20+70=120. The fork terminator spawns 3 branches concurrently, each branch performs independent computation, phi nodes merge values at completion points, and final result combines all parallel outputs."
 }

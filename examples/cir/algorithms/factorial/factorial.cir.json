@@ -1,424 +1,424 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
-  "description": "Factorial algorithm using lambda calculus structure. Since CIR does not yet have a fix combinator for direct recursion, this example demonstrates the lambda structure for factorial by computing 5! = 120. Shows how recursive algorithms would be structured: factorial(n) = if n <= 1 then 1 else n * factorial(n-1).",
-  "algorithm": "factorial(n) = if n <= 1 then 1 else n * factorial(n - 1)",
-  "example": "factorial(5) = 5 * 4 * 3 * 2 * 1 = 120",
-  "version": "1.0.0",
-  "airDefs": [
-    {
-      "ns": "core",
-      "name": "mul",
-      "params": [
-        "a",
-        "b"
-      ],
-      "result": {
-        "kind": "int"
-      },
-      "body": {
-        "kind": "ref",
-        "id": "a"
-      }
-    },
-    {
-      "ns": "core",
-      "name": "lte",
-      "params": [
-        "a",
-        "b"
-      ],
-      "result": {
-        "kind": "bool"
-      },
-      "body": {
-        "kind": "ref",
-        "id": "a"
-      }
-    },
-    {
-      "ns": "core",
-      "name": "sub",
-      "params": [
-        "a",
-        "b"
-      ],
-      "result": {
-        "kind": "int"
-      },
-      "body": {
-        "kind": "ref",
-        "id": "a"
-      }
-    }
-  ],
-  "nodes": [
-    {
-      "id": "one",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 1
-      }
-    },
-    {
-      "id": "five",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 5
-      }
-    },
-    {
-      "id": "four",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 4
-      }
-    },
-    {
-      "id": "three",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 3
-      }
-    },
-    {
-      "id": "two",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 2
-      }
-    },
-    {
-      "id": "six",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 6
-      }
-    },
-    {
-      "id": "twelve",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 12
-      }
-    },
-    {
-      "id": "twentyFour",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 24
-      }
-    },
-    {
-      "id": "oneHundredTwenty",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 120
-      }
-    },
-    {
-      "id": "isBaseCase",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "lte",
-        "args": [
-          "five",
-          "one"
-        ]
-      }
-    },
-    {
-      "id": "factorialOfFive",
-      "expr": {
-        "kind": "if",
-        "cond": "isBaseCase",
-        "then": "one",
-        "else": "fiveTimesFactorialFour",
-        "type": {
-          "kind": "int"
-        }
-      }
-    },
-    {
-      "id": "fiveTimesFactorialFour",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "mul",
-        "args": [
-          "five",
-          "factorialOfFour"
-        ]
-      }
-    },
-    {
-      "id": "isBaseCase4",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "lte",
-        "args": [
-          "four",
-          "one"
-        ]
-      }
-    },
-    {
-      "id": "factorialOfFour",
-      "expr": {
-        "kind": "if",
-        "cond": "isBaseCase4",
-        "then": "one",
-        "else": "fourTimesFactorialThree",
-        "type": {
-          "kind": "int"
-        }
-      }
-    },
-    {
-      "id": "fourTimesFactorialThree",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "mul",
-        "args": [
-          "four",
-          "factorialOfThree"
-        ]
-      }
-    },
-    {
-      "id": "isBaseCase3",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "lte",
-        "args": [
-          "three",
-          "one"
-        ]
-      }
-    },
-    {
-      "id": "factorialOfThree",
-      "expr": {
-        "kind": "if",
-        "cond": "isBaseCase3",
-        "then": "one",
-        "else": "threeTimesFactorialTwo",
-        "type": {
-          "kind": "int"
-        }
-      }
-    },
-    {
-      "id": "threeTimesFactorialTwo",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "mul",
-        "args": [
-          "three",
-          "factorialOfTwo"
-        ]
-      }
-    },
-    {
-      "id": "isBaseCase2",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "lte",
-        "args": [
-          "two",
-          "one"
-        ]
-      }
-    },
-    {
-      "id": "factorialOfTwo",
-      "expr": {
-        "kind": "if",
-        "cond": "isBaseCase2",
-        "then": "one",
-        "else": "twoTimesOne",
-        "type": {
-          "kind": "int"
-        }
-      }
-    },
-    {
-      "id": "twoTimesOne",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "mul",
-        "args": [
-          "two",
-          "one"
-        ]
-      }
-    },
-    {
-      "id": "factorialLambdaTemplate",
-      "expr": {
-        "kind": "lambda",
-        "params": [
-          "n"
-        ],
-        "body": "factorialBodyTemplate",
-        "type": {
-          "kind": "fn",
-          "params": [
-            {
-              "kind": "int"
-            }
-          ],
-          "returns": {
-            "kind": "int"
-          }
-        }
-      }
-    },
-    {
-      "id": "factorialBodyTemplate",
-      "expr": {
-        "kind": "let",
-        "name": "isBase",
-        "value": "checkBaseCase",
-        "body": "baseOrRecursive"
-      }
-    },
-    {
-      "id": "checkBaseCase",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "lte",
-        "args": [
-          "n",
-          "one"
-        ]
-      }
-    },
-    {
-      "id": "baseOrRecursive",
-      "expr": {
-        "kind": "if",
-        "cond": "isBase",
-        "then": "one",
-        "else": "multiplyByFactorialOfDecrement",
-        "type": {
-          "kind": "int"
-        }
-      }
-    },
-    {
-      "id": "multiplyByFactorialOfDecrement",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "mul",
-        "args": [
-          "n",
-          "factorialOfNMinusOne"
-        ]
-      }
-    },
-    {
-      "id": "factorialOfNMinusOne",
-      "expr": {
-        "kind": "var",
-        "name": "recursiveResult"
-      }
-    },
-    {
-      "id": "result",
-      "expr": {
-        "kind": "ref",
-        "id": "factorialOfFive"
-      }
-    }
-  ],
-  "result": "result",
-  "expected_result": 120,
-  "computation_trace": [
-    {
-      "step": 1,
-      "n": 5,
-      "n_le_1": false,
-      "computes": "5 * factorial(4)"
-    },
-    {
-      "step": 2,
-      "n": 4,
-      "n_le_1": false,
-      "computes": "4 * factorial(3)"
-    },
-    {
-      "step": 3,
-      "n": 3,
-      "n_le_1": false,
-      "computes": "3 * factorial(2)"
-    },
-    {
-      "step": 4,
-      "n": 2,
-      "n_le_1": false,
-      "computes": "2 * factorial(1)"
-    },
-    {
-      "step": 5,
-      "n": 1,
-      "n_le_1": true,
-      "returns": 1
-    },
-    {
-      "step": 6,
-      "unwind": "2 * 1",
-      "result": 2
-    },
-    {
-      "step": 7,
-      "unwind": "3 * 2",
-      "result": 6
-    },
-    {
-      "step": 8,
-      "unwind": "4 * 6",
-      "result": 24
-    },
-    {
-      "step": 9,
-      "unwind": "5 * 24",
-      "result": 120
-    }
-  ]
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"algorithm": "factorial(n) = if n <= 1 then 1 else n * factorial(n - 1)",
+	"example": "factorial(5) = 5 * 4 * 3 * 2 * 1 = 120",
+	"version": "1.0.0",
+	"description": "Factorial algorithm using lambda calculus structure. Since CIR does not yet have a fix combinator for direct recursion, this example demonstrates the lambda structure for factorial by computing 5! = 120. Shows how recursive algorithms would be structured: factorial(n) = if n <= 1 then 1 else n * factorial(n-1).",
+	"airDefs": [
+		{
+			"ns": "core",
+			"name": "mul",
+			"params": [
+				"a",
+				"b"
+			],
+			"result": {
+				"kind": "int"
+			},
+			"body": {
+				"kind": "ref",
+				"id": "a"
+			}
+		},
+		{
+			"ns": "core",
+			"name": "lte",
+			"params": [
+				"a",
+				"b"
+			],
+			"result": {
+				"kind": "bool"
+			},
+			"body": {
+				"kind": "ref",
+				"id": "a"
+			}
+		},
+		{
+			"ns": "core",
+			"name": "sub",
+			"params": [
+				"a",
+				"b"
+			],
+			"result": {
+				"kind": "int"
+			},
+			"body": {
+				"kind": "ref",
+				"id": "a"
+			}
+		}
+	],
+	"nodes": [
+		{
+			"id": "one",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 1
+			}
+		},
+		{
+			"id": "five",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 5
+			}
+		},
+		{
+			"id": "four",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 4
+			}
+		},
+		{
+			"id": "three",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 3
+			}
+		},
+		{
+			"id": "two",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 2
+			}
+		},
+		{
+			"id": "six",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 6
+			}
+		},
+		{
+			"id": "twelve",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 12
+			}
+		},
+		{
+			"id": "twentyFour",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 24
+			}
+		},
+		{
+			"id": "oneHundredTwenty",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 120
+			}
+		},
+		{
+			"id": "isBaseCase",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "lte",
+				"args": [
+					"five",
+					"one"
+				]
+			}
+		},
+		{
+			"id": "factorialOfFive",
+			"expr": {
+				"kind": "if",
+				"type": {
+					"kind": "int"
+				},
+				"cond": "isBaseCase",
+				"then": "one",
+				"else": "fiveTimesFactorialFour"
+			}
+		},
+		{
+			"id": "fiveTimesFactorialFour",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "mul",
+				"args": [
+					"five",
+					"factorialOfFour"
+				]
+			}
+		},
+		{
+			"id": "isBaseCase4",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "lte",
+				"args": [
+					"four",
+					"one"
+				]
+			}
+		},
+		{
+			"id": "factorialOfFour",
+			"expr": {
+				"kind": "if",
+				"type": {
+					"kind": "int"
+				},
+				"cond": "isBaseCase4",
+				"then": "one",
+				"else": "fourTimesFactorialThree"
+			}
+		},
+		{
+			"id": "fourTimesFactorialThree",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "mul",
+				"args": [
+					"four",
+					"factorialOfThree"
+				]
+			}
+		},
+		{
+			"id": "isBaseCase3",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "lte",
+				"args": [
+					"three",
+					"one"
+				]
+			}
+		},
+		{
+			"id": "factorialOfThree",
+			"expr": {
+				"kind": "if",
+				"type": {
+					"kind": "int"
+				},
+				"cond": "isBaseCase3",
+				"then": "one",
+				"else": "threeTimesFactorialTwo"
+			}
+		},
+		{
+			"id": "threeTimesFactorialTwo",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "mul",
+				"args": [
+					"three",
+					"factorialOfTwo"
+				]
+			}
+		},
+		{
+			"id": "isBaseCase2",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "lte",
+				"args": [
+					"two",
+					"one"
+				]
+			}
+		},
+		{
+			"id": "factorialOfTwo",
+			"expr": {
+				"kind": "if",
+				"type": {
+					"kind": "int"
+				},
+				"cond": "isBaseCase2",
+				"then": "one",
+				"else": "twoTimesOne"
+			}
+		},
+		{
+			"id": "twoTimesOne",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "mul",
+				"args": [
+					"two",
+					"one"
+				]
+			}
+		},
+		{
+			"id": "factorialLambdaTemplate",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"n"
+				],
+				"body": "factorialBodyTemplate"
+			}
+		},
+		{
+			"id": "factorialBodyTemplate",
+			"expr": {
+				"kind": "let",
+				"name": "isBase",
+				"value": "checkBaseCase",
+				"body": "baseOrRecursive"
+			}
+		},
+		{
+			"id": "checkBaseCase",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "lte",
+				"args": [
+					"n",
+					"one"
+				]
+			}
+		},
+		{
+			"id": "baseOrRecursive",
+			"expr": {
+				"kind": "if",
+				"type": {
+					"kind": "int"
+				},
+				"cond": "isBase",
+				"then": "one",
+				"else": "multiplyByFactorialOfDecrement"
+			}
+		},
+		{
+			"id": "multiplyByFactorialOfDecrement",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "mul",
+				"args": [
+					"n",
+					"factorialOfNMinusOne"
+				]
+			}
+		},
+		{
+			"id": "factorialOfNMinusOne",
+			"expr": {
+				"kind": "var",
+				"name": "recursiveResult"
+			}
+		},
+		{
+			"id": "result",
+			"expr": {
+				"kind": "ref",
+				"id": "factorialOfFive"
+			}
+		}
+	],
+	"result": "result",
+	"expected_result": 120,
+	"computation_trace": [
+		{
+			"computes": "5 * factorial(4)",
+			"n": 5,
+			"n_le_1": false,
+			"step": 1
+		},
+		{
+			"computes": "4 * factorial(3)",
+			"n": 4,
+			"n_le_1": false,
+			"step": 2
+		},
+		{
+			"computes": "3 * factorial(2)",
+			"n": 3,
+			"n_le_1": false,
+			"step": 3
+		},
+		{
+			"computes": "2 * factorial(1)",
+			"n": 2,
+			"n_le_1": false,
+			"step": 4
+		},
+		{
+			"n": 1,
+			"n_le_1": true,
+			"returns": 1,
+			"step": 5
+		},
+		{
+			"result": 2,
+			"step": 6,
+			"unwind": "2 * 1"
+		},
+		{
+			"result": 6,
+			"step": 7,
+			"unwind": "3 * 2"
+		},
+		{
+			"result": 24,
+			"step": 8,
+			"unwind": "4 * 6"
+		},
+		{
+			"result": 120,
+			"step": 9,
+			"unwind": "5 * 24"
+		}
+	]
 }

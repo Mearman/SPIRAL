@@ -1,80 +1,80 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
-  "version": "1.0.0",
-  "description": "Clamps a value between min and max bounds. Uses expression nodes for constants and a block node for the clamping logic.",
-  "airDefs": [],
-  "nodes": [
-    {
-      "id": "value",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 150 }
-    },
-    {
-      "id": "minBound",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
-    },
-    {
-      "id": "maxBound",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 100 }
-    },
-    {
-      "id": "clampedValue",
-      "blocks": [
-        {
-          "id": "checkMin",
-          "instructions": [
-            {
-              "kind": "op",
-              "target": "belowMin",
-              "ns": "core",
-              "name": "lt",
-              "args": ["value", "minBound"]
-            }
-          ],
-          "terminator": {
-            "kind": "branch",
-            "cond": "belowMin",
-            "then": "returnMin",
-            "else": "checkMax"
-          }
-        },
-        {
-          "id": "returnMin",
-          "instructions": [],
-          "terminator": { "kind": "return", "value": "minBound" }
-        },
-        {
-          "id": "checkMax",
-          "instructions": [
-            {
-              "kind": "op",
-              "target": "aboveMax",
-              "ns": "core",
-              "name": "gt",
-              "args": ["value", "maxBound"]
-            }
-          ],
-          "terminator": {
-            "kind": "branch",
-            "cond": "aboveMax",
-            "then": "returnMax",
-            "else": "returnValue"
-          }
-        },
-        {
-          "id": "returnMax",
-          "instructions": [],
-          "terminator": { "kind": "return", "value": "maxBound" }
-        },
-        {
-          "id": "returnValue",
-          "instructions": [],
-          "terminator": { "kind": "return", "value": "value" }
-        }
-      ],
-      "entry": "checkMin"
-    }
-  ],
-  "result": "clampedValue",
-  "expected_result": 100,
-  "note": "value=150 is above maxBound=100, so returns 100. Flow: checkMin(150<0? no) → checkMax(150>100? yes) → returnMax"
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Clamps a value between min and max bounds. Uses expression nodes for constants and a block node for the clamping logic.",
+	"airDefs": [],
+	"nodes": [
+		{
+			"id": "value",
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 150 }
+		},
+		{
+			"id": "minBound",
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+		},
+		{
+			"id": "maxBound",
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 100 }
+		},
+		{
+			"id": "clampedValue",
+			"blocks": [
+				{
+					"id": "checkMin",
+					"instructions": [
+						{
+							"kind": "op",
+							"ns": "core",
+							"name": "lt",
+							"target": "belowMin",
+							"args": ["value", "minBound"]
+						}
+					],
+					"terminator": {
+						"kind": "branch",
+						"cond": "belowMin",
+						"then": "returnMin",
+						"else": "checkMax"
+					}
+				},
+				{
+					"id": "returnMin",
+					"instructions": [],
+					"terminator": { "kind": "return", "value": "minBound" }
+				},
+				{
+					"id": "checkMax",
+					"instructions": [
+						{
+							"kind": "op",
+							"ns": "core",
+							"name": "gt",
+							"target": "aboveMax",
+							"args": ["value", "maxBound"]
+						}
+					],
+					"terminator": {
+						"kind": "branch",
+						"cond": "aboveMax",
+						"then": "returnMax",
+						"else": "returnValue"
+					}
+				},
+				{
+					"id": "returnMax",
+					"instructions": [],
+					"terminator": { "kind": "return", "value": "maxBound" }
+				},
+				{
+					"id": "returnValue",
+					"instructions": [],
+					"terminator": { "kind": "return", "value": "value" }
+				}
+			],
+			"entry": "checkMin"
+		}
+	],
+	"result": "clampedValue",
+	"expected_result": 100,
+	"note": "value=150 is above maxBound=100, so returns 100. Flow: checkMin(150<0? no) → checkMax(150>100? yes) → returnMax"
 }

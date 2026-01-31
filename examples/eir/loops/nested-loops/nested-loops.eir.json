@@ -1,216 +1,216 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
-  "version": "1.0.0",
-  "description": "Demonstrates nested while loops in EIR. The outer loop controls one variable, while the inner loop runs to completion for each iteration of the outer loop.",
-  "airDefs": [
-    {
-      "ns": "core",
-      "name": "add",
-      "params": [
-        "a",
-        "b"
-      ],
-      "result": {
-        "kind": "int"
-      },
-      "body": {
-        "kind": "ref",
-        "id": "a"
-      }
-    },
-    {
-      "ns": "core",
-      "name": "lt",
-      "params": [
-        "a",
-        "b"
-      ],
-      "result": {
-        "kind": "bool"
-      },
-      "body": {
-        "kind": "ref",
-        "id": "a"
-      }
-    },
-    {
-      "ns": "core",
-      "name": "mul",
-      "params": [
-        "a",
-        "b"
-      ],
-      "result": {
-        "kind": "int"
-      },
-      "body": {
-        "kind": "ref",
-        "id": "a"
-      }
-    }
-  ],
-  "nodes": [
-    {
-      "id": "zero",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 0
-      }
-    },
-    {
-      "id": "one",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 1
-      }
-    },
-    {
-      "id": "three",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 3
-      }
-    },
-    {
-      "id": "four",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 4
-      }
-    },
-    {
-      "id": "initI",
-      "expr": {
-        "kind": "assign",
-        "target": "i",
-        "value": "zero"
-      }
-    },
-    {
-      "id": "initJ",
-      "expr": {
-        "kind": "assign",
-        "target": "j",
-        "value": "zero"
-      }
-    },
-    {
-      "id": "outerCond",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "lt",
-        "args": [
-          "i",
-          "three"
-        ]
-      }
-    },
-    {
-      "id": "innerCond",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "lt",
-        "args": [
-          "j",
-          "four"
-        ]
-      }
-    },
-    {
-      "id": "incJ",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "add",
-        "args": [
-          "j",
-          "one"
-        ]
-      }
-    },
-    {
-      "id": "incI",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "add",
-        "args": [
-          "i",
-          "one"
-        ]
-      }
-    },
-    {
-      "id": "innerBody",
-      "expr": {
-        "kind": "assign",
-        "target": "j",
-        "value": "incJ"
-      }
-    },
-    {
-      "id": "innerLoop",
-      "expr": {
-        "kind": "while",
-        "cond": "innerCond",
-        "body": "innerBody"
-      }
-    },
-    {
-      "id": "outerBody",
-      "expr": {
-        "kind": "seq",
-        "first": "innerLoop",
-        "then": "innerReset"
-      }
-    },
-    {
-      "id": "innerReset",
-      "expr": {
-        "kind": "assign",
-        "target": "j",
-        "value": "zero"
-      }
-    },
-    {
-      "id": "outerUpdate",
-      "expr": {
-        "kind": "assign",
-        "target": "i",
-        "value": "incI"
-      }
-    },
-    {
-      "id": "outerLoop",
-      "expr": {
-        "kind": "while",
-        "cond": "outerCond",
-        "body": "outerUpdate"
-      }
-    },
-    {
-      "id": "result",
-      "expr": {
-        "kind": "ref",
-        "id": "zero"
-      }
-    }
-  ],
-  "result": "result",
-  "expected_result": 0,
-  "note": "Nested loops: outer runs 3 times (i=0,1,2), inner runs 4 times for each outer. Total iterations = 3 * 4 = 12."
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
+	"version": "1.0.0",
+	"description": "Demonstrates nested while loops in EIR. The outer loop controls one variable, while the inner loop runs to completion for each iteration of the outer loop.",
+	"airDefs": [
+		{
+			"ns": "core",
+			"name": "add",
+			"params": [
+				"a",
+				"b"
+			],
+			"result": {
+				"kind": "int"
+			},
+			"body": {
+				"kind": "ref",
+				"id": "a"
+			}
+		},
+		{
+			"ns": "core",
+			"name": "lt",
+			"params": [
+				"a",
+				"b"
+			],
+			"result": {
+				"kind": "bool"
+			},
+			"body": {
+				"kind": "ref",
+				"id": "a"
+			}
+		},
+		{
+			"ns": "core",
+			"name": "mul",
+			"params": [
+				"a",
+				"b"
+			],
+			"result": {
+				"kind": "int"
+			},
+			"body": {
+				"kind": "ref",
+				"id": "a"
+			}
+		}
+	],
+	"nodes": [
+		{
+			"id": "zero",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 0
+			}
+		},
+		{
+			"id": "one",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 1
+			}
+		},
+		{
+			"id": "three",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 3
+			}
+		},
+		{
+			"id": "four",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 4
+			}
+		},
+		{
+			"id": "initI",
+			"expr": {
+				"kind": "assign",
+				"target": "i",
+				"value": "zero"
+			}
+		},
+		{
+			"id": "initJ",
+			"expr": {
+				"kind": "assign",
+				"target": "j",
+				"value": "zero"
+			}
+		},
+		{
+			"id": "outerCond",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "lt",
+				"args": [
+					"i",
+					"three"
+				]
+			}
+		},
+		{
+			"id": "innerCond",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "lt",
+				"args": [
+					"j",
+					"four"
+				]
+			}
+		},
+		{
+			"id": "incJ",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "add",
+				"args": [
+					"j",
+					"one"
+				]
+			}
+		},
+		{
+			"id": "incI",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "add",
+				"args": [
+					"i",
+					"one"
+				]
+			}
+		},
+		{
+			"id": "innerBody",
+			"expr": {
+				"kind": "assign",
+				"target": "j",
+				"value": "incJ"
+			}
+		},
+		{
+			"id": "innerLoop",
+			"expr": {
+				"kind": "while",
+				"body": "innerBody",
+				"cond": "innerCond"
+			}
+		},
+		{
+			"id": "outerBody",
+			"expr": {
+				"kind": "seq",
+				"first": "innerLoop",
+				"then": "innerReset"
+			}
+		},
+		{
+			"id": "innerReset",
+			"expr": {
+				"kind": "assign",
+				"target": "j",
+				"value": "zero"
+			}
+		},
+		{
+			"id": "outerUpdate",
+			"expr": {
+				"kind": "assign",
+				"target": "i",
+				"value": "incI"
+			}
+		},
+		{
+			"id": "outerLoop",
+			"expr": {
+				"kind": "while",
+				"body": "outerUpdate",
+				"cond": "outerCond"
+			}
+		},
+		{
+			"id": "result",
+			"expr": {
+				"kind": "ref",
+				"id": "zero"
+			}
+		}
+	],
+	"result": "result",
+	"expected_result": 0,
+	"note": "Nested loops: outer runs 3 times (i=0,1,2), inner runs 4 times for each outer. Total iterations = 3 * 4 = 12."
 }

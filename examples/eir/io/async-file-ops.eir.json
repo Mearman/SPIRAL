@@ -1,158 +1,158 @@
 {
-  "$schema": "../../../eir.schema.json",
-  "version": "1.0.0",
-  "capabilities": ["async", "parallel"],
-  "description": "Demonstrates async file I/O operations with concurrent reads using par expression and error handling with try/catch",
-  "nodes": [
-    {
-      "id": "filePath1",
-      "expr": {
-        "kind": "lit",
-        "type": { "kind": "string" },
-        "value": "data/input1.txt"
-      }
-    },
-    {
-      "id": "filePath2",
-      "expr": {
-        "kind": "lit",
-        "type": { "kind": "string" },
-        "value": "data/input2.txt"
-      }
-    },
-    {
-      "id": "outputPath",
-      "expr": {
-        "kind": "lit",
-        "type": { "kind": "string" },
-        "value": "data/output.txt"
-      }
-    },
-    {
-      "id": "contentToWrite",
-      "expr": {
-        "kind": "lit",
-        "type": { "kind": "string" },
-        "value": "Processed data: 42"
-      }
-    },
-    {
-      "id": "readOp1",
-      "type": { "kind": "future", "of": { "kind": "string" } },
-      "expr": {
-        "kind": "effect",
-        "op": "asyncRead",
-        "args": ["filePath1"]
-      }
-    },
-    {
-      "id": "readOp2",
-      "type": { "kind": "future", "of": { "kind": "string" } },
-      "expr": {
-        "kind": "effect",
-        "op": "asyncRead",
-        "args": ["filePath2"]
-      }
-    },
-    {
-      "id": "concurrentReads",
-      "expr": {
-        "kind": "par",
-        "branches": ["readOp1", "readOp2"]
-      }
-    },
-    {
-      "id": "writeOp",
-      "type": { "kind": "future", "of": { "kind": "void" } },
-      "expr": {
-        "kind": "effect",
-        "op": "asyncWrite",
-        "args": ["outputPath", "contentToWrite"]
-      }
-    },
-    {
-      "id": "errorFallback",
-      "expr": {
-        "kind": "lit",
-        "type": { "kind": "string" },
-        "value": "Error: File not found"
-      }
-    },
-    {
-      "id": "awaitRead1",
-      "expr": {
-        "kind": "await",
-        "future": "readOp1"
-      }
-    },
-    {
-      "id": "awaitRead2",
-      "expr": {
-        "kind": "await",
-        "future": "readOp2"
-      }
-    },
-    {
-      "id": "safeRead1",
-      "expr": {
-        "kind": "try",
-        "tryBody": "awaitRead1",
-        "catchParam": "err",
-        "catchBody": "errorFallback"
-      }
-    },
-    {
-      "id": "safeRead2",
-      "expr": {
-        "kind": "try",
-        "tryBody": "awaitRead2",
-        "catchParam": "err",
-        "catchBody": "errorFallback"
-      }
-    },
-    {
-      "id": "safeConcurrentReads",
-      "expr": {
-        "kind": "par",
-        "branches": ["safeRead1", "safeRead2"]
-      }
-    },
-    {
-      "id": "readWithTimeout",
-      "expr": {
-        "kind": "lit",
-        "type": { "kind": "int" },
-        "value": 5000
-      }
-    },
-    {
-      "id": "timeoutFallback",
-      "expr": {
-        "kind": "lit",
-        "type": { "kind": "string" },
-        "value": "Timeout: Read took too long"
-      }
-    },
-    {
-      "id": "awaitWithTimeout",
-      "expr": {
-        "kind": "await",
-        "future": "readOp1",
-        "timeout": "readWithTimeout",
-        "fallback": "timeoutFallback",
-        "returnIndex": false
-      }
-    },
-    {
-      "id": "processFile",
-      "expr": {
-        "kind": "seq",
-        "first": "safeConcurrentReads",
-        "then": "writeOp"
-      }
-    }
-  ],
-  "result": "safeConcurrentReads",
-  "expected_result": ["Error: File not found", "Error: File not found"],
-  "note": "This example shows async file I/O patterns. The 'concurrentReads' node reads two files in parallel using par. 'safeRead1' and 'safeRead2' wrap reads in try/catch for error handling. 'awaitWithTimeout' demonstrates reading with a timeout fallback. Change 'result' to 'processFile' to see the full read-then-write workflow."
+	"$schema": "../../../eir.schema.json",
+	"version": "1.0.0",
+	"capabilities": ["async", "parallel"],
+	"description": "Demonstrates async file I/O operations with concurrent reads using par expression and error handling with try/catch",
+	"nodes": [
+		{
+			"id": "filePath1",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "data/input1.txt"
+			}
+		},
+		{
+			"id": "filePath2",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "data/input2.txt"
+			}
+		},
+		{
+			"id": "outputPath",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "data/output.txt"
+			}
+		},
+		{
+			"id": "contentToWrite",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "Processed data: 42"
+			}
+		},
+		{
+			"id": "readOp1",
+			"type": { "kind": "future", "of": { "kind": "string" } },
+			"expr": {
+				"kind": "effect",
+				"op": "asyncRead",
+				"args": ["filePath1"]
+			}
+		},
+		{
+			"id": "readOp2",
+			"type": { "kind": "future", "of": { "kind": "string" } },
+			"expr": {
+				"kind": "effect",
+				"op": "asyncRead",
+				"args": ["filePath2"]
+			}
+		},
+		{
+			"id": "concurrentReads",
+			"expr": {
+				"kind": "par",
+				"branches": ["readOp1", "readOp2"]
+			}
+		},
+		{
+			"id": "writeOp",
+			"type": { "kind": "future", "of": { "kind": "void" } },
+			"expr": {
+				"kind": "effect",
+				"op": "asyncWrite",
+				"args": ["outputPath", "contentToWrite"]
+			}
+		},
+		{
+			"id": "errorFallback",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "Error: File not found"
+			}
+		},
+		{
+			"id": "awaitRead1",
+			"expr": {
+				"kind": "await",
+				"future": "readOp1"
+			}
+		},
+		{
+			"id": "awaitRead2",
+			"expr": {
+				"kind": "await",
+				"future": "readOp2"
+			}
+		},
+		{
+			"id": "safeRead1",
+			"expr": {
+				"kind": "try",
+				"tryBody": "awaitRead1",
+				"catchParam": "err",
+				"catchBody": "errorFallback"
+			}
+		},
+		{
+			"id": "safeRead2",
+			"expr": {
+				"kind": "try",
+				"tryBody": "awaitRead2",
+				"catchParam": "err",
+				"catchBody": "errorFallback"
+			}
+		},
+		{
+			"id": "safeConcurrentReads",
+			"expr": {
+				"kind": "par",
+				"branches": ["safeRead1", "safeRead2"]
+			}
+		},
+		{
+			"id": "readWithTimeout",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "int" },
+				"value": 5000
+			}
+		},
+		{
+			"id": "timeoutFallback",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "Timeout: Read took too long"
+			}
+		},
+		{
+			"id": "awaitWithTimeout",
+			"expr": {
+				"kind": "await",
+				"future": "readOp1",
+				"timeout": "readWithTimeout",
+				"fallback": "timeoutFallback",
+				"returnIndex": false
+			}
+		},
+		{
+			"id": "processFile",
+			"expr": {
+				"kind": "seq",
+				"first": "safeConcurrentReads",
+				"then": "writeOp"
+			}
+		}
+	],
+	"result": "safeConcurrentReads",
+	"expected_result": ["Error: File not found", "Error: File not found"],
+	"note": "This example shows async file I/O patterns. The 'concurrentReads' node reads two files in parallel using par. 'safeRead1' and 'safeRead2' wrap reads in try/catch for error handling. 'awaitWithTimeout' demonstrates reading with a timeout fallback. Change 'result' to 'processFile' to see the full read-then-write workflow."
 }

@@ -1,125 +1,125 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
-  "version": "1.0.0",
-  "description": "Sums all elements in a list using iter loop with mutation in EIR. Demonstrates the fold/reduce pattern with mutable state.",
-  "airDefs": [
-    {
-      "ns": "core",
-      "name": "add",
-      "params": [
-        "a",
-        "b"
-      ],
-      "result": {
-        "kind": "int"
-      },
-      "body": {
-        "kind": "ref",
-        "id": "a"
-      }
-    }
-  ],
-  "nodes": [
-    {
-      "id": "zero",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 0
-      }
-    },
-    {
-      "id": "numbers",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "list",
-          "of": {
-            "kind": "int"
-          }
-        },
-        "value": [
-          {
-            "kind": "int",
-            "value": 10
-          },
-          {
-            "kind": "int",
-            "value": 20
-          },
-          {
-            "kind": "int",
-            "value": 30
-          },
-          {
-            "kind": "int",
-            "value": 40
-          }
-        ]
-      }
-    },
-    {
-      "id": "initSum",
-      "expr": {
-        "kind": "assign",
-        "target": "total",
-        "value": "zero"
-      }
-    },
-    {
-      "id": "currentTotal",
-      "expr": {
-        "kind": "var",
-        "name": "total"
-      }
-    },
-    {
-      "id": "element",
-      "expr": {
-        "kind": "var",
-        "name": "x"
-      }
-    },
-    {
-      "id": "sumOp",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "add",
-        "args": [
-          "currentTotal",
-          "element"
-        ]
-      }
-    },
-    {
-      "id": "updateTotal",
-      "expr": {
-        "kind": "assign",
-        "target": "total",
-        "value": "sumOp"
-      }
-    },
-    {
-      "id": "sumLoop",
-      "expr": {
-        "kind": "iter",
-        "var": "x",
-        "iter": "numbers",
-        "body": "updateTotal"
-      }
-    },
-    {
-      "id": "result",
-      "expr": {
-        "kind": "var",
-        "name": "total"
-      }
-    }
-  ],
-  "result": "result",
-  "expected_result": 100,
-  "note": "Iterates over [10,20,30,40], accumulating the sum. Result is 100."
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
+	"version": "1.0.0",
+	"description": "Sums all elements in a list using iter loop with mutation in EIR. Demonstrates the fold/reduce pattern with mutable state.",
+	"airDefs": [
+		{
+			"ns": "core",
+			"name": "add",
+			"params": [
+				"a",
+				"b"
+			],
+			"result": {
+				"kind": "int"
+			},
+			"body": {
+				"kind": "ref",
+				"id": "a"
+			}
+		}
+	],
+	"nodes": [
+		{
+			"id": "zero",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 0
+			}
+		},
+		{
+			"id": "numbers",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "list",
+					"of": {
+						"kind": "int"
+					}
+				},
+				"value": [
+					{
+						"kind": "int",
+						"value": 10
+					},
+					{
+						"kind": "int",
+						"value": 20
+					},
+					{
+						"kind": "int",
+						"value": 30
+					},
+					{
+						"kind": "int",
+						"value": 40
+					}
+				]
+			}
+		},
+		{
+			"id": "initSum",
+			"expr": {
+				"kind": "assign",
+				"target": "total",
+				"value": "zero"
+			}
+		},
+		{
+			"id": "currentTotal",
+			"expr": {
+				"kind": "var",
+				"name": "total"
+			}
+		},
+		{
+			"id": "element",
+			"expr": {
+				"kind": "var",
+				"name": "x"
+			}
+		},
+		{
+			"id": "sumOp",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "add",
+				"args": [
+					"currentTotal",
+					"element"
+				]
+			}
+		},
+		{
+			"id": "updateTotal",
+			"expr": {
+				"kind": "assign",
+				"target": "total",
+				"value": "sumOp"
+			}
+		},
+		{
+			"id": "sumLoop",
+			"expr": {
+				"kind": "iter",
+				"var": "x",
+				"iter": "numbers",
+				"body": "updateTotal"
+			}
+		},
+		{
+			"id": "result",
+			"expr": {
+				"kind": "var",
+				"name": "total"
+			}
+		}
+	],
+	"result": "result",
+	"expected_result": 100,
+	"note": "Iterates over [10,20,30,40], accumulating the sum. Result is 100."
 }

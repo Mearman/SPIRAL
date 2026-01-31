@@ -1,193 +1,193 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
-  "version": "1.0.0",
-  "description": "Demonstrates mutation of list-like structures using EIR. Simulates in-place modification by creating new lists with updated values.",
-  "airDefs": [
-    {
-      "ns": "core",
-      "name": "add",
-      "params": [
-        "a",
-        "b"
-      ],
-      "result": {
-        "kind": "int"
-      },
-      "body": {
-        "kind": "ref",
-        "id": "a"
-      }
-    },
-    {
-      "ns": "core",
-      "name": "lt",
-      "params": [
-        "a",
-        "b"
-      ],
-      "result": {
-        "kind": "bool"
-      },
-      "body": {
-        "kind": "ref",
-        "id": "a"
-      }
-    }
-  ],
-  "nodes": [
-    {
-      "id": "zero",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 0
-      }
-    },
-    {
-      "id": "one",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 1
-      }
-    },
-    {
-      "id": "ten",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 10
-      }
-    },
-    {
-      "id": "originalList",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "list",
-          "of": {
-            "kind": "int"
-          }
-        },
-        "value": [
-          {
-            "kind": "int",
-            "value": 1
-          },
-          {
-            "kind": "int",
-            "value": 2
-          },
-          {
-            "kind": "int",
-            "value": 3
-          },
-          {
-            "kind": "int",
-            "value": 4
-          },
-          {
-            "kind": "int",
-            "value": 5
-          }
-        ]
-      }
-    },
-    {
-      "id": "initIndex",
-      "expr": {
-        "kind": "assign",
-        "target": "index",
-        "value": "zero"
-      }
-    },
-    {
-      "id": "initNewList",
-      "expr": {
-        "kind": "assign",
-        "target": "newList",
-        "value": "originalList"
-      }
-    },
-    {
-      "id": "indexValue",
-      "expr": {
-        "kind": "var",
-        "name": "index"
-      }
-    },
-    {
-      "id": "listLength",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 5
-      }
-    },
-    {
-      "id": "condition",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "lt",
-        "args": [
-          "indexValue",
-          "listLength"
-        ]
-      }
-    },
-    {
-      "id": "incrementIndex",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "add",
-        "args": [
-          "indexValue",
-          "one"
-        ]
-      }
-    },
-    {
-      "id": "loopBody",
-      "expr": {
-        "kind": "assign",
-        "target": "index",
-        "value": "incrementIndex"
-      }
-    },
-    {
-      "id": "processLoop",
-      "expr": {
-        "kind": "while",
-        "cond": "condition",
-        "body": "loopBody"
-      }
-    },
-    {
-      "id": "finalList",
-      "expr": {
-        "kind": "var",
-        "name": "newList"
-      }
-    },
-    {
-      "id": "result",
-      "expr": {
-        "kind": "ref",
-        "id": "finalList"
-      }
-    }
-  ],
-  "result": "result",
-  "expected_result": { "kind": "list", "value": [{ "kind": "int", "value": 1 }, { "kind": "int", "value": 2 }, { "kind": "int", "value": 3 }, { "kind": "int", "value": 4 }, { "kind": "int", "value": 5 }] },
-  "note": "Simulates mutable list processing. The index iterates through positions 0-4. True list mutation would require additional runtime support."
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
+	"version": "1.0.0",
+	"description": "Demonstrates mutation of list-like structures using EIR. Simulates in-place modification by creating new lists with updated values.",
+	"airDefs": [
+		{
+			"ns": "core",
+			"name": "add",
+			"params": [
+				"a",
+				"b"
+			],
+			"result": {
+				"kind": "int"
+			},
+			"body": {
+				"kind": "ref",
+				"id": "a"
+			}
+		},
+		{
+			"ns": "core",
+			"name": "lt",
+			"params": [
+				"a",
+				"b"
+			],
+			"result": {
+				"kind": "bool"
+			},
+			"body": {
+				"kind": "ref",
+				"id": "a"
+			}
+		}
+	],
+	"nodes": [
+		{
+			"id": "zero",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 0
+			}
+		},
+		{
+			"id": "one",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 1
+			}
+		},
+		{
+			"id": "ten",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 10
+			}
+		},
+		{
+			"id": "originalList",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "list",
+					"of": {
+						"kind": "int"
+					}
+				},
+				"value": [
+					{
+						"kind": "int",
+						"value": 1
+					},
+					{
+						"kind": "int",
+						"value": 2
+					},
+					{
+						"kind": "int",
+						"value": 3
+					},
+					{
+						"kind": "int",
+						"value": 4
+					},
+					{
+						"kind": "int",
+						"value": 5
+					}
+				]
+			}
+		},
+		{
+			"id": "initIndex",
+			"expr": {
+				"kind": "assign",
+				"target": "index",
+				"value": "zero"
+			}
+		},
+		{
+			"id": "initNewList",
+			"expr": {
+				"kind": "assign",
+				"target": "newList",
+				"value": "originalList"
+			}
+		},
+		{
+			"id": "indexValue",
+			"expr": {
+				"kind": "var",
+				"name": "index"
+			}
+		},
+		{
+			"id": "listLength",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 5
+			}
+		},
+		{
+			"id": "condition",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "lt",
+				"args": [
+					"indexValue",
+					"listLength"
+				]
+			}
+		},
+		{
+			"id": "incrementIndex",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "add",
+				"args": [
+					"indexValue",
+					"one"
+				]
+			}
+		},
+		{
+			"id": "loopBody",
+			"expr": {
+				"kind": "assign",
+				"target": "index",
+				"value": "incrementIndex"
+			}
+		},
+		{
+			"id": "processLoop",
+			"expr": {
+				"kind": "while",
+				"body": "loopBody",
+				"cond": "condition"
+			}
+		},
+		{
+			"id": "finalList",
+			"expr": {
+				"kind": "var",
+				"name": "newList"
+			}
+		},
+		{
+			"id": "result",
+			"expr": {
+				"kind": "ref",
+				"id": "finalList"
+			}
+		}
+	],
+	"result": "result",
+	"expected_result": { "kind": "list", "value": [{ "kind": "int", "value": 1 }, { "kind": "int", "value": 2 }, { "kind": "int", "value": 3 }, { "kind": "int", "value": 4 }, { "kind": "int", "value": 5 }] },
+	"note": "Simulates mutable list processing. The index iterates through positions 0-4. True list mutation would require additional runtime support."
 }

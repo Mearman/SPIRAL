@@ -1,22 +1,22 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
-  "version": "1.0.0",
-  "description": "LIR expression-only example: all nodes are expression nodes (no block nodes).",
-  "nodes": [
-    {
-      "id": "x",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 42 }
-    },
-    {
-      "id": "doubled",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 84 }
-    },
-    {
-      "id": "result",
-      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 100 }
-    }
-  ],
-  "result": "result",
-  "expected_result": 100,
-  "note": "All nodes are expression nodes (literals only). Returns 100."
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
+	"version": "1.0.0",
+	"description": "LIR expression-only example: all nodes are expression nodes (no block nodes).",
+	"nodes": [
+		{
+			"id": "x",
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 42 }
+		},
+		{
+			"id": "doubled",
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 84 }
+		},
+		{
+			"id": "result",
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 100 }
+		}
+	],
+	"result": "result",
+	"expected_result": 100,
+	"note": "All nodes are expression nodes (literals only). Returns 100."
 }
