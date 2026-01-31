@@ -293,7 +293,7 @@ describe("Inline Expressions - Integration Tests", () => {
 				nodes: [
 					{
 						id: "counter",
-						expr: { kind: "lit", type: { kind: "int" }, value: 0 },
+						expr: { kind: "lit", type: { kind: "int" }, value: 5 },
 					},
 					{
 						id: "loop",
@@ -313,7 +313,7 @@ describe("Inline Expressions - Integration Tests", () => {
 					},
 					{
 						id: "result",
-						expr: { kind: "lit", type: { kind: "int" }, value: 42 }, // Return a literal since loop doesn't execute
+						expr: { kind: "lit", type: { kind: "int" }, value: 42 }, // Return a literal since loop doesn't execute (5 < 3 is false)
 					},
 				],
 				result: "result",
