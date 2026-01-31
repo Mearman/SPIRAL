@@ -13,6 +13,7 @@ import type {
 	CIRDocument,
 	EIRDocument,
 	LIRDocument,
+	PIRDocument,
 	Node,
 } from "../../src/types.js";
 
@@ -919,6 +920,169 @@ describe("Python Synthesizer - Unit Tests", () => {
 			const openBrackets = (result.match(/\[/g) || []).length;
 			const closeBrackets = (result.match(/\]/g) || []).length;
 			assert.strictEqual(openBrackets, closeBrackets, "Unbalanced brackets");
+		});
+	});
+
+	//==========================================================================
+	// PIR Document Tests
+	//==========================================================================
+
+	describe("PIR Documents", () => {
+		it("should synthesize par expression with asyncio.gather", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "branchA",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 1 } },
+					},
+					{
+						id: "branchB",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 2 } },
+					},
+					{
+						id: "result",
+						expr: { kind: "par", branches: ["branchA", "branchB"] },
+					},
+				],
+				result: "result",
+			};
+			const result = synthesizePython(doc);
+			assert.ok(result.includes("asyncio"), "Should contain asyncio for par expression");
+			assert.ok(result.includes("asyncio.gather"), "Should contain asyncio.gather for par expression");
+		});
+
+		it("should synthesize spawn expression with asyncio.create_task", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "taskBody",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 42 } },
+					},
+					{
+						id: "result",
+						expr: { kind: "spawn", task: "taskBody" },
+					},
+				],
+				result: "result",
+			};
+			const result = synthesizePython(doc);
+			assert.ok(result.includes("asyncio"), "Should contain asyncio for spawn expression");
+			assert.ok(result.includes("asyncio.create_task"), "Should contain asyncio.create_task for spawn expression");
+		});
+
+		it("should synthesize await expression", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "taskBody",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 42 } },
+					},
+					{
+						id: "spawned",
+						expr: { kind: "spawn", task: "taskBody" },
+					},
+					{
+						id: "result",
+						expr: { kind: "await", future: "spawned" },
+					},
+				],
+				result: "result",
+			};
+			const result = synthesizePython(doc);
+			assert.ok(result.includes("await"), "Should contain await for await expression");
+		});
+
+		it("should synthesize channel expression with asyncio.Queue", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "result",
+						expr: { kind: "channel", channelType: "mpsc" },
+					},
+				],
+				result: "result",
+			};
+			const result = synthesizePython(doc);
+			assert.ok(result.includes("asyncio"), "Should contain asyncio for channel expression");
+			assert.ok(result.includes("asyncio.Queue"), "Should contain asyncio.Queue for channel expression");
+		});
+
+		it("should synthesize send and recv expressions", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "ch",
+						expr: { kind: "channel", channelType: "mpsc" },
+					},
+					{
+						id: "msg",
+						expr: { kind: "lit", type: { kind: "string" }, value: { kind: "string", value: "hello" } },
+					},
+					{
+						id: "sendOp",
+						expr: { kind: "send", channel: "ch", value: "msg" },
+					},
+					{
+						id: "result",
+						expr: { kind: "recv", channel: "ch" },
+					},
+				],
+				result: "result",
+			};
+			const result = synthesizePython(doc);
+			assert.ok(result.includes(".put("), "Should contain .put() for send expression");
+			assert.ok(result.includes(".get()"), "Should contain .get() for recv expression");
+		});
+
+		it("should include asyncio import for PIR documents", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "branchA",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 1 } },
+					},
+					{
+						id: "branchB",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 2 } },
+					},
+					{
+						id: "result",
+						expr: { kind: "par", branches: ["branchA", "branchB"] },
+					},
+				],
+				result: "result",
+			};
+			const result = synthesizePython(doc);
+			assert.ok(result.includes("import asyncio"), "Should include asyncio import for PIR documents");
+		});
+
+		it("should synthesize select expression with asyncio.wait", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "futA",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 1 } },
+					},
+					{
+						id: "futB",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 2 } },
+					},
+					{
+						id: "result",
+						expr: { kind: "select", futures: ["futA", "futB"] },
+					},
+				],
+				result: "result",
+			};
+			const result = synthesizePython(doc);
+			assert.ok(result.includes("asyncio.wait"), "Should contain asyncio.wait for select expression");
 		});
 	});
 
