@@ -28,6 +28,7 @@
     "examples:list": "tsx examples/cli.ts --list",
     "examples:validate": "tsx examples/cli.ts --validate",
     "examples:help": "tsx examples/cli.ts --help",
+    "generate:schemas": "tsx scripts/generate-schemas.ts",
     "ci": "npm run lint && npm run test:types && npm run test && npm run test:examples",
     "prepare": "husky"
   },
