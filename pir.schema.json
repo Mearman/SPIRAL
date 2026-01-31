@@ -1,504 +1,2341 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/pir.schema.json",
-  "title": "PIR (Parallel Intermediate Representation)",
-  "description": "Parallel IR extending EIR with async primitives (par, spawn, await, channels) for concurrent execution.",
-  "allOf": [
-    {
-      "$ref": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/eir.schema.json"
-    },
-    {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "version": {
-          "type": "string",
-          "pattern": "^2\\.[0-9]+\\.[0-9]+$"
-        },
-        "capabilities": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": ["async", "parallel", "channels", "hybrid"]
-          }
-        }
-      }
-    }
-  ],
-  "$defs": {
-    "id": {
+  "title": "PIR (Parallel IR)",
+  "type": "object",
+  "properties": {
+    "version": {
       "type": "string",
-      "pattern": "^[A-Za-z][A-Za-z0-9_\\-]*$"
+      "pattern": "^2\\.\\d+\\.\\d+$"
     },
-    "idOrExprPir": {
-      "oneOf": [
-        { "$ref": "#/$defs/id" },
-        { "$ref": "#/$defs/exprPir" }
-      ]
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
-    "node": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id"],
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/id"
-        },
-        "type": {
-          "$ref": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/air.schema.json#/$defs/type"
-        },
-        "expr": {
-          "$ref": "#/$defs/exprPir"
-        },
-        "blocks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/pirBlock"
+    "functionSigs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ns": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "params": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "returns": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "pure": {
+            "type": "boolean"
           }
         },
-        "entry": {
-          "$ref": "#/$defs/id",
-          "description": "Entry block identifier for block-based nodes"
-        }
-      },
-      "oneOf": [
-        {
-          "required": ["expr"]
-        },
-        {
-          "required": ["blocks", "entry"]
-        }
-      ]
+        "required": [
+          "ns",
+          "name",
+          "params",
+          "returns",
+          "pure"
+        ],
+        "additionalProperties": false
+      }
     },
-    "pirBlock": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "instructions", "terminator"],
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/id"
-        },
-        "instructions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/pirInstruction"
+    "airDefs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ns": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "params": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "result": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "body": {
+            "$ref": "#/$defs/__schema1"
           }
         },
-        "terminator": {
-          "$ref": "#/$defs/pirTerminator"
-        }
+        "required": [
+          "ns",
+          "name",
+          "params",
+          "result",
+          "body"
+        ],
+        "additionalProperties": false
       }
     },
-    "exprPir": {
-      "oneOf": [
-        {
-          "$ref": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/eir.schema.json#/$defs/exprEir"
-        },
-        {
-          "$ref": "#/$defs/expr_par"
-        },
-        {
-          "$ref": "#/$defs/expr_spawn"
-        },
-        {
-          "$ref": "#/$defs/expr_await"
-        },
-        {
-          "$ref": "#/$defs/expr_channel"
-        },
-        {
-          "$ref": "#/$defs/expr_send"
-        },
-        {
-          "$ref": "#/$defs/expr_recv"
-        },
-        {
-          "$ref": "#/$defs/expr_select"
-        },
-        {
-          "$ref": "#/$defs/expr_race"
-        }
-      ]
-    },
-    "expr_par": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "branches"],
-      "properties": {
-        "kind": {
-          "const": "par"
-        },
-        "branches": {
-          "type": "array",
-          "minItems": 2,
-          "items": {
-            "$ref": "#/$defs/id"
-          }
-        }
-      }
-    },
-    "expr_spawn": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "task"],
-      "properties": {
-        "kind": {
-          "const": "spawn"
-        },
-        "task": {
-          "$ref": "#/$defs/id"
-        }
-      }
-    },
-    "expr_await": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "future"],
-      "properties": {
-        "kind": {
-          "const": "await"
-        },
-        "future": {
-          "$ref": "#/$defs/id"
-        },
-        "timeout": {
-          "$ref": "#/$defs/idOrExprPir",
-          "description": "Timeout in milliseconds (node reference to int literal, or inline expression)"
-        },
-        "fallback": {
-          "$ref": "#/$defs/idOrExprPir",
-          "description": "Fallback value on timeout (node reference, or inline expression)"
-        },
-        "returnIndex": {
-          "type": "boolean",
-          "description": "Return success(0)/timeout(1) index instead of value"
-        }
-      }
-    },
-    "expr_channel": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "channelType"],
-      "properties": {
-        "kind": {
-          "const": "channel"
-        },
-        "channelType": {
-          "type": "string",
-          "enum": ["mpsc", "spsc", "mpmc", "broadcast"]
-        },
-        "bufferSize": {
-          "$ref": "#/$defs/idOrExprPir"
-        }
-      }
-    },
-    "expr_send": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "channel", "value"],
-      "properties": {
-        "kind": {
-          "const": "send"
-        },
-        "channel": {
-          "$ref": "#/$defs/id"
-        },
-        "value": {
-          "$ref": "#/$defs/idOrExprPir"
-        }
-      }
-    },
-    "expr_recv": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "channel"],
-      "properties": {
-        "kind": {
-          "const": "recv"
-        },
-        "channel": {
-          "$ref": "#/$defs/id"
-        }
-      }
-    },
-    "expr_select": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "futures"],
-      "properties": {
-        "kind": {
-          "const": "select"
-        },
-        "futures": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/$defs/id"
-          }
-        },
-        "timeout": {
-          "$ref": "#/$defs/idOrExprPir",
-          "description": "Timeout in milliseconds (node reference to int literal, or inline expression)"
-        },
-        "fallback": {
-          "$ref": "#/$defs/idOrExprPir",
-          "description": "Fallback value on timeout (node reference, or inline expression)"
-        },
-        "returnIndex": {
-          "type": "boolean",
-          "description": "Return which future won (-1=timeout, 0..n-1=winning future)"
-        }
-      }
-    },
-    "expr_race": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "tasks"],
-      "properties": {
-        "kind": {
-          "const": "race"
-        },
-        "tasks": {
-          "type": "array",
-          "minItems": 2,
-          "items": {
-            "$ref": "#/$defs/id"
-          }
-        }
-      }
-    },
-    "pirInstruction": {
-      "oneOf": [
-        {
-          "$ref": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/eir.schema.json#/$defs/expr_effect"
-        },
-        {
-          "$ref": "#/$defs/ins_spawn"
-        },
-        {
-          "$ref": "#/$defs/ins_channelOp"
-        },
-        {
-          "$ref": "#/$defs/ins_await"
-        }
-      ]
-    },
-    "ins_spawn": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "target", "entry"],
-      "properties": {
-        "kind": {
-          "const": "spawn"
-        },
-        "target": {
-          "$ref": "#/$defs/id"
-        },
-        "entry": {
-          "$ref": "#/$defs/id"
-        },
-        "args": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/id"
-          }
-        }
-      }
-    },
-    "ins_channelOp": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "op", "channel"],
-      "properties": {
-        "kind": {
-          "const": "channelOp"
-        },
-        "op": {
-          "type": "string",
-          "enum": ["send", "recv", "trySend", "tryRecv"]
-        },
-        "target": {
-          "$ref": "#/$defs/id"
-        },
-        "channel": {
-          "$ref": "#/$defs/id"
-        },
-        "value": {
-          "$ref": "#/$defs/id"
-        }
-      }
-    },
-    "ins_await": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "target", "future"],
-      "properties": {
-        "kind": {
-          "const": "await"
-        },
-        "target": {
-          "$ref": "#/$defs/id"
-        },
-        "future": {
-          "$ref": "#/$defs/id"
-        }
-      }
-    },
-    "pirTerminator": {
-      "oneOf": [
-        {
-          "$ref": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/lir.schema.json#/$defs/term_jump"
-        },
-        {
-          "$ref": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/lir.schema.json#/$defs/term_branch"
-        },
-        {
-          "$ref": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/lir.schema.json#/$defs/term_return"
-        },
-        {
-          "$ref": "#/$defs/term_fork"
-        },
-        {
-          "$ref": "#/$defs/term_join"
-        },
-        {
-          "$ref": "#/$defs/term_suspend"
-        }
-      ]
-    },
-    "term_fork": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "branches", "continuation"],
-      "properties": {
-        "kind": {
-          "const": "fork"
-        },
-        "branches": {
-          "type": "array",
-          "minItems": 2,
-          "items": {
+    "nodes": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
             "type": "object",
-            "additionalProperties": false,
-            "required": ["block", "taskId"],
             "properties": {
-              "block": {
-                "$ref": "#/$defs/id"
+              "id": {
+                "type": "string"
               },
-              "taskId": {
-                "$ref": "#/$defs/id"
+              "type": {
+                "$ref": "#/$defs/__schema0"
+              },
+              "expr": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "lit"
+                      },
+                      "type": {
+                        "$ref": "#/$defs/__schema0"
+                      },
+                      "value": {}
+                    },
+                    "required": [
+                      "kind",
+                      "type",
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "ref"
+                      },
+                      "id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "var"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "name"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "call"
+                      },
+                      "ns": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "$ref": "#/$defs/__schema1"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "ns",
+                      "name",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "if"
+                      },
+                      "cond": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "then": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "else": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "type": {
+                        "$ref": "#/$defs/__schema0"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "cond",
+                      "then",
+                      "else"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "let"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "body": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "type": {
+                        "$ref": "#/$defs/__schema0"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "name",
+                      "value",
+                      "body"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "airRef"
+                      },
+                      "ns": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "ns",
+                      "name",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "predicate"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "name",
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "lambda"
+                      },
+                      "params": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "$ref": "#/$defs/__schema0"
+                                },
+                                "optional": {
+                                  "type": "boolean"
+                                },
+                                "default": {
+                                  "$ref": "#/$defs/__schema1"
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      },
+                      "body": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "$ref": "#/$defs/__schema0"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "params",
+                      "body",
+                      "type"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "callExpr"
+                      },
+                      "fn": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "$ref": "#/$defs/__schema1"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "fn",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "fix"
+                      },
+                      "fn": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "$ref": "#/$defs/__schema0"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "fn",
+                      "type"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "do"
+                      },
+                      "exprs": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "$ref": "#/$defs/__schema1"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "exprs"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "seq"
+                      },
+                      "first": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "then": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "first",
+                      "then"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "assign"
+                      },
+                      "target": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "target",
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "while"
+                      },
+                      "cond": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "body": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "cond",
+                      "body"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "for"
+                      },
+                      "var": {
+                        "type": "string"
+                      },
+                      "init": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "cond": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "update": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "body": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "var",
+                      "init",
+                      "cond",
+                      "update",
+                      "body"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "iter"
+                      },
+                      "var": {
+                        "type": "string"
+                      },
+                      "iter": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "body": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "var",
+                      "iter",
+                      "body"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "effect"
+                      },
+                      "op": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "$ref": "#/$defs/__schema1"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "op",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "refCell"
+                      },
+                      "target": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "target"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "deref"
+                      },
+                      "target": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "target"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "try"
+                      },
+                      "tryBody": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "catchParam": {
+                        "type": "string"
+                      },
+                      "catchBody": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "fallback": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "tryBody",
+                      "catchParam",
+                      "catchBody"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "par"
+                      },
+                      "branches": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "branches"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "spawn"
+                      },
+                      "task": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "task"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "await"
+                      },
+                      "future": {
+                        "type": "string"
+                      },
+                      "timeout": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "fallback": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "returnIndex": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "future"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "channel"
+                      },
+                      "channelType": {
+                        "type": "string",
+                        "enum": [
+                          "mpsc",
+                          "spsc",
+                          "mpmc",
+                          "broadcast"
+                        ]
+                      },
+                      "bufferSize": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "channelType"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "send"
+                      },
+                      "channel": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "channel",
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "recv"
+                      },
+                      "channel": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "channel"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "select"
+                      },
+                      "futures": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "timeout": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "fallback": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema1"
+                          }
+                        ]
+                      },
+                      "returnIndex": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "futures"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "race"
+                      },
+                      "tasks": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "tasks"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "expr"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "type": {
+                "$ref": "#/$defs/__schema0"
+              },
+              "blocks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "instructions": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "const": "assign"
+                                  },
+                                  "target": {
+                                    "type": "string"
+                                  },
+                                  "value": {
+                                    "$ref": "#/$defs/__schema1"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "target",
+                                  "value"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "const": "op"
+                                  },
+                                  "target": {
+                                    "type": "string"
+                                  },
+                                  "ns": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "args": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "target",
+                                  "ns",
+                                  "name",
+                                  "args"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "const": "phi"
+                                  },
+                                  "target": {
+                                    "type": "string"
+                                  },
+                                  "sources": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "block": {
+                                          "type": "string"
+                                        },
+                                        "id": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "block",
+                                        "id"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "target",
+                                  "sources"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "const": "effect"
+                                  },
+                                  "target": {
+                                    "type": "string"
+                                  },
+                                  "op": {
+                                    "type": "string"
+                                  },
+                                  "args": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "target",
+                                  "op",
+                                  "args"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "const": "assignRef"
+                                  },
+                                  "target": {
+                                    "type": "string"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "target",
+                                  "value"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "const": "spawn"
+                              },
+                              "target": {
+                                "type": "string"
+                              },
+                              "entry": {
+                                "type": "string"
+                              },
+                              "args": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "target",
+                              "entry"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "const": "channelOp"
+                              },
+                              "op": {
+                                "type": "string",
+                                "enum": [
+                                  "send",
+                                  "recv",
+                                  "trySend",
+                                  "tryRecv"
+                                ]
+                              },
+                              "target": {
+                                "type": "string"
+                              },
+                              "channel": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "op",
+                              "channel"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "const": "await"
+                              },
+                              "target": {
+                                "type": "string"
+                              },
+                              "future": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "target",
+                              "future"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "terminator": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "jump"
+                            },
+                            "to": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "to"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "branch"
+                            },
+                            "cond": {
+                              "type": "string"
+                            },
+                            "then": {
+                              "type": "string"
+                            },
+                            "else": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "cond",
+                            "then",
+                            "else"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "return"
+                            },
+                            "value": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "exit"
+                            },
+                            "code": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "fork"
+                            },
+                            "branches": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "block": {
+                                    "type": "string"
+                                  },
+                                  "taskId": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "block",
+                                  "taskId"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "continuation": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "branches",
+                            "continuation"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "join"
+                            },
+                            "tasks": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "results": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "to": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "tasks",
+                            "to"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "suspend"
+                            },
+                            "future": {
+                              "type": "string"
+                            },
+                            "resumeBlock": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "future",
+                            "resumeBlock"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "instructions",
+                    "terminator"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "entry": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "blocks",
+              "entry"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "result": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "version",
+    "nodes",
+    "result"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "__schema0": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "bool"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "int"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "float"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "string"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "void"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "set"
+            },
+            "of": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "required": [
+            "kind",
+            "of"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "list"
+            },
+            "of": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "required": [
+            "kind",
+            "of"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "map"
+            },
+            "key": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "value": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "required": [
+            "kind",
+            "key",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "option"
+            },
+            "of": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "required": [
+            "kind",
+            "of"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "opaque"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "fn"
+            },
+            "params": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/__schema0"
+              }
+            },
+            "returns": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "optionalParams": {
+              "type": "array",
+              "items": {
+                "type": "boolean"
               }
             }
-          }
+          },
+          "required": [
+            "kind",
+            "params",
+            "returns"
+          ],
+          "additionalProperties": false
         },
-        "continuation": {
-          "$ref": "#/$defs/id"
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "ref"
+            },
+            "of": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "required": [
+            "kind",
+            "of"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "future"
+            },
+            "of": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "required": [
+            "kind",
+            "of"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "channel"
+            },
+            "channelType": {
+              "type": "string",
+              "enum": [
+                "mpsc",
+                "spsc",
+                "mpmc",
+                "broadcast"
+              ]
+            },
+            "of": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "required": [
+            "kind",
+            "channelType",
+            "of"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "task"
+            },
+            "returns": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "required": [
+            "kind",
+            "returns"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "async"
+            },
+            "params": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/__schema0"
+              }
+            },
+            "returns": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "future"
+                },
+                "of": {
+                  "$ref": "#/$defs/__schema0"
+                }
+              },
+              "required": [
+                "kind",
+                "of"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "kind",
+            "params",
+            "returns"
+          ],
+          "additionalProperties": false
         }
-      }
+      ]
     },
-    "term_join": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "tasks", "to"],
-      "properties": {
-        "kind": {
-          "const": "join"
+    "__schema1": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "lit"
+            },
+            "type": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "value": {}
+          },
+          "required": [
+            "kind",
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
         },
-        "tasks": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/$defs/id"
-          }
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "ref"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "additionalProperties": false
         },
-        "results": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/id"
-          }
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "var"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "additionalProperties": false
         },
-        "to": {
-          "$ref": "#/$defs/id"
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "call"
+            },
+            "ns": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/__schema1"
+                  }
+                ]
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "ns",
+            "name",
+            "args"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "if"
+            },
+            "cond": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/__schema1"
+                }
+              ]
+            },
+            "then": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/__schema1"
+                }
+              ]
+            },
+            "else": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/__schema1"
+                }
+              ]
+            },
+            "type": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "required": [
+            "kind",
+            "cond",
+            "then",
+            "else"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "let"
+            },
+            "name": {
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/__schema1"
+                }
+              ]
+            },
+            "body": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/__schema1"
+                }
+              ]
+            },
+            "type": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "required": [
+            "kind",
+            "name",
+            "value",
+            "body"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "airRef"
+            },
+            "ns": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "ns",
+            "name",
+            "args"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "predicate"
+            },
+            "name": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "name",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "lambda"
+            },
+            "params": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "$ref": "#/$defs/__schema0"
+                      },
+                      "optional": {
+                        "type": "boolean"
+                      },
+                      "default": {
+                        "$ref": "#/$defs/__schema1"
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "body": {
+              "type": "string"
+            },
+            "type": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "required": [
+            "kind",
+            "params",
+            "body",
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "callExpr"
+            },
+            "fn": {
+              "type": "string"
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/__schema1"
+                  }
+                ]
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "fn",
+            "args"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "fix"
+            },
+            "fn": {
+              "type": "string"
+            },
+            "type": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "required": [
+            "kind",
+            "fn",
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "do"
+            },
+            "exprs": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/__schema1"
+                  }
+                ]
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "exprs"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "par"
+            },
+            "branches": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "branches"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "spawn"
+            },
+            "task": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "task"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "await"
+            },
+            "future": {
+              "type": "string"
+            },
+            "timeout": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/__schema1"
+                }
+              ]
+            },
+            "fallback": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/__schema1"
+                }
+              ]
+            },
+            "returnIndex": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind",
+            "future"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "channel"
+            },
+            "channelType": {
+              "type": "string",
+              "enum": [
+                "mpsc",
+                "spsc",
+                "mpmc",
+                "broadcast"
+              ]
+            },
+            "bufferSize": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/__schema1"
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "channelType"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "send"
+            },
+            "channel": {
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/__schema1"
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "channel",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "recv"
+            },
+            "channel": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "channel"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "select"
+            },
+            "futures": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "timeout": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/__schema1"
+                }
+              ]
+            },
+            "fallback": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/__schema1"
+                }
+              ]
+            },
+            "returnIndex": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind",
+            "futures"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "race"
+            },
+            "tasks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "tasks"
+          ],
+          "additionalProperties": false
         }
-      }
-    },
-    "term_suspend": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "future", "resumeBlock"],
-      "properties": {
-        "kind": {
-          "const": "suspend"
-        },
-        "future": {
-          "$ref": "#/$defs/id"
-        },
-        "resumeBlock": {
-          "$ref": "#/$defs/id"
-        }
-      }
-    },
-    "type_future": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "of"],
-      "properties": {
-        "kind": {
-          "const": "future"
-        },
-        "of": {
-          "$ref": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/air.schema.json#/$defs/type"
-        }
-      }
-    },
-    "type_channel": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "channelType", "of"],
-      "properties": {
-        "kind": {
-          "const": "channel"
-        },
-        "channelType": {
-          "type": "string",
-          "enum": ["mpsc", "spsc", "mpmc", "broadcast"]
-        },
-        "of": {
-          "$ref": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/air.schema.json#/$defs/type"
-        }
-      }
-    },
-    "type_task": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "returns"],
-      "properties": {
-        "kind": {
-          "const": "task"
-        },
-        "returns": {
-          "$ref": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/air.schema.json#/$defs/type"
-        }
-      }
-    },
-    "type_async": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "params", "returns"],
-      "properties": {
-        "kind": {
-          "const": "async"
-        },
-        "params": {
-          "type": "array",
-          "items": {
-            "$ref": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/air.schema.json#/$defs/type"
-          }
-        },
-        "returns": {
-          "$ref": "#/$defs/type_future"
-        }
-      }
+      ]
     }
   }
 }
