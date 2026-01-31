@@ -4,7 +4,6 @@
 import type {
 	EIRDocument,
 	EirHybridNode,
-	PirHybridNode,
 	HybridNode,
 	LIRDocument,
 } from "../types.js";
@@ -12,6 +11,7 @@ import { isExprNode } from "../types.js";
 import type { BlockResult, LoweringContext, LowerParams } from "./lower-types.js";
 import { freshBlock, addBlock, validationError } from "./lower-types.js";
 import { isEirOnlyExpr, lowerEirExpr } from "./lower-eir.js";
+import { isAsyncOnlyExpr, lowerAsyncExpr } from "./lower-async.js";
 import { lowerCirExpr } from "./lower-cir.js";
 
 //==============================================================================
@@ -20,7 +20,7 @@ import { lowerCirExpr } from "./lower-cir.js";
 
 /** Arguments for the recursive lowerNode callback. */
 export interface LowerNodeArgs {
-	node: EirHybridNode | PirHybridNode;
+	node: EirHybridNode;
 	currentBlock: string;
 	ctx: LoweringContext;
 	nextBlock: string | null;
@@ -166,6 +166,10 @@ function lowerNode(args: LowerNodeArgs): BlockResult {
 		ctx,
 		nextBlock,
 	};
+
+	if (isAsyncOnlyExpr(node.expr)) {
+		return lowerAsyncExpr(p, node.expr, lowerNode);
+	}
 
 	if (isEirOnlyExpr(node.expr)) {
 		return lowerEirExpr(p, node.expr, lowerNode);

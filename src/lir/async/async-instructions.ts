@@ -1,11 +1,11 @@
-// SPIRAL LIR Async Evaluator - PIR Async Instruction Handlers
+// SPIRAL LIR Async Evaluator - Async Instruction Handlers
 
 import { ErrorCodes } from "../../errors.js";
 import { lookupValue } from "../../env.js";
 import type {
-	PirInsSpawn,
-	PirInsChannelOp,
-	PirInsAwait,
+	EirInsSpawn,
+	EirInsChannelOp,
+	EirInsAwait,
 	Value,
 } from "../../types.js";
 import {
@@ -27,7 +27,7 @@ import { bindVar } from "./instruction-handlers.js";
  * Execute a spawn instruction: creates a new async task
  */
 export function executeSpawnInstruction(
-	ins: PirInsSpawn,
+	ins: EirInsSpawn,
 	state: LIRAsyncRuntimeState,
 ): Value | undefined {
 	const taskId = `task_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -52,7 +52,7 @@ export function executeSpawnInstruction(
 //==============================================================================
 
 async function handleChannelSend(
-	ins: PirInsChannelOp,
+	ins: EirInsChannelOp,
 	state: LIRAsyncRuntimeState,
 	channel: { send: (v: Value) => Promise<void> },
 ): Promise<Value | undefined> {
@@ -65,7 +65,7 @@ async function handleChannelSend(
 }
 
 function handleChannelRecv(
-	ins: PirInsChannelOp,
+	ins: EirInsChannelOp,
 	state: LIRAsyncRuntimeState,
 	received: Value,
 ): void {
@@ -75,7 +75,7 @@ function handleChannelRecv(
 }
 
 function handleChannelTrySend(
-	ins: PirInsChannelOp,
+	ins: EirInsChannelOp,
 	state: LIRAsyncRuntimeState,
 	channel: { trySend: (v: Value) => boolean },
 ): Value | undefined {
@@ -91,7 +91,7 @@ function handleChannelTrySend(
 }
 
 function handleChannelTryRecv(
-	ins: PirInsChannelOp,
+	ins: EirInsChannelOp,
 	state: LIRAsyncRuntimeState,
 	result: Value | null,
 ): void {
@@ -107,7 +107,7 @@ function handleChannelTryRecv(
 //==============================================================================
 
 function resolveChannel(
-	ins: PirInsChannelOp,
+	ins: EirInsChannelOp,
 	state: LIRAsyncRuntimeState,
 ): ReturnType<LIRAsyncRuntimeState["channels"]["get"]> | Value {
 	const channelValue = lookupValue(state.vars, ins.channel);
@@ -125,7 +125,7 @@ function resolveChannel(
  * Execute a channel operation instruction: send/recv/trySend/tryRecv
  */
 export async function executeChannelOpInstruction(
-	ins: PirInsChannelOp,
+	ins: EirInsChannelOp,
 	state: LIRAsyncRuntimeState,
 ): Promise<Value | undefined> {
 	const resolved = resolveChannel(ins, state);
@@ -159,7 +159,7 @@ export async function executeChannelOpInstruction(
  * Execute an await instruction: wait for a future and store result
  */
 export async function executeAwaitInstruction(
-	ins: PirInsAwait,
+	ins: EirInsAwait,
 	state: LIRAsyncRuntimeState,
 ): Promise<Value | undefined> {
 	const futureValue = lookupValue(state.vars, ins.future);

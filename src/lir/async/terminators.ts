@@ -8,10 +8,10 @@ import type {
 	LirBlock,
 	LirHybridNode,
 	LirTerminator,
-	PirTerminator,
-	PirTermFork,
-	PirTermJoin,
-	PirTermSuspend,
+	EirTerminator,
+	EirTermFork,
+	EirTermJoin,
+	EirTermSuspend,
 	Value,
 } from "../../types.js";
 import {
@@ -77,7 +77,7 @@ function handleExit(
 }
 
 function handleFork(
-	term: PirTermFork,
+	term: EirTermFork,
 	ctx: TerminatorContext,
 ): Promise<string | Value> | Value {
 	if (!ctx.registry) {
@@ -96,7 +96,7 @@ function handleFork(
 }
 
 //==============================================================================
-// PIR Async Terminator Handlers (exported for tests)
+// EIR Async Terminator Handlers (exported for tests)
 //==============================================================================
 
 /**
@@ -105,7 +105,7 @@ function handleFork(
  */
 type ExecuteForkFn = (
 	...args: [
-		term: PirTermFork,
+		term: EirTermFork,
 		state: LIRAsyncRuntimeState,
 		blocks: LirBlock[],
 		nodeMap: Map<string, LirHybridNode>,
@@ -124,7 +124,7 @@ export const executeForkTerminator: ExecuteForkFn = (
 };
 
 async function executeForkTerminatorImpl(
-	term: PirTermFork,
+	term: EirTermFork,
 	forkCtx: ForkContext,
 ): Promise<string | Value> {
 	for (const branch of term.branches) {
@@ -215,7 +215,7 @@ async function executeForkBranchCfg(
  * Execute join terminator: wait for tasks and bind results to variables
  */
 export async function executeJoinTerminator(
-	term: PirTermJoin,
+	term: EirTermJoin,
 	state: LIRAsyncRuntimeState,
 ): Promise<string | Value> {
 	const results = await Promise.all(
@@ -247,7 +247,7 @@ function bindJoinResults(
  * Execute suspend terminator: await a future, then resume at resumeBlock
  */
 export async function executeSuspendTerminator(
-	term: PirTermSuspend,
+	term: EirTermSuspend,
 	state: LIRAsyncRuntimeState,
 ): Promise<string | Value> {
 	const futureValue = lookupValue(state.vars, term.future);
@@ -267,7 +267,7 @@ export async function executeSuspendTerminator(
  * Returns the next block id, or a Value for return/exit.
  */
 export async function executeTerminatorAsync(
-	term: LirTerminator | PirTerminator,
+	term: LirTerminator | EirTerminator,
 	ctx: TerminatorContext,
 ): Promise<string | Value> {
 	switch (term.kind) {

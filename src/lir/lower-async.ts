@@ -1,42 +1,42 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-// SPIRAL LIR Lowering - PIR expression handlers
+// SPIRAL LIR Lowering - Async (EIR) expression handlers
 
 import type {
-	PirSpawnExpr,
-	PirAwaitExpr,
-	PirParExpr,
-	PirChannelExpr,
-	PirSendExpr,
-	PirRecvExpr,
-	PirSelectExpr,
-	PirRaceExpr,
+	EirSpawnExpr,
+	EirAwaitExpr,
+	EirParExpr,
+	EirChannelExpr,
+	EirSendExpr,
+	EirRecvExpr,
+	EirSelectExpr,
+	EirRaceExpr,
 } from "../types.js";
 import type { BlockResult, LowerParams } from "./lower-types.js";
 import { addBlock, asStringRef } from "./lower-types.js";
 import type { LowerNodeFn } from "./lower.js";
 
-/** PIR-only expression type */
-export type PirOnlyExpr =
-	| PirSpawnExpr | PirAwaitExpr | PirParExpr | PirChannelExpr
-	| PirSendExpr | PirRecvExpr | PirSelectExpr | PirRaceExpr;
+/** Async-only expression type */
+export type AsyncOnlyExpr =
+	| EirSpawnExpr | EirAwaitExpr | EirParExpr | EirChannelExpr
+	| EirSendExpr | EirRecvExpr | EirSelectExpr | EirRaceExpr;
 
-const PIR_KINDS = new Set([
+const ASYNC_KINDS = new Set([
 	"spawn", "await", "par", "channel",
 	"send", "recv", "select", "race",
 ]);
 
-/** Type guard: checks if an expression is PIR-specific */
-export function isPirOnlyExpr(
+/** Type guard: checks if an expression is async-specific */
+export function isAsyncOnlyExpr(
 	expr: { kind: string },
-): expr is PirOnlyExpr {
-	return PIR_KINDS.has(expr.kind);
+): expr is AsyncOnlyExpr {
+	return ASYNC_KINDS.has(expr.kind);
 }
 
 //==============================================================================
-// PIR Case Handlers
+// Async Case Handlers
 //==============================================================================
 
-function lowerSpawn(p: LowerParams, expr: PirSpawnExpr): BlockResult {
+function lowerSpawn(p: LowerParams, expr: EirSpawnExpr): BlockResult {
 	addBlock(p.ctx, {
 		id: p.currentBlock,
 		instructions: [{
@@ -52,7 +52,7 @@ function lowerSpawn(p: LowerParams, expr: PirSpawnExpr): BlockResult {
 	return { entry: p.currentBlock, exit: p.currentBlock };
 }
 
-function lowerAwait(p: LowerParams, expr: PirAwaitExpr): BlockResult {
+function lowerAwait(p: LowerParams, expr: EirAwaitExpr): BlockResult {
 	addBlock(p.ctx, {
 		id: p.currentBlock,
 		instructions: [{
@@ -68,7 +68,7 @@ function lowerAwait(p: LowerParams, expr: PirAwaitExpr): BlockResult {
 	return { entry: p.currentBlock, exit: p.currentBlock };
 }
 
-function lowerPar(p: LowerParams, expr: PirParExpr): BlockResult {
+function lowerPar(p: LowerParams, expr: EirParExpr): BlockResult {
 	addBlock(p.ctx, {
 		id: p.currentBlock,
 		instructions: [{
@@ -84,7 +84,7 @@ function lowerPar(p: LowerParams, expr: PirParExpr): BlockResult {
 	return { entry: p.currentBlock, exit: p.currentBlock };
 }
 
-function lowerChannel(p: LowerParams, expr: PirChannelExpr): BlockResult {
+function lowerChannel(p: LowerParams, expr: EirChannelExpr): BlockResult {
 	const args = expr.bufferSize ? [asStringRef(expr.bufferSize)] : [];
 	addBlock(p.ctx, {
 		id: p.currentBlock,
@@ -101,7 +101,7 @@ function lowerChannel(p: LowerParams, expr: PirChannelExpr): BlockResult {
 	return { entry: p.currentBlock, exit: p.currentBlock };
 }
 
-function lowerSend(p: LowerParams, expr: PirSendExpr): BlockResult {
+function lowerSend(p: LowerParams, expr: EirSendExpr): BlockResult {
 	addBlock(p.ctx, {
 		id: p.currentBlock,
 		instructions: [{
@@ -117,7 +117,7 @@ function lowerSend(p: LowerParams, expr: PirSendExpr): BlockResult {
 	return { entry: p.currentBlock, exit: p.currentBlock };
 }
 
-function lowerRecv(p: LowerParams, expr: PirRecvExpr): BlockResult {
+function lowerRecv(p: LowerParams, expr: EirRecvExpr): BlockResult {
 	addBlock(p.ctx, {
 		id: p.currentBlock,
 		instructions: [{
@@ -133,7 +133,7 @@ function lowerRecv(p: LowerParams, expr: PirRecvExpr): BlockResult {
 	return { entry: p.currentBlock, exit: p.currentBlock };
 }
 
-function lowerSelect(p: LowerParams, expr: PirSelectExpr): BlockResult {
+function lowerSelect(p: LowerParams, expr: EirSelectExpr): BlockResult {
 	addBlock(p.ctx, {
 		id: p.currentBlock,
 		instructions: [{
@@ -149,7 +149,7 @@ function lowerSelect(p: LowerParams, expr: PirSelectExpr): BlockResult {
 	return { entry: p.currentBlock, exit: p.currentBlock };
 }
 
-function lowerRace(p: LowerParams, expr: PirRaceExpr): BlockResult {
+function lowerRace(p: LowerParams, expr: EirRaceExpr): BlockResult {
 	addBlock(p.ctx, {
 		id: p.currentBlock,
 		instructions: [{
@@ -166,13 +166,13 @@ function lowerRace(p: LowerParams, expr: PirRaceExpr): BlockResult {
 }
 
 //==============================================================================
-// PIR Dispatcher
+// Async Dispatcher
 //==============================================================================
 
-/** Lower a PIR expression to CFG form. */
-export function lowerPirExpr(
+/** Lower an async expression to CFG form. */
+export function lowerAsyncExpr(
 	p: LowerParams,
-	expr: PirOnlyExpr,
+	expr: AsyncOnlyExpr,
 	_lowerNode: LowerNodeFn,
 ): BlockResult {
 	switch (expr.kind) {
