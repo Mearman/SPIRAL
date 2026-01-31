@@ -144,6 +144,7 @@ export {
 export { evaluateLIR, type LIREvalOptions } from "./lir/evaluator.js";
 
 export { lowerEIRtoLIR } from "./lir/lower.js";
+export { lowerPIRtoLIR } from "./lir/lower-pir-doc.js";
 
 //==============================================================================
 // PIR (Parallel IR)
@@ -224,3 +225,4 @@ export {
 //==============================================================================
 
 export { ingestTypeScript, type TypeScriptIngestOptions } from "./ingest/typescript.js";
+export { ingestPython, type PythonIngestOptions } from "./ingest/python.js";
