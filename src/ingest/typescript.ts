@@ -286,7 +286,7 @@ function convertFunctionDeclaration(
 	const paramTypes = node.parameters.map((p) => inferTypeFromAnnotation(p.type));
 
 	// Convert body to a single inline expression for the lambda
-	let bodyExpr: unknown = convertFunctionBodyInline(node.body, state, params);
+	let bodyExpr: unknown = node.body ? convertFunctionBodyInline(node.body, state, params) : undefined;
 	if (bodyExpr === undefined) {
 		bodyExpr = { kind: "lit", type: { kind: "void" }, value: null };
 	}
@@ -332,6 +332,7 @@ function convertFunctionBodyInline(
 	// Single return statement: return its inline expression
 	const first = statements[0];
 	if (
+		first !== undefined &&
 		statements.length === 1 &&
 		ts.isReturnStatement(first) &&
 		first.expression
