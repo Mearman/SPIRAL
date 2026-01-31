@@ -1,4 +1,3 @@
-/* eslint-disable max-lines, max-statements, complexity, @typescript-eslint/no-unnecessary-condition */
 // SPIRAL Python Synthesizer
 // Translates SPIRAL documents (AIR/CIR/EIR/LIR) to executable Python code
 

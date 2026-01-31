@@ -1,4 +1,3 @@
-/* eslint-disable max-lines, @typescript-eslint/consistent-type-assertions */
 // SPIRAL Zod Schemas
 // Single source of truth for all document-serializable schemas.
 // Runtime-only types (Value, ClosureVal, etc.) remain in types.ts.

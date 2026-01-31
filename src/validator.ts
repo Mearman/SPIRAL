@@ -1,4 +1,3 @@
-/* eslint-disable max-lines, max-lines-per-function, max-params, max-statements, complexity, max-depth, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-non-null-assertion, @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-unsafe-assignment */
 // SPIRAL Schema Validator
 // Two-phase validation: Zod safeParse for structural, then semantic checks.
 
