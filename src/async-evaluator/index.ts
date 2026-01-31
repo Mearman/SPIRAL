@@ -1,5 +1,5 @@
 // SPIRAL Async Evaluator
-// Promise-based big-step evaluation for PIR: p, s |- e => v, s'
+// Promise-based big-step evaluation for async: p, s |- e => v, s'
 // Extends EIR with async primitives (par, spawn, await, channels)
 
 import type { OperatorRegistry } from "../domains/registry.js";
@@ -17,21 +17,21 @@ import {
 	voidVal,
 	errorVal,
 	isError,
-	type PIRDocument,
-	type PirHybridNode,
-	type PirExpr,
-	type PirBlock,
+	type EIRDocument,
+	type EirHybridNode,
+	type EirExpr,
+	type EirBlock,
 } from "../types.js";
 import { emptyEffectRegistry, type EffectRegistry } from "../effects.js";
 import type { AsyncIOEffectConfig } from "../async-io-effects.js";
-import type { PirInstruction, PirTerminator } from "../types.js";
+import type { EirInstruction, EirTerminator } from "../types.js";
 import { createTaskScheduler } from "../scheduler.js";
 import { createAsyncChannelStore } from "../async-effects.js";
 
 import type { AsyncEvalContext, AsyncEvalOptions, EvalServices } from "./types.js";
 
 // Handler modules
-import * as pir from "./pir-handlers.js";
+import * as asyncHandlers from "./async-handlers.js";
 import * as eir from "./eir-handlers.js";
 import * as cfg from "./cfg-handlers.js";
 import { resolveNodeRef } from "./node-resolution.js";
@@ -59,7 +59,7 @@ function isConstructorConfig(
 // Expression kind sets for dispatch
 //==============================================================================
 
-const PIR_KINDS: ReadonlySet<string> = new Set([
+const ASYNC_KINDS: ReadonlySet<string> = new Set([
 	"par", "spawn", "await", "channel", "send", "recv", "select", "race",
 ]);
 
@@ -72,7 +72,7 @@ const EIR_SYNC_KINDS: ReadonlySet<string> = new Set([
 //==============================================================================
 
 function evalEirCoreExpr(
-	expr: PirExpr, env: ValueEnv, ctx: AsyncEvalContext,
+	expr: EirExpr, env: ValueEnv, ctx: AsyncEvalContext,
 ): Promise<Value> | Value | null {
 	switch (expr.kind) {
 	case "call": return eir.evalCall(expr, env, ctx);
@@ -86,7 +86,7 @@ function evalEirCoreExpr(
 }
 
 function evalEirControlExpr(
-	expr: PirExpr, env: ValueEnv, ctx: AsyncEvalContext,
+	expr: EirExpr, env: ValueEnv, ctx: AsyncEvalContext,
 ): Promise<Value> | Value | null {
 	switch (expr.kind) {
 	case "assign": return eir.evalAssignExpr(expr, env, ctx);
@@ -136,14 +136,14 @@ export class AsyncEvaluator {
 	get defs(): Defs { return this._defs; }
 	get effectRegistry(): EffectRegistry { return this._effectRegistry; }
 
-	async evaluateDocument(doc: PIRDocument, options?: AsyncEvalOptions): Promise<Value> {
+	async evaluateDocument(doc: EIRDocument, options?: AsyncEvalOptions): Promise<Value> {
 		const ctx = this.buildContext(options);
 		this.buildNodeMap(doc, ctx);
 		return this.evalDocumentNodes(doc, ctx);
 	}
 
 	async evaluate(
-		expr: PirExpr,
+		expr: EirExpr,
 		env: ValueEnv = emptyValueEnv(),
 		options?: AsyncEvalOptions,
 	): Promise<Value> {
@@ -192,13 +192,13 @@ export class AsyncEvaluator {
 		};
 	}
 
-	private buildNodeMap(doc: PIRDocument, ctx: AsyncEvalContext): void {
+	private buildNodeMap(doc: EIRDocument, ctx: AsyncEvalContext): void {
 		for (const node of doc.nodes) ctx.nodeMap.set(node.id, node);
 	}
 
-	private async evalDocumentNodes(doc: PIRDocument, ctx: AsyncEvalContext): Promise<Value> {
-		const exprNodes: PirHybridNode[] = [];
-		const blockNodes: PirHybridNode[] = [];
+	private async evalDocumentNodes(doc: EIRDocument, ctx: AsyncEvalContext): Promise<Value> {
+		const exprNodes: EirHybridNode[] = [];
+		const blockNodes: EirHybridNode[] = [];
 		for (const node of doc.nodes) {
 			(isBlockNode(node) ? blockNodes : exprNodes).push(node);
 		}
@@ -208,7 +208,7 @@ export class AsyncEvaluator {
 			?? errorVal(ErrorCodes.DomainError, `Result node not found: ${doc.result}`);
 	}
 
-	private async evalNodeList(nodes: PirHybridNode[], ctx: AsyncEvalContext): Promise<void> {
+	private async evalNodeList(nodes: EirHybridNode[], ctx: AsyncEvalContext): Promise<void> {
 		for (const node of nodes) {
 			if (ctx.nodeValues.has(node.id)) continue;
 			const result = await this.evalNode(node, ctx);
@@ -222,7 +222,7 @@ export class AsyncEvaluator {
 	// ==========================================================================
 
 	private async evalNode(
-		node: PirHybridNode,
+		node: EirHybridNode,
 		ctx: AsyncEvalContext,
 	): Promise<{ value: Value; state: import("../types.js").AsyncEvalState }> {
 		if (isBlockNode(node)) return this.evalBlockNode(node, ctx);
@@ -231,16 +231,16 @@ export class AsyncEvaluator {
 	}
 
 	private async evalBlockNode(
-		node: BlockNode<PirBlock>,
+		node: BlockNode<EirBlock>,
 		ctx: AsyncEvalContext,
 	): Promise<{ value: Value; state: import("../types.js").AsyncEvalState }> {
-		const blockMap = new Map<string, PirBlock>();
+		const blockMap = new Map<string, EirBlock>();
 		for (const block of node.blocks) blockMap.set(block.id, block);
 		return this.runBlockLoop(blockMap, node.entry, ctx);
 	}
 
 	private async runBlockLoop(
-		blockMap: Map<string, PirBlock>,
+		blockMap: Map<string, EirBlock>,
 		entryId: string,
 		ctx: AsyncEvalContext,
 	): Promise<{ value: Value; state: import("../types.js").AsyncEvalState }> {
@@ -254,7 +254,7 @@ export class AsyncEvaluator {
 	}
 
 	private async runBlockStep(
-		blockMap: Map<string, PirBlock>,
+		blockMap: Map<string, EirBlock>,
 		blockId: string,
 		ctx: AsyncEvalContext,
 	): Promise<{ done: boolean; value?: Value; nextBlock?: string }> {
@@ -265,7 +265,7 @@ export class AsyncEvaluator {
 		return this.execTerminator(block.terminator, blockMap, ctx);
 	}
 
-	private async runBlockInstructions(block: PirBlock, ctx: AsyncEvalContext): Promise<Value | null> {
+	private async runBlockInstructions(block: EirBlock, ctx: AsyncEvalContext): Promise<Value | null> {
 		for (const instr of block.instructions) {
 			const result = await this.execInstruction(instr, ctx);
 			if (isError(result)) return result;
@@ -277,28 +277,28 @@ export class AsyncEvaluator {
 	// Expression Dispatch
 	// ==========================================================================
 
-	async evalExpr(expr: PirExpr, env: ValueEnv, ctx: AsyncEvalContext): Promise<Value> {
+	async evalExpr(expr: EirExpr, env: ValueEnv, ctx: AsyncEvalContext): Promise<Value> {
 		await ctx.state.scheduler.checkGlobalSteps();
-		if (PIR_KINDS.has(expr.kind)) return this.evalPirExpr(expr, env, ctx);
+		if (ASYNC_KINDS.has(expr.kind)) return this.evalAsyncExpr(expr, env, ctx);
 		if (EIR_SYNC_KINDS.has(expr.kind)) return this.evalEirSyncExpr(expr, env, ctx);
 		return this.evalEirAsyncExpr(expr, env, ctx);
 	}
 
-	private async evalPirExpr(expr: PirExpr, env: ValueEnv, ctx: AsyncEvalContext): Promise<Value> {
+	private async evalAsyncExpr(expr: EirExpr, env: ValueEnv, ctx: AsyncEvalContext): Promise<Value> {
 		switch (expr.kind) {
-		case "par": return pir.evalPar(expr, env, ctx);
-		case "spawn": return pir.evalSpawnExpr(expr, env, ctx);
-		case "await": return pir.evalAwaitExpr(expr, env, ctx);
-		case "channel": return pir.evalChannelExpr(expr, env, ctx);
-		case "send": return pir.evalSendExpr(expr, env, ctx);
-		case "recv": return pir.evalRecvExpr(expr, env, ctx);
-		case "select": return pir.evalSelectExpr(expr, env, ctx);
-		case "race": return pir.evalRaceExpr(expr, env, ctx);
+		case "par": return asyncHandlers.evalPar(expr, env, ctx);
+		case "spawn": return asyncHandlers.evalSpawnExpr(expr, env, ctx);
+		case "await": return asyncHandlers.evalAwaitExpr(expr, env, ctx);
+		case "channel": return asyncHandlers.evalChannelExpr(expr, env, ctx);
+		case "send": return asyncHandlers.evalSendExpr(expr, env, ctx);
+		case "recv": return asyncHandlers.evalRecvExpr(expr, env, ctx);
+		case "select": return asyncHandlers.evalSelectExpr(expr, env, ctx);
+		case "race": return asyncHandlers.evalRaceExpr(expr, env, ctx);
 		}
 		return errorVal(ErrorCodes.UnknownOperator, `Unknown expression kind: ${expr.kind}`);
 	}
 
-	private evalEirSyncExpr(expr: PirExpr, env: ValueEnv, ctx: AsyncEvalContext): Value {
+	private evalEirSyncExpr(expr: EirExpr, env: ValueEnv, ctx: AsyncEvalContext): Value {
 		switch (expr.kind) {
 		case "lit": return eir.evalLit(expr);
 		case "var": return eir.evalVar(expr, env, ctx);
@@ -309,7 +309,7 @@ export class AsyncEvaluator {
 		return errorVal(ErrorCodes.UnknownOperator, `Unknown expression kind: ${expr.kind}`);
 	}
 
-	private evalEirAsyncExpr(expr: PirExpr, env: ValueEnv, ctx: AsyncEvalContext): Promise<Value> | Value {
+	private evalEirAsyncExpr(expr: EirExpr, env: ValueEnv, ctx: AsyncEvalContext): Promise<Value> | Value {
 		return evalEirCoreExpr(expr, env, ctx)
 			?? evalEirControlExpr(expr, env, ctx)
 			?? errorVal(ErrorCodes.UnknownOperator, `Unknown expression kind: ${expr.kind}`);
@@ -319,7 +319,7 @@ export class AsyncEvaluator {
 	// Instruction & Terminator Dispatch
 	// ==========================================================================
 
-	private async execInstruction(instr: PirInstruction, ctx: AsyncEvalContext): Promise<Value> {
+	private async execInstruction(instr: EirInstruction, ctx: AsyncEvalContext): Promise<Value> {
 		switch (instr.kind) {
 		case "assign": return cfg.execAssign(instr, ctx);
 		case "op": return cfg.execOp(instr, ctx);
@@ -331,8 +331,8 @@ export class AsyncEvaluator {
 	}
 
 	private async execTerminator(
-		term: PirTerminator,
-		blockMap: Map<string, PirBlock>,
+		term: EirTerminator,
+		blockMap: Map<string, EirBlock>,
 		ctx: AsyncEvalContext,
 	): Promise<{ done: boolean; value?: Value; nextBlock?: string }> {
 		switch (term.kind) {

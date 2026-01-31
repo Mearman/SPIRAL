@@ -1,4 +1,4 @@
-// PIR Select and Race Handlers
+// EIR Async Select and Race Handlers
 
 import { ErrorCodes } from "../errors.js";
 import {
@@ -7,7 +7,7 @@ import {
 	errorVal,
 	isBlockNode,
 } from "../types.js";
-import type { PirSelectExpr, PirRaceExpr } from "../types.js";
+import type { EirSelectExpr, EirRaceExpr } from "../types.js";
 import type { ValueEnv } from "../env.js";
 import type { AsyncEvalContext } from "./types.js";
 
@@ -22,7 +22,7 @@ interface SelectResult {
 }
 
 function buildSelectTimeoutPromise(
-	input: { expr: PirSelectExpr; env: ValueEnv; ctx: AsyncEvalContext },
+	input: { expr: EirSelectExpr; env: ValueEnv; ctx: AsyncEvalContext },
 	timeoutMs: number,
 ): Promise<SelectResult> {
 	const { expr, env, ctx } = input;
@@ -49,7 +49,7 @@ function buildSelectTimeoutPromise(
 }
 
 export async function evalSelectExpr(
-	expr: PirSelectExpr,
+	expr: EirSelectExpr,
 	env: ValueEnv,
 	ctx: AsyncEvalContext,
 ): Promise<Value> {
@@ -97,7 +97,7 @@ async function evalRaceTask(
 }
 
 export async function evalRaceExpr(
-	expr: PirRaceExpr,
+	expr: EirRaceExpr,
 	env: ValueEnv,
 	ctx: AsyncEvalContext,
 ): Promise<Value> {

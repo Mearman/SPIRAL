@@ -13,8 +13,8 @@ import {
 	isError,
 	isBlockNode,
 } from "../types.js";
-import type { PirInsChannelOp, Expr } from "../types.js";
-import { getChannels } from "./pir-handlers.js";
+import type { EirInsChannelOp, Expr } from "../types.js";
+import { getChannels } from "./async-handlers.js";
 import type { AsyncEvalContext } from "./types.js";
 
 // Re-export fork, join, suspend terminators
@@ -109,7 +109,7 @@ function buildSpawnEnv(
 
 interface SpawnInput {
 	taskId: string;
-	entryNode: import("../types.js").PirHybridNode;
+	entryNode: import("../types.js").EirHybridNode;
 	taskEnv: import("../env.js").ValueEnv;
 }
 
@@ -166,7 +166,7 @@ export function execSpawn(
 // execChannelOp
 //==============================================================================
 
-async function execChannelSend(instr: PirInsChannelOp, ctx: AsyncEvalContext, channelId: string): Promise<Value> {
+async function execChannelSend(instr: EirInsChannelOp, ctx: AsyncEvalContext, channelId: string): Promise<Value> {
 	const channel = getChannels(ctx.state).get(channelId);
 	if (!channel) return errorVal(ErrorCodes.DomainError, `Channel not found: ${channelId}`);
 	const value = instr.value ? ctx.nodeValues.get(instr.value) : voidVal();
@@ -175,7 +175,7 @@ async function execChannelSend(instr: PirInsChannelOp, ctx: AsyncEvalContext, ch
 	return voidVal();
 }
 
-async function execChannelRecv(instr: PirInsChannelOp, ctx: AsyncEvalContext, channelId: string): Promise<Value> {
+async function execChannelRecv(instr: EirInsChannelOp, ctx: AsyncEvalContext, channelId: string): Promise<Value> {
 	const channel = getChannels(ctx.state).get(channelId);
 	if (!channel) return errorVal(ErrorCodes.DomainError, `Channel not found: ${channelId}`);
 	const received = await channel.recv();
@@ -185,7 +185,7 @@ async function execChannelRecv(instr: PirInsChannelOp, ctx: AsyncEvalContext, ch
 	return voidVal();
 }
 
-export async function execChannelOp(instr: PirInsChannelOp, ctx: AsyncEvalContext): Promise<Value> {
+export async function execChannelOp(instr: EirInsChannelOp, ctx: AsyncEvalContext): Promise<Value> {
 	const channelValue = ctx.nodeValues.get(instr.channel);
 	if (!channelValue || !isChannel(channelValue)) {
 		return errorVal(ErrorCodes.TypeError, "channelOp requires a Channel value");
