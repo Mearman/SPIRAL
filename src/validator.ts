@@ -771,6 +771,306 @@ function checkEirNodeReferences(
 }
 
 //==============================================================================
+// Block Reachability Check
+//==============================================================================
+
+/**
+ * BFS from entry block to find unreachable blocks.
+ * Reports blocks that cannot be reached from the entry block.
+ */
+function checkBlockReachability(
+	state: ValidationState,
+	nodes: { id: string; blocks?: unknown; entry?: unknown }[],
+): void {
+	for (let i = 0; i < nodes.length; i++) {
+		const node = nodes[i] as Record<string, unknown>;
+		if (!Array.isArray(node.blocks) || typeof node.entry !== "string") continue;
+
+		pushPath(state, "nodes[" + String(i) + "]");
+
+		const blocks = node.blocks as Record<string, unknown>[];
+		const blockMap = new Map<string, Record<string, unknown>>();
+		for (const block of blocks) {
+			if (isRecord(block) && typeof block.id === "string") {
+				blockMap.set(block.id, block);
+			}
+		}
+
+		// BFS from entry
+		const visited = new Set<string>();
+		const queue: string[] = [node.entry];
+		visited.add(node.entry);
+
+		while (queue.length > 0) {
+			const blockId = queue.shift()!;
+			const block = blockMap.get(blockId);
+			if (!block) continue;
+
+			const targets = collectTerminatorTargets(block.terminator);
+			for (const target of targets) {
+				if (!visited.has(target)) {
+					visited.add(target);
+					queue.push(target);
+				}
+			}
+		}
+
+		// Report unreachable blocks
+		for (const block of blocks) {
+			if (isRecord(block) && typeof block.id === "string" && !visited.has(block.id)) {
+				addError(state, "Unreachable block: " + block.id, block.id);
+			}
+		}
+
+		popPath(state);
+	}
+}
+
+/**
+ * Collect target block IDs from a terminator.
+ */
+function collectTerminatorTargets(terminator: unknown): string[] {
+	if (!isRecord(terminator)) return [];
+	const targets: string[] = [];
+	const kind = terminator.kind;
+
+	if (kind === "jump") {
+		if (typeof terminator.to === "string") targets.push(terminator.to);
+	} else if (kind === "branch") {
+		if (typeof terminator.then === "string") targets.push(terminator.then);
+		if (typeof terminator.else === "string") targets.push(terminator.else);
+	} else if (kind === "fork") {
+		const branches = terminator.branches;
+		if (Array.isArray(branches)) {
+			for (const b of branches) {
+				if (isRecord(b) && typeof b.block === "string") {
+					targets.push(b.block);
+				}
+			}
+		}
+		if (typeof terminator.continuation === "string") targets.push(terminator.continuation);
+	} else if (kind === "join") {
+		if (typeof terminator.to === "string") targets.push(terminator.to);
+	} else if (kind === "suspend") {
+		if (typeof terminator.resumeBlock === "string") targets.push(terminator.resumeBlock);
+	}
+
+	return targets;
+}
+
+//==============================================================================
+// Phi Predecessor Check
+//==============================================================================
+
+/**
+ * For each phi instruction in a block, verify that each phi source block
+ * is an actual CFG predecessor of that block.
+ */
+function checkPhiPredecessors(
+	state: ValidationState,
+	nodes: { id: string; blocks?: unknown; entry?: unknown }[],
+): void {
+	for (let i = 0; i < nodes.length; i++) {
+		const node = nodes[i] as Record<string, unknown>;
+		if (!Array.isArray(node.blocks)) continue;
+
+		pushPath(state, "nodes[" + String(i) + "]");
+
+		const blocks = node.blocks as Record<string, unknown>[];
+
+		// Build block lookup map
+		const blockMap = new Map<string, Record<string, unknown>>();
+		for (const block of blocks) {
+			if (isRecord(block) && typeof block.id === "string") {
+				blockMap.set(block.id, block);
+			}
+		}
+
+		// Build predecessor map: blockId -> set of predecessor block IDs
+		const predecessors = new Map<string, Set<string>>();
+		for (const block of blocks) {
+			if (!isRecord(block) || typeof block.id !== "string") continue;
+			// Initialize empty set for each block
+			if (!predecessors.has(block.id)) {
+				predecessors.set(block.id, new Set());
+			}
+		}
+
+		for (const block of blocks) {
+			if (!isRecord(block) || typeof block.id !== "string") continue;
+			const targets = collectTerminatorTargets(block.terminator);
+			for (const target of targets) {
+				let predSet = predecessors.get(target);
+				if (!predSet) {
+					predSet = new Set();
+					predecessors.set(target, predSet);
+				}
+				predSet.add(block.id);
+			}
+		}
+
+		// For fork terminators, blocks that return within fork branches
+		// are logical predecessors of the fork's continuation block.
+		for (const block of blocks) {
+			if (!isRecord(block) || typeof block.id !== "string") continue;
+			const term = block.terminator;
+			if (!isRecord(term) || term.kind !== "fork") continue;
+			const continuation = term.continuation;
+			if (typeof continuation !== "string") continue;
+			const forkBranches = term.branches;
+			if (!Array.isArray(forkBranches)) continue;
+
+			// Collect all blocks reachable from fork branch entries that end with return
+			const branchEntries = new Set<string>();
+			for (const b of forkBranches) {
+				if (isRecord(b) && typeof b.block === "string") {
+					branchEntries.add(b.block);
+				}
+			}
+
+			// BFS from branch entries to find blocks with return terminators
+			const branchVisited = new Set<string>();
+			const branchQueue = [...branchEntries];
+			for (const be of branchEntries) branchVisited.add(be);
+
+			while (branchQueue.length > 0) {
+				const bid = branchQueue.shift()!;
+				const bblock = blockMap.get(bid);
+				if (!bblock) continue;
+				const bterm = bblock.terminator;
+				if (isRecord(bterm) && bterm.kind === "return") {
+					// This block returns within a fork branch; it's a logical predecessor of continuation
+					let predSet = predecessors.get(continuation);
+					if (!predSet) {
+						predSet = new Set();
+						predecessors.set(continuation, predSet);
+					}
+					predSet.add(bid);
+				}
+				const bTargets = collectTerminatorTargets(bterm);
+				for (const t of bTargets) {
+					if (!branchVisited.has(t) && t !== continuation) {
+						branchVisited.add(t);
+						branchQueue.push(t);
+					}
+				}
+			}
+		}
+
+		// Check phi instructions
+		for (const block of blocks) {
+			if (!isRecord(block) || typeof block.id !== "string") continue;
+			const instructions = block.instructions;
+			if (!Array.isArray(instructions)) continue;
+
+			const blockPreds = predecessors.get(block.id) ?? new Set<string>();
+
+			for (const ins of instructions) {
+				if (!isRecord(ins) || ins.kind !== "phi") continue;
+				const sources = ins.sources;
+				if (!Array.isArray(sources)) continue;
+
+				for (const source of sources) {
+					if (!isRecord(source) || typeof source.block !== "string") continue;
+					if (!blockPreds.has(source.block)) {
+						addError(
+							state,
+							"Phi source block " + source.block + " is not a predecessor of block " + block.id,
+							source.block,
+						);
+					}
+				}
+			}
+		}
+
+		popPath(state);
+	}
+}
+
+//==============================================================================
+// PIR Expression Node Reference Check
+//==============================================================================
+
+/**
+ * Validate PIR expression node references.
+ * Checks that string references in PIR-specific expressions point to existing nodes.
+ */
+function checkPirNodeReferences(
+	state: ValidationState,
+	nodes: { id: string; expr?: unknown }[],
+	nodeIds: Set<string>,
+): void {
+	const checkRef = (ref: unknown, name: string) => {
+		if (typeof ref === "string" && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(ref)) {
+			if (!nodeIds.has(ref)) {
+				addError(state, name + " references non-existent node: " + ref, ref);
+			}
+		}
+	};
+
+	for (const node of nodes) {
+		if (!isRecord(node.expr)) continue;
+		const expr = node.expr;
+		const kind = expr.kind;
+
+		switch (kind) {
+		case "spawn":
+			if (typeof expr.task === "string") checkRef(expr.task, "spawn.task");
+			break;
+		case "await":
+			if (typeof expr.future === "string") checkRef(expr.future, "await.future");
+			break;
+		case "par": {
+			const branches = expr.branches;
+			if (Array.isArray(branches)) {
+				for (let i = 0; i < branches.length; i++) {
+					const b = branches[i];
+					if (typeof b === "string") {
+						checkRef(b, "par.branches[" + String(i) + "]");
+					}
+				}
+			}
+			break;
+		}
+		case "channel":
+			// channel has no node references (channelType and bufferSize are not node refs)
+			break;
+		case "send":
+			if (typeof expr.channel === "string") checkRef(expr.channel, "send.channel");
+			if (typeof expr.value === "string") checkRef(expr.value, "send.value");
+			break;
+		case "recv":
+			if (typeof expr.channel === "string") checkRef(expr.channel, "recv.channel");
+			break;
+		case "select": {
+			const futures = expr.futures;
+			if (Array.isArray(futures)) {
+				for (let i = 0; i < futures.length; i++) {
+					const f = futures[i];
+					if (typeof f === "string") {
+						checkRef(f, "select.futures[" + String(i) + "]");
+					}
+				}
+			}
+			break;
+		}
+		case "race": {
+			const tasks = expr.tasks;
+			if (Array.isArray(tasks)) {
+				for (let i = 0; i < tasks.length; i++) {
+					const t = tasks[i];
+					if (typeof t === "string") {
+						checkRef(t, "race.tasks[" + String(i) + "]");
+					}
+				}
+			}
+			break;
+		}
+		}
+	}
+}
+
+//==============================================================================
 // Shared Semantic Validation
 //==============================================================================
 
@@ -784,6 +1084,9 @@ function semanticValidateDocument<T extends { nodes: { id: string; expr?: unknow
 		checkAcyclic?: boolean;
 		collectLambdaParams?: boolean;
 		checkEirRefs?: boolean;
+		checkBlockReachability?: boolean;
+		checkPhiPredecessors?: boolean;
+		checkPirRefs?: boolean;
 	},
 ): ValidationResult<T> {
 	const state: ValidationState = { errors: [], path: [] };
@@ -808,6 +1111,21 @@ function semanticValidateDocument<T extends { nodes: { id: string; expr?: unknow
 	// 5. EIR expression node reference checking
 	if (options?.checkEirRefs) {
 		checkEirNodeReferences(state, doc.nodes, nodeIds);
+	}
+
+	// 6. Block reachability checking
+	if (options?.checkBlockReachability) {
+		checkBlockReachability(state, doc.nodes);
+	}
+
+	// 7. Phi predecessor checking
+	if (options?.checkPhiPredecessors) {
+		checkPhiPredecessors(state, doc.nodes);
+	}
+
+	// 8. PIR expression node reference checking
+	if (options?.checkPirRefs) {
+		checkPirNodeReferences(state, doc.nodes, nodeIds);
 	}
 
 	if (state.errors.length > 0) {
@@ -862,7 +1180,7 @@ export function validateLIR(doc: unknown): ValidationResult<LIRDocument> {
 	}
 
 	// Phase 2: Semantic validation on typed data
-	return semanticValidateDocument(parsed.data);
+	return semanticValidateDocument(parsed.data, { checkBlockReachability: true, checkPhiPredecessors: true });
 }
 
 export function validatePIR(doc: unknown): ValidationResult<PIRDocument> {
@@ -873,5 +1191,5 @@ export function validatePIR(doc: unknown): ValidationResult<PIRDocument> {
 	}
 
 	// Phase 2: Semantic validation on typed data
-	return semanticValidateDocument(parsed.data);
+	return semanticValidateDocument(parsed.data, { checkPirRefs: true, checkBlockReachability: true });
 }
