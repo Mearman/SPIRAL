@@ -143,12 +143,12 @@ function synthesizeExprBased(
 	for (const node of doc.nodes) {
 		if (!isExprNode(node)) continue;
 		const expr = node.expr;
-		if (expr.kind === "lambda" || expr.kind === "let") {
-			const bodyId = expr.body;
-			const bodyNode = state.nodeMap.get(bodyId);
-			if (bodyNode && exprHasFreeVars(bodyNode.expr)) {
-				state.inlinedNodes.add(bodyId);
-			}
+		if (expr.kind === "lambda") {
+			const params = new Set(expr.params);
+			markInlinedBodies(state, expr.body, params);
+		} else if (expr.kind === "let") {
+			const params = new Set([expr.name]);
+			markInlinedBodies(state, expr.body, params);
 		}
 	}
 
@@ -215,11 +215,16 @@ function synthesizeExpr(
 	expr: Expr | EirExpr,
 	mutableCells: Map<string, boolean>,
 	cellInitLines: string[],
+	paramScope = new Set<string>(),
 ): string {
 	const kind = expr.kind;
-	const refToTs = (nodeId: string): string => `v_${sanitizeId(nodeId)}`;
+	// Resolve a string ref: if it's a lambda/let param in scope, emit as-is; otherwise prefix with v_
+	const refToTs = (id: string): string => {
+		if (paramScope.has(id) && !state.nodeMap.has(id)) return id;
+		return `v_${sanitizeId(id)}`;
+	};
 	const refOrInline = (val: string | Expr | EirExpr): string =>
-		typeof val === "string" ? refToTs(val) : synthesizeExpr(state, val, mutableCells, cellInitLines);
+		typeof val === "string" ? refToTs(val) : synthesizeExpr(state, val, mutableCells, cellInitLines, paramScope);
 
 	switch (kind) {
 	case "lit": {
@@ -286,9 +291,15 @@ function synthesizeExpr(
 
 	case "let": {
 		const bodyNode = state.nodeMap.get(expr.body);
-		if (bodyNode && exprHasFreeVars(bodyNode.expr)) {
+		const letParams = new Set([...paramScope, expr.name]);
+		const needsInline = bodyNode && (
+			exprHasFreeVars(bodyNode.expr) ||
+			exprHasParamRefs(bodyNode.expr, letParams, state.nodeMap)
+		);
+		if (needsInline) {
 			state.inlinedNodes.add(expr.body);
-			const bodyCode = synthesizeExpr(state, bodyNode.expr, mutableCells, cellInitLines);
+			// bodyNode guaranteed non-null by needsInline
+			const bodyCode = synthesizeExpr(state, bodyNode.expr, mutableCells, cellInitLines, letParams);
 			return `((${expr.name}: any) => ${bodyCode})(${refToTs(expr.value)})`;
 		}
 		return `((${expr.name}: any) => ${refToTs(expr.body)})(${refToTs(expr.value)})`;
@@ -309,19 +320,27 @@ function synthesizeExpr(
 	case "lambda": {
 		const paramNames = expr.params.map(p => `${p}: any`).join(", ");
 		const bodyNode = state.nodeMap.get(expr.body);
-		// Inline the body if its expression contains free var references
-		// (which would be out of scope as a top-level binding)
-		if (bodyNode && exprHasFreeVars(bodyNode.expr)) {
+		const lambdaParams = new Set([...paramScope, ...expr.params]);
+		// Inline the body if its expression references lambda parameters
+		// (either via inline var expressions or via string refs to param names)
+		const needsInline = bodyNode && (
+			exprHasFreeVars(bodyNode.expr) ||
+			exprHasParamRefs(bodyNode.expr, lambdaParams, state.nodeMap)
+		);
+		if (needsInline) {
 			state.inlinedNodes.add(expr.body);
-			const bodyCode = synthesizeExpr(state, bodyNode.expr, mutableCells, cellInitLines);
+			// bodyNode guaranteed non-null by needsInline
+			const bodyCode = synthesizeExpr(state, bodyNode.expr, mutableCells, cellInitLines, lambdaParams);
 			return `((${paramNames}) => ${bodyCode})`;
 		}
 		return `((${paramNames}) => ${refToTs(expr.body)})`;
 	}
 
 	case "callExpr": {
-		const argCodes = expr.args.map(refToTs);
-		return `${refToTs(expr.fn)}(${argCodes.join(", ")})`;
+		const fnCode = typeof expr.fn === "string" ? refToTs(expr.fn) : synthesizeExpr(state, expr.fn, mutableCells, cellInitLines, paramScope);
+		const argCodes = expr.args.map(a =>
+			typeof a === "string" ? refToTs(a) : synthesizeExpr(state, a, mutableCells, cellInitLines, paramScope));
+		return `${fnCode}(${argCodes.join(", ")})`;
 	}
 
 	case "fix": {
@@ -531,6 +550,90 @@ function synthesizeLIR(doc: LIRDocument, opts: TypeScriptSynthOptions): string {
 //==============================================================================
 // Utilities
 //==============================================================================
+
+/**
+ * Recursively mark body nodes (and their transitive dependencies) for inlining
+ * when they reference lambda/let parameter names — either via inline `var` expressions
+ * or via string refs that match parameter names rather than node IDs.
+ */
+function markInlinedBodies(
+	state: ExprSynthState,
+	bodyId: string,
+	paramNames: Set<string>,
+): void {
+	const bodyNode = state.nodeMap.get(bodyId);
+	if (!bodyNode) return;
+	if (exprHasFreeVars(bodyNode.expr) || exprHasParamRefs(bodyNode.expr, paramNames, state.nodeMap)) {
+		state.inlinedNodes.add(bodyId);
+		// Also mark transitive dependencies that reference params
+		collectTransitiveInlines(state, bodyNode.expr, paramNames);
+	}
+}
+
+/**
+ * Check whether an expression uses string refs that refer to parameter names
+ * rather than node IDs. This catches cases where callExpr.fn = "f" and "f"
+ * is a lambda parameter, not a node in the document.
+ */
+function exprHasParamRefs(
+	expr: Expr | EirExpr,
+	paramNames: Set<string>,
+	nodeMap: Map<string, Node | EirNode>,
+): boolean {
+	const isParamRef = (ref: string | Expr | EirExpr): boolean => {
+		if (typeof ref !== "string") return false;
+		return paramNames.has(ref) && !nodeMap.has(ref);
+	};
+
+	if (expr.kind === "callExpr") {
+		if (typeof expr.fn === "string" && isParamRef(expr.fn)) return true;
+		return expr.args.some(a => isParamRef(a));
+	}
+	if (expr.kind === "call") {
+		return expr.args.some(a => isParamRef(a));
+	}
+	if (expr.kind === "ref") {
+		return isParamRef(expr.id);
+	}
+	if (expr.kind === "if") {
+		return isParamRef(expr.cond) || isParamRef(expr.then) || isParamRef(expr.else);
+	}
+	if (expr.kind === "do") {
+		return expr.exprs.some(e => isParamRef(e));
+	}
+	if (expr.kind === "seq") {
+		return isParamRef(expr.first) || isParamRef(expr.then);
+	}
+	return false;
+}
+
+/**
+ * Mark transitive node dependencies for inlining when they reference params.
+ */
+function collectTransitiveInlines(
+	state: ExprSynthState,
+	expr: Expr | EirExpr,
+	paramNames: Set<string>,
+): void {
+	const checkRef = (ref: string | Expr | EirExpr): void => {
+		if (typeof ref !== "string") return;
+		const node = state.nodeMap.get(ref);
+		if (!node || state.inlinedNodes.has(ref)) return;
+		if (exprHasFreeVars(node.expr) || exprHasParamRefs(node.expr, paramNames, state.nodeMap)) {
+			state.inlinedNodes.add(ref);
+			collectTransitiveInlines(state, node.expr, paramNames);
+		}
+	};
+
+	if (expr.kind === "call") expr.args.forEach(checkRef);
+	if (expr.kind === "callExpr") {
+		checkRef(expr.fn);
+		expr.args.forEach(checkRef);
+	}
+	if (expr.kind === "if") { checkRef(expr.cond); checkRef(expr.then); checkRef(expr.else); }
+	if (expr.kind === "do") expr.exprs.forEach(checkRef);
+	if (expr.kind === "seq") { checkRef(expr.first); checkRef(expr.then); }
+}
 
 /**
  * Check whether an expression (or any of its inline sub-expressions)
