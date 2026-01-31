@@ -1,5 +1,5 @@
 // SPIRAL Async Barrier
-// Fork-join synchronization primitive for PIR parallel execution
+// Fork-join synchronization primitive for async parallel execution
 
 export class AsyncBarrier {
 	private count: number;

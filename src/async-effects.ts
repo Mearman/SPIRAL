@@ -6,7 +6,7 @@
  
 
 // SPIRAL Async Effects
-// Async runtime primitives for PIR (Parallel IR)
+// Async runtime primitives for EIR async
 // Provides AsyncChannel, AsyncRefCell, AsyncMutex, and ConcurrentEffectLog
 
 import type { Value, AsyncChannel, ErrorVal } from "./types.js";
