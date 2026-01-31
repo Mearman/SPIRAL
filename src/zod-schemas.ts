@@ -823,11 +823,11 @@ export const EirBlockSchema = z.object({
 //==============================================================================
 
 /** Expression-based node for AIR layer (restricted expression set) */
-export const AirExprNodeSchema: z.ZodType<ExprNode> = z.object({
+export const AirExprNodeSchema = z.object({
 	id: z.string(),
 	type: TypeSchema.optional(),
 	expr: AirExprSchema,
-}) as z.ZodType<ExprNode>;
+});
 
 /** Expression-based node (CIR layer) */
 export const ExprNodeSchema: z.ZodType<ExprNode> = z.object({
@@ -837,40 +837,40 @@ export const ExprNodeSchema: z.ZodType<ExprNode> = z.object({
 });
 
 /** Expression-based node for EIR layer */
-export const EirExprNodeSchema: z.ZodType<ExprNode<EirExpr>> = z.object({
+export const EirExprNodeSchema = z.object({
 	id: z.string(),
 	type: TypeSchema.optional(),
 	expr: EirExprSchema,
-}) as z.ZodType<ExprNode<EirExpr>>;
+});
 
 /** Block-based node (generic) */
-function blockNodeSchema<B>(blockSchema: z.ZodType<B>): z.ZodType<BlockNode<B>> {
+function blockNodeSchema<B>(blockSchema: z.ZodType<B>) {
 	return z.object({
 		id: z.string(),
 		type: TypeSchema.optional(),
 		blocks: z.array(blockSchema),
 		entry: z.string(),
-	}) as z.ZodType<BlockNode<B>>;
+	});
 }
 
-export const AirHybridNodeSchema: z.ZodType<AirHybridNode> = z.union([AirExprNodeSchema, blockNodeSchema(AirBlockSchema)]) as z.ZodType<AirHybridNode>;
+export const AirHybridNodeSchema = z.union([AirExprNodeSchema, blockNodeSchema(AirBlockSchema)]);
 /** Expression-based node for CIR layer (no async expressions) */
-export const CirExprNodeSchema: z.ZodType<ExprNode> = z.object({
+export const CirExprNodeSchema = z.object({
 	id: z.string(),
 	type: TypeSchema.optional(),
 	expr: CirExprSchema,
-}) as z.ZodType<ExprNode>;
+});
 
-export const CirHybridNodeSchema: z.ZodType<CirHybridNode> = z.union([CirExprNodeSchema, blockNodeSchema(CirBlockSchema)]) as z.ZodType<CirHybridNode>;
-export const EirHybridNodeSchema: z.ZodType<EirHybridNode> = z.union([EirExprNodeSchema, blockNodeSchema(EirBlockSchema)]) as z.ZodType<EirHybridNode>;
+export const CirHybridNodeSchema = z.union([CirExprNodeSchema, blockNodeSchema(CirBlockSchema)]);
+export const EirHybridNodeSchema = z.union([EirExprNodeSchema, blockNodeSchema(EirBlockSchema)]);
 /** Expression-based node for LIR layer (no async expressions) */
-export const LirExprNodeSchema: z.ZodType<ExprNode> = z.object({
+export const LirExprNodeSchema = z.object({
 	id: z.string(),
 	type: TypeSchema.optional(),
 	expr: CirExprSchema,
-}) as z.ZodType<ExprNode>;
+});
 
-export const LirHybridNodeSchema: z.ZodType<LirHybridNode> = z.union([LirExprNodeSchema, blockNodeSchema(LirBlockSchema)]) as z.ZodType<LirHybridNode>;
+export const LirHybridNodeSchema = z.union([LirExprNodeSchema, blockNodeSchema(LirBlockSchema)]);
 
 //==============================================================================
 // Zod Schemas - Supporting
