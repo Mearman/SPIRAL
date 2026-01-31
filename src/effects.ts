@@ -182,49 +182,46 @@ export const defaultEffectRegistry = createDefaultEffectRegistry();
  * @param inputs - Array of input values (strings or numbers)
  * @returns EffectRegistry with readLine/readInt bound to the input queue
  */
-export function createQueuedEffectRegistry(inputs: (string | number)[]): EffectRegistry {
-	const inputQueue = [...inputs]; // Make a copy to avoid mutations
-
-	let registry = emptyEffectRegistry();
-
-	// Add print effect (unchanged)
-	registry = registerEffect(registry, {
+function registerPrintEffects(registry: EffectRegistry): EffectRegistry {
+	let reg = registry;
+	reg = registerEffect(reg, {
 		name: "print",
 		params: [stringType],
 		returns: voidType,
 		pure: false,
 		fn: (...args: Value[]) => {
-			// Validate expected args
 			if (args.length < 1) {
 				return errorVal(ErrorCodes.ArityError, "print requires 1 argument");
 			}
 			return { kind: "void" };
 		},
 	});
-
-	// Add printInt effect (unchanged)
-	registry = registerEffect(registry, {
+	reg = registerEffect(reg, {
 		name: "printInt",
 		params: [intType],
 		returns: voidType,
 		pure: false,
 		fn: (...args: Value[]) => {
-			// Validate expected args
 			if (args.length < 1) {
 				return errorVal(ErrorCodes.ArityError, "printInt requires 1 argument");
 			}
 			return { kind: "void" };
 		},
 	});
+	return reg;
+}
 
-	// Add readLine effect with queue
-	registry = registerEffect(registry, {
+function registerQueuedReadEffects(
+	registry: EffectRegistry,
+	inputQueue: (string | number)[],
+): EffectRegistry {
+	let reg = registry;
+	reg = registerEffect(reg, {
 		name: "readLine",
 		params: [],
 		returns: stringType,
 		pure: false,
 		fn: (...args: Value[]) => {
-			// Validate no args expected
 			if (args.length > 0) {
 				return errorVal(ErrorCodes.ArityError, "readLine accepts no arguments");
 			}
@@ -235,15 +232,12 @@ export function createQueuedEffectRegistry(inputs: (string | number)[]): EffectR
 			return stringVal(String(next));
 		},
 	});
-
-	// Add readInt effect with queue
-	registry = registerEffect(registry, {
+	reg = registerEffect(reg, {
 		name: "readInt",
 		params: [],
 		returns: intType,
 		pure: false,
 		fn: (...args: Value[]) => {
-			// Validate no args expected
 			if (args.length > 0) {
 				return errorVal(ErrorCodes.ArityError, "readInt accepts no arguments");
 			}
@@ -255,8 +249,16 @@ export function createQueuedEffectRegistry(inputs: (string | number)[]): EffectR
 			return intVal(Number.isNaN(num) ? 0 : num);
 		},
 	});
+	return reg;
+}
 
-	// Optionally add state effects
+export function createQueuedEffectRegistry(inputs: (string | number)[]): EffectRegistry {
+	const inputQueue = [...inputs]; // Make a copy to avoid mutations
+
+	let registry = emptyEffectRegistry();
+	registry = registerPrintEffects(registry);
+	registry = registerQueuedReadEffects(registry, inputQueue);
+
 	for (const op of stateEffects) {
 		registry = registerEffect(registry, op);
 	}
