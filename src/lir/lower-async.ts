@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // SPIRAL LIR Lowering - Async (EIR) expression handlers
 
 import type {
@@ -13,7 +12,7 @@ import type {
 } from "../types.js";
 import type { BlockResult, LowerParams } from "./lower-types.js";
 import { addBlock, asStringRef } from "./lower-types.js";
-import type { LowerNodeFn } from "./lower.js";
+
 
 /** Async-only expression type */
 export type AsyncOnlyExpr =
@@ -173,7 +172,6 @@ function lowerRace(p: LowerParams, expr: EirRaceExpr): BlockResult {
 export function lowerAsyncExpr(
 	p: LowerParams,
 	expr: AsyncOnlyExpr,
-	_lowerNode: LowerNodeFn,
 ): BlockResult {
 	switch (expr.kind) {
 	case "spawn":
