@@ -6,7 +6,7 @@ export interface PythonIngestOptions {
 	/** Module name for the generated SPIRAL document */
 	moduleName?: string;
 	/** Target IR layer (default: "eir") */
-	targetLayer?: "air" | "cir" | "eir" | "pir";
+	targetLayer?: "air" | "cir" | "eir";
 }
 
 /**
