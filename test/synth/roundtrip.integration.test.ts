@@ -177,6 +177,34 @@ describe("Round-Trip: TS -> Spiral -> TS (functions)", () => {
 		assert.deepStrictEqual(originalResult, 42);
 		assert.deepStrictEqual(synthesizedResult, 42);
 	});
+
+	it("should round-trip multi-parameter function", () => {
+		const source = "const add = (a: number, b: number) => a + b; add(3, 4);";
+
+		const originalFn = new Function("const add = (a, b) => a + b; return add(3, 4);");
+		const originalResult = originalFn();
+
+		const doc = ingestTypeScript(source);
+		const synthesized = synthesizeTypeScript(doc);
+		const synthesizedResult = evalSynthesizedTS(synthesized);
+
+		assert.deepStrictEqual(originalResult, 7);
+		assert.deepStrictEqual(synthesizedResult, 7);
+	});
+
+	it("should round-trip higher-order function", () => {
+		const source = "const apply = (f: (x: number) => number, x: number) => f(x); const inc = (n: number) => n + 1; apply(inc, 5);";
+
+		const originalFn = new Function("const apply = (f, x) => f(x); const inc = (n) => n + 1; return apply(inc, 5);");
+		const originalResult = originalFn();
+
+		const doc = ingestTypeScript(source);
+		const synthesized = synthesizeTypeScript(doc);
+		const synthesizedResult = evalSynthesizedTS(synthesized);
+
+		assert.deepStrictEqual(originalResult, 6);
+		assert.deepStrictEqual(synthesizedResult, 6);
+	});
 });
 
 //==============================================================================
@@ -285,6 +313,45 @@ describe("Round-Trip: Spiral -> TS -> eval", () => {
 
 		assert.deepStrictEqual(spiralNorm, 42);
 		assert.deepStrictEqual(tsResult, 42);
+	});
+
+	it("should match: CIR lambda with let binding", () => {
+		// Use let-binding to test closure semantics without inline var exprs
+		// let x = 10 in (x + 3)
+		const doc: AIRDocument = {
+			version: "1.0.0",
+			airDefs: [],
+			nodes: [
+				{ id: "val", expr: { kind: "lit", type: { kind: "int" }, value: 10 } },
+				{ id: "three", expr: { kind: "lit", type: { kind: "int" }, value: 3 } },
+				{
+					id: "sum",
+					expr: { kind: "call", ns: "core", name: "add", args: ["val", "three"] },
+				},
+				{
+					id: "fn",
+					expr: { kind: "lambda", params: ["unused"], body: "sum" },
+				},
+				{
+					id: "arg",
+					expr: { kind: "lit", type: { kind: "int" }, value: 0 },
+				},
+				{
+					id: "result",
+					expr: { kind: "callExpr", fn: "fn", args: ["arg"] },
+				},
+			],
+			result: "result",
+		};
+
+		const spiralResult = evaluateProgram(doc, registry, defs);
+		const spiralNorm = normalizeValue(spiralResult);
+
+		const synthesized = synthesizeTypeScript(doc);
+		const tsResult = evalSynthesizedTS(synthesized);
+
+		assert.deepStrictEqual(spiralNorm, 13);
+		assert.deepStrictEqual(tsResult, 13);
 	});
 
 	it("should match: string concat", () => {
