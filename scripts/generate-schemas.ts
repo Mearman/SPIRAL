@@ -11,7 +11,6 @@ import {
 	CIRDocumentSchema,
 	EIRDocumentSchema,
 	LIRDocumentSchema,
-	PIRDocumentSchema,
 } from "../src/zod-schemas.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -37,11 +36,6 @@ const layers = [
 		name: "lir",
 		title: "LIR (Low-Level IR)",
 		schema: LIRDocumentSchema,
-	},
-	{
-		name: "pir",
-		title: "PIR (Parallel IR)",
-		schema: PIRDocumentSchema,
 	},
 ];
 

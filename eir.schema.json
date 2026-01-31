@@ -933,6 +933,224 @@
                       "catchBody"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "par"
+                      },
+                      "branches": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "branches"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "spawn"
+                      },
+                      "task": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "task"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "await"
+                      },
+                      "future": {
+                        "type": "string"
+                      },
+                      "timeout": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema2"
+                          }
+                        ]
+                      },
+                      "fallback": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema2"
+                          }
+                        ]
+                      },
+                      "returnIndex": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "future"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "channel"
+                      },
+                      "channelType": {
+                        "type": "string",
+                        "enum": [
+                          "mpsc",
+                          "spsc",
+                          "mpmc",
+                          "broadcast"
+                        ]
+                      },
+                      "bufferSize": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema2"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "channelType"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "send"
+                      },
+                      "channel": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema2"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "channel",
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "recv"
+                      },
+                      "channel": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "channel"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "select"
+                      },
+                      "futures": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "timeout": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema2"
+                          }
+                        ]
+                      },
+                      "fallback": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/__schema2"
+                          }
+                        ]
+                      },
+                      "returnIndex": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "futures"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "race"
+                      },
+                      "tasks": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "tasks"
+                    ],
+                    "additionalProperties": false
                   }
                 ]
               }
@@ -965,747 +1183,1018 @@
                       "items": {
                         "anyOf": [
                           {
-                            "type": "object",
-                            "properties": {
-                              "kind": {
-                                "type": "string",
-                                "const": "assign"
-                              },
-                              "target": {
-                                "type": "string"
-                              },
-                              "value": {
-                                "anyOf": [
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "lit"
-                                      },
-                                      "type": {
-                                        "$ref": "#/$defs/__schema0"
-                                      },
-                                      "value": {}
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "type",
-                                      "value"
-                                    ],
-                                    "additionalProperties": false
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "const": "assign"
                                   },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "ref"
-                                      },
-                                      "id": {
-                                        "type": "string"
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "id"
-                                    ],
-                                    "additionalProperties": false
+                                  "target": {
+                                    "type": "string"
                                   },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "var"
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "lit"
+                                          },
+                                          "type": {
+                                            "$ref": "#/$defs/__schema0"
+                                          },
+                                          "value": {}
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "type",
+                                          "value"
+                                        ],
+                                        "additionalProperties": false
                                       },
-                                      "name": {
-                                        "type": "string"
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "name"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "$ref": "#/$defs/__schema1"
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "if"
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "ref"
+                                          },
+                                          "id": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "id"
+                                        ],
+                                        "additionalProperties": false
                                       },
-                                      "cond": {
-                                        "anyOf": [
-                                          {
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "var"
+                                          },
+                                          "name": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "name"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "$ref": "#/$defs/__schema1"
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "if"
+                                          },
+                                          "cond": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "then": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "else": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "type": {
+                                            "$ref": "#/$defs/__schema0"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "cond",
+                                          "then",
+                                          "else"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "let"
+                                          },
+                                          "name": {
                                             "type": "string"
                                           },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
+                                          "value": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "body": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "type": {
+                                            "$ref": "#/$defs/__schema0"
                                           }
-                                        ]
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "name",
+                                          "value",
+                                          "body"
+                                        ],
+                                        "additionalProperties": false
                                       },
-                                      "then": {
-                                        "anyOf": [
-                                          {
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "airRef"
+                                          },
+                                          "ns": {
                                             "type": "string"
                                           },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      },
-                                      "else": {
-                                        "anyOf": [
-                                          {
+                                          "name": {
                                             "type": "string"
                                           },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      },
-                                      "type": {
-                                        "$ref": "#/$defs/__schema0"
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "cond",
-                                      "then",
-                                      "else"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "let"
-                                      },
-                                      "name": {
-                                        "type": "string"
-                                      },
-                                      "value": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
-                                          },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      },
-                                      "body": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
-                                          },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      },
-                                      "type": {
-                                        "$ref": "#/$defs/__schema0"
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "name",
-                                      "value",
-                                      "body"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "airRef"
-                                      },
-                                      "ns": {
-                                        "type": "string"
-                                      },
-                                      "name": {
-                                        "type": "string"
-                                      },
-                                      "args": {
-                                        "type": "array",
-                                        "items": {
-                                          "type": "string"
-                                        }
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "ns",
-                                      "name",
-                                      "args"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "predicate"
-                                      },
-                                      "name": {
-                                        "type": "string"
-                                      },
-                                      "value": {
-                                        "type": "string"
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "name",
-                                      "value"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "lambda"
-                                      },
-                                      "params": {
-                                        "type": "array",
-                                        "items": {
-                                          "anyOf": [
-                                            {
+                                          "args": {
+                                            "type": "array",
+                                            "items": {
                                               "type": "string"
-                                            },
-                                            {
-                                              "type": "object",
-                                              "properties": {
-                                                "name": {
+                                            }
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "ns",
+                                          "name",
+                                          "args"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "predicate"
+                                          },
+                                          "name": {
+                                            "type": "string"
+                                          },
+                                          "value": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "name",
+                                          "value"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "lambda"
+                                          },
+                                          "params": {
+                                            "type": "array",
+                                            "items": {
+                                              "anyOf": [
+                                                {
                                                   "type": "string"
                                                 },
-                                                "type": {
-                                                  "$ref": "#/$defs/__schema0"
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "name": {
+                                                      "type": "string"
+                                                    },
+                                                    "type": {
+                                                      "$ref": "#/$defs/__schema0"
+                                                    },
+                                                    "optional": {
+                                                      "type": "boolean"
+                                                    },
+                                                    "default": {
+                                                      "$ref": "#/$defs/__schema2"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "name"
+                                                  ],
+                                                  "additionalProperties": false
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          "body": {
+                                            "type": "string"
+                                          },
+                                          "type": {
+                                            "$ref": "#/$defs/__schema0"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "params",
+                                          "body",
+                                          "type"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "callExpr"
+                                          },
+                                          "fn": {
+                                            "type": "string"
+                                          },
+                                          "args": {
+                                            "type": "array",
+                                            "items": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
                                                 },
-                                                "optional": {
-                                                  "type": "boolean"
-                                                },
-                                                "default": {
+                                                {
                                                   "$ref": "#/$defs/__schema2"
                                                 }
+                                              ]
+                                            }
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "fn",
+                                          "args"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "fix"
+                                          },
+                                          "fn": {
+                                            "type": "string"
+                                          },
+                                          "type": {
+                                            "$ref": "#/$defs/__schema0"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "fn",
+                                          "type"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "do"
+                                          },
+                                          "exprs": {
+                                            "type": "array",
+                                            "items": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "$ref": "#/$defs/__schema2"
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "exprs"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "seq"
+                                          },
+                                          "first": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
                                               },
-                                              "required": [
-                                                "name"
-                                              ],
-                                              "additionalProperties": false
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "then": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "first",
+                                          "then"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "assign"
+                                          },
+                                          "target": {
+                                            "type": "string"
+                                          },
+                                          "value": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "target",
+                                          "value"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "while"
+                                          },
+                                          "cond": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "body": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "cond",
+                                          "body"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "for"
+                                          },
+                                          "var": {
+                                            "type": "string"
+                                          },
+                                          "init": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "cond": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "update": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "body": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "var",
+                                          "init",
+                                          "cond",
+                                          "update",
+                                          "body"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "iter"
+                                          },
+                                          "var": {
+                                            "type": "string"
+                                          },
+                                          "iter": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "body": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "var",
+                                          "iter",
+                                          "body"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "effect"
+                                          },
+                                          "op": {
+                                            "type": "string"
+                                          },
+                                          "args": {
+                                            "type": "array",
+                                            "items": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "$ref": "#/$defs/__schema2"
+                                                }
+                                              ]
                                             }
-                                          ]
-                                        }
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "op",
+                                          "args"
+                                        ],
+                                        "additionalProperties": false
                                       },
-                                      "body": {
-                                        "type": "string"
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "refCell"
+                                          },
+                                          "target": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "target"
+                                        ],
+                                        "additionalProperties": false
                                       },
-                                      "type": {
-                                        "$ref": "#/$defs/__schema0"
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "params",
-                                      "body",
-                                      "type"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "callExpr"
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "deref"
+                                          },
+                                          "target": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "target"
+                                        ],
+                                        "additionalProperties": false
                                       },
-                                      "fn": {
-                                        "type": "string"
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "try"
+                                          },
+                                          "tryBody": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "catchParam": {
+                                            "type": "string"
+                                          },
+                                          "catchBody": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "fallback": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "tryBody",
+                                          "catchParam",
+                                          "catchBody"
+                                        ],
+                                        "additionalProperties": false
                                       },
-                                      "args": {
-                                        "type": "array",
-                                        "items": {
-                                          "anyOf": [
-                                            {
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "par"
+                                          },
+                                          "branches": {
+                                            "type": "array",
+                                            "items": {
                                               "type": "string"
-                                            },
-                                            {
-                                              "$ref": "#/$defs/__schema2"
                                             }
-                                          ]
-                                        }
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "fn",
-                                      "args"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "fix"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "branches"
+                                        ],
+                                        "additionalProperties": false
                                       },
-                                      "fn": {
-                                        "type": "string"
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "spawn"
+                                          },
+                                          "task": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "task"
+                                        ],
+                                        "additionalProperties": false
                                       },
-                                      "type": {
-                                        "$ref": "#/$defs/__schema0"
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "fn",
-                                      "type"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "do"
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "await"
+                                          },
+                                          "future": {
+                                            "type": "string"
+                                          },
+                                          "timeout": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "fallback": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          },
+                                          "returnIndex": {
+                                            "type": "boolean"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "future"
+                                        ],
+                                        "additionalProperties": false
                                       },
-                                      "exprs": {
-                                        "type": "array",
-                                        "items": {
-                                          "anyOf": [
-                                            {
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "channel"
+                                          },
+                                          "channelType": {
+                                            "type": "string",
+                                            "enum": [
+                                              "mpsc",
+                                              "spsc",
+                                              "mpmc",
+                                              "broadcast"
+                                            ]
+                                          },
+                                          "bufferSize": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "channelType"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "send"
+                                          },
+                                          "channel": {
+                                            "type": "string"
+                                          },
+                                          "value": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "channel",
+                                          "value"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "recv"
+                                          },
+                                          "channel": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "channel"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "select"
+                                          },
+                                          "futures": {
+                                            "type": "array",
+                                            "items": {
                                               "type": "string"
-                                            },
-                                            {
-                                              "$ref": "#/$defs/__schema2"
                                             }
-                                          ]
-                                        }
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "exprs"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "seq"
-                                      },
-                                      "first": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
                                           },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      },
-                                      "then": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
+                                          "timeout": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
                                           },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "first",
-                                      "then"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "assign"
-                                      },
-                                      "target": {
-                                        "type": "string"
-                                      },
-                                      "value": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
+                                          "fallback": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "$ref": "#/$defs/__schema2"
+                                              }
+                                            ]
                                           },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
+                                          "returnIndex": {
+                                            "type": "boolean"
                                           }
-                                        ]
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "target",
-                                      "value"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "while"
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "futures"
+                                        ],
+                                        "additionalProperties": false
                                       },
-                                      "cond": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string",
+                                            "const": "race"
                                           },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      },
-                                      "body": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
-                                          },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "cond",
-                                      "body"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "for"
-                                      },
-                                      "var": {
-                                        "type": "string"
-                                      },
-                                      "init": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
-                                          },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      },
-                                      "cond": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
-                                          },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      },
-                                      "update": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
-                                          },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      },
-                                      "body": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
-                                          },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "var",
-                                      "init",
-                                      "cond",
-                                      "update",
-                                      "body"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "iter"
-                                      },
-                                      "var": {
-                                        "type": "string"
-                                      },
-                                      "iter": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
-                                          },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      },
-                                      "body": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
-                                          },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "var",
-                                      "iter",
-                                      "body"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "effect"
-                                      },
-                                      "op": {
-                                        "type": "string"
-                                      },
-                                      "args": {
-                                        "type": "array",
-                                        "items": {
-                                          "anyOf": [
-                                            {
+                                          "tasks": {
+                                            "type": "array",
+                                            "items": {
                                               "type": "string"
-                                            },
-                                            {
-                                              "$ref": "#/$defs/__schema2"
                                             }
-                                          ]
-                                        }
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "op",
-                                      "args"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "refCell"
-                                      },
-                                      "target": {
-                                        "type": "string"
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "target"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "deref"
-                                      },
-                                      "target": {
-                                        "type": "string"
-                                      }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "target"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "const": "try"
-                                      },
-                                      "tryBody": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
-                                          },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
                                           }
-                                        ]
-                                      },
-                                      "catchParam": {
-                                        "type": "string"
-                                      },
-                                      "catchBody": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
-                                          },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
-                                      },
-                                      "fallback": {
-                                        "anyOf": [
-                                          {
-                                            "type": "string"
-                                          },
-                                          {
-                                            "$ref": "#/$defs/__schema2"
-                                          }
-                                        ]
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "tasks"
+                                        ],
+                                        "additionalProperties": false
                                       }
-                                    },
-                                    "required": [
-                                      "kind",
-                                      "tryBody",
-                                      "catchParam",
-                                      "catchBody"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
-                                ]
-                              }
-                            },
-                            "required": [
-                              "kind",
-                              "target",
-                              "value"
-                            ],
-                            "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "kind": {
-                                "type": "string",
-                                "const": "op"
+                                },
+                                "required": [
+                                  "kind",
+                                  "target",
+                                  "value"
+                                ],
+                                "additionalProperties": false
                               },
-                              "target": {
-                                "type": "string"
-                              },
-                              "ns": {
-                                "type": "string"
-                              },
-                              "name": {
-                                "type": "string"
-                              },
-                              "args": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                }
-                              }
-                            },
-                            "required": [
-                              "kind",
-                              "target",
-                              "ns",
-                              "name",
-                              "args"
-                            ],
-                            "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "kind": {
-                                "type": "string",
-                                "const": "phi"
-                              },
-                              "target": {
-                                "type": "string"
-                              },
-                              "sources": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "block": {
-                                      "type": "string"
-                                    },
-                                    "id": {
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "const": "op"
+                                  },
+                                  "target": {
+                                    "type": "string"
+                                  },
+                                  "ns": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "args": {
+                                    "type": "array",
+                                    "items": {
                                       "type": "string"
                                     }
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "target",
+                                  "ns",
+                                  "name",
+                                  "args"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "const": "phi"
                                   },
-                                  "required": [
-                                    "block",
-                                    "id"
-                                  ],
-                                  "additionalProperties": false
-                                }
+                                  "target": {
+                                    "type": "string"
+                                  },
+                                  "sources": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "block": {
+                                          "type": "string"
+                                        },
+                                        "id": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "block",
+                                        "id"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "target",
+                                  "sources"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "const": "effect"
+                                  },
+                                  "target": {
+                                    "type": "string"
+                                  },
+                                  "op": {
+                                    "type": "string"
+                                  },
+                                  "args": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "target",
+                                  "op",
+                                  "args"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "const": "assignRef"
+                                  },
+                                  "target": {
+                                    "type": "string"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "target",
+                                  "value"
+                                ],
+                                "additionalProperties": false
                               }
-                            },
-                            "required": [
-                              "kind",
-                              "target",
-                              "sources"
-                            ],
-                            "additionalProperties": false
+                            ]
                           },
                           {
                             "type": "object",
                             "properties": {
                               "kind": {
                                 "type": "string",
-                                "const": "effect"
+                                "const": "spawn"
                               },
                               "target": {
                                 "type": "string"
                               },
-                              "op": {
+                              "entry": {
                                 "type": "string"
                               },
                               "args": {
@@ -1718,8 +2207,7 @@
                             "required": [
                               "kind",
                               "target",
-                              "op",
-                              "args"
+                              "entry"
                             ],
                             "additionalProperties": false
                           },
@@ -1728,9 +2216,21 @@
                             "properties": {
                               "kind": {
                                 "type": "string",
-                                "const": "assignRef"
+                                "const": "channelOp"
+                              },
+                              "op": {
+                                "type": "string",
+                                "enum": [
+                                  "send",
+                                  "recv",
+                                  "trySend",
+                                  "tryRecv"
+                                ]
                               },
                               "target": {
+                                "type": "string"
+                              },
+                              "channel": {
                                 "type": "string"
                               },
                               "value": {
@@ -1739,8 +2239,29 @@
                             },
                             "required": [
                               "kind",
+                              "op",
+                              "channel"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "const": "await"
+                              },
+                              "target": {
+                                "type": "string"
+                              },
+                              "future": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "kind",
                               "target",
-                              "value"
+                              "future"
                             ],
                             "additionalProperties": false
                           }
@@ -1829,6 +2350,94 @@
                             "kind"
                           ],
                           "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "fork"
+                            },
+                            "branches": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "block": {
+                                    "type": "string"
+                                  },
+                                  "taskId": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "block",
+                                  "taskId"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "continuation": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "branches",
+                            "continuation"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "join"
+                            },
+                            "tasks": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "results": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "to": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "tasks",
+                            "to"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "suspend"
+                            },
+                            "future": {
+                              "type": "string"
+                            },
+                            "resumeBlock": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "future",
+                            "resumeBlock"
+                          ],
+                          "additionalProperties": false
                         }
                       ]
                     }
@@ -1861,7 +2470,6 @@
   },
   "required": [
     "version",
-    "airDefs",
     "nodes",
     "result"
   ],
@@ -2534,224 +3142,6 @@
           "required": [
             "kind",
             "exprs"
-          ],
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "properties": {
-            "kind": {
-              "type": "string",
-              "const": "par"
-            },
-            "branches": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          "required": [
-            "kind",
-            "branches"
-          ],
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "properties": {
-            "kind": {
-              "type": "string",
-              "const": "spawn"
-            },
-            "task": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "kind",
-            "task"
-          ],
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "properties": {
-            "kind": {
-              "type": "string",
-              "const": "await"
-            },
-            "future": {
-              "type": "string"
-            },
-            "timeout": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "$ref": "#/$defs/__schema2"
-                }
-              ]
-            },
-            "fallback": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "$ref": "#/$defs/__schema2"
-                }
-              ]
-            },
-            "returnIndex": {
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "kind",
-            "future"
-          ],
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "properties": {
-            "kind": {
-              "type": "string",
-              "const": "channel"
-            },
-            "channelType": {
-              "type": "string",
-              "enum": [
-                "mpsc",
-                "spsc",
-                "mpmc",
-                "broadcast"
-              ]
-            },
-            "bufferSize": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "$ref": "#/$defs/__schema2"
-                }
-              ]
-            }
-          },
-          "required": [
-            "kind",
-            "channelType"
-          ],
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "properties": {
-            "kind": {
-              "type": "string",
-              "const": "send"
-            },
-            "channel": {
-              "type": "string"
-            },
-            "value": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "$ref": "#/$defs/__schema2"
-                }
-              ]
-            }
-          },
-          "required": [
-            "kind",
-            "channel",
-            "value"
-          ],
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "properties": {
-            "kind": {
-              "type": "string",
-              "const": "recv"
-            },
-            "channel": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "kind",
-            "channel"
-          ],
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "properties": {
-            "kind": {
-              "type": "string",
-              "const": "select"
-            },
-            "futures": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "timeout": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "$ref": "#/$defs/__schema2"
-                }
-              ]
-            },
-            "fallback": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "$ref": "#/$defs/__schema2"
-                }
-              ]
-            },
-            "returnIndex": {
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "kind",
-            "futures"
-          ],
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "properties": {
-            "kind": {
-              "type": "string",
-              "const": "race"
-            },
-            "tasks": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          "required": [
-            "kind",
-            "tasks"
           ],
           "additionalProperties": false
         }
