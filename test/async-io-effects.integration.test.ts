@@ -6,8 +6,8 @@ import {
 	createMockHttpClient,
 	createAsyncIOConfig,
 	evalAsyncEffect,
-	type AsyncEvalState,
 } from "../src/async-io-effects.js";
+import type { AsyncEvalState } from "../src/types.js";
 import { createTaskScheduler } from "../src/scheduler.js";
 import { stringVal, intVal } from "../src/types.js";
 
@@ -37,7 +37,7 @@ describe("async-io-effects", () => {
 		};
 
 		const config = createAsyncIOConfig({ fileSystem: fs });
-		const result = evalAsyncEffect("asyncRead", state, config, stringVal("test.txt"));
+		const result = evalAsyncEffect({ effectName: "asyncRead", state, config }, [stringVal("test.txt")]);
 
 		assert.strictEqual(result.kind, "future");
 		if (result.kind === "future") {
@@ -70,11 +70,8 @@ describe("async-io-effects", () => {
 
 		const config = createAsyncIOConfig({ fileSystem: fs });
 		const result = evalAsyncEffect(
-			"asyncWrite",
-			state,
-			config,
-			stringVal("test.txt"),
-			stringVal("Hello, World!"),
+			{ effectName: "asyncWrite", state, config },
+			[stringVal("test.txt"), stringVal("Hello, World!")],
 		);
 
 		assert.strictEqual(result.kind, "future");
@@ -105,7 +102,7 @@ describe("async-io-effects", () => {
 		};
 
 		const config = createAsyncIOConfig({});
-		const result = evalAsyncEffect("sleep", state, config, intVal(10));
+		const result = evalAsyncEffect({ effectName: "sleep", state, config }, [intVal(10)]);
 
 		assert.strictEqual(result.kind, "future");
 		if (result.kind === "future") {
@@ -139,7 +136,7 @@ describe("async-io-effects", () => {
 		};
 
 		const config = createAsyncIOConfig({ httpClient: http });
-		const result = evalAsyncEffect("httpGet", state, config, stringVal("https://example.com"));
+		const result = evalAsyncEffect({ effectName: "httpGet", state, config }, [stringVal("https://example.com")]);
 
 		assert.strictEqual(result.kind, "future");
 		if (result.kind === "future") {
@@ -174,7 +171,7 @@ describe("async-io-effects", () => {
 		const config = createAsyncIOConfig({ fileSystem: fs });
 
 		// Test existing file
-		const result1 = evalAsyncEffect("asyncExists", state, config, stringVal("test.txt"));
+		const result1 = evalAsyncEffect({ effectName: "asyncExists", state, config }, [stringVal("test.txt")]);
 		assert.strictEqual(result1.kind, "future");
 		if (result1.kind === "future") {
 			const value1 = await scheduler.await(result1.taskId);
@@ -185,7 +182,7 @@ describe("async-io-effects", () => {
 		}
 
 		// Test non-existing file
-		const result2 = evalAsyncEffect("asyncExists", state, config, stringVal("nonexistent.txt"));
+		const result2 = evalAsyncEffect({ effectName: "asyncExists", state, config }, [stringVal("nonexistent.txt")]);
 		assert.strictEqual(result2.kind, "future");
 		if (result2.kind === "future") {
 			const value2 = await scheduler.await(result2.taskId);
@@ -215,11 +212,8 @@ describe("async-io-effects", () => {
 
 		const config = createAsyncIOConfig({ fileSystem: fs });
 		const result = evalAsyncEffect(
-			"asyncAppend",
-			state,
-			config,
-			stringVal("test.txt"),
-			stringVal(", World!"),
+			{ effectName: "asyncAppend", state, config },
+			[stringVal("test.txt"), stringVal(", World!")],
 		);
 
 		assert.strictEqual(result.kind, "future");
@@ -250,7 +244,7 @@ describe("async-io-effects", () => {
 		};
 
 		const config = createAsyncIOConfig({ fileSystem: fs });
-		const result = evalAsyncEffect("asyncDelete", state, config, stringVal("test.txt"));
+		const result = evalAsyncEffect({ effectName: "asyncDelete", state, config }, [stringVal("test.txt")]);
 
 		assert.strictEqual(result.kind, "future");
 		if (result.kind === "future") {
@@ -280,11 +274,8 @@ describe("async-io-effects", () => {
 
 		const config = createAsyncIOConfig({ httpClient: http });
 		const result = evalAsyncEffect(
-			"httpPost",
-			state,
-			config,
-			stringVal("https://example.com"),
-			stringVal("Request body"),
+			{ effectName: "httpPost", state, config },
+			[stringVal("https://example.com"), stringVal("Request body")],
 		);
 
 		assert.strictEqual(result.kind, "future");
@@ -315,13 +306,13 @@ describe("async-io-effects", () => {
 		const config = createAsyncIOConfig({});
 
 		// Missing arguments
-		const result1 = evalAsyncEffect("asyncRead", state, config);
+		const result1 = evalAsyncEffect({ effectName: "asyncRead", state, config }, []);
 		assert.strictEqual(result1.kind, "error");
 		if (result1.kind === "error") {
 			assert.strictEqual(result1.code, "ArityError");
 		}
 
-		const result2 = evalAsyncEffect("sleep", state, config);
+		const result2 = evalAsyncEffect({ effectName: "sleep", state, config }, []);
 		assert.strictEqual(result2.kind, "error");
 		if (result2.kind === "error") {
 			assert.strictEqual(result2.code, "ArityError");
@@ -345,14 +336,14 @@ describe("async-io-effects", () => {
 		const config = createAsyncIOConfig({});
 
 		// Wrong type for filename
-		const result1 = evalAsyncEffect("asyncRead", state, config, intVal(123));
+		const result1 = evalAsyncEffect({ effectName: "asyncRead", state, config }, [intVal(123)]);
 		assert.strictEqual(result1.kind, "error");
 		if (result1.kind === "error") {
 			assert.strictEqual(result1.code, "TypeError");
 		}
 
 		// Wrong type for sleep milliseconds
-		const result2 = evalAsyncEffect("sleep", state, config, stringVal("100"));
+		const result2 = evalAsyncEffect({ effectName: "sleep", state, config }, [stringVal("100")]);
 		assert.strictEqual(result2.kind, "error");
 		if (result2.kind === "error") {
 			assert.strictEqual(result2.code, "TypeError");
