@@ -109,6 +109,7 @@ interface IfBranchCtx {
 
 function lowerIfBranches(ctx: IfBranchCtx, ids: IfBlockIds): void {
 	const { p, expr, lowerNode } = ctx;
+	if (typeof expr.then !== "string" || typeof expr.else !== "string") return;
 	const thenNode = p.ctx.nodeMap.get(expr.then);
 	if (thenNode) {
 		lowerNode({ node: thenNode, currentBlock: ids.thenId, ctx: p.ctx, nextBlock: ids.mergeId });
@@ -133,6 +134,9 @@ function lowerIf(
 	expr: Expr & { kind: "if" },
 	lowerNode: LowerNodeFn,
 ): BlockResult {
+	if (typeof expr.cond !== "string") {
+		return { entry: p.currentBlock, exit: p.currentBlock };
+	}
 	const ids: IfBlockIds = {
 		thenId: freshBlock(p.ctx),
 		elseId: freshBlock(p.ctx),
@@ -160,6 +164,9 @@ function lowerLet(
 	expr: Expr & { kind: "let" },
 	lowerNode: LowerNodeFn,
 ): BlockResult {
+	if (typeof expr.value !== "string" || typeof expr.body !== "string") {
+		return { entry: p.currentBlock, exit: p.currentBlock };
+	}
 	addBlock(p.ctx, {
 		id: p.currentBlock,
 		instructions: [

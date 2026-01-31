@@ -85,7 +85,7 @@ function visitExprRefs(
 
 function visitLetRefs(
 	state: BoundNodeState,
-	expr: { value: string; body: string },
+	expr: { value: string | Expr; body: string | Expr },
 	visited: Set<string>,
 ): void {
 	if (typeof expr.value === "string") {
@@ -98,7 +98,7 @@ function visitLetRefs(
 
 function visitIfRefs(
 	state: BoundNodeState,
-	expr: { cond: string; then: string; else: string },
+	expr: { cond: string | Expr; then: string | Expr; else: string | Expr },
 	visited: Set<string>,
 ): void {
 	if (typeof expr.cond === "string") collectDeps(state, expr.cond, visited);

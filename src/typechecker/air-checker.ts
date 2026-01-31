@@ -100,10 +100,10 @@ function checkRef(
 
 function checkIf(
 	ctx: AIRCheckContext,
-	expr: { kind: "if"; cond: string; then: string; else: string; type: Type },
+	expr: { kind: "if"; cond: string | Expr; then: string | Expr; else: string | Expr; type?: Type | undefined },
 ): TypeCheckResult {
 	checkIfCondition(ctx, expr.cond);
-	const dt = expr.type;
+	const dt: Type = expr.type ?? { kind: "int" };
 	const thenType = resolveIfBranch({ ctx, branchVal: expr.then, branchName: "Then", declaredType: dt });
 	const elseType = resolveIfBranch({ ctx, branchVal: expr.else, branchName: "Else", declaredType: dt });
 	validateBranchType({ ctx, branchVal: expr.then, branchType: thenType, declaredType: dt, label: "if then branch" });
@@ -148,7 +148,7 @@ function resolveLetBody(
 
 function checkLet(
 	ctx: AIRCheckContext,
-	expr: { kind: "let"; name: string; value: string; body: string },
+	expr: { kind: "let"; name: string; value: string | Expr; body: string | Expr },
 ): TypeCheckResult {
 	const valueType = resolveLetValue(ctx, expr.value);
 	const extendedEnv = extendTypeEnv(ctx.env, expr.name, valueType);

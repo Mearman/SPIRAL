@@ -51,8 +51,8 @@ export interface LitExpr { kind: "lit"; type: Type; value: unknown }
 export interface RefExpr { kind: "ref"; id: string }
 export interface VarExpr { kind: "var"; name: string }
 export interface CallExpr { kind: "call"; ns: string; name: string; args: (string | Expr)[] }
-export interface IfExpr { kind: "if"; cond: string; then: string; else: string; type: Type }
-export interface LetExpr { kind: "let"; name: string; value: string; body: string }
+export interface IfExpr { kind: "if"; cond: string | Expr; then: string | Expr; else: string | Expr; type?: Type | undefined }
+export interface LetExpr { kind: "let"; name: string; value: string | Expr; body: string | Expr }
 export interface AirRefExpr { kind: "airRef"; ns: string; name: string; args: string[] }
 export interface PredicateExpr { kind: "predicate"; name: string; value: string }
 
@@ -358,7 +358,7 @@ export const IfExprSchema: z.ZodType<IfExpr> = z.object({
 	get then() { return stringOrExpr(); },
 	get else() { return stringOrExpr(); },
 	type: TypeSchema.optional(),
-}).meta({ id: "IfExpr", title: "If Expression", description: "Conditional expression with then/else branches" }) as z.ZodType<IfExpr>;
+}).meta({ id: "IfExpr", title: "If Expression", description: "Conditional expression with then/else branches" });
 
 export const LetExprSchema: z.ZodType<LetExpr> = z.object({
 	kind: z.literal("let"),
@@ -366,7 +366,7 @@ export const LetExprSchema: z.ZodType<LetExpr> = z.object({
 	get value() { return stringOrExpr(); },
 	get body() { return stringOrExpr(); },
 	type: TypeSchema.optional(),
-}).meta({ id: "LetExpr", title: "Let Expression", description: "Local binding that scopes a name to a value within a body" }) as z.ZodType<LetExpr>;
+}).meta({ id: "LetExpr", title: "Let Expression", description: "Local binding that scopes a name to a value within a body" });
 
 export const AirRefExprSchema = z.object({
 	kind: z.literal("airRef"),

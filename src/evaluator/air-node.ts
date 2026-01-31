@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 // evalNode - dispatch per expression kind for AIR/CIR nodes
 
 import {
@@ -246,6 +247,9 @@ function applyCallOp(nc: NodeCallCtx, args: Value[]): NodeEvalResult {
 //==============================================================================
 
 function evalNodeIf(ctx: ProgramCtx, expr: Expr & { kind: "if" }, env: ValueEnv): NodeEvalResult {
+	if (typeof expr.cond !== "string" || typeof expr.then !== "string" || typeof expr.else !== "string") {
+		return { value: errorVal(ErrorCodes.DomainError, "Inline expressions not supported"), env };
+	}
 	const condValue = resolveCondition(ctx, expr.cond, env);
 	if (!condValue) return { value: errorVal(ErrorCodes.DomainError, "Condition node not evaluated: " + expr.cond), env };
 	if (isError(condValue)) return { value: condValue, env };

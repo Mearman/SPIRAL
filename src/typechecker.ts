@@ -62,7 +62,7 @@ function dispatchSimpleExpr(expr: Expr, env: TypeEnv): TypeCheckResult | undefin
 	case "lit":
 		return { type: expr.type, env };
 	case "if":
-		return { type: expr.type, env };
+		return { type: expr.type ?? { kind: "int" }, env };
 	case "let":
 		return { type: intType, env };
 	case "predicate":

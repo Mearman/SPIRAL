@@ -264,6 +264,9 @@ function tryApplyAirDef(cCtx: CallCtx, args: Value[]): Value {
 //==============================================================================
 
 function evalLet(ctx: AirEvalCtx, expr: Expr & { kind: "let" }, env: ValueEnv): Value {
+	if (typeof expr.value !== "string" || typeof expr.body !== "string") {
+		return errorVal(ErrorCodes.DomainError, "Inline expressions not supported in evaluator");
+	}
 	const val = resolveLetVal(ctx, expr.value, env);
 	if (!val) return errorVal(ErrorCodes.DomainError, "Let value not found: " + expr.value);
 	if (isError(val)) return val;
@@ -283,6 +286,9 @@ function resolveLetVal(ctx: AirEvalCtx, valueRef: string, env: ValueEnv): Value 
 }
 
 function evalIf(ctx: AirEvalCtx, expr: Expr & { kind: "if" }, env: ValueEnv): Value {
+	if (typeof expr.cond !== "string" || typeof expr.then !== "string" || typeof expr.else !== "string") {
+		return errorVal(ErrorCodes.DomainError, "Inline expressions not supported in evaluator");
+	}
 	const condValue = resolveIfCond(ctx, expr.cond, env);
 	if (!condValue) return errorVal(ErrorCodes.DomainError, "Condition node not evaluated: " + expr.cond);
 	if (isError(condValue)) return condValue;

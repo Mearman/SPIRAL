@@ -179,11 +179,11 @@ function markBoundRecursively(
 	bound.add(nodeId);
 	if (isBlockNode(node)) return;
 	if (node.expr.kind === "let") {
-		markBoundRecursively(node.expr.body, bound, nodeMap);
+		if (typeof node.expr.body === "string") markBoundRecursively(node.expr.body, bound, nodeMap);
 	}
 	if (node.expr.kind === "if") {
-		markBoundRecursively(node.expr.then, bound, nodeMap);
-		markBoundRecursively(node.expr.else, bound, nodeMap);
+		if (typeof node.expr.then === "string") markBoundRecursively(node.expr.then, bound, nodeMap);
+		if (typeof node.expr.else === "string") markBoundRecursively(node.expr.else, bound, nodeMap);
 	}
 }
 
