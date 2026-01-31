@@ -23,7 +23,7 @@ export function collectLambdaParamsAndLetBindings(
 function addParamsFromExpr(params: Set<string>, expr: Expr): void {
 	if (expr.kind === "lambda") {
 		for (const p of expr.params) {
-			params.add(p);
+			params.add(typeof p === "string" ? p : p.name);
 		}
 	} else if (expr.kind === "let") {
 		params.add(expr.name);

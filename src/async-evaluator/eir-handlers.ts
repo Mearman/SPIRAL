@@ -146,7 +146,7 @@ export async function evalLet(
 //==============================================================================
 
 export function evalLambda(
-	expr: { kind: "lambda"; params: (string | { name: string; optional?: boolean; default?: Expr })[]; body: string },
+	expr: { kind: "lambda"; params: (string | LambdaParam)[]; body: string },
 	env: ValueEnv,
 ): Value {
 	const lambdaParams: LambdaParam[] = expr.params.map(p =>

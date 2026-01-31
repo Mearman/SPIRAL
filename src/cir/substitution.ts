@@ -2,7 +2,9 @@
 // Capture-avoiding substitution for CIR expressions
 
 import type { ValueEnv } from "../env.js";
-import type { Expr, LambdaExpr, Value } from "../types.js";
+import type { Expr, LambdaExpr, LambdaParam, Value } from "../types.js";
+
+const paramName = (p: string | LambdaParam): string => typeof p === "string" ? p : p.name;
 
 //==============================================================================
 // Fresh Name Generation
@@ -49,11 +51,11 @@ export function substitute(expr: Expr, varName: string, value: Expr): Expr {
 /** Handle substitution in lambda expressions (capture-avoiding). */
 function substituteLambda(expr: LambdaExpr, ctx: SubstContext): Expr {
 	// If varName is captured by lambda parameters, it's shadowed
-	if (expr.params.includes(ctx.varName)) {
+	if (expr.params.map(paramName).includes(ctx.varName)) {
 		return expr;
 	}
 
-	const paramsSet = new Set(expr.params);
+	const paramsSet = new Set(expr.params.map(paramName));
 	const capturedInValue = collectFreeVars(ctx.value, new Set())
 		.filter((v) => paramsSet.has(v));
 
@@ -62,7 +64,7 @@ function substituteLambda(expr: LambdaExpr, ctx: SubstContext): Expr {
 	}
 
 	// Capture would occur - alpha-rename the lambda parameters
-	const paramRenaming = buildParamRenaming(expr.params, {
+	const paramRenaming = buildParamRenaming(expr.params.map(paramName), {
 		capturedInValue, paramsSet, boundVars: ctx.boundVars, varName: ctx.varName,
 	});
 
@@ -159,7 +161,7 @@ export function collectFreeVars(expr: Expr, boundVars: Set<string>): string[] {
 	case "lambda": {
 		const lambdaBoundVars = new Set(boundVars);
 		for (const param of expr.params) {
-			lambdaBoundVars.add(param);
+			lambdaBoundVars.add(paramName(param));
 		}
 		return [];
 	}
@@ -261,7 +263,7 @@ function computeRenamedParams(
 
 /** Handle alpha-renaming for a lambda expression. */
 function renameLambda(expr: LambdaExpr, ctx: RenameContext): Expr {
-	const [newParams, changed] = computeRenamedParams(expr.params, ctx);
+	const [newParams, changed] = computeRenamedParams(expr.params.map(paramName), ctx);
 	return changed ? { ...expr, params: newParams } : expr;
 }
 

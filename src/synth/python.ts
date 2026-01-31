@@ -181,7 +181,7 @@ function synthSimpleKind(ctx: ExprCtx, expr: Expr | EirExpr): string | null {
 	case "var": return expr.name;
 	case "if": return `(${refOrInline(ctx, expr.then)} if ${refOrInline(ctx, expr.cond)} else ${refOrInline(ctx, expr.else)})`;
 	case "let": return `(lambda ${expr.name}: ${refOrInline(ctx, expr.body)})(${refOrInline(ctx, expr.value)})`;
-	case "lambda": return `(lambda ${expr.params.join(", ")}: ${ref(expr.body)})`;
+	case "lambda": return `(lambda ${expr.params.map(p => typeof p === "string" ? p : p.name).join(", ")}: ${ref(expr.body)})`;
 	case "callExpr": return `${ref(expr.fn)}(${expr.args.map(ref).join(", ")})`;
 	case "predicate": return `(lambda ${expr.name}: True)`;
 	case "while": return `(lambda _: (${refOrInline(ctx, expr.body)}, None)[1] if ${refOrInline(ctx, expr.cond)} else None)(None)`;
