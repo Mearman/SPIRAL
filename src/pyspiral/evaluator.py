@@ -240,11 +240,11 @@ class Evaluator:
         elif kind == "try":
             return self._eval_try(expr, env, state)
 
-        # PIR expressions - not supported in synchronous evaluator
+        # Async/parallel EIR expressions - not supported in synchronous evaluator
         elif kind in ("par", "spawn", "await", "channel", "send", "recv", "select", "race"):
             return error_val(
                 ErrorCodes.DOMAIN_ERROR,
-                f"PIR expressions require AsyncEvaluator: {kind}"
+                f"Async EIR expressions require AsyncEvaluator: {kind}"
             )
 
         else:

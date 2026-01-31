@@ -1,6 +1,6 @@
 """
 SPIRAL Concurrent Execution Detectors
-Race condition and deadlock detection for PIR async/parallel execution
+Race condition and deadlock detection for EIR async/parallel execution
 """
 
 from __future__ import annotations

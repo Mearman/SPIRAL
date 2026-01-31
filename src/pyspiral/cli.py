@@ -3,7 +3,7 @@
 SPIRAL Python CLI
 
 A command-line interface for running and validating SPIRAL documents
-(AIR, CIR, EIR, LIR, PIR layers) in Python.
+(AIR, CIR, EIR, LIR layers) in Python.
 
 Usage:
     python -m pyspiral.cli <path> [options]
@@ -14,7 +14,6 @@ Examples:
     pyspiral examples/cir/algorithms/factorial.cir.json --verbose
     pyspiral examples/eir/interactive/prompt-uppercase.eir.json --inputs "hello"
     pyspiral examples/lir/control-flow/while-cfg.lir.json --trace
-    pyspiral examples/pir/async/timeout-select.pir.json --inputs "test"
 """
 
 from __future__ import annotations
@@ -35,7 +34,6 @@ from pyspiral.validator import (
     validate_cir,
     validate_eir,
     validate_lir,
-    validate_pir,
     ValidationResult,
 )
 from pyspiral.domains.registry import (
@@ -56,17 +54,13 @@ from pyspiral.lir.evaluator import (
     LIREvaluator,
     LIREvalOptions,
 )
-from pyspiral.lir.async_evaluator import (
-    LIRAsyncEvaluator,
-    LIRAsyncEvalOptions,
-)
 
 
 #==============================================================================
 # Type Aliases
 #==============================================================================
 
-IRLayer = Literal["AIR", "CIR", "EIR", "LIR", "PIR"]
+IRLayer = Literal["AIR", "CIR", "EIR", "LIR"]
 Document = dict[str, Any]
 
 
@@ -218,11 +212,9 @@ def detect_ir_layer(path: str, doc: Document | None = None) -> IRLayer:
         doc: Optional loaded document
 
     Returns:
-        The detected IR layer (AIR, CIR, EIR, LIR, or PIR)
+        The detected IR layer (AIR, CIR, EIR, or LIR)
     """
     # Check file extension first
-    if ".pir.json" in path or path.endswith(".pir"):
-        return "PIR"
     if ".lir.json" in path or path.endswith(".lir"):
         return "LIR"
     if ".eir.json" in path or path.endswith(".eir"):
@@ -233,8 +225,6 @@ def detect_ir_layer(path: str, doc: Document | None = None) -> IRLayer:
         return "AIR"
 
     # Check path hints
-    if "/pir/" in path or path.startswith("pir/"):
-        return "PIR"
     if "/lir/" in path or path.startswith("lir/"):
         return "LIR"
     if "/eir/" in path or path.startswith("eir/"):
@@ -260,7 +250,7 @@ def load_document(path: str) -> tuple[Document, IRLayer] | None:
 
     # If path doesn't exist, try common extensions
     if not path_obj.exists():
-        for ext in [".air.json", ".cir.json", ".eir.json", ".lir.json", ".pir.json"]:
+        for ext in [".air.json", ".cir.json", ".eir.json", ".lir.json"]:
             test_path = Path(f"{path}{ext}")
             if test_path.exists():
                 path_obj = test_path
@@ -305,10 +295,8 @@ def validate_document(doc: Document, ir: IRLayer) -> ValidationResult:
         return validate_cir(doc)
     elif ir == "EIR":
         return validate_eir(doc)
-    elif ir == "LIR":
+    else:  # LIR
         return validate_lir(doc)
-    else:  # PIR
-        return validate_pir(doc)
 
 
 #==============================================================================
@@ -370,19 +358,11 @@ def evaluate_document(
         result = evaluator.evaluate_program(doc, options=options, effects=effect_registry)
         return result
 
-    elif ir == "LIR":
+    else:  # LIR
         # For LIR, use the CFG evaluator
         options = LIREvalOptions(trace=trace, effects=effect_registry)
         evaluator = LIREvaluator(registry, effect_registry, options)
         result = evaluator.evaluate_document(doc)
-        return result
-
-    else:  # PIR
-        # For PIR, use the async evaluator
-        import asyncio
-        options = LIRAsyncEvalOptions(trace=trace)
-        evaluator = LIRAsyncEvaluator(registry, effect_registry, options)
-        result = asyncio.run(evaluator.evaluate_document(doc))
         return result
 
 
@@ -451,7 +431,7 @@ def run_document(
                 print_msg(f"{Colors.DIM}Using inputs from --inputs-file{Colors.RESET}", Colors.DIM)
         else:
             print_msg(f"{Colors.YELLOW}Warning: Could not read inputs file: {inputs_file}{Colors.RESET}", Colors.YELLOW)
-    elif ir in ("EIR", "LIR", "PIR"):
+    elif ir in ("EIR", "LIR"):
         # Try to load fixture file
         path_obj = Path(path)
         fixture_file = path_obj.parent / f"{path_obj.stem}.inputs.json"
@@ -541,7 +521,6 @@ def show_help() -> None:
     print("  pyspiral examples/cir/algorithms/factorial.cir.json --verbose", Colors.CYAN)
     print("  pyspiral examples/eir/interactive/prompt-uppercase.eir.json --inputs 'hello'", Colors.CYAN)
     print("  pyspiral examples/lir/control-flow/while-cfg.lir.json --trace", Colors.CYAN)
-    print("  pyspiral examples/pir/async/timeout-select.pir.json --inputs 'test'", Colors.CYAN)
     print()
     print_msg(f"{Colors.BOLD}Options:{Colors.RESET}")
     print("  -v, --verbose           Show detailed output")

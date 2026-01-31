@@ -1,8 +1,8 @@
 """
 SPIRAL Task Scheduler for Python
-Cooperative task scheduling for PIR async/parallel execution
+Cooperative task scheduling for EIR async/parallel execution
 
-This module provides task scheduling infrastructure for PIR (Parallel IR) execution,
+This module provides task scheduling infrastructure for EIR async/parallel execution,
 including both default and deterministic schedulers with support for sequential,
 parallel, breadth-first, and depth-first execution modes.
 """
@@ -34,7 +34,7 @@ from pyspiral.types import Value
 
 class TaskScheduler(ABC):
     """
-    TaskScheduler manages async task execution in PIR
+    TaskScheduler manages async task execution in EIR
     Uses cooperative scheduling with async/await-based execution
     """
 
