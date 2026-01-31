@@ -9,14 +9,12 @@ import {
 	validateCIR,
 	validateEIR,
 	validateLIR,
-	validatePIR,
 } from "../src/validator.js";
 import type {
 	AIRDocument,
 	CIRDocument,
 	EIRDocument,
 	LIRDocument,
-	PIRDocument,
 } from "../src/types.js";
 
 //==============================================================================
@@ -179,8 +177,8 @@ const validLIRDoc: LIRDocument = {
 	result: "main",
 };
 
-const validPIRDoc: PIRDocument = {
-	version: "2.0.0",
+const validEIRAsyncDoc: EIRDocument = {
+	version: "1.0.0",
 	nodes: [
 		{
 			id: "taskBody",
@@ -576,8 +574,8 @@ const invalidLIRJumpToNonExistentBlock = {
 	result: "main",
 };
 
-const invalidPIRWrongVersion = {
-	version: "1.0.0", // Should be 2.x.x
+const invalidEIRAsyncWrongVersion = {
+	version: "not-a-semver",
 	nodes: [
 		{
 			id: "x",
@@ -587,8 +585,8 @@ const invalidPIRWrongVersion = {
 	result: "x",
 };
 
-const invalidPIRInvalidCapability = {
-	version: "2.0.0",
+const invalidEIRAsyncInvalidCapability = {
+	version: "1.0.0",
 	capabilities: ["invalidCap"],
 	nodes: [
 		{
@@ -599,13 +597,13 @@ const invalidPIRInvalidCapability = {
 	result: "x",
 };
 
-const invalidPIRExprUnknownKind = {
-	version: "2.0.0",
+const invalidEIRAsyncExprUnknownKind = {
+	version: "1.0.0",
 	nodes: [
 		{
 			id: "x",
 			// @ts-expect-error - intentionally invalid kind
-			expr: { kind: "unknownPIRKind" },
+			expr: { kind: "unknownEIRKind" },
 		},
 	],
 	result: "x",
@@ -1495,25 +1493,25 @@ describe("Validator - Unit Tests", () => {
 	});
 
 	//==========================================================================
-	// PIR Validator Tests
+	// EIR Async Validator Tests
 	//==========================================================================
 
-	describe("validatePIR", () => {
-		it("should accept valid PIR document", () => {
-			const result = validatePIR(validPIRDoc);
+	describe("validateEIR (async)", () => {
+		it("should accept valid EIR async document", () => {
+			const result = validateEIR(validEIRAsyncDoc);
 			assert.ok(result.valid);
 			assert.deepStrictEqual(result.errors, []);
 		});
 
-		it("should require version 2.x.x", () => {
-			const result = validatePIR(invalidPIRWrongVersion);
+		it("should reject invalid version", () => {
+			const result = validateEIR(invalidEIRAsyncWrongVersion);
 			assert.ok(!result.valid);
 			assert.ok(result.errors.some((e) => e.path.includes("version")));
 		});
 
 		it("should accept valid capabilities", () => {
-			const doc: PIRDocument = {
-				version: "2.0.0",
+			const doc: EIRDocument = {
+				version: "1.0.0",
 				capabilities: ["async", "parallel", "channels", "hybrid"],
 				nodes: [
 					{
@@ -1523,30 +1521,30 @@ describe("Validator - Unit Tests", () => {
 				],
 				result: "x",
 			};
-			const result = validatePIR(doc);
+			const result = validateEIR(doc);
 			assert.ok(result.valid);
 		});
 
 		it("should accept any string capability (structural validation only)", () => {
-			const result = validatePIR(invalidPIRInvalidCapability);
+			const result = validateEIR(invalidEIRAsyncInvalidCapability);
 			// Zod schemas accept any string for capabilities; specific capability
 			// validation is a semantic concern not yet implemented
 			assert.ok(result.valid);
 		});
 
 		it("should accept spawn expression", () => {
-			const result = validatePIR(validPIRDoc);
+			const result = validateEIR(validEIRAsyncDoc);
 			assert.ok(result.valid);
 		});
 
 		it("should accept await expression", () => {
-			const result = validatePIR(validPIRDoc);
+			const result = validateEIR(validEIRAsyncDoc);
 			assert.ok(result.valid);
 		});
 
 		it("should accept par expression", () => {
-			const doc: PIRDocument = {
-				version: "2.0.0",
+			const doc: EIRDocument = {
+				version: "1.0.0",
 				nodes: [
 					{
 						id: "x",
@@ -1566,13 +1564,13 @@ describe("Validator - Unit Tests", () => {
 				],
 				result: "x",
 			};
-			const result = validatePIR(doc);
+			const result = validateEIR(doc);
 			assert.ok(result.valid);
 		});
 
 		it("should accept channel expression", () => {
-			const doc: PIRDocument = {
-				version: "2.0.0",
+			const doc: EIRDocument = {
+				version: "1.0.0",
 				nodes: [
 					{
 						id: "x",
@@ -1584,13 +1582,13 @@ describe("Validator - Unit Tests", () => {
 				],
 				result: "x",
 			};
-			const result = validatePIR(doc);
+			const result = validateEIR(doc);
 			assert.ok(result.valid);
 		});
 
 		it("should accept send expression", () => {
-			const doc: PIRDocument = {
-				version: "2.0.0",
+			const doc: EIRDocument = {
+				version: "1.0.0",
 				nodes: [
 					{
 						id: "x",
@@ -1611,13 +1609,13 @@ describe("Validator - Unit Tests", () => {
 				],
 				result: "x",
 			};
-			const result = validatePIR(doc);
+			const result = validateEIR(doc);
 			assert.ok(result.valid, `Expected valid but got errors: ${JSON.stringify(result.errors)}`);
 		});
 
 		it("should accept recv expression", () => {
-			const doc: PIRDocument = {
-				version: "2.0.0",
+			const doc: EIRDocument = {
+				version: "1.0.0",
 				nodes: [
 					{
 						id: "x",
@@ -1633,13 +1631,13 @@ describe("Validator - Unit Tests", () => {
 				],
 				result: "x",
 			};
-			const result = validatePIR(doc);
+			const result = validateEIR(doc);
 			assert.ok(result.valid, `Expected valid but got errors: ${JSON.stringify(result.errors)}`);
 		});
 
 		it("should accept select expression", () => {
-			const doc: PIRDocument = {
-				version: "2.0.0",
+			const doc: EIRDocument = {
+				version: "1.0.0",
 				nodes: [
 					{
 						id: "x",
@@ -1659,13 +1657,13 @@ describe("Validator - Unit Tests", () => {
 				],
 				result: "x",
 			};
-			const result = validatePIR(doc);
+			const result = validateEIR(doc);
 			assert.ok(result.valid);
 		});
 
 		it("should accept race expression", () => {
-			const doc: PIRDocument = {
-				version: "2.0.0",
+			const doc: EIRDocument = {
+				version: "1.0.0",
 				nodes: [
 					{
 						id: "x",
@@ -1685,12 +1683,12 @@ describe("Validator - Unit Tests", () => {
 				],
 				result: "x",
 			};
-			const result = validatePIR(doc);
+			const result = validateEIR(doc);
 			assert.ok(result.valid);
 		});
 
-		it("should reject unknown PIR expression kind", () => {
-			const result = validatePIR(invalidPIRExprUnknownKind);
+		it("should reject unknown EIR expression kind", () => {
+			const result = validateEIR(invalidEIRAsyncExprUnknownKind);
 			assert.ok(!result.valid);
 			assert.ok(result.errors.length > 0);
 		});
@@ -1864,13 +1862,13 @@ describe("Validator - Unit Tests", () => {
 	});
 
 	//==========================================================================
-	// PIR Semantic Checks - Node Reference Validation
+	// EIR Async Semantic Checks - Node Reference Validation
 	//==========================================================================
 
-	describe("PIR Node Reference Validation", () => {
-		it("should reject PIR document with spawn referencing non-existent node", () => {
-			const doc: PIRDocument = {
-				version: "2.0.0",
+	describe("EIR Async Node Reference Validation", () => {
+		it("should reject EIR document with spawn referencing non-existent node", () => {
+			const doc: EIRDocument = {
+				version: "1.0.0",
 				nodes: [
 					{
 						id: "spawned",
@@ -1879,7 +1877,7 @@ describe("Validator - Unit Tests", () => {
 				],
 				result: "spawned",
 			};
-			const result = validatePIR(doc);
+			const result = validateEIR(doc);
 			assert.ok(!result.valid, "Should be invalid due to spawn referencing non-existent node");
 			assert.ok(
 				result.errors.some((e) => e.message.includes("non-existent")),
@@ -1887,9 +1885,9 @@ describe("Validator - Unit Tests", () => {
 			);
 		});
 
-		it("should reject PIR document with await referencing non-existent node", () => {
-			const doc: PIRDocument = {
-				version: "2.0.0",
+		it("should reject EIR document with await referencing non-existent node", () => {
+			const doc: EIRDocument = {
+				version: "1.0.0",
 				nodes: [
 					{
 						id: "awaited",
@@ -1898,7 +1896,7 @@ describe("Validator - Unit Tests", () => {
 				],
 				result: "awaited",
 			};
-			const result = validatePIR(doc);
+			const result = validateEIR(doc);
 			assert.ok(!result.valid, "Should be invalid due to await referencing non-existent node");
 			assert.ok(
 				result.errors.some((e) => e.message.includes("non-existent")),
@@ -1906,9 +1904,9 @@ describe("Validator - Unit Tests", () => {
 			);
 		});
 
-		it("should reject PIR document with par referencing non-existent node", () => {
-			const doc: PIRDocument = {
-				version: "2.0.0",
+		it("should reject EIR document with par referencing non-existent node", () => {
+			const doc: EIRDocument = {
+				version: "1.0.0",
 				nodes: [
 					{
 						id: "branchA",
@@ -1921,7 +1919,7 @@ describe("Validator - Unit Tests", () => {
 				],
 				result: "parallel",
 			};
-			const result = validatePIR(doc);
+			const result = validateEIR(doc);
 			assert.ok(!result.valid, "Should be invalid due to par referencing non-existent node");
 			assert.ok(
 				result.errors.some((e) => e.message.includes("non-existent")),
@@ -1929,9 +1927,9 @@ describe("Validator - Unit Tests", () => {
 			);
 		});
 
-		it("should reject PIR document with send referencing non-existent channel", () => {
-			const doc: PIRDocument = {
-				version: "2.0.0",
+		it("should reject EIR document with send referencing non-existent channel", () => {
+			const doc: EIRDocument = {
+				version: "1.0.0",
 				nodes: [
 					{
 						id: "msg",
@@ -1944,7 +1942,7 @@ describe("Validator - Unit Tests", () => {
 				],
 				result: "sendOp",
 			};
-			const result = validatePIR(doc);
+			const result = validateEIR(doc);
 			assert.ok(!result.valid, "Should be invalid due to send referencing non-existent channel");
 			assert.ok(
 				result.errors.some((e) => e.message.includes("non-existent")),
@@ -1952,9 +1950,9 @@ describe("Validator - Unit Tests", () => {
 			);
 		});
 
-		it("should reject PIR document with recv referencing non-existent channel", () => {
-			const doc: PIRDocument = {
-				version: "2.0.0",
+		it("should reject EIR document with recv referencing non-existent channel", () => {
+			const doc: EIRDocument = {
+				version: "1.0.0",
 				nodes: [
 					{
 						id: "recvOp",
@@ -1963,7 +1961,7 @@ describe("Validator - Unit Tests", () => {
 				],
 				result: "recvOp",
 			};
-			const result = validatePIR(doc);
+			const result = validateEIR(doc);
 			assert.ok(!result.valid, "Should be invalid due to recv referencing non-existent channel");
 			assert.ok(
 				result.errors.some((e) => e.message.includes("non-existent")),
@@ -1971,8 +1969,8 @@ describe("Validator - Unit Tests", () => {
 			);
 		});
 
-		it("should accept PIR document with all valid references", () => {
-			const result = validatePIR(validPIRDoc);
+		it("should accept EIR document with all valid references", () => {
+			const result = validateEIR(validEIRAsyncDoc);
 			assert.ok(result.valid);
 			assert.deepStrictEqual(result.errors, []);
 		});

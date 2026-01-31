@@ -127,10 +127,9 @@ describe("ingestTypeScript", () => {
 		assert.equal(doc.version, "1.0.0");
 	});
 
-	it("force layer PIR sets version 2.0.0", () => {
-		const doc = ingestTypeScript("const x = 1;", { forceLayer: "pir" });
-		assert.equal(doc.version, "2.0.0");
-		assert.deepEqual(doc.capabilities, ["async"]);
+	it("force layer EIR", () => {
+		const doc = ingestTypeScript("const x = 1;", { forceLayer: "eir" });
+		assert.equal(doc.version, "1.0.0");
 	});
 
 	// ===========================================================================

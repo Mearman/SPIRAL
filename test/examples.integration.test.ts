@@ -10,13 +10,12 @@ import { globSync } from "glob";
 import { evaluateProgram, evaluateEIR } from "../src/evaluator.js";
 import { evaluateLIR } from "../src/lir/evaluator.js";
 import { evaluateLIRAsync } from "../src/lir/async-evaluator.js";
-import { AsyncEvaluator } from "../src/async-evaluator.js";
+import { AsyncEvaluator } from "../src/async-evaluator/index.js";
 import { emptyDefs, emptyValueEnv, registerDef } from "../src/env.js";
 import {
 	createDefaultEffectRegistry,
 	createQueuedEffectRegistry,
 } from "../src/effects.js";
-import { createAsyncIOConfig } from "../src/async-io-effects.js";
 import { createCoreRegistry } from "../src/domains/core.js";
 import { createBoolRegistry } from "../src/domains/bool.js";
 import { createListRegistry } from "../src/domains/list.js";
@@ -26,7 +25,6 @@ import {
 	validateCIR,
 	validateEIR,
 	validateLIR,
-	validatePIR,
 } from "../src/validator.js";
 import type { Value, OperatorRegistry } from "../src/types.js";
 
@@ -34,7 +32,7 @@ import type { Value, OperatorRegistry } from "../src/types.js";
 // Types
 //==============================================================================
 
-type Layer = "AIR" | "CIR" | "EIR" | "PIR" | "LIR";
+type Layer = "AIR" | "CIR" | "EIR" | "LIR";
 
 interface ExampleInfo {
 	path: string;
@@ -53,7 +51,7 @@ interface ExampleInfo {
 
 function discoverExamples(): ExampleInfo[] {
 	const root = resolve(import.meta.dirname, "..");
-	const pattern = "examples/**/*.{air,cir,eir,lir,pir}.json";
+	const pattern = "examples/**/*.{air,cir,eir,lir}.json";
 	const files = globSync(pattern, { cwd: root, absolute: true });
 
 	return files.map((filePath) => {
@@ -64,7 +62,7 @@ function discoverExamples(): ExampleInfo[] {
 
 		// Look for companion .inputs.json
 		const inputsPath = filePath.replace(
-			/\.(air|cir|eir|lir|pir)\.json$/,
+			/\.(air|cir|eir|lir)\.json$/,
 			".inputs.json",
 		);
 		const hasInputs = existsSync(inputsPath);
@@ -92,7 +90,6 @@ function detectLayer(filePath: string): Layer {
 	if (name.endsWith(".cir.json")) return "CIR";
 	if (name.endsWith(".eir.json")) return "EIR";
 	if (name.endsWith(".lir.json")) return "LIR";
-	if (name.endsWith(".pir.json")) return "PIR";
 	throw new Error(`Cannot detect layer from filename: ${name}`);
 }
 
@@ -119,8 +116,6 @@ function getValidator(layer: Layer) {
 		return validateEIR;
 	case "LIR":
 		return validateLIR;
-	case "PIR":
-		return validatePIR;
 	}
 }
 
@@ -155,17 +150,21 @@ async function executeExample(example: ExampleInfo): Promise<Value> {
 
 	case "EIR": {
 		const effects = buildEffectRegistry(example);
+		const docStr = JSON.stringify(doc);
+		const isAsync = docStr.includes('"kind":"spawn"') || docStr.includes('"kind":"par"') ||
+			docStr.includes('"kind":"await"') || docStr.includes('"kind":"channel"') ||
+			docStr.includes('"kind":"select"') || docStr.includes('"kind":"race"') ||
+			docStr.includes('"kind":"send"') || docStr.includes('"kind":"recv"');
+		if (isAsync) {
+			const evaluator = new AsyncEvaluator({
+				registry, defs, effectRegistry: effects, asyncIOConfig: {},
+			});
+			return evaluator.evaluateDocument(doc as never);
+		}
 		const { result } = evaluateEIR(doc as never, registry, defs, undefined, {
 			effects,
 		});
 		return result;
-	}
-
-	case "PIR": {
-		const effects = buildEffectRegistry(example);
-		const asyncIOConfig = createAsyncIOConfig();
-		const asyncEval = new AsyncEvaluator({ registry, defs, effectRegistry: effects, asyncIOConfig });
-		return asyncEval.evaluateDocument(doc as never);
 	}
 
 	case "LIR": {

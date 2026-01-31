@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// SPIRAL PIR Async Evaluator Tests - Simple Version
+// SPIRAL EIR Async Evaluator Tests - Simple Version
 
 import { describe, it, before } from "node:test";
 import assert from "node:assert/strict";
@@ -20,9 +20,9 @@ import {
 	type EffectRegistry,
 } from "../src/effects.js";
 import type {
-	PIRDocument,
-	PirHybridNode,
-	PirExpr,
+	EIRDocument,
+	EirHybridNode,
+	EirExpr,
 	Value,
 } from "../src/types.js";
 import {
@@ -71,8 +71,8 @@ before(() => {
 
 function createExprNode(
 	id: string,
-	expr: PirExpr,
-): PirHybridNode {
+	expr: EirExpr,
+): EirHybridNode {
 	return {
 		id,
 		expr,
@@ -80,9 +80,9 @@ function createExprNode(
 }
 
 function createDocument(
-	nodes: PirHybridNode[],
+	nodes: EirHybridNode[],
 	result: string,
-): PIRDocument {
+): EIRDocument {
 	return {
 		version: "1.0.0",
 		airDefs: [],
@@ -95,7 +95,7 @@ function createDocument(
 // Test Suite
 //==============================================================================
 
-describe("PIR Async Evaluator - Simple Tests", () => {
+describe("EIR Async Evaluator - Simple Tests", () => {
 	it("should evaluate simple literal", async () => {
 		const evaluator = createAsyncEvaluator(registry, defs(), effects);
 

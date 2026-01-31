@@ -6,11 +6,9 @@ import assert from "node:assert/strict";
 
 import {
 	validateEIR,
-	validatePIR,
 } from "../src/validator.js";
 import type {
 	EIRDocument,
-	PIRDocument,
 } from "../src/types.js";
 
 //==============================================================================
@@ -331,9 +329,9 @@ const eirTryWithInline: EIRDocument = {
 	result: "main",
 };
 
-// Valid PIR document with inline expressions
-const pirWithInlineExprs: PIRDocument = {
-	version: "2.0.0",
+// Valid EIR document with async inline expressions
+const eirAsyncWithInlineExprs: EIRDocument = {
+	version: "1.0.0",
 	capabilities: ["async"],
 	airDefs: [],
 	nodes: [
@@ -466,24 +464,24 @@ describe("Inline Expressions - Unit Tests", () => {
 	});
 
 	//==========================================================================
-	// PIR Validator Tests
+	// EIR Async Validator Tests
 	//==========================================================================
 
-	describe("PIR Validator", () => {
+	describe("EIR Validator (async)", () => {
 		it("should accept inline expressions in await", () => {
-			const result = validatePIR(pirWithInlineExprs);
+			const result = validateEIR(eirAsyncWithInlineExprs);
 			assert.ok(result.valid);
 			assert.deepStrictEqual(result.errors, []);
 		});
 
 		it("should accept inline expressions in spawn", () => {
-			const result = validatePIR(pirWithInlineExprs);
+			const result = validateEIR(eirAsyncWithInlineExprs);
 			assert.ok(result.valid);
 			assert.deepStrictEqual(result.errors, []);
 		});
 
 		it("should accept inline expressions in timeout/fallback", () => {
-			const result = validatePIR(pirWithInlineExprs);
+			const result = validateEIR(eirAsyncWithInlineExprs);
 			assert.ok(result.valid);
 			assert.deepStrictEqual(result.errors, []);
 		});

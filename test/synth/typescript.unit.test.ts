@@ -13,7 +13,6 @@ import type {
 	CIRDocument,
 	EIRDocument,
 	LIRDocument,
-	PIRDocument,
 	Node,
 } from "../../src/types.js";
 
@@ -907,12 +906,12 @@ describe("TypeScript Synthesizer - Unit Tests", () => {
 	});
 
 	//==========================================================================
-	// PIR Document Tests
+	// EIR Async Document Tests
 	//==========================================================================
 
-	describe("PIR Documents", () => {
+	describe("EIR Async Documents", () => {
 		it("should synthesize par expression with Promise.all", () => {
-			const doc: PIRDocument = {
+			const doc: EIRDocument = {
 				version: "2.0.0",
 				nodes: [
 					{
@@ -935,7 +934,7 @@ describe("TypeScript Synthesizer - Unit Tests", () => {
 		});
 
 		it("should synthesize spawn expression with async", () => {
-			const doc: PIRDocument = {
+			const doc: EIRDocument = {
 				version: "2.0.0",
 				nodes: [
 					{
@@ -954,7 +953,7 @@ describe("TypeScript Synthesizer - Unit Tests", () => {
 		});
 
 		it("should synthesize await expression", () => {
-			const doc: PIRDocument = {
+			const doc: EIRDocument = {
 				version: "2.0.0",
 				nodes: [
 					{
@@ -977,7 +976,7 @@ describe("TypeScript Synthesizer - Unit Tests", () => {
 		});
 
 		it("should synthesize channel expression", () => {
-			const doc: PIRDocument = {
+			const doc: EIRDocument = {
 				version: "2.0.0",
 				nodes: [
 					{
@@ -992,7 +991,7 @@ describe("TypeScript Synthesizer - Unit Tests", () => {
 		});
 
 		it("should synthesize send and recv expressions", () => {
-			const doc: PIRDocument = {
+			const doc: EIRDocument = {
 				version: "2.0.0",
 				nodes: [
 					{
@@ -1020,7 +1019,7 @@ describe("TypeScript Synthesizer - Unit Tests", () => {
 		});
 
 		it("should synthesize select expression with Promise.race", () => {
-			const doc: PIRDocument = {
+			const doc: EIRDocument = {
 				version: "2.0.0",
 				nodes: [
 					{
@@ -1043,7 +1042,7 @@ describe("TypeScript Synthesizer - Unit Tests", () => {
 		});
 
 		it("should synthesize race expression with Promise.race", () => {
-			const doc: PIRDocument = {
+			const doc: EIRDocument = {
 				version: "2.0.0",
 				nodes: [
 					{
