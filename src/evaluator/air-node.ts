@@ -106,11 +106,11 @@ function evalNodeSimple(ctx: ProgramCtx, expr: Expr, env: ValueEnv): NodeEvalRes
 	return { value: ctx.evaluator.evaluateWithState(expr, env, state), env };
 }
 
-const PIR_KINDS = new Set(["par", "spawn", "await", "channel", "send", "recv", "select", "race"]);
+const ASYNC_KINDS = new Set(["par", "spawn", "await", "channel", "send", "recv", "select", "race"]);
 
 function evalNodeRemainder(expr: Expr, env: ValueEnv): NodeEvalResult {
-	if (PIR_KINDS.has(expr.kind)) {
-		return { value: errorVal(ErrorCodes.DomainError, "PIR expressions require AsyncEvaluator: " + expr.kind), env };
+	if (ASYNC_KINDS.has(expr.kind)) {
+		return { value: errorVal(ErrorCodes.DomainError, "Async expressions require AsyncEvaluator: " + expr.kind), env };
 	}
 	return { value: errorVal(ErrorCodes.DomainError, "Unsupported expression kind: " + expr.kind), env };
 }
