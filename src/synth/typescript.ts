@@ -3,7 +3,7 @@
 
 import type {
 	AIRDocument, CIRDocument, EIRDocument,
-	LIRDocument,
+	LIRDocument, PIRDocument,
 } from "../types.js";
 import type { TypeScriptSynthOptions } from "./ts-synth-shared.js";
 import { synthesizeExprBased } from "./ts-synth-expr.js";
@@ -11,7 +11,7 @@ import { synthesizeLIR } from "./ts-synth-lir.js";
 
 export type { TypeScriptSynthOptions } from "./ts-synth-shared.js";
 
-type Document = AIRDocument | CIRDocument | EIRDocument | LIRDocument;
+type Document = AIRDocument | CIRDocument | EIRDocument | LIRDocument | PIRDocument;
 
 /**
  * Type guard: checks whether a Document is a LIR document
@@ -24,8 +24,8 @@ function isLIRDocument(doc: Document): doc is LIRDocument {
 /**
  * Type guard: checks whether a Document is an expression-based document (AIR/CIR/EIR).
  */
-function isExprBasedDocument(doc: Document): doc is AIRDocument | CIRDocument | EIRDocument {
-	return "nodes" in doc && "airDefs" in doc && Array.isArray(doc.airDefs);
+function isExprBasedDocument(doc: Document): doc is AIRDocument | CIRDocument | EIRDocument | PIRDocument {
+	return "nodes" in doc && doc.nodes.some((n) => "expr" in n);
 }
 
 /**
