@@ -9,10 +9,12 @@ import {
 	cirSchema,
 	eirSchema,
 	lirSchema,
+	pirSchema,
 	isAIRSchema,
 	isCIRSchema,
 	isEIRSchema,
 	isLIRSchema,
+	isPIRSchema,
 } from "../src/schemas.js";
 
 //==============================================================================
@@ -228,6 +230,62 @@ describe("Schemas - Unit Tests", () => {
 			assert.ok(lirSchema.properties);
 			assert.ok(lirSchema.properties.capabilities);
 			assert.strictEqual(lirSchema.properties.capabilities.type, "array");
+		});
+	});
+
+	//==========================================================================
+	// Schema Structure Tests - PIR
+	//==========================================================================
+
+	describe("PIR Schema Structure", () => {
+		it("should have $schema property with draft-07", () => {
+			assert.strictEqual(pirSchema.$schema, "http://json-schema.org/draft-07/schema#");
+		});
+
+		it("should have type object", () => {
+			assert.strictEqual(pirSchema.type, "object");
+		});
+
+		it("should require version, nodes, and result", () => {
+			assert.ok(Array.isArray(pirSchema.required));
+			assert.ok(pirSchema.required.includes("version"));
+			assert.ok(pirSchema.required.includes("nodes"));
+			assert.ok(pirSchema.required.includes("result"));
+		});
+
+		it("should have version property with PIR version pattern", () => {
+			assert.ok(pirSchema.properties);
+			assert.ok(pirSchema.properties.version);
+			assert.strictEqual(pirSchema.properties.version.type, "string");
+			assert.ok(pirSchema.properties.version.pattern);
+		});
+
+		it("should have nodes property as array", () => {
+			assert.ok(pirSchema.properties);
+			assert.ok(pirSchema.properties.nodes);
+			assert.strictEqual(pirSchema.properties.nodes.type, "array");
+		});
+
+		it("should have result property as string", () => {
+			assert.ok(pirSchema.properties);
+			assert.ok(pirSchema.properties.result);
+			assert.strictEqual(pirSchema.properties.result.type, "string");
+		});
+
+		it("should have optional capabilities property", () => {
+			assert.ok(pirSchema.properties);
+			assert.ok(pirSchema.properties.capabilities);
+			assert.strictEqual(pirSchema.properties.capabilities.type, "array");
+		});
+
+		it("should have definitions object", () => {
+			assert.ok(pirSchema.definitions);
+			assert.strictEqual(typeof pirSchema.definitions, "object");
+		});
+
+		it("should have definitions for recursive types", () => {
+			assert.ok(pirSchema.definitions);
+			assert.ok(Object.keys(pirSchema.definitions).length >= 2);
 		});
 	});
 
@@ -448,6 +506,36 @@ describe("Schemas - Unit Tests", () => {
 	});
 
 	//==========================================================================
+	// Type Guard Tests - isPIRSchema
+	//==========================================================================
+
+	describe("isPIRSchema", () => {
+		it("should return true for valid PIR schema object", () => {
+			assert.strictEqual(isPIRSchema({ $schema: "http://json-schema.org/draft-07/schema#", title: "PIR Document" }), true);
+		});
+
+		it("should return false for object without $schema", () => {
+			assert.strictEqual(isPIRSchema(objectWithoutSchema), false);
+		});
+
+		it("should return false for null", () => {
+			assert.strictEqual(isPIRSchema(null), false);
+		});
+
+		it("should return false for undefined", () => {
+			assert.strictEqual(isPIRSchema(undefined), false);
+		});
+
+		it("should return false for string", () => {
+			assert.strictEqual(isPIRSchema("string"), false);
+		});
+
+		it("should return false for number", () => {
+			assert.strictEqual(isPIRSchema(123), false);
+		});
+	});
+
+	//==========================================================================
 	// Schema Definition Content Tests
 	//==========================================================================
 
@@ -475,14 +563,15 @@ describe("Schemas - Unit Tests", () => {
 		});
 
 		it("all schemas should have expr union definition", () => {
-			for (const [name, schema] of [["AIR", airSchema], ["CIR", cirSchema], ["EIR", eirSchema], ["LIR", lirSchema]] as const) {
-				const exprDef = findUnionDef(schema as Record<string, any>, 20);
-				assert.ok(exprDef, `${name} should have an expr union definition`);
+			for (const [name, schema] of [["AIR", airSchema], ["CIR", cirSchema], ["EIR", eirSchema], ["LIR", lirSchema], ["PIR", pirSchema]] as const) {
+				const defs = (schema as Record<string, any>).definitions;
+				const hasExprUnion = Object.values(defs).some((def: any) => def.anyOf && def.anyOf.length >= 20);
+				assert.ok(hasExprUnion, `${name} should have an expr union definition`);
 			}
 		});
 
 		it("all schemas should have type union definition with 16 variants", () => {
-			for (const [name, schema] of [["AIR", airSchema], ["CIR", cirSchema], ["EIR", eirSchema], ["LIR", lirSchema]] as const) {
+			for (const [name, schema] of [["AIR", airSchema], ["CIR", cirSchema], ["EIR", eirSchema], ["LIR", lirSchema], ["PIR", pirSchema]] as const) {
 				const typeDef = findUnionDef(schema as Record<string, any>, 16);
 				assert.ok(typeDef, `${name} should have a type union definition with 16 variants`);
 			}
@@ -510,8 +599,12 @@ describe("Schemas - Unit Tests", () => {
 			assert.strictEqual(lirSchema.additionalProperties, false);
 		});
 
+		it("PIR schema should use additionalProperties false", () => {
+			assert.strictEqual(pirSchema.additionalProperties, false);
+		});
+
 		it("all schemas should have version, nodes, result properties", () => {
-			for (const [name, schema] of [["AIR", airSchema], ["CIR", cirSchema], ["EIR", eirSchema], ["LIR", lirSchema]] as const) {
+			for (const [name, schema] of [["AIR", airSchema], ["CIR", cirSchema], ["EIR", eirSchema], ["LIR", lirSchema], ["PIR", pirSchema]] as const) {
 				assert.ok((schema as Record<string, any>).properties.version, `${name} should have version`);
 				assert.ok((schema as Record<string, any>).properties.nodes, `${name} should have nodes`);
 				assert.ok((schema as Record<string, any>).properties.result, `${name} should have result`);
@@ -528,9 +621,10 @@ describe("Schemas - Unit Tests", () => {
 			assert.strictEqual(airSchema.$schema, cirSchema.$schema);
 			assert.strictEqual(airSchema.$schema, eirSchema.$schema);
 			assert.strictEqual(airSchema.$schema, lirSchema.$schema);
+			assert.strictEqual(airSchema.$schema, pirSchema.$schema);
 		});
 
-		it("all schemas should have semver pattern for version", () => {
+		it("AIR/CIR/EIR/LIR schemas should share the same semver pattern", () => {
 			assert.ok(airSchema.properties.version.pattern);
 			assert.ok(cirSchema.properties.version.pattern);
 			assert.ok(eirSchema.properties.version.pattern);
@@ -549,11 +643,20 @@ describe("Schemas - Unit Tests", () => {
 			);
 		});
 
+		it("PIR schema should have its own version pattern", () => {
+			assert.ok(pirSchema.properties.version.pattern);
+			assert.notStrictEqual(
+				pirSchema.properties.version.pattern,
+				airSchema.properties.version.pattern,
+			);
+		});
+
 		it("all schemas should have result as string type", () => {
 			assert.strictEqual(airSchema.properties.result.type, "string");
 			assert.strictEqual(cirSchema.properties.result.type, "string");
 			assert.strictEqual(eirSchema.properties.result.type, "string");
 			assert.strictEqual(lirSchema.properties.result.type, "string");
+			assert.strictEqual(pirSchema.properties.result.type, "string");
 		});
 	});
 });
