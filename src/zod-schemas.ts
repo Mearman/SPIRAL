@@ -567,7 +567,28 @@ export const AirExprSchema: z.ZodType<Expr> = z.union([
 	PredicateExprSchema,
 ] as [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]);
 
-/** CIR expression variants: AIR plus lambda/callExpr/fix/do. */
+/** CIR-only expression variants: AIR plus lambda/callExpr/fix/do. No PIR extensions. */
+export const CirExprSchema: z.ZodType<Expr> = z.union([
+	LitExprSchema,
+	RefExprSchema,
+	VarExprSchema,
+	CallExprSchema,
+	IfExprSchema,
+	LetExprSchema,
+	AirRefExprSchema,
+	PredicateExprSchema,
+	LambdaExprSchema,
+	CallFnExprSchema,
+	FixExprSchema,
+	DoExprSchema,
+] as [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]);
+
+/**
+ * Wide expression union used by the recursive stringOrExpr() helper.
+ * Includes all expression kinds (AIR+CIR+PIR) because Zod's recursive
+ * schema model prevents per-layer restriction of nested inline expressions.
+ * For layer-specific top-level validation, use AirExprSchema, CirExprSchema, etc.
+ */
 export const ExprSchema: z.ZodType<Expr> = z.union([
 	LitExprSchema,
 	RefExprSchema,
@@ -656,7 +677,7 @@ export const PirExprSchema: z.ZodType<PirExpr> = z.union([
 export const LirInsAssignSchema: z.ZodType<LirInsAssign> = z.object({
 	kind: z.literal("assign"),
 	target: z.string(),
-	value: ExprSchema,
+	value: CirExprSchema,
 });
 
 export const LirInsCallSchema = z.object({
@@ -751,20 +772,24 @@ export const LirBlockSchema: z.ZodType<LirBlock> = z.object({
 //==============================================================================
 
 export const AirInstructionSchema: z.ZodType<AirInstruction> = z.union([
-	z.object({ kind: z.literal("assign"), target: z.string(), value: ExprSchema }),
+	z.object({ kind: z.literal("assign"), target: z.string(), value: AirExprSchema }),
 	z.object({ kind: z.literal("op"), target: z.string(), ns: z.string(), name: z.string(), args: z.array(z.string()) }),
 	LirInsPhiSchema,
 ]);
 
-export const CirInstructionSchema: z.ZodType<CirInstruction> = AirInstructionSchema;
+export const CirInstructionSchema: z.ZodType<CirInstruction> = z.union([
+	z.object({ kind: z.literal("assign"), target: z.string(), value: CirExprSchema }),
+	z.object({ kind: z.literal("op"), target: z.string(), ns: z.string(), name: z.string(), args: z.array(z.string()) }),
+	LirInsPhiSchema,
+]);
 
 export const EirBlockInstructionSchema: z.ZodType<EirInstruction> = z.union([
-	z.object({ kind: z.literal("assign"), target: z.string(), value: ExprSchema }),
+	z.object({ kind: z.literal("assign"), target: z.string(), value: EirExprSchema }),
 	z.object({ kind: z.literal("op"), target: z.string(), ns: z.string(), name: z.string(), args: z.array(z.string()) }),
 	LirInsPhiSchema,
 	z.object({ kind: z.literal("effect"), target: z.string(), op: z.string(), args: z.array(z.string()) }),
 	z.object({ kind: z.literal("assignRef"), target: z.string(), value: z.string() }),
-]);
+]) as z.ZodType<EirInstruction>;
 
 export const AirBlockSchema: z.ZodType<AirBlock> = z.object({
 	id: z.string(),
@@ -894,9 +919,23 @@ function blockNodeSchema<B>(blockSchema: z.ZodType<B>): z.ZodType<BlockNode<B>> 
 }
 
 export const AirHybridNodeSchema: z.ZodType<AirHybridNode> = z.union([AirExprNodeSchema, blockNodeSchema(AirBlockSchema)]) as z.ZodType<AirHybridNode>;
-export const CirHybridNodeSchema: z.ZodType<CirHybridNode> = z.union([ExprNodeSchema, blockNodeSchema(CirBlockSchema)]);
+/** Expression-based node for CIR layer (no PIR expressions) */
+export const CirExprNodeSchema: z.ZodType<ExprNode> = z.object({
+	id: z.string(),
+	type: TypeSchema.optional(),
+	expr: CirExprSchema,
+}) as z.ZodType<ExprNode>;
+
+export const CirHybridNodeSchema: z.ZodType<CirHybridNode> = z.union([CirExprNodeSchema, blockNodeSchema(CirBlockSchema)]) as z.ZodType<CirHybridNode>;
 export const EirHybridNodeSchema: z.ZodType<EirHybridNode> = z.union([EirExprNodeSchema, blockNodeSchema(EirBlockSchema)]) as z.ZodType<EirHybridNode>;
-export const LirHybridNodeSchema: z.ZodType<LirHybridNode> = z.union([ExprNodeSchema, blockNodeSchema(LirBlockSchema)]);
+/** Expression-based node for LIR layer (no PIR expressions) */
+export const LirExprNodeSchema: z.ZodType<ExprNode> = z.object({
+	id: z.string(),
+	type: TypeSchema.optional(),
+	expr: CirExprSchema,
+}) as z.ZodType<ExprNode>;
+
+export const LirHybridNodeSchema: z.ZodType<LirHybridNode> = z.union([LirExprNodeSchema, blockNodeSchema(LirBlockSchema)]) as z.ZodType<LirHybridNode>;
 export const PirHybridNodeSchema: z.ZodType<PirHybridNode> = z.union([PirExprNodeSchema, blockNodeSchema(PirBlockSchema)]) as z.ZodType<PirHybridNode>;
 
 //==============================================================================
@@ -916,7 +955,7 @@ export const AIRDefSchema: z.ZodType<AIRDef> = z.object({
 	name: z.string(),
 	params: z.array(z.string()),
 	result: TypeSchema,
-	body: ExprSchema,
+	body: AirExprSchema,
 });
 
 //==============================================================================
@@ -930,7 +969,7 @@ export const AIRDocumentSchema: z.ZodType<AIRDocument> = z.object({
 	airDefs: z.array(AIRDefSchema),
 	nodes: z.array(AirHybridNodeSchema),
 	result: z.string(),
-});
+}).describe("AIRDocument");
 
 export const CIRDocumentSchema: z.ZodType<CIRDocument> = z.object({
 	version: SemVer,
@@ -939,7 +978,7 @@ export const CIRDocumentSchema: z.ZodType<CIRDocument> = z.object({
 	airDefs: z.array(AIRDefSchema),
 	nodes: z.array(CirHybridNodeSchema),
 	result: z.string(),
-});
+}).describe("CIRDocument");
 
 export const EIRDocumentSchema: z.ZodType<EIRDocument> = z.object({
 	version: SemVer,
@@ -948,7 +987,7 @@ export const EIRDocumentSchema: z.ZodType<EIRDocument> = z.object({
 	airDefs: z.array(AIRDefSchema),
 	nodes: z.array(EirHybridNodeSchema),
 	result: z.string(),
-});
+}).describe("EIRDocument");
 
 export const LIRDocumentSchema: z.ZodType<LIRDocument> = z.object({
 	version: SemVer,
@@ -957,7 +996,7 @@ export const LIRDocumentSchema: z.ZodType<LIRDocument> = z.object({
 	airDefs: z.array(AIRDefSchema).optional(),
 	nodes: z.array(LirHybridNodeSchema),
 	result: z.string(),
-});
+}).describe("LIRDocument");
 
 export const PIRDocumentSchema: z.ZodType<PIRDocument> = z.object({
 	version: PirVersion,
@@ -966,4 +1005,4 @@ export const PIRDocumentSchema: z.ZodType<PIRDocument> = z.object({
 	airDefs: z.array(AIRDefSchema).optional(),
 	nodes: z.array(PirHybridNodeSchema),
 	result: z.string(),
-});
+}).describe("PIRDocument");
