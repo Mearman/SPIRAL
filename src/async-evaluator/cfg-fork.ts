@@ -8,7 +8,7 @@ import {
 	errorVal,
 	isError,
 } from "../types.js";
-import type { PirBlock } from "../types.js";
+import type { EirBlock } from "../types.js";
 import type { AsyncEvalContext } from "./types.js";
 
 //==============================================================================
@@ -21,19 +21,19 @@ interface ContinuationState {
 }
 
 interface ForkBranchInput {
-	block: PirBlock;
-	blockMap: Map<string, PirBlock>;
+	block: EirBlock;
+	blockMap: Map<string, EirBlock>;
 	continuation: string;
 	contState: ContinuationState;
 }
 
 interface ContinuationInput {
-	blockMap: Map<string, PirBlock>;
+	blockMap: Map<string, EirBlock>;
 	contState: ContinuationState;
 	continuation: string;
 }
 
-async function runBranchInstructions(block: PirBlock, ctx: AsyncEvalContext): Promise<Value | null> {
+async function runBranchInstructions(block: EirBlock, ctx: AsyncEvalContext): Promise<Value | null> {
 	for (const instr of block.instructions) {
 		const result = await ctx.svc.execInstruction(instr, ctx);
 		if (isError(result)) return result;
@@ -42,7 +42,7 @@ async function runBranchInstructions(block: PirBlock, ctx: AsyncEvalContext): Pr
 }
 
 async function runContinuationBlock(
-	block: PirBlock,
+	block: EirBlock,
 	input: ContinuationInput,
 	ctx: AsyncEvalContext,
 ): Promise<Value> {
@@ -97,7 +97,7 @@ function spawnForkBranch(input: ForkBranchInput, taskId: string, ctx: AsyncEvalC
 
 interface ForkSetup {
 	term: { branches: { block: string; taskId: string }[]; continuation: string };
-	blockMap: Map<string, PirBlock>;
+	blockMap: Map<string, EirBlock>;
 	contState: ContinuationState;
 }
 
@@ -126,7 +126,7 @@ function spawnForkBranches(setup: ForkSetup, ctx: AsyncEvalContext): string[] {
 
 export async function execFork(
 	term: { kind: "fork"; branches: { block: string; taskId: string }[]; continuation: string },
-	blockMap: Map<string, PirBlock>,
+	blockMap: Map<string, EirBlock>,
 	ctx: AsyncEvalContext,
 ): Promise<{ done: boolean; value?: Value; nextBlock?: string }> {
 	const contState: ContinuationState = { executed: false, result: undefined };

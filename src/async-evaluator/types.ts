@@ -7,11 +7,11 @@ import type { AsyncIOEffectConfig } from "../async-io-effects.js";
 import type {
 	BlockNode,
 	Value,
-	PirHybridNode,
-	PirExpr,
-	PirBlock,
-	PirInstruction,
-	PirTerminator,
+	EirHybridNode,
+	EirExpr,
+	EirBlock,
+	EirInstruction,
+	EirTerminator,
 	AsyncEvalState,
 } from "../types.js";
 import type { TaskScheduler } from "../scheduler.js";
@@ -37,7 +37,7 @@ export interface AsyncEvalContext {
 	trace: boolean;
 	concurrency: "sequential" | "parallel" | "speculative";
 	state: AsyncEvalState;
-	nodeMap: Map<string, PirHybridNode>;
+	nodeMap: Map<string, EirHybridNode>;
 	nodeValues: Map<string, Value>;
 	readonly svc: EvalServices;
 }
@@ -52,26 +52,26 @@ export interface EvalServices {
 	readonly effectRegistry: EffectRegistry;
 	readonly asyncIOConfig: AsyncIOEffectConfig | undefined;
 	evalExpr: (
-		expr: PirExpr,
+		expr: EirExpr,
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	) => Promise<Value>;
 	resolveNodeRef: (
-		ref: string | PirExpr,
+		ref: string | EirExpr,
 		env: ValueEnv,
 		context: AsyncEvalContext,
 	) => Promise<Value>;
 	evalBlockNode: (
-		node: BlockNode<PirBlock>,
+		node: BlockNode<EirBlock>,
 		context: AsyncEvalContext,
 	) => Promise<{ value: Value; state: AsyncEvalState }>;
 	execInstruction: (
-		instr: PirInstruction,
+		instr: EirInstruction,
 		context: AsyncEvalContext,
 	) => Promise<Value>;
 	execTerminator: (
-		term: PirTerminator,
-		blockMap: Map<string, PirBlock>,
+		term: EirTerminator,
+		blockMap: Map<string, EirBlock>,
 		context: AsyncEvalContext,
 	) => Promise<{ done: boolean; value?: Value; nextBlock?: string }>;
 }

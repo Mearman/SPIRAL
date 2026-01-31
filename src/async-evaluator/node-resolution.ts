@@ -11,7 +11,7 @@ import {
 	errorVal,
 	isError,
 } from "../types.js";
-import type { PirExpr } from "../types.js";
+import type { EirExpr } from "../types.js";
 import type { AsyncEvalContext } from "./types.js";
 
 //==============================================================================
@@ -19,7 +19,7 @@ import type { AsyncEvalContext } from "./types.js";
 //==============================================================================
 
 export async function resolveNodeRef(
-	ref: string | PirExpr,
+	ref: string | EirExpr,
 	env: ValueEnv,
 	ctx: AsyncEvalContext,
 ): Promise<Value> {

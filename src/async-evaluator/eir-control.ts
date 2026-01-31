@@ -186,7 +186,7 @@ export function evalRefExpr(
 
 interface TryBodyInput {
 	bodyId: string;
-	bodyNode: import("../types.js").PirHybridNode;
+	bodyNode: import("../types.js").EirHybridNode;
 }
 
 async function evalAndCacheBody(

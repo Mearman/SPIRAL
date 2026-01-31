@@ -1,4 +1,4 @@
-// PIR Expression Handlers: par, spawn, await, channel, send, recv, select, race
+// EIR Async Expression Handlers: par, spawn, await, channel, send, recv, select, race
 
 import { ErrorCodes } from "../errors.js";
 import {
@@ -15,12 +15,12 @@ import {
 	isError,
 } from "../types.js";
 import type {
-	PirParExpr,
-	PirSpawnExpr,
-	PirAwaitExpr,
-	PirChannelExpr,
-	PirSendExpr,
-	PirRecvExpr,
+	EirParExpr,
+	EirSpawnExpr,
+	EirAwaitExpr,
+	EirChannelExpr,
+	EirSendExpr,
+	EirRecvExpr,
 	AsyncEvalState,
 } from "../types.js";
 import { AsyncChannelStore } from "../async-effects.js";
@@ -28,7 +28,7 @@ import type { ValueEnv } from "../env.js";
 import type { AsyncEvalContext } from "./types.js";
 
 // Re-export select and race
-export { evalSelectExpr, evalRaceExpr } from "./pir-select.js";
+export { evalSelectExpr, evalRaceExpr } from "./async-select.js";
 
 //==============================================================================
 // Channel helper
@@ -61,7 +61,7 @@ async function evalParBranch(
 }
 
 export async function evalPar(
-	expr: PirParExpr,
+	expr: EirParExpr,
 	env: ValueEnv,
 	ctx: AsyncEvalContext,
 ): Promise<Value> {
@@ -83,7 +83,7 @@ export async function evalPar(
 //==============================================================================
 
 export function evalSpawnExpr(
-	expr: PirSpawnExpr,
+	expr: EirSpawnExpr,
 	env: ValueEnv,
 	ctx: AsyncEvalContext,
 ): Value {
@@ -116,7 +116,7 @@ function wrapAwaitResult(value: Value, returnIndex: boolean | undefined, index: 
 }
 
 interface TimeoutInput {
-	expr: PirAwaitExpr;
+	expr: EirAwaitExpr;
 	env: ValueEnv;
 	ctx: AsyncEvalContext;
 }
@@ -170,14 +170,14 @@ async function evalAwaitWithTimeout(input: TimeoutInput, futureTaskId: string): 
 // Await
 //==============================================================================
 
-function handleReadyFuture(futureValue: Value & { kind: "future" }, expr: PirAwaitExpr): Value | null {
+function handleReadyFuture(futureValue: Value & { kind: "future" }, expr: EirAwaitExpr): Value | null {
 	if (futureValue.status === "error") return errorVal(ErrorCodes.DomainError, "Future completed with error");
 	if (futureValue.status === "ready") return wrapAwaitResult(futureValue.value ?? voidVal(), expr.returnIndex, 0);
 	return null;
 }
 
 export async function evalAwaitExpr(
-	expr: PirAwaitExpr,
+	expr: EirAwaitExpr,
 	env: ValueEnv,
 	ctx: AsyncEvalContext,
 ): Promise<Value> {
@@ -195,7 +195,7 @@ export async function evalAwaitExpr(
 //==============================================================================
 
 export async function evalChannelExpr(
-	expr: PirChannelExpr,
+	expr: EirChannelExpr,
 	env: ValueEnv,
 	ctx: AsyncEvalContext,
 ): Promise<Value> {
@@ -214,7 +214,7 @@ export async function evalChannelExpr(
 //==============================================================================
 
 export async function evalSendExpr(
-	expr: PirSendExpr,
+	expr: EirSendExpr,
 	env: ValueEnv,
 	ctx: AsyncEvalContext,
 ): Promise<Value> {
@@ -236,7 +236,7 @@ export async function evalSendExpr(
 //==============================================================================
 
 export async function evalRecvExpr(
-	expr: PirRecvExpr,
+	expr: EirRecvExpr,
 	env: ValueEnv,
 	ctx: AsyncEvalContext,
 ): Promise<Value> {
