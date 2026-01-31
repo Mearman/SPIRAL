@@ -711,8 +711,8 @@ export const LirTerminatorSchema: z.ZodType<LirTerminator> = z.union([
 export const LirBlockSchema: z.ZodType<LirBlock> = z.object({
 	id: z.string(),
 	instructions: z.array(LirInstructionSchema),
-	get terminator() { return EirTerminatorZodSchema; },
-}).meta({ id: "LirBlock", title: "Basic Block", description: "Sequence of instructions ending with a control-flow terminator" }) as z.ZodType<LirBlock>;
+	terminator: LirTerminatorSchema,
+}).meta({ id: "LirBlock", title: "Basic Block", description: "Sequence of instructions ending with a control-flow terminator" });
 
 //==============================================================================
 // Zod Schemas - Layer-Specific Block Instructions

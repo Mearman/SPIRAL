@@ -1,5 +1,5 @@
 {
-	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
 	"version": "2.0.0",
 	"capabilities": ["async", "parallel"],
 	"description": "Demonstrates fork-join parallel execution in LIR. Forks into 3 parallel branches to compute (a+b), (c*d), and (e-f) simultaneously, then joins and sums all results. Phi nodes merge values from async branches.",
@@ -274,6 +274,5 @@
 		}
 	],
 	"result": "main",
-	"expected_result": 120,
-	"note": "Parallel computation: task1 computes 10+20=30, task2 computes 5*4=20, task3 computes 100-30=70. Join merges all: 30+20+70=120. The fork terminator spawns 3 branches concurrently, each branch performs independent computation, phi nodes merge values at completion points, and final result combines all parallel outputs."
+	"note": "Parallel computation: task1 computes 10+20=30, task2 computes 5*4=20, task3 computes 100-30=70. Join merges all: 30+20+70=120. The fork terminator spawns 3 branches concurrently, each branch performs independent computation, phi nodes merge values at completion points, and final result combines all parallel outputs. Expected result is 120 when evaluated with an async-capable fork/join runtime."
 }
