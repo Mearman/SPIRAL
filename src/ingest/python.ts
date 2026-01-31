@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // SPIRAL Python Ingest
 // Stub for future Python source code ingestion
 
@@ -14,9 +13,6 @@ export interface PythonIngestOptions {
  *
  * @throws Always throws - Python ingest is not yet implemented.
  */
-export function ingestPython(
-	_source: string,
-	_options?: PythonIngestOptions,
-): never {
+export function ingestPython(): never {
 	throw new Error("Python ingest is not yet implemented");
 }

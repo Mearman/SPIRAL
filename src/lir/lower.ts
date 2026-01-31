@@ -168,7 +168,7 @@ function lowerNode(args: LowerNodeArgs): BlockResult {
 	};
 
 	if (isAsyncOnlyExpr(node.expr)) {
-		return lowerAsyncExpr(p, node.expr, lowerNode);
+		return lowerAsyncExpr(p, node.expr);
 	}
 
 	if (isEirOnlyExpr(node.expr)) {
