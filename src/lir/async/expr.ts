@@ -2,7 +2,7 @@
 
 import { ErrorCodes } from "../../errors.js";
 import { lookupValue, type ValueEnv } from "../../env.js";
-import type { Expr, Value } from "../../types.js";
+import type { Expr, EirExpr, Value } from "../../types.js";
 import { errorVal, intVal, voidVal } from "../../types.js";
 
 /**
@@ -31,7 +31,7 @@ function evaluateLitExpr(expr: Expr & { kind: "lit" }): Value {
  * Evaluate a simple CIR expression (for LIR assign instruction).
  * Only supports literals and variables for now.
  */
-export function evaluateExpr(expr: Expr, env: ValueEnv): Value {
+export function evaluateExpr(expr: Expr | EirExpr, env: ValueEnv): Value {
 	switch (expr.kind) {
 	case "lit":
 		return evaluateLitExpr(expr);

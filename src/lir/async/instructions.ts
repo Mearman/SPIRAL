@@ -62,6 +62,8 @@ function dispatchAsyncInstruction(
 		return executeChannelOpInstruction(ins, ctx.state);
 	case "await":
 		return executeAwaitInstruction(ins, ctx.state);
+	case "assign":
+		return handleAssign(ins.target, ins.value, ctx);
 	default:
 		return dispatchLirInstruction(ins, ctx);
 	}

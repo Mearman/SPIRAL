@@ -13,7 +13,7 @@ import {
 	isError,
 	isBlockNode,
 } from "../types.js";
-import type { EirInsChannelOp, Expr } from "../types.js";
+import type { EirInsChannelOp, EirExpr } from "../types.js";
 import { getChannels } from "./async-handlers.js";
 import type { AsyncEvalContext } from "./types.js";
 
@@ -36,7 +36,7 @@ function updateRefCell(target: string, value: Value, ctx: AsyncEvalContext): voi
 }
 
 export async function execAssign(
-	instr: { kind: "assign"; target: string; value: Expr },
+	instr: { kind: "assign"; target: string; value: EirExpr },
 	ctx: AsyncEvalContext,
 ): Promise<Value> {
 	const value = await ctx.svc.evalExpr(instr.value, ctx.state.env, ctx);

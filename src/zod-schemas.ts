@@ -132,6 +132,7 @@ export type AirInstruction = AirInsAssign | AirInsOp | AirInsPhi;
 
 export type CirInstruction = AirInstruction;
 
+export interface EirInsAssign { kind: "assign"; target: string; value: EirExpr }
 export type EirInsEffect = LirInsEffect;
 export type EirInsAssignRef = LirInsAssignRef;
 
@@ -139,7 +140,7 @@ export type EirInsAssignRef = LirInsAssignRef;
 export interface EirInsSpawn { kind: "spawn"; target: string; entry: string; args?: string[] | undefined }
 export interface EirInsChannelOp { kind: "channelOp"; op: "send" | "recv" | "trySend" | "tryRecv"; target?: string | undefined; channel: string; value?: string | undefined }
 export interface EirInsAwait { kind: "await"; target: string; future: string }
-export type EirInstruction = CirInstruction | EirInsEffect | EirInsAssignRef | EirInsSpawn | EirInsChannelOp | EirInsAwait;
+export type EirInstruction = EirInsAssign | AirInsOp | AirInsPhi | EirInsEffect | EirInsAssignRef | EirInsSpawn | EirInsChannelOp | EirInsAwait;
 
 // EIR async terminators
 export interface EirTermFork { kind: "fork"; branches: { block: string; taskId: string }[]; continuation: string }
@@ -730,13 +731,13 @@ export const CirInstructionSchema: z.ZodType<CirInstruction> = z.union([
 	LirInsPhiSchema,
 ]);
 
-export const EirBlockInstructionSchema: z.ZodType<EirInstruction> = z.union([
+export const EirBlockInstructionSchema = z.union([
 	z.object({ kind: z.literal("assign"), target: z.string(), value: EirExprSchema }),
 	z.object({ kind: z.literal("op"), target: z.string(), ns: z.string(), name: z.string(), args: z.array(z.string()) }),
 	LirInsPhiSchema,
 	z.object({ kind: z.literal("effect"), target: z.string(), op: z.string(), args: z.array(z.string()) }),
 	z.object({ kind: z.literal("assignRef"), target: z.string(), value: z.string() }),
-]) as z.ZodType<EirInstruction>;
+]);
 
 export const AirBlockSchema: z.ZodType<AirBlock> = z.object({
 	id: z.string(),
@@ -775,7 +776,7 @@ export const EirInsAwaitSchema = z.object({
 	future: z.string(),
 }).meta({ id: "EirInsAwait", title: "EIR Await Instruction", description: "Block until a future resolves, storing result in target" });
 
-export const EirFullInstructionSchema: z.ZodType<EirInstruction> = z.union([
+export const EirFullInstructionSchema = z.union([
 	EirBlockInstructionSchema,
 	EirInsSpawnSchema,
 	EirInsChannelOpSchema,
@@ -811,7 +812,7 @@ export const EirTerminatorZodSchema: z.ZodType<EirTerminator> = z.union([
 	EirTermSuspendSchema,
 ]);
 
-export const EirBlockSchema: z.ZodType<EirBlock> = z.object({
+export const EirBlockSchema = z.object({
 	id: z.string(),
 	instructions: z.array(EirFullInstructionSchema),
 	terminator: EirTerminatorZodSchema,
