@@ -2,6 +2,7 @@
 // List operators
 
 import { ErrorCodes } from "../errors.js";
+import type { Value } from "../types.js";
 import {
 	errorVal,
 	intType,
@@ -57,6 +58,20 @@ const concat: Operator = defineOperator("list", "concat")
 	})
 	.build();
 
+function nthFromList(list: Value, index: Value): Value {
+	if (list.kind !== "list") return errorVal(ErrorCodes.TypeError, "Expected list value");
+	if (index.kind !== "int") return errorVal(ErrorCodes.TypeError, "Expected int index");
+	const idx = index.value;
+	if (idx < 0 || idx >= list.value.length) {
+		return errorVal(ErrorCodes.DomainError, "Index out of bounds: " + String(idx));
+	}
+	const result = list.value[idx];
+	if (result === undefined) {
+		return errorVal(ErrorCodes.DomainError, "Index out of bounds: " + String(idx));
+	}
+	return result;
+}
+
 // nth(list<A>, int) -> A
 const nth: Operator = defineOperator("list", "nth")
 	.setParams(listType(intType), intType)
@@ -65,24 +80,7 @@ const nth: Operator = defineOperator("list", "nth")
 	.setImpl((a, b) => {
 		if (isError(a)) return a;
 		if (isError(b)) return b;
-		if (a.kind !== "list") {
-			return errorVal(ErrorCodes.TypeError, "Expected list value");
-		}
-		if (b.kind !== "int") {
-			return errorVal(ErrorCodes.TypeError, "Expected int index");
-		}
-		const idx = b.value;
-		if (idx < 0 || idx >= a.value.length) {
-			return errorVal(
-				ErrorCodes.DomainError,
-				"Index out of bounds: " + String(idx),
-			);
-		}
-		const result = a.value[idx];
-		if (result === undefined) {
-			return errorVal(ErrorCodes.DomainError, "Index out of bounds: " + String(idx));
-		}
-		return result;
+		return nthFromList(a, b);
 	})
 	.build();
 
@@ -157,14 +155,10 @@ const cons: Operator = defineOperator("list", "cons")
  * Create the list domain registry with all list operators.
  */
 export function createListRegistry(): OperatorRegistry {
-	let registry: OperatorRegistry = new Map();
+	const operators: Operator[] = [length, concat, nth, reverse, slice, cons];
 
-	registry = registerOperator(registry, length);
-	registry = registerOperator(registry, concat);
-	registry = registerOperator(registry, nth);
-	registry = registerOperator(registry, reverse);
-	registry = registerOperator(registry, slice);
-	registry = registerOperator(registry, cons);
-
-	return registry;
+	return operators.reduce<OperatorRegistry>(
+		(reg, op) => registerOperator(reg, op),
+		new Map(),
+	);
 }
