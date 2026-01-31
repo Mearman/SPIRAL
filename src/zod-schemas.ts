@@ -929,3 +929,12 @@ export const LIRDocumentSchema: z.ZodType<LIRDocument> = z.object({
 	nodes: z.array(LirHybridNodeSchema),
 	result: z.string(),
 }).describe("LIRDocument");
+
+export const SPIRALDocument = z.union([
+	AIRDocumentSchema,
+	CIRDocumentSchema,
+	EIRDocumentSchema,
+	LIRDocumentSchema,
+]).describe("SPIRALDocument");
+
+export type SPIRALDocument = z.infer<typeof SPIRALDocument>;
