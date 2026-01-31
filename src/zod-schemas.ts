@@ -544,7 +544,7 @@ export const AirExprSchema: z.ZodType<Expr> = z.union([
 	LetExprSchema,
 	AirRefExprSchema,
 	PredicateExprSchema,
-] as [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]);
+] satisfies [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]);
 
 /** CIR-only expression variants: AIR plus lambda/callExpr/fix/do. No async extensions. */
 export const CirExprSchema: z.ZodType<Expr> = z.union([
@@ -560,7 +560,7 @@ export const CirExprSchema: z.ZodType<Expr> = z.union([
 	CallFnExprSchema,
 	FixExprSchema,
 	DoExprSchema,
-] as [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]);
+] satisfies [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]);
 
 /**
  * Wide expression union used by the recursive stringOrExpr() helper.
