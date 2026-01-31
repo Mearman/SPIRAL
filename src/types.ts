@@ -80,7 +80,7 @@ export type {
 export type {
 	AirInstruction, AirInsAssign, AirInsOp, AirInsPhi,
 	CirInstruction,
-	EirInstruction, EirInsEffect, EirInsAssignRef,
+	EirInstruction, EirInsAssign, EirInsEffect, EirInsAssignRef,
 	EirInsSpawn, EirInsChannelOp, EirInsAwait,
 	EirTerminator, EirTermFork, EirTermJoin, EirTermSuspend,
 	AirBlock, CirBlock, EirBlock,
