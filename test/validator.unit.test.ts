@@ -1697,6 +1697,288 @@ describe("Validator - Unit Tests", () => {
 	});
 
 	//==========================================================================
+	// LIR Semantic Checks - Unreachable Blocks
+	//==========================================================================
+
+	describe("LIR Unreachable Blocks", () => {
+		it("should reject LIR document with unreachable block", () => {
+			const doc: LIRDocument = {
+				version: "1.0.0",
+				nodes: [
+					{
+						id: "main",
+						blocks: [
+							{
+								id: "entry",
+								instructions: [],
+								terminator: { kind: "return", value: "x" },
+							},
+							{
+								id: "unreachable",
+								instructions: [
+									{
+										kind: "assign",
+										target: "y",
+										value: { kind: "lit", type: { kind: "int" }, value: 99 },
+									},
+								],
+								terminator: { kind: "return", value: "y" },
+							},
+						],
+						entry: "entry",
+					},
+				],
+				result: "main",
+			};
+			const result = validateLIR(doc);
+			assert.ok(!result.valid, "Should be invalid due to unreachable block");
+			assert.ok(
+				result.errors.some((e) => e.message.includes("Unreachable block")),
+				`Expected unreachable block error, got: ${JSON.stringify(result.errors)}`,
+			);
+		});
+
+		it("should accept LIR document where all blocks are reachable", () => {
+			const doc: LIRDocument = {
+				version: "1.0.0",
+				nodes: [
+					{
+						id: "main",
+						blocks: [
+							{
+								id: "entry",
+								instructions: [],
+								terminator: { kind: "jump", to: "next" },
+							},
+							{
+								id: "next",
+								instructions: [],
+								terminator: { kind: "return" },
+							},
+						],
+						entry: "entry",
+					},
+				],
+				result: "main",
+			};
+			const result = validateLIR(doc);
+			assert.ok(result.valid, `Expected valid but got errors: ${JSON.stringify(result.errors)}`);
+		});
+	});
+
+	//==========================================================================
+	// LIR Semantic Checks - Phi Predecessor Validation
+	//==========================================================================
+
+	describe("LIR Phi Predecessor Validation", () => {
+		it("should reject phi instruction whose source blocks are not predecessors", () => {
+			const doc: LIRDocument = {
+				version: "1.0.0",
+				nodes: [
+					{
+						id: "main",
+						blocks: [
+							{
+								id: "entry",
+								instructions: [],
+								terminator: { kind: "jump", to: "merge" },
+							},
+							{
+								id: "other",
+								instructions: [],
+								terminator: { kind: "jump", to: "merge" },
+							},
+							{
+								id: "merge",
+								instructions: [
+									{
+										kind: "phi",
+										target: "x",
+										sources: [
+											{ block: "entry", value: "1" },
+											{ block: "nonPredecessor", value: "2" },
+										],
+									},
+								],
+								terminator: { kind: "return" },
+							},
+						],
+						entry: "entry",
+					},
+				],
+				result: "main",
+			};
+			const result = validateLIR(doc);
+			assert.ok(!result.valid, "Should be invalid due to phi source not being a predecessor");
+			assert.ok(
+				result.errors.some((e) => e.message.includes("Phi source block") || e.message.includes("non-existent")),
+				`Expected phi predecessor error, got: ${JSON.stringify(result.errors)}`,
+			);
+		});
+
+		it("should accept phi instruction whose source blocks are valid predecessors", () => {
+			const doc: LIRDocument = {
+				version: "1.0.0",
+				nodes: [
+					{
+						id: "main",
+						blocks: [
+							{
+								id: "entry",
+								instructions: [],
+								terminator: { kind: "branch", cond: "c", then: "a", else: "b" },
+							},
+							{
+								id: "a",
+								instructions: [],
+								terminator: { kind: "jump", to: "merge" },
+							},
+							{
+								id: "b",
+								instructions: [],
+								terminator: { kind: "jump", to: "merge" },
+							},
+							{
+								id: "merge",
+								instructions: [
+									{
+										kind: "phi",
+										target: "x",
+										sources: [
+											{ block: "a", value: "1" },
+											{ block: "b", value: "2" },
+										],
+									},
+								],
+								terminator: { kind: "return" },
+							},
+						],
+						entry: "entry",
+					},
+				],
+				result: "main",
+			};
+			const result = validateLIR(doc);
+			assert.ok(result.valid, `Expected valid but got errors: ${JSON.stringify(result.errors)}`);
+		});
+	});
+
+	//==========================================================================
+	// PIR Semantic Checks - Node Reference Validation
+	//==========================================================================
+
+	describe("PIR Node Reference Validation", () => {
+		it("should reject PIR document with spawn referencing non-existent node", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "spawned",
+						expr: { kind: "spawn", task: "nonExistentTask" },
+					},
+				],
+				result: "spawned",
+			};
+			const result = validatePIR(doc);
+			assert.ok(!result.valid, "Should be invalid due to spawn referencing non-existent node");
+			assert.ok(
+				result.errors.some((e) => e.message.includes("non-existent")),
+				`Expected non-existent node error, got: ${JSON.stringify(result.errors)}`,
+			);
+		});
+
+		it("should reject PIR document with await referencing non-existent node", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "awaited",
+						expr: { kind: "await", future: "nonExistentFuture" },
+					},
+				],
+				result: "awaited",
+			};
+			const result = validatePIR(doc);
+			assert.ok(!result.valid, "Should be invalid due to await referencing non-existent node");
+			assert.ok(
+				result.errors.some((e) => e.message.includes("non-existent")),
+				`Expected non-existent node error, got: ${JSON.stringify(result.errors)}`,
+			);
+		});
+
+		it("should reject PIR document with par referencing non-existent node", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "branchA",
+						expr: { kind: "lit", type: { kind: "int" }, value: 1 },
+					},
+					{
+						id: "parallel",
+						expr: { kind: "par", branches: ["branchA", "nonExistentBranch"] },
+					},
+				],
+				result: "parallel",
+			};
+			const result = validatePIR(doc);
+			assert.ok(!result.valid, "Should be invalid due to par referencing non-existent node");
+			assert.ok(
+				result.errors.some((e) => e.message.includes("non-existent")),
+				`Expected non-existent node error, got: ${JSON.stringify(result.errors)}`,
+			);
+		});
+
+		it("should reject PIR document with send referencing non-existent channel", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "msg",
+						expr: { kind: "lit", type: { kind: "string" }, value: "hello" },
+					},
+					{
+						id: "sendOp",
+						expr: { kind: "send", channel: "nonExistentChannel", value: "msg" },
+					},
+				],
+				result: "sendOp",
+			};
+			const result = validatePIR(doc);
+			assert.ok(!result.valid, "Should be invalid due to send referencing non-existent channel");
+			assert.ok(
+				result.errors.some((e) => e.message.includes("non-existent")),
+				`Expected non-existent node error, got: ${JSON.stringify(result.errors)}`,
+			);
+		});
+
+		it("should reject PIR document with recv referencing non-existent channel", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "recvOp",
+						expr: { kind: "recv", channel: "nonExistentChannel" },
+					},
+				],
+				result: "recvOp",
+			};
+			const result = validatePIR(doc);
+			assert.ok(!result.valid, "Should be invalid due to recv referencing non-existent channel");
+			assert.ok(
+				result.errors.some((e) => e.message.includes("non-existent")),
+				`Expected non-existent node error, got: ${JSON.stringify(result.errors)}`,
+			);
+		});
+
+		it("should accept PIR document with all valid references", () => {
+			const result = validatePIR(validPIRDoc);
+			assert.ok(result.valid);
+			assert.deepStrictEqual(result.errors, []);
+		});
+	});
+
+	//==========================================================================
 	// Type Validation Tests
 	//==========================================================================
 
