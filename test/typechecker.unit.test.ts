@@ -934,7 +934,7 @@ describe("TypeChecker", () => {
 
 			const effects = new Map();
 			const defs = emptyDefs();
-			const result = typeCheckEIRProgram(doc, testRegistry, defs, effects);
+			const result = typeCheckEIRProgram({ doc, registry: testRegistry, defs, effects });
 
 			assert.deepStrictEqual(result.nodeTypes.get("result"), intType);
 		});
@@ -966,7 +966,7 @@ describe("TypeChecker", () => {
 
 			const effects = new Map();
 			const defs = emptyDefs();
-			const result = typeCheckEIRProgram(doc, testRegistry, defs, effects);
+			const result = typeCheckEIRProgram({ doc, registry: testRegistry, defs, effects });
 
 			assert.deepStrictEqual(result.nodeTypes.get("result"), voidType);
 		});
@@ -994,7 +994,7 @@ describe("TypeChecker", () => {
 
 			const effects = new Map();
 			const defs = emptyDefs();
-			const result = typeCheckEIRProgram(doc, testRegistry, defs, effects);
+			const result = typeCheckEIRProgram({ doc, registry: testRegistry, defs, effects });
 
 			assert.deepStrictEqual(result.nodeTypes.get("result"), voidType);
 		});
@@ -1034,7 +1034,7 @@ describe("TypeChecker", () => {
 
 			const effects = new Map();
 			const defs = emptyDefs();
-			const result = typeCheckEIRProgram(doc, testRegistry, defs, effects);
+			const result = typeCheckEIRProgram({ doc, registry: testRegistry, defs, effects });
 
 			assert.deepStrictEqual(result.nodeTypes.get("result"), voidType);
 		});
@@ -1069,7 +1069,7 @@ describe("TypeChecker", () => {
 
 			const effects = new Map();
 			const defs = emptyDefs();
-			const result = typeCheckEIRProgram(doc, testRegistry, defs, effects);
+			const result = typeCheckEIRProgram({ doc, registry: testRegistry, defs, effects });
 
 			const refType = result.nodeTypes.get("ref");
 			assert.strictEqual(refType?.kind, "ref");
@@ -1115,7 +1115,7 @@ describe("TypeChecker", () => {
 
 			const effects = new Map();
 			const defs = emptyDefs();
-			const result = typeCheckEIRProgram(doc, testRegistry, defs, effects);
+			const result = typeCheckEIRProgram({ doc, registry: testRegistry, defs, effects });
 
 			assert.deepStrictEqual(result.nodeTypes.get("result"), intType);
 		});
@@ -1149,7 +1149,7 @@ describe("TypeChecker", () => {
 
 			const effects = new Map();
 			const defs = emptyDefs();
-			const result = typeCheckEIRProgram(doc, testRegistry, defs, effects);
+			const result = typeCheckEIRProgram({ doc, registry: testRegistry, defs, effects });
 
 			assert.deepStrictEqual(result.nodeTypes.get("result"), intType);
 		});
@@ -1186,7 +1186,7 @@ describe("TypeChecker", () => {
 
 			const effects = new Map();
 			const defs = emptyDefs();
-			const result = typeCheckEIRProgram(doc, testRegistry, defs, effects);
+			const result = typeCheckEIRProgram({ doc, registry: testRegistry, defs, effects });
 
 			assert.deepStrictEqual(result.nodeTypes.get("result"), intType);
 		});
@@ -1218,7 +1218,7 @@ describe("TypeChecker", () => {
 
 			const effects = new Map();
 			const defs = emptyDefs();
-			const result = typeCheckEIRProgram(doc, testRegistry, defs, effects);
+			const result = typeCheckEIRProgram({ doc, registry: testRegistry, defs, effects });
 
 			assert.deepStrictEqual(result.nodeTypes.get("result"), voidType);
 		});
@@ -1261,7 +1261,7 @@ describe("TypeChecker", () => {
 
 			const effects = new Map();
 			const defs = emptyDefs();
-			const result = typeCheckEIRProgram(doc, testRegistry, defs, effects);
+			const result = typeCheckEIRProgram({ doc, registry: testRegistry, defs, effects });
 
 			assert.deepStrictEqual(result.nodeTypes.get("result"), voidType);
 		});
@@ -1293,7 +1293,7 @@ describe("TypeChecker", () => {
 
 			const effects = new Map();
 			const defs = emptyDefs();
-			const result = typeCheckEIRProgram(doc, testRegistry, defs, effects);
+			const result = typeCheckEIRProgram({ doc, registry: testRegistry, defs, effects });
 
 			assert.deepStrictEqual(result.nodeTypes.get("result"), intType);
 		});
@@ -1502,7 +1502,7 @@ describe("TypeChecker", () => {
 
 			assert.throws(
 				() => checker.typeCheck(invalidExpr, env),
-				/Unexpected value/,
+				/Unhandled expression kind/,
 			);
 		});
 
