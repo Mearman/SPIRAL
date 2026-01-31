@@ -144,13 +144,12 @@ export {
 export { evaluateLIR, type LIREvalOptions } from "./lir/evaluator.js";
 
 export { lowerEIRtoLIR } from "./lir/lower.js";
-export { lowerPIRtoLIR } from "./lir/lower-pir-doc.js";
+export { lowerAsyncEIRtoLIR } from "./lir/lower-async-doc.js";
 
 //==============================================================================
-// PIR (Parallel IR)
+// Async Evaluation
 //==============================================================================
 
-export { validatePIR } from "./validator.js";
 export { AsyncEvaluator, type AsyncEvalOptions } from "./async-evaluator.js";
 export { createTaskScheduler, createDeterministicScheduler, type TaskScheduler, type SchedulerMode } from "./scheduler.js";
 export {
@@ -165,7 +164,6 @@ export {
 	type AsyncMutex,
 	type ConcurrentEffectLog,
 } from "./async-effects.js";
-export type { PIRDocument } from "./types.js";
 
 //==============================================================================
 // Concurrent Execution Detectors
@@ -212,12 +210,10 @@ export {
 	cirSchema,
 	eirSchema,
 	lirSchema,
-	pirSchema,
 	isAIRSchema,
 	isCIRSchema,
 	isEIRSchema,
 	isLIRSchema,
-	isPIRSchema,
 } from "./schemas.js";
 
 //==============================================================================
