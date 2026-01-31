@@ -177,6 +177,15 @@ function toSpiralDocument(
 	throw new Error("Invalid SPIRAL document");
 }
 
+export function resolveExistingNodeId(state: IngestState, name: string): string | undefined {
+	if (state.usedIds.has(name)) return name;
+	if (name.startsWith("v_")) {
+		const stripped = name.slice(2);
+		if (state.usedIds.has(stripped)) return stripped;
+	}
+	return undefined;
+}
+
 export function buildDocument(
 	args: BuildDocumentArgs,
 ): AIRDocument | CIRDocument | EIRDocument {
