@@ -346,14 +346,14 @@ describe("evalLet inline", () => {
 });
 
 // ===========================================================================
-// 6. PIR expressions in sync evaluator
+// 6. Async expressions in sync evaluator
 // ===========================================================================
-describe("PIR expressions in sync evaluator", () => {
-	const pirKinds = ["par", "spawn", "await", "channel", "send", "recv", "select", "race"] as const;
+describe("Async expressions in sync evaluator", () => {
+	const asyncKinds = ["par", "spawn", "await", "channel", "send", "recv", "select", "race"] as const;
 
-	for (const kind of pirKinds) {
+	for (const kind of asyncKinds) {
 		it(`${kind} returns domain error`, () => {
-			// Build a minimal expression for each PIR kind
+			// Build a minimal expression for each async kind
 			let expr: Record<string, unknown> = { kind };
 			switch (kind) {
 			case "par":
@@ -384,7 +384,7 @@ describe("PIR expressions in sync evaluator", () => {
 			const result = ev(expr as Expr);
 			assert.equal(isError(result), true);
 			if (result.kind === "error") {
-				assert.match(result.message ?? "", /PIR expressions require AsyncEvaluator/);
+				assert.match(result.message ?? "", /Async expressions require AsyncEvaluator/);
 			}
 		});
 	}

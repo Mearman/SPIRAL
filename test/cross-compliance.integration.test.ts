@@ -232,9 +232,8 @@ async function executeFixture(fixture: ComplianceFixture): Promise<Value> {
 		return evaluateProgram(doc as never, registry, defs, inputMap);
 	}
 
-	case "EIR":
-	case "PIR": {
-		// EIR/PIR uses evaluateEIR
+	case "EIR": {
+		// EIR uses evaluateEIR
 		const { result } = evaluateEIR(doc as never, registry, defs, inputMap);
 		return result;
 	}

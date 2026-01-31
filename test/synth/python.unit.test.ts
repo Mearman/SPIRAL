@@ -13,7 +13,6 @@ import type {
 	CIRDocument,
 	EIRDocument,
 	LIRDocument,
-	PIRDocument,
 	Node,
 } from "../../src/types.js";
 
@@ -924,12 +923,12 @@ describe("Python Synthesizer - Unit Tests", () => {
 	});
 
 	//==========================================================================
-	// PIR Document Tests
+	// EIR Async Document Tests
 	//==========================================================================
 
-	describe("PIR Documents", () => {
+	describe("EIR Async Documents", () => {
 		it("should synthesize par expression with asyncio.gather", () => {
-			const doc: PIRDocument = {
+			const doc: EIRDocument = {
 				version: "2.0.0",
 				nodes: [
 					{
@@ -953,7 +952,7 @@ describe("Python Synthesizer - Unit Tests", () => {
 		});
 
 		it("should synthesize spawn expression with asyncio.create_task", () => {
-			const doc: PIRDocument = {
+			const doc: EIRDocument = {
 				version: "2.0.0",
 				nodes: [
 					{
@@ -973,7 +972,7 @@ describe("Python Synthesizer - Unit Tests", () => {
 		});
 
 		it("should synthesize await expression", () => {
-			const doc: PIRDocument = {
+			const doc: EIRDocument = {
 				version: "2.0.0",
 				nodes: [
 					{
@@ -996,7 +995,7 @@ describe("Python Synthesizer - Unit Tests", () => {
 		});
 
 		it("should synthesize channel expression with asyncio.Queue", () => {
-			const doc: PIRDocument = {
+			const doc: EIRDocument = {
 				version: "2.0.0",
 				nodes: [
 					{
@@ -1012,7 +1011,7 @@ describe("Python Synthesizer - Unit Tests", () => {
 		});
 
 		it("should synthesize send and recv expressions", () => {
-			const doc: PIRDocument = {
+			const doc: EIRDocument = {
 				version: "2.0.0",
 				nodes: [
 					{
@@ -1039,8 +1038,8 @@ describe("Python Synthesizer - Unit Tests", () => {
 			assert.ok(result.includes(".get()"), "Should contain .get() for recv expression");
 		});
 
-		it("should include asyncio import for PIR documents", () => {
-			const doc: PIRDocument = {
+		it("should include asyncio import for async EIR documents", () => {
+			const doc: EIRDocument = {
 				version: "2.0.0",
 				nodes: [
 					{
@@ -1059,11 +1058,11 @@ describe("Python Synthesizer - Unit Tests", () => {
 				result: "result",
 			};
 			const result = synthesizePython(doc);
-			assert.ok(result.includes("import asyncio"), "Should include asyncio import for PIR documents");
+			assert.ok(result.includes("import asyncio"), "Should include asyncio import for async EIR documents");
 		});
 
 		it("should synthesize select expression with asyncio.wait", () => {
-			const doc: PIRDocument = {
+			const doc: EIRDocument = {
 				version: "2.0.0",
 				nodes: [
 					{

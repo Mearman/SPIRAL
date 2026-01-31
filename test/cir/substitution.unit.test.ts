@@ -198,7 +198,7 @@ describe("CIR Substitution - Unit Tests", () => {
 			assert.deepStrictEqual(result, expr);
 		});
 
-		// PIR expressions
+		// Async expressions
 		it("should return par unchanged", () => {
 			const expr: Expr = {
 				kind: "par",
@@ -391,7 +391,7 @@ describe("CIR Substitution - Unit Tests", () => {
 			assert.deepStrictEqual(result, []);
 		});
 
-		// PIR expressions
+		// Async expressions
 		it("should return empty for par", () => {
 			const expr: Expr = { kind: "par", exprs: ["e1", "e2"] };
 			const result = collectFreeVars(expr, new Set());
@@ -552,7 +552,7 @@ describe("CIR Substitution - Unit Tests", () => {
 			assert.deepStrictEqual(result, expr);
 		});
 
-		// PIR expressions
+		// Async expressions
 		it("should return par unchanged", () => {
 			const expr: Expr = { kind: "par", exprs: ["e1"] };
 			const result = alphaRename(expr, ["x"], ["y"]);

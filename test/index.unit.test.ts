@@ -41,10 +41,6 @@ describe("Main Index Exports - Unit Tests", () => {
 			assert.ok("LIRDocument" in spiral || spiral.validateLIR, "LIRDocument should be available");
 		});
 
-		it("should export PIRDocument type", () => {
-			assert.ok("PIRDocument" in spiral || spiral.validatePIR, "PIRDocument should be available");
-		});
-
 		it("should export Expr, Node, Type, Value types", () => {
 			assert.ok("Expr" in spiral || spiral.intVal, "Expr type should be available");
 			assert.ok("Node" in spiral || spiral.intVal, "Node type should be available");
@@ -93,7 +89,7 @@ describe("Main Index Exports - Unit Tests", () => {
 			assert.ok("FunctionSignature" in spiral || spiral.fnType, "FunctionSignature should be available");
 		});
 
-		// PIR/Async types
+		// Async types
 		it("should export AsyncChannelStore, AsyncChannel, AsyncRefCell types", () => {
 			assert.ok("AsyncChannelStore" in spiral || spiral.createAsyncChannelStore, "AsyncChannelStore should be available");
 			assert.ok("AsyncChannel" in spiral || spiral.createAsyncChannel, "AsyncChannel should be available");
@@ -505,9 +501,6 @@ describe("Main Index Exports - Unit Tests", () => {
 			assert.strictEqual(typeof spiral.validateLIR, "function");
 		});
 
-		it("should export validatePIR", () => {
-			assert.strictEqual(typeof spiral.validatePIR, "function");
-		});
 	});
 
 	//==========================================================================
@@ -688,10 +681,10 @@ describe("Main Index Exports - Unit Tests", () => {
 	});
 
 	//==========================================================================
-	// PIR (Parallel IR) Functions
+	// Async/Parallel Functions
 	//==========================================================================
 
-	describe("PIR (Parallel IR) Functions", () => {
+	describe("Async/Parallel Functions", () => {
 		it("should export AsyncEvaluator class", () => {
 			assert.strictEqual(typeof spiral.AsyncEvaluator, "function");
 		});

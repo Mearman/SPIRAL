@@ -8,7 +8,6 @@ import {
 	validateCIR,
 	validateAIR,
 	validateEIR,
-	validatePIR,
 } from "../src/validator.js";
 import { evaluateProgram } from "../src/evaluator.js";
 import { createCoreRegistry } from "../src/domains/core.js";
@@ -26,7 +25,6 @@ import type {
 	AIRDocument,
 	CIRDocument,
 	EIRDocument,
-	PIRDocument,
 	Expr,
 } from "../src/types.js";
 
@@ -129,9 +127,10 @@ describe("do expression - validator", () => {
 		assert.ok(result.valid, `Expected valid in EIR but got errors: ${JSON.stringify(result.errors)}`);
 	});
 
-	it("valid: do in PIR document", () => {
-		const doc: PIRDocument = {
-			version: "2.0.0",
+	it("valid: do in EIR async document", () => {
+		const doc: EIRDocument = {
+			version: "1.0.0",
+			capabilities: ["async"],
 			airDefs: [],
 			nodes: [
 				{ id: "a", expr: { kind: "lit", type: { kind: "int" }, value: 1 } },
@@ -140,8 +139,8 @@ describe("do expression - validator", () => {
 			],
 			result: "result",
 		};
-		const result = validatePIR(doc);
-		assert.ok(result.valid, `Expected valid in PIR but got errors: ${JSON.stringify(result.errors)}`);
+		const result = validateEIR(doc);
+		assert.ok(result.valid, `Expected valid in EIR async but got errors: ${JSON.stringify(result.errors)}`);
 	});
 });
 

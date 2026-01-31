@@ -30,7 +30,7 @@ export interface ComplianceFixture {
 
 	/** Fixture metadata */
 	metadata: {
-		layer: "AIR" | "CIR" | "EIR" | "PIR" | "LIR";
+		layer: "AIR" | "CIR" | "EIR" | "LIR";
 		category: string;
 		description: string;
 	};

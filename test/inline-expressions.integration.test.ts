@@ -27,7 +27,6 @@ import {
 } from "../src/effects.js";
 import type {
 	EIRDocument,
-	PIRDocument,
 	Value,
 } from "../src/types.js";
 import {
@@ -607,16 +606,16 @@ describe("Inline Expressions - Integration Tests", () => {
 	});
 
 	//==========================================================================
-	// PIR Integration Tests
+	// EIR Async Integration Tests
 	//==========================================================================
 
-	describe("PIR Evaluator (Async)", () => {
+	describe("EIR Async Evaluator", () => {
 
 		it("should evaluate inline expressions in await", async () => {
 			setupBefore();
 
-			const doc: PIRDocument = {
-				version: "2.0.0",
+			const doc: EIRDocument = {
+				version: "1.0.0",
 				capabilities: ["async"],
 				airDefs: [],
 				nodes: [
@@ -656,8 +655,8 @@ describe("Inline Expressions - Integration Tests", () => {
 		it("should evaluate inline expressions in spawn", async () => {
 			setupBefore();
 
-			const doc: PIRDocument = {
-				version: "2.0.0",
+			const doc: EIRDocument = {
+				version: "1.0.0",
 				capabilities: ["async"],
 				airDefs: [],
 				nodes: [

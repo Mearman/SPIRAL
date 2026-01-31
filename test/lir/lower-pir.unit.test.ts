@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-// SPIRAL PIR to LIR Lowering - Unit Tests
+// SPIRAL EIR (async) to LIR Lowering - Unit Tests
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import { lowerPIRtoLIR } from "../../src/lir/lower-pir-doc.js";
+import { lowerAsyncEIRtoLIR } from "../../src/lir/lower-async-doc.js";
 import type {
-	PIRDocument,
+	EIRDocument,
 	LIRDocument,
 	LirBlock,
 } from "../../src/types.js";
@@ -15,8 +15,8 @@ import type {
 // Test Fixtures
 //==============================================================================
 
-// PIR document with spawn expression
-const pirWithSpawn: PIRDocument = {
+// Async EIR document with spawn expression
+const eirWithSpawn: EIRDocument = {
 	version: "2.0.0",
 	nodes: [
 		{
@@ -31,8 +31,8 @@ const pirWithSpawn: PIRDocument = {
 	result: "spawned",
 };
 
-// PIR document with await expression
-const pirWithAwait: PIRDocument = {
+// Async EIR document with await expression
+const eirWithAwait: EIRDocument = {
 	version: "2.0.0",
 	nodes: [
 		{
@@ -51,8 +51,8 @@ const pirWithAwait: PIRDocument = {
 	result: "result",
 };
 
-// PIR document with par expression
-const pirWithPar: PIRDocument = {
+// Async EIR document with par expression
+const eirWithPar: EIRDocument = {
 	version: "2.0.0",
 	nodes: [
 		{
@@ -71,8 +71,8 @@ const pirWithPar: PIRDocument = {
 	result: "parallel",
 };
 
-// PIR document with channel, send, and recv expressions
-const pirWithChannel: PIRDocument = {
+// Async EIR document with channel, send, and recv expressions
+const eirWithChannel: EIRDocument = {
 	version: "2.0.0",
 	nodes: [
 		{
@@ -95,8 +95,8 @@ const pirWithChannel: PIRDocument = {
 	result: "recvOp",
 };
 
-// PIR document with select expression
-const pirWithSelect: PIRDocument = {
+// Async EIR document with select expression
+const eirWithSelect: EIRDocument = {
 	version: "2.0.0",
 	nodes: [
 		{
@@ -115,8 +115,8 @@ const pirWithSelect: PIRDocument = {
 	result: "selected",
 };
 
-// PIR document with race expression
-const pirWithRace: PIRDocument = {
+// Async EIR document with race expression
+const eirWithRace: EIRDocument = {
 	version: "2.0.0",
 	nodes: [
 		{
@@ -135,8 +135,8 @@ const pirWithRace: PIRDocument = {
 	result: "raced",
 };
 
-// PIR document with capabilities
-const pirWithCapabilities: PIRDocument = {
+// Async EIR document with capabilities
+const eirWithCapabilities: EIRDocument = {
 	version: "2.0.0",
 	capabilities: ["async", "parallel"],
 	nodes: [
@@ -148,8 +148,8 @@ const pirWithCapabilities: PIRDocument = {
 	result: "result",
 };
 
-// Invalid PIR document with missing result node
-const pirMissingResult: PIRDocument = {
+// Invalid async EIR document with missing result node
+const eirMissingResult: EIRDocument = {
 	version: "2.0.0",
 	nodes: [
 		{
@@ -160,8 +160,8 @@ const pirMissingResult: PIRDocument = {
 	result: "nonexistent",
 };
 
-// PIR document with empty nodes array
-const pirEmptyNodes: PIRDocument = {
+// Async EIR document with empty nodes array
+const eirEmptyNodes: EIRDocument = {
 	version: "2.0.0",
 	nodes: [],
 	result: "result",
@@ -186,56 +186,56 @@ function getAllBlocks(lir: LIRDocument): LirBlock[] {
 // Test Suite
 //==============================================================================
 
-describe("PIR to LIR Lowering - Unit Tests", () => {
+describe("Async EIR to LIR Lowering - Unit Tests", () => {
 
 	//==========================================================================
 	// Basic Lowering Tests
 	//==========================================================================
 
 	describe("Basic Lowering", () => {
-		it("should preserve version from PIR document", () => {
-			const lir = lowerPIRtoLIR(pirWithSpawn);
+		it("should preserve version from async EIR document", () => {
+			const lir = lowerAsyncEIRtoLIR(eirWithSpawn);
 			assert.strictEqual(lir.version, "2.0.0");
 		});
 
-		it("should preserve capabilities from PIR document", () => {
-			const lir = lowerPIRtoLIR(pirWithCapabilities);
+		it("should preserve capabilities from async EIR document", () => {
+			const lir = lowerAsyncEIRtoLIR(eirWithCapabilities);
 			assert.deepStrictEqual(lir.capabilities, ["async", "parallel"]);
 		});
 
 		it("should produce a result property", () => {
-			const lir = lowerPIRtoLIR(pirWithSpawn);
+			const lir = lowerAsyncEIRtoLIR(eirWithSpawn);
 			assert.ok(lir.result);
 		});
 
 		it("should produce nodes array", () => {
-			const lir = lowerPIRtoLIR(pirWithSpawn);
+			const lir = lowerAsyncEIRtoLIR(eirWithSpawn);
 			assert.ok(Array.isArray(lir.nodes));
 			assert.ok(lir.nodes.length > 0);
 		});
 
 		it("should handle empty nodes array", () => {
 			assert.throws(
-				() => lowerPIRtoLIR(pirEmptyNodes),
+				() => lowerAsyncEIRtoLIR(eirEmptyNodes),
 				/Result node not found/,
 			);
 		});
 
 		it("should throw error when result node is missing", () => {
 			assert.throws(
-				() => lowerPIRtoLIR(pirMissingResult),
+				() => lowerAsyncEIRtoLIR(eirMissingResult),
 				/Result node not found/,
 			);
 		});
 	});
 
 	//==========================================================================
-	// PIR Spawn Expression Lowering
+	// Async EIR Spawn Expression Lowering
 	//==========================================================================
 
 	describe("Spawn Expression Lowering", () => {
-		it("should lower a PIR doc with spawn to a valid LIR document", () => {
-			const lir = lowerPIRtoLIR(pirWithSpawn);
+		it("should lower an async EIR doc with spawn to a valid LIR document", () => {
+			const lir = lowerAsyncEIRtoLIR(eirWithSpawn);
 
 			assert.ok(lir.version);
 			assert.ok(lir.nodes);
@@ -246,7 +246,7 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 		});
 
 		it("should produce effect instruction with op 'spawn'", () => {
-			const lir = lowerPIRtoLIR(pirWithSpawn);
+			const lir = lowerAsyncEIRtoLIR(eirWithSpawn);
 			const blocks = getAllBlocks(lir);
 
 			const spawnInstr = blocks
@@ -258,12 +258,12 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 	});
 
 	//==========================================================================
-	// PIR Await Expression Lowering
+	// Async EIR Await Expression Lowering
 	//==========================================================================
 
 	describe("Await Expression Lowering", () => {
-		it("should lower a PIR doc with await to a valid LIR document", () => {
-			const lir = lowerPIRtoLIR(pirWithAwait);
+		it("should lower an async EIR doc with await to a valid LIR document", () => {
+			const lir = lowerAsyncEIRtoLIR(eirWithAwait);
 
 			assert.ok(lir.version);
 			assert.ok(lir.nodes);
@@ -274,7 +274,7 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 		});
 
 		it("should produce effect instruction with op 'await'", () => {
-			const lir = lowerPIRtoLIR(pirWithAwait);
+			const lir = lowerAsyncEIRtoLIR(eirWithAwait);
 			const blocks = getAllBlocks(lir);
 
 			const awaitInstr = blocks
@@ -286,12 +286,12 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 	});
 
 	//==========================================================================
-	// PIR Par Expression Lowering
+	// Async EIR Par Expression Lowering
 	//==========================================================================
 
 	describe("Par Expression Lowering", () => {
-		it("should lower a PIR doc with par to a valid LIR document", () => {
-			const lir = lowerPIRtoLIR(pirWithPar);
+		it("should lower an async EIR doc with par to a valid LIR document", () => {
+			const lir = lowerAsyncEIRtoLIR(eirWithPar);
 
 			assert.ok(lir.version);
 			assert.ok(lir.nodes);
@@ -302,7 +302,7 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 		});
 
 		it("should produce effect instruction with op 'par'", () => {
-			const lir = lowerPIRtoLIR(pirWithPar);
+			const lir = lowerAsyncEIRtoLIR(eirWithPar);
 			const blocks = getAllBlocks(lir);
 
 			const parInstr = blocks
@@ -314,12 +314,12 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 	});
 
 	//==========================================================================
-	// PIR Channel/Send/Recv Expression Lowering
+	// Async EIR Channel/Send/Recv Expression Lowering
 	//==========================================================================
 
 	describe("Channel/Send/Recv Expression Lowering", () => {
-		it("should lower a PIR doc with channel/send/recv to a valid LIR document", () => {
-			const lir = lowerPIRtoLIR(pirWithChannel);
+		it("should lower an async EIR doc with channel/send/recv to a valid LIR document", () => {
+			const lir = lowerAsyncEIRtoLIR(eirWithChannel);
 
 			assert.ok(lir.version);
 			assert.ok(lir.nodes);
@@ -330,7 +330,7 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 		});
 
 		it("should produce effect instructions for channel, send, and recv ops", () => {
-			const lir = lowerPIRtoLIR(pirWithChannel);
+			const lir = lowerAsyncEIRtoLIR(eirWithChannel);
 			const blocks = getAllBlocks(lir);
 
 			const allEffects = blocks
@@ -346,12 +346,12 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 	});
 
 	//==========================================================================
-	// PIR Select Expression Lowering
+	// Async EIR Select Expression Lowering
 	//==========================================================================
 
 	describe("Select Expression Lowering", () => {
-		it("should lower a PIR doc with select to a valid LIR document", () => {
-			const lir = lowerPIRtoLIR(pirWithSelect);
+		it("should lower an async EIR doc with select to a valid LIR document", () => {
+			const lir = lowerAsyncEIRtoLIR(eirWithSelect);
 
 			assert.ok(lir.version);
 			assert.ok(lir.nodes);
@@ -362,7 +362,7 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 		});
 
 		it("should produce effect instruction with op 'select'", () => {
-			const lir = lowerPIRtoLIR(pirWithSelect);
+			const lir = lowerAsyncEIRtoLIR(eirWithSelect);
 			const blocks = getAllBlocks(lir);
 
 			const selectInstr = blocks
@@ -374,12 +374,12 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 	});
 
 	//==========================================================================
-	// PIR Race Expression Lowering
+	// Async EIR Race Expression Lowering
 	//==========================================================================
 
 	describe("Race Expression Lowering", () => {
-		it("should lower a PIR doc with race to a valid LIR document", () => {
-			const lir = lowerPIRtoLIR(pirWithRace);
+		it("should lower an async EIR doc with race to a valid LIR document", () => {
+			const lir = lowerAsyncEIRtoLIR(eirWithRace);
 
 			assert.ok(lir.version);
 			assert.ok(lir.nodes);
@@ -390,7 +390,7 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 		});
 
 		it("should produce effect instruction with op 'race'", () => {
-			const lir = lowerPIRtoLIR(pirWithRace);
+			const lir = lowerAsyncEIRtoLIR(eirWithRace);
 			const blocks = getAllBlocks(lir);
 
 			const raceInstr = blocks
@@ -407,7 +407,7 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 
 	describe("Block Structure", () => {
 		it("should create blocks with sequential IDs", () => {
-			const lir = lowerPIRtoLIR(pirWithPar);
+			const lir = lowerAsyncEIRtoLIR(eirWithPar);
 			const blocks = getAllBlocks(lir);
 
 			blocks.forEach((block, index) => {
@@ -416,7 +416,7 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 		});
 
 		it("should set entry point to first block", () => {
-			const lir = lowerPIRtoLIR(pirWithSpawn);
+			const lir = lowerAsyncEIRtoLIR(eirWithSpawn);
 			const mainNode = lir.nodes[0];
 
 			assert.ok(mainNode && "entry" in mainNode);
@@ -426,7 +426,7 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 		});
 
 		it("should ensure all blocks have terminators", () => {
-			const lir = lowerPIRtoLIR(pirWithAwait);
+			const lir = lowerAsyncEIRtoLIR(eirWithAwait);
 			const blocks = getAllBlocks(lir);
 
 			blocks.forEach((block) => {
@@ -439,7 +439,7 @@ describe("PIR to LIR Lowering - Unit Tests", () => {
 		});
 
 		it("should have a return terminator on the final block", () => {
-			const lir = lowerPIRtoLIR(pirWithSpawn);
+			const lir = lowerAsyncEIRtoLIR(eirWithSpawn);
 			const blocks = getAllBlocks(lir);
 
 			const lastBlock = blocks[blocks.length - 1];
