@@ -343,46 +343,6 @@ export default [
 		},
 	},
 
-	// JSON Schema files - schema field ordering
-	{
-		files: ["*.schema.json"],
-		plugins: jsoncPlugin,
-		rules: {
-			"jsonc/sort-keys": ["error",
-				{
-					pathPattern: "^$",
-					order: jsonSchemaKeyOrder,
-				},
-				{
-					pathPattern: ".",
-					hasProperties: ["$ref"],
-					order: [
-						"$ref",
-					],
-				},
-				{
-					pathPattern: ".",
-					hasProperties: ["kind"],
-					order: [
-						"kind",
-						"type",
-						"const",
-						"enum",
-					],
-				},
-				{
-					pathPattern: ".",
-					hasProperties: ["type"],
-					order: jsonSchemaKeyOrder,
-				},
-				{
-					pathPattern: ".",
-					order: { type: "asc" },
-				},
-			],
-		},
-	},
-
 	// SPIRAL document files - semantic field ordering
 	{
 		files: [
@@ -445,6 +405,38 @@ export default [
 						"else",
 						"returns",
 					],
+				},
+				{
+					pathPattern: ".",
+					order: { type: "asc" },
+				},
+			],
+		},
+	},
+
+	// JSON Schema files - schema field ordering
+	// MUST come after SPIRAL document rules so it overrides for *.schema.json.
+	// Uses **/ prefix to ensure ESLint flat config matches root-level files.
+	{
+		files: ["**/*.schema.json"],
+		plugins: jsoncPlugin,
+		rules: {
+			"jsonc/sort-keys": ["error",
+				{
+					pathPattern: "^$",
+					order: jsonSchemaKeyOrder,
+				},
+				{
+					pathPattern: ".",
+					hasProperties: ["$ref"],
+					order: [
+						"$ref",
+					],
+				},
+				{
+					pathPattern: ".",
+					hasProperties: ["type"],
+					order: jsonSchemaKeyOrder,
 				},
 				{
 					pathPattern: ".",
