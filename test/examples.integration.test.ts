@@ -164,7 +164,7 @@ async function executeExample(example: ExampleInfo): Promise<Value> {
 	case "PIR": {
 		const effects = buildEffectRegistry(example);
 		const asyncIOConfig = createAsyncIOConfig();
-		const asyncEval = new AsyncEvaluator(registry, defs, effects, asyncIOConfig);
+		const asyncEval = new AsyncEvaluator({ registry, defs, effectRegistry: effects, asyncIOConfig });
 		return asyncEval.evaluateDocument(doc as never);
 	}
 
