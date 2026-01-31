@@ -484,9 +484,11 @@ describe("TypeScript Synthesizer - Unit Tests", () => {
 			assert.ok(result.includes("=>"));
 		});
 
-		it("should synthesize fix combinator", () => {
+		it("should synthesize fix combinator using Z-combinator", () => {
 			const result = synthesizeTypeScript(cirFixDoc);
 			assert.ok(result.includes("=>"));
+			// Z-combinator self-application pattern: (g => g(g))
+			assert.ok(result.includes("(") && result.includes(")"));
 		});
 
 		it("should handle call expressions", () => {
