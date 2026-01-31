@@ -333,17 +333,17 @@ export const LitExprSchema: z.ZodType<LitExpr> = z.object({
 	kind: z.literal("lit"),
 	type: TypeSchema,
 	value: z.unknown(),
-});
+}).meta({ id: "LitExpr" });
 
 export const RefExprSchema = z.object({
 	kind: z.literal("ref"),
 	id: z.string(),
-});
+}).meta({ id: "RefExpr" });
 
 export const VarExprSchema = z.object({
 	kind: z.literal("var"),
 	name: z.string(),
-});
+}).meta({ id: "VarExpr" });
 
 export const CallExprSchema: z.ZodType<CallExpr> = z.object({
 	kind: z.literal("call"),
@@ -358,7 +358,7 @@ export const IfExprSchema: z.ZodType<IfExpr> = z.object({
 	get then() { return stringOrExpr(); },
 	get else() { return stringOrExpr(); },
 	type: TypeSchema.optional(),
-}) as z.ZodType<IfExpr>;
+}).meta({ id: "IfExpr" }) as z.ZodType<IfExpr>;
 
 export const LetExprSchema: z.ZodType<LetExpr> = z.object({
 	kind: z.literal("let"),
@@ -366,20 +366,20 @@ export const LetExprSchema: z.ZodType<LetExpr> = z.object({
 	get value() { return stringOrExpr(); },
 	get body() { return stringOrExpr(); },
 	type: TypeSchema.optional(),
-}) as z.ZodType<LetExpr>;
+}).meta({ id: "LetExpr" }) as z.ZodType<LetExpr>;
 
 export const AirRefExprSchema = z.object({
 	kind: z.literal("airRef"),
 	ns: z.string(),
 	name: z.string(),
 	args: z.array(z.string()),
-});
+}).meta({ id: "AirRefExpr" });
 
 export const PredicateExprSchema = z.object({
 	kind: z.literal("predicate"),
 	name: z.string(),
 	value: z.string(),
-});
+}).meta({ id: "PredicateExpr" });
 
 //==============================================================================
 // Zod Schemas - Expression Domain - CIR extensions (4 variants)
@@ -624,7 +624,7 @@ export const LirInsAssignSchema: z.ZodType<LirInsAssign> = z.object({
 	kind: z.literal("assign"),
 	target: z.string(),
 	value: CirExprSchema,
-});
+}).meta({ id: "LirInsAssign" });
 
 export const LirInsCallSchema = z.object({
 	kind: z.literal("call"),
@@ -639,7 +639,7 @@ export const LirInsOpSchema = z.object({
 	ns: z.string(),
 	name: z.string(),
 	args: z.array(z.string()),
-});
+}).meta({ id: "LirInsOp" });
 
 export const LirInsPhiSchema = z.object({
 	kind: z.literal("phi"),
@@ -654,7 +654,7 @@ export const LirInsPhiSchema = z.object({
 		},
 		z.object({ block: z.string(), id: z.string() }),
 	)),
-});
+}).meta({ id: "LirInsPhi" });
 
 export const LirInsEffectSchema = z.object({
 	kind: z.literal("effect"),
@@ -681,24 +681,24 @@ export const LirInstructionSchema: z.ZodType<LirInstruction> = z.union([
 export const LirTermJumpSchema = z.object({
 	kind: z.literal("jump"),
 	to: z.string(),
-});
+}).meta({ id: "LirTermJump" });
 
 export const LirTermBranchSchema = z.object({
 	kind: z.literal("branch"),
 	cond: z.string(),
 	then: z.string(),
 	else: z.string(),
-});
+}).meta({ id: "LirTermBranch" });
 
 export const LirTermReturnSchema = z.object({
 	kind: z.literal("return"),
 	value: z.string().optional(),
-});
+}).meta({ id: "LirTermReturn" });
 
 export const LirTermExitSchema = z.object({
 	kind: z.literal("exit"),
 	code: z.union([z.string(), z.number()]).optional(),
-});
+}).meta({ id: "LirTermExit" });
 
 export const LirTerminatorSchema: z.ZodType<LirTerminator> = z.union([
 	LirTermJumpSchema,
@@ -880,7 +880,7 @@ export const FunctionSignatureSchema: z.ZodType<FunctionSignature> = z.object({
 	params: z.array(TypeSchema),
 	returns: TypeSchema,
 	pure: z.boolean(),
-});
+}).meta({ id: "FunctionSignature" });
 
 export const AIRDefSchema: z.ZodType<AIRDef> = z.object({
 	ns: z.string(),
@@ -888,7 +888,7 @@ export const AIRDefSchema: z.ZodType<AIRDef> = z.object({
 	params: z.array(z.string()),
 	result: TypeSchema,
 	body: AirExprSchema,
-});
+}).meta({ id: "AIRDef" });
 
 //==============================================================================
 // Zod Schemas - Documents
