@@ -8,6 +8,7 @@ import {
 	addNode,
 	addLitNode,
 	getBinaryOpMapping,
+	resolveExistingNodeId,
 } from "./helpers.js";
 import {
 	convertArrowFunctionToNode,
@@ -259,6 +260,9 @@ function tryConvertOperator(
 	state: IngestState,
 ): string | undefined {
 	if (ts.isIdentifier(node)) {
+		const existingId = resolveExistingNodeId(state, node.text);
+		if (existingId !== undefined) return existingId;
+
 		const id = freshId(state);
 		addNode(state, id, { kind: "ref", id: node.text });
 		return id;

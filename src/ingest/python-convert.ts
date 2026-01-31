@@ -1,7 +1,7 @@
 // Python AST to SPIRAL node conversion
 
 import type { IngestState } from "./types.js";
-import { freshId, addNode, addLitNode } from "./helpers.js";
+import { freshId, addNode, addLitNode, resolveExistingNodeId } from "./helpers.js";
 import type {
 	PyNode, PyAssign, PyFunctionDef, PyIf, PyWhile,
 	PyFor, PyBinOp, PyUnaryOp, PyBoolOp, PyCompare,
@@ -199,6 +199,9 @@ function convertName(node: PyName, state: IngestState): string {
 	if (node.id === "True") return addLitNode(state, { kind: "bool" }, true);
 	if (node.id === "False") return addLitNode(state, { kind: "bool" }, false);
 	if (node.id === "None") return addLitNode(state, { kind: "void" }, null);
+
+	const existingId = resolveExistingNodeId(state, node.id);
+	if (existingId !== undefined) return existingId;
 
 	const id = freshId(state);
 	addNode(state, id, { kind: "ref", id: node.id });
