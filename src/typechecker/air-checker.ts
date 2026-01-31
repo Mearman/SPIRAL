@@ -218,17 +218,18 @@ function validateLambdaBody(
 	}
 }
 
-function checkCallExprArgs(ctx: AIRCheckContext, args: string[]): void {
-	for (const argId of args) {
-		if (!ctx.nodeMap.has(argId) && !ctx.lambdaParams.has(argId)) {
-			throw SPIRALError.validation("callExpr", "Argument node not found: " + argId);
+function checkCallExprArgs(ctx: AIRCheckContext, args: (string | Expr)[]): void {
+	for (const arg of args) {
+		if (typeof arg !== "string") continue;
+		if (!ctx.nodeMap.has(arg) && !ctx.lambdaParams.has(arg)) {
+			throw SPIRALError.validation("callExpr", "Argument node not found: " + arg);
 		}
 	}
 }
 
 function checkCallExpr(
 	ctx: AIRCheckContext,
-	expr: { kind: "callExpr"; fn: string; args: string[] },
+	expr: { kind: "callExpr"; fn: string; args: (string | Expr)[] },
 ): TypeCheckResult {
 	checkCallExprArgs(ctx, expr.args);
 	if (!ctx.nodeMap.has(expr.fn) && !ctx.lambdaParams.has(expr.fn)) {

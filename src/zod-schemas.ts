@@ -62,7 +62,7 @@ export interface PredicateExpr { kind: "predicate"; name: string; value: string 
 
 // CIR extensions
 export interface LambdaExpr { kind: "lambda"; params: (string | LambdaParam)[]; body: string; type: Type }
-export interface CallFnExpr { kind: "callExpr"; fn: string; args: string[] }
+export interface CallFnExpr { kind: "callExpr"; fn: string; args: (string | Expr)[] }
 export interface FixExpr { kind: "fix"; fn: string; type: Type }
 export interface DoExpr { kind: "do"; exprs: (string | Expr)[] }
 
@@ -406,7 +406,7 @@ export const CallFnExprSchema: z.ZodType<CallFnExpr> = z.object({
 	kind: z.literal("callExpr"),
 	fn: z.string(),
 	get args() { return z.array(stringOrExpr()); },
-}).meta({ id: "CallFnExpr", title: "Function Call Expression", description: "Invocation of a first-class function node with arguments" }) as z.ZodType<CallFnExpr>;
+}).meta({ id: "CallFnExpr", title: "Function Call Expression", description: "Invocation of a first-class function node with arguments" });
 
 export const FixExprSchema: z.ZodType<FixExpr> = z.object({
 	kind: z.literal("fix"),
