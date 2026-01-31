@@ -11,6 +11,7 @@ import {
 	CIRDocumentSchema,
 	EIRDocumentSchema,
 	LIRDocumentSchema,
+	SPIRALDocument,
 } from "../src/zod-schemas.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -36,6 +37,11 @@ const layers = [
 		name: "lir",
 		title: "LIR (Low-Level IR)",
 		schema: LIRDocumentSchema,
+	},
+	{
+		name: "spiral",
+		title: "SPIRAL Document",
+		schema: SPIRALDocument,
 	},
 ];
 
