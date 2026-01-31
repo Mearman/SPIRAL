@@ -1,297 +1,297 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
-  "version": "1.0.0",
-  "description": "Interactive example: demonstrates mixed-cadence I/O pattern with multiple outputs, strategic inputs, and value reuse. Reads user name and age, prints messages about them.",
-  "airDefs": [],
-  "nodes": [
-    {
-      "id": "welcome",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "string"
-        },
-        "value": "Welcome!"
-      }
-    },
-    {
-      "id": "printWelcome",
-      "expr": {
-        "kind": "effect",
-        "op": "print",
-        "args": [
-          "welcome"
-        ]
-      }
-    },
-    {
-      "id": "namePrompt",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "string"
-        },
-        "value": "What is your name?"
-      }
-    },
-    {
-      "id": "printNamePrompt",
-      "expr": {
-        "kind": "effect",
-        "op": "print",
-        "args": [
-          "namePrompt"
-        ]
-      }
-    },
-    {
-      "id": "readName",
-      "expr": {
-        "kind": "effect",
-        "op": "readLine",
-        "args": []
-      }
-    },
-    {
-      "id": "greetingPrefix",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "string"
-        },
-        "value": "Hello, "
-      }
-    },
-    {
-      "id": "printGreeting",
-      "expr": {
-        "kind": "effect",
-        "op": "print",
-        "args": [
-          "greetingPrefix"
-        ]
-      }
-    },
-    {
-      "id": "printName",
-      "expr": {
-        "kind": "effect",
-        "op": "print",
-        "args": [
-          "readName"
-        ]
-      }
-    },
-    {
-      "id": "agePrompt",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "string"
-        },
-        "value": "What is your age?"
-      }
-    },
-    {
-      "id": "printAgePrompt",
-      "expr": {
-        "kind": "effect",
-        "op": "print",
-        "args": [
-          "agePrompt"
-        ]
-      }
-    },
-    {
-      "id": "readAge",
-      "expr": {
-        "kind": "effect",
-        "op": "readInt",
-        "args": []
-      }
-    },
-    {
-      "id": "ageMessagePrefix",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "string"
-        },
-        "value": "You are "
-      }
-    },
-    {
-      "id": "printAgePrefix",
-      "expr": {
-        "kind": "effect",
-        "op": "print",
-        "args": [
-          "ageMessagePrefix"
-        ]
-      }
-    },
-    {
-      "id": "printAge",
-      "expr": {
-        "kind": "effect",
-        "op": "printInt",
-        "args": [
-          "readAge"
-        ]
-      }
-    },
-    {
-      "id": "yearsOldMsg",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "string"
-        },
-        "value": "years old."
-      }
-    },
-    {
-      "id": "printYearsOld",
-      "expr": {
-        "kind": "effect",
-        "op": "print",
-        "args": [
-          "yearsOldMsg"
-        ]
-      }
-    },
-    {
-      "id": "goodbyePrefix",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "string"
-        },
-        "value": "Goodbye, "
-      }
-    },
-    {
-      "id": "printGoodbyePrefix",
-      "expr": {
-        "kind": "effect",
-        "op": "print",
-        "args": [
-          "goodbyePrefix"
-        ]
-      }
-    },
-    {
-      "id": "printGoodbyeName",
-      "expr": {
-        "kind": "effect",
-        "op": "print",
-        "args": [
-          "readName"
-        ]
-      }
-    },
-    {
-      "id": "seq1",
-      "expr": {
-        "kind": "seq",
-        "first": "printWelcome",
-        "then": "printNamePrompt"
-      }
-    },
-    {
-      "id": "seq2",
-      "expr": {
-        "kind": "seq",
-        "first": "seq1",
-        "then": "readName"
-      }
-    },
-    {
-      "id": "seq3",
-      "expr": {
-        "kind": "seq",
-        "first": "seq2",
-        "then": "printGreeting"
-      }
-    },
-    {
-      "id": "seq4",
-      "expr": {
-        "kind": "seq",
-        "first": "seq3",
-        "then": "printName"
-      }
-    },
-    {
-      "id": "seq5",
-      "expr": {
-        "kind": "seq",
-        "first": "seq4",
-        "then": "printAgePrompt"
-      }
-    },
-    {
-      "id": "seq6",
-      "expr": {
-        "kind": "seq",
-        "first": "seq5",
-        "then": "readAge"
-      }
-    },
-    {
-      "id": "seq7",
-      "expr": {
-        "kind": "seq",
-        "first": "seq6",
-        "then": "printAgePrefix"
-      }
-    },
-    {
-      "id": "seq8",
-      "expr": {
-        "kind": "seq",
-        "first": "seq7",
-        "then": "printAge"
-      }
-    },
-    {
-      "id": "seq9",
-      "expr": {
-        "kind": "seq",
-        "first": "seq8",
-        "then": "printYearsOld"
-      }
-    },
-    {
-      "id": "seq10",
-      "expr": {
-        "kind": "seq",
-        "first": "seq9",
-        "then": "printGoodbyePrefix"
-      }
-    },
-    {
-      "id": "finalSeq",
-      "expr": {
-        "kind": "seq",
-        "first": "seq10",
-        "then": "printGoodbyeName"
-      }
-    }
-  ],
-  "result": "finalSeq",
-  "expected_output": [
-    "Welcome!",
-    "What is your name?",
-    "Hello, ",
-    "Alice",
-    "What is your age?",
-    "You are ",
-    "25",
-    "years old.",
-    "Goodbye, ",
-    "Alice"
-  ],
-  "note": "Mixed-cadence I/O pattern: outputs multiple prompts and messages, interleaved with two input reads. Demonstrates value capture and reuse (name used twice, age used once) via readName and readAge nodes referenced in later print effects. Sequential execution chains effects through nested seq expressions.",
-  "expected_result": null
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
+	"version": "1.0.0",
+	"description": "Interactive example: demonstrates mixed-cadence I/O pattern with multiple outputs, strategic inputs, and value reuse. Reads user name and age, prints messages about them.",
+	"airDefs": [],
+	"nodes": [
+		{
+			"id": "welcome",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "Welcome!"
+			}
+		},
+		{
+			"id": "printWelcome",
+			"expr": {
+				"kind": "effect",
+				"op": "print",
+				"args": [
+					"welcome"
+				]
+			}
+		},
+		{
+			"id": "namePrompt",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "What is your name?"
+			}
+		},
+		{
+			"id": "printNamePrompt",
+			"expr": {
+				"kind": "effect",
+				"op": "print",
+				"args": [
+					"namePrompt"
+				]
+			}
+		},
+		{
+			"id": "readName",
+			"expr": {
+				"kind": "effect",
+				"op": "readLine",
+				"args": []
+			}
+		},
+		{
+			"id": "greetingPrefix",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "Hello, "
+			}
+		},
+		{
+			"id": "printGreeting",
+			"expr": {
+				"kind": "effect",
+				"op": "print",
+				"args": [
+					"greetingPrefix"
+				]
+			}
+		},
+		{
+			"id": "printName",
+			"expr": {
+				"kind": "effect",
+				"op": "print",
+				"args": [
+					"readName"
+				]
+			}
+		},
+		{
+			"id": "agePrompt",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "What is your age?"
+			}
+		},
+		{
+			"id": "printAgePrompt",
+			"expr": {
+				"kind": "effect",
+				"op": "print",
+				"args": [
+					"agePrompt"
+				]
+			}
+		},
+		{
+			"id": "readAge",
+			"expr": {
+				"kind": "effect",
+				"op": "readInt",
+				"args": []
+			}
+		},
+		{
+			"id": "ageMessagePrefix",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "You are "
+			}
+		},
+		{
+			"id": "printAgePrefix",
+			"expr": {
+				"kind": "effect",
+				"op": "print",
+				"args": [
+					"ageMessagePrefix"
+				]
+			}
+		},
+		{
+			"id": "printAge",
+			"expr": {
+				"kind": "effect",
+				"op": "printInt",
+				"args": [
+					"readAge"
+				]
+			}
+		},
+		{
+			"id": "yearsOldMsg",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "years old."
+			}
+		},
+		{
+			"id": "printYearsOld",
+			"expr": {
+				"kind": "effect",
+				"op": "print",
+				"args": [
+					"yearsOldMsg"
+				]
+			}
+		},
+		{
+			"id": "goodbyePrefix",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "Goodbye, "
+			}
+		},
+		{
+			"id": "printGoodbyePrefix",
+			"expr": {
+				"kind": "effect",
+				"op": "print",
+				"args": [
+					"goodbyePrefix"
+				]
+			}
+		},
+		{
+			"id": "printGoodbyeName",
+			"expr": {
+				"kind": "effect",
+				"op": "print",
+				"args": [
+					"readName"
+				]
+			}
+		},
+		{
+			"id": "seq1",
+			"expr": {
+				"kind": "seq",
+				"first": "printWelcome",
+				"then": "printNamePrompt"
+			}
+		},
+		{
+			"id": "seq2",
+			"expr": {
+				"kind": "seq",
+				"first": "seq1",
+				"then": "readName"
+			}
+		},
+		{
+			"id": "seq3",
+			"expr": {
+				"kind": "seq",
+				"first": "seq2",
+				"then": "printGreeting"
+			}
+		},
+		{
+			"id": "seq4",
+			"expr": {
+				"kind": "seq",
+				"first": "seq3",
+				"then": "printName"
+			}
+		},
+		{
+			"id": "seq5",
+			"expr": {
+				"kind": "seq",
+				"first": "seq4",
+				"then": "printAgePrompt"
+			}
+		},
+		{
+			"id": "seq6",
+			"expr": {
+				"kind": "seq",
+				"first": "seq5",
+				"then": "readAge"
+			}
+		},
+		{
+			"id": "seq7",
+			"expr": {
+				"kind": "seq",
+				"first": "seq6",
+				"then": "printAgePrefix"
+			}
+		},
+		{
+			"id": "seq8",
+			"expr": {
+				"kind": "seq",
+				"first": "seq7",
+				"then": "printAge"
+			}
+		},
+		{
+			"id": "seq9",
+			"expr": {
+				"kind": "seq",
+				"first": "seq8",
+				"then": "printYearsOld"
+			}
+		},
+		{
+			"id": "seq10",
+			"expr": {
+				"kind": "seq",
+				"first": "seq9",
+				"then": "printGoodbyePrefix"
+			}
+		},
+		{
+			"id": "finalSeq",
+			"expr": {
+				"kind": "seq",
+				"first": "seq10",
+				"then": "printGoodbyeName"
+			}
+		}
+	],
+	"result": "finalSeq",
+	"expected_output": [
+		"Welcome!",
+		"What is your name?",
+		"Hello, ",
+		"Alice",
+		"What is your age?",
+		"You are ",
+		"25",
+		"years old.",
+		"Goodbye, ",
+		"Alice"
+	],
+	"expected_result": null,
+	"note": "Mixed-cadence I/O pattern: outputs multiple prompts and messages, interleaved with two input reads. Demonstrates value capture and reuse (name used twice, age used once) via readName and readAge nodes referenced in later print effects. Sequential execution chains effects through nested seq expressions."
 }

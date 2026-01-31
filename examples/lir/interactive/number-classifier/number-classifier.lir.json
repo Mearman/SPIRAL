@@ -1,49 +1,49 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
-  "version": "1.0.0",
-  "description": "LIR representation of number-classifier: demonstrates I/O effects in straight-line execution form.",
-  "nodes": [
-    {
-      "id": "main",
-      "blocks": [
-        {
-          "id": "entry",
-          "instructions": [
-            {
-              "kind": "effect",
-              "target": "readResult",
-              "op": "readInt",
-              "args": []
-            },
-            {
-              "kind": "assign",
-              "target": "msgZero",
-              "value": {
-                "kind": "lit",
-                "type": {
-                  "kind": "string"
-                },
-                "value": "Number read."
-              }
-            },
-            {
-              "kind": "effect",
-              "target": "printResult",
-              "op": "print",
-              "args": [
-                "msgZero"
-              ]
-            }
-          ],
-          "terminator": {
-            "kind": "return"
-          }
-        }
-      ],
-      "entry": "entry"
-    }
-  ],
-  "result": "main",
-  "note": "Simplified LIR number-classifier demonstrating I/O sequencing. Note: Due to SSA form constraints in the LIR evaluator, effect target values cannot be used in subsequent operations. For conditional branching with effect results, see the EIR version which has full expression capabilities.",
-  "expected_result": null
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
+	"version": "1.0.0",
+	"description": "LIR representation of number-classifier: demonstrates I/O effects in straight-line execution form.",
+	"nodes": [
+		{
+			"id": "main",
+			"blocks": [
+				{
+					"id": "entry",
+					"instructions": [
+						{
+							"kind": "effect",
+							"op": "readInt",
+							"target": "readResult",
+							"args": []
+						},
+						{
+							"kind": "assign",
+							"target": "msgZero",
+							"value": {
+								"kind": "lit",
+								"type": {
+									"kind": "string"
+								},
+								"value": "Number read."
+							}
+						},
+						{
+							"kind": "effect",
+							"op": "print",
+							"target": "printResult",
+							"args": [
+								"msgZero"
+							]
+						}
+					],
+					"terminator": {
+						"kind": "return"
+					}
+				}
+			],
+			"entry": "entry"
+		}
+	],
+	"result": "main",
+	"expected_result": null,
+	"note": "Simplified LIR number-classifier demonstrating I/O sequencing. Note: Due to SSA form constraints in the LIR evaluator, effect target values cannot be used in subsequent operations. For conditional branching with effect results, see the EIR version which has full expression capabilities."
 }

@@ -1,123 +1,123 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
-  "version": "1.0.0",
-  "description": "Demonstrates a loop in LIR using a back-edge (jump to previous block). The block executes repeatedly until a condition becomes false.",
-  "nodes": [
-    {
-      "id": "main",
-      "blocks": [
-        {
-          "id": "entry",
-          "instructions": [
-            {
-              "kind": "assign",
-              "target": "i",
-              "value": {
-                "kind": "lit",
-                "type": {
-                  "kind": "int"
-                },
-                "value": 0
-              }
-            }
-          ],
-          "terminator": {
-            "kind": "jump",
-            "to": "loopHeader"
-          }
-        },
-        {
-          "id": "loopHeader",
-          "instructions": [
-            {
-              "kind": "assign",
-              "target": "limit",
-              "value": {
-                "kind": "lit",
-                "type": {
-                  "kind": "int"
-                },
-                "value": 5
-              }
-            },
-            {
-              "kind": "op",
-              "target": "condition",
-              "ns": "core",
-              "name": "lt",
-              "args": [
-                "i",
-                "limit"
-              ]
-            }
-          ],
-          "terminator": {
-            "kind": "branch",
-            "cond": "condition",
-            "then": "loopBody",
-            "else": "loopExit"
-          }
-        },
-        {
-          "id": "loopBody",
-          "instructions": [
-            {
-              "kind": "assign",
-              "target": "one",
-              "value": {
-                "kind": "lit",
-                "type": {
-                  "kind": "int"
-                },
-                "value": 1
-              }
-            },
-            {
-              "kind": "op",
-              "target": "nextI",
-              "ns": "core",
-              "name": "add",
-              "args": [
-                "i",
-                "one"
-              ]
-            },
-            {
-              "kind": "assign",
-              "target": "i",
-              "value": {
-                "kind": "var",
-                "name": "nextI"
-              }
-            }
-          ],
-          "terminator": {
-            "kind": "jump",
-            "to": "loopHeader"
-          }
-        },
-        {
-          "id": "loopExit",
-          "instructions": [
-            {
-              "kind": "assign",
-              "target": "result",
-              "value": {
-                "kind": "var",
-                "name": "i"
-              }
-            }
-          ],
-          "terminator": {
-            "kind": "return",
-            "value": "result"
-          }
-        }
-      ],
-      "entry": "entry"
-    }
-  ],
-  "result": "main",
-  "expected_result": 5,
-  "note": "Loop with back-edge: i goes from 0 to 5. Control flow: entry -> loopHeader -> loopBody -> loopHeader -> loopExit"
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
+	"version": "1.0.0",
+	"description": "Demonstrates a loop in LIR using a back-edge (jump to previous block). The block executes repeatedly until a condition becomes false.",
+	"nodes": [
+		{
+			"id": "main",
+			"blocks": [
+				{
+					"id": "entry",
+					"instructions": [
+						{
+							"kind": "assign",
+							"target": "i",
+							"value": {
+								"kind": "lit",
+								"type": {
+									"kind": "int"
+								},
+								"value": 0
+							}
+						}
+					],
+					"terminator": {
+						"kind": "jump",
+						"to": "loopHeader"
+					}
+				},
+				{
+					"id": "loopHeader",
+					"instructions": [
+						{
+							"kind": "assign",
+							"target": "limit",
+							"value": {
+								"kind": "lit",
+								"type": {
+									"kind": "int"
+								},
+								"value": 5
+							}
+						},
+						{
+							"kind": "op",
+							"ns": "core",
+							"name": "lt",
+							"target": "condition",
+							"args": [
+								"i",
+								"limit"
+							]
+						}
+					],
+					"terminator": {
+						"kind": "branch",
+						"cond": "condition",
+						"then": "loopBody",
+						"else": "loopExit"
+					}
+				},
+				{
+					"id": "loopBody",
+					"instructions": [
+						{
+							"kind": "assign",
+							"target": "one",
+							"value": {
+								"kind": "lit",
+								"type": {
+									"kind": "int"
+								},
+								"value": 1
+							}
+						},
+						{
+							"kind": "op",
+							"ns": "core",
+							"name": "add",
+							"target": "nextI",
+							"args": [
+								"i",
+								"one"
+							]
+						},
+						{
+							"kind": "assign",
+							"target": "i",
+							"value": {
+								"kind": "var",
+								"name": "nextI"
+							}
+						}
+					],
+					"terminator": {
+						"kind": "jump",
+						"to": "loopHeader"
+					}
+				},
+				{
+					"id": "loopExit",
+					"instructions": [
+						{
+							"kind": "assign",
+							"target": "result",
+							"value": {
+								"kind": "var",
+								"name": "i"
+							}
+						}
+					],
+					"terminator": {
+						"kind": "return",
+						"value": "result"
+					}
+				}
+			],
+			"entry": "entry"
+		}
+	],
+	"result": "main",
+	"expected_result": 5,
+	"note": "Loop with back-edge: i goes from 0 to 5. Control flow: entry -> loopHeader -> loopBody -> loopHeader -> loopExit"
 }

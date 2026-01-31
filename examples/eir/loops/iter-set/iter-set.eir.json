@@ -1,151 +1,151 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
-  "version": "1.0.0",
-  "description": "Demonstrates iter loop for iterating over a set of integers in EIR. Tests set iteration and element conversion.",
-  "airDefs": [
-    {
-      "ns": "core",
-      "name": "add",
-      "params": [
-        "a",
-        "b"
-      ],
-      "result": {
-        "kind": "int"
-      },
-      "body": {
-        "kind": "ref",
-        "id": "a"
-      }
-    }
-  ],
-  "nodes": [
-    {
-      "id": "zero",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 0
-      }
-    },
-    {
-      "id": "one",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 1
-      }
-    },
-    {
-      "id": "two",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 2
-      }
-    },
-    {
-      "id": "three",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "int"
-        },
-        "value": 3
-      }
-    },
-    {
-      "id": "numbers",
-      "expr": {
-        "kind": "lit",
-        "type": {
-          "kind": "set",
-          "of": {
-            "kind": "int"
-          }
-        },
-        "value": [
-          {
-            "kind": "int",
-            "value": 1
-          },
-          {
-            "kind": "int",
-            "value": 2
-          },
-          {
-            "kind": "int",
-            "value": 3
-          }
-        ]
-      }
-    },
-    {
-      "id": "initSum",
-      "expr": {
-        "kind": "assign",
-        "target": "sum",
-        "value": "zero"
-      }
-    },
-    {
-      "id": "currentSum",
-      "expr": {
-        "kind": "var",
-        "name": "sum"
-      }
-    },
-    {
-      "id": "currentElement",
-      "expr": {
-        "kind": "var",
-        "name": "x"
-      }
-    },
-    {
-      "id": "newSum",
-      "expr": {
-        "kind": "call",
-        "ns": "core",
-        "name": "add",
-        "args": [
-          "currentSum",
-          "currentElement"
-        ]
-      }
-    },
-    {
-      "id": "updateSum",
-      "expr": {
-        "kind": "assign",
-        "target": "sum",
-        "value": "newSum"
-      }
-    },
-    {
-      "id": "iterLoop",
-      "expr": {
-        "kind": "iter",
-        "var": "x",
-        "iter": "numbers",
-        "body": "updateSum"
-      }
-    },
-    {
-      "id": "result",
-      "expr": {
-        "kind": "var",
-        "name": "sum"
-      }
-    }
-  ],
-  "result": "result",
-  "expected_result": 6,
-  "note": "The iter loop iterates over the set {1,2,3}, adding each element to sum. Final sum is 6."
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
+	"version": "1.0.0",
+	"description": "Demonstrates iter loop for iterating over a set of integers in EIR. Tests set iteration and element conversion.",
+	"airDefs": [
+		{
+			"ns": "core",
+			"name": "add",
+			"params": [
+				"a",
+				"b"
+			],
+			"result": {
+				"kind": "int"
+			},
+			"body": {
+				"kind": "ref",
+				"id": "a"
+			}
+		}
+	],
+	"nodes": [
+		{
+			"id": "zero",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 0
+			}
+		},
+		{
+			"id": "one",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 1
+			}
+		},
+		{
+			"id": "two",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 2
+			}
+		},
+		{
+			"id": "three",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 3
+			}
+		},
+		{
+			"id": "numbers",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "set",
+					"of": {
+						"kind": "int"
+					}
+				},
+				"value": [
+					{
+						"kind": "int",
+						"value": 1
+					},
+					{
+						"kind": "int",
+						"value": 2
+					},
+					{
+						"kind": "int",
+						"value": 3
+					}
+				]
+			}
+		},
+		{
+			"id": "initSum",
+			"expr": {
+				"kind": "assign",
+				"target": "sum",
+				"value": "zero"
+			}
+		},
+		{
+			"id": "currentSum",
+			"expr": {
+				"kind": "var",
+				"name": "sum"
+			}
+		},
+		{
+			"id": "currentElement",
+			"expr": {
+				"kind": "var",
+				"name": "x"
+			}
+		},
+		{
+			"id": "newSum",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "add",
+				"args": [
+					"currentSum",
+					"currentElement"
+				]
+			}
+		},
+		{
+			"id": "updateSum",
+			"expr": {
+				"kind": "assign",
+				"target": "sum",
+				"value": "newSum"
+			}
+		},
+		{
+			"id": "iterLoop",
+			"expr": {
+				"kind": "iter",
+				"var": "x",
+				"iter": "numbers",
+				"body": "updateSum"
+			}
+		},
+		{
+			"id": "result",
+			"expr": {
+				"kind": "var",
+				"name": "sum"
+			}
+		}
+	],
+	"result": "result",
+	"expected_result": 6,
+	"note": "The iter loop iterates over the set {1,2,3}, adding each element to sum. Final sum is 6."
 }

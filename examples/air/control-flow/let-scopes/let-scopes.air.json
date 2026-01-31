@@ -1,196 +1,196 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/air.schema.json",
-  "version": "1.0.0",
-  "description": "Demonstrates let expression scoping: variable shadowing, nested scopes, and accessing outer scope variables.",
-  "airDefs": [
-    {
-      "ns": "core",
-      "name": "add",
-      "params": [
-        "a",
-        "b"
-      ],
-      "result": {
-        "kind": "int"
-      },
-      "body": {
-        "kind": "ref",
-        "id": "a"
-      }
-    }
-  ],
-  "nodes": [
-    {
-      "id": "shadowingExample",
-      "expr": {
-        "kind": "let",
-        "name": "x",
-        "value": {
-          "kind": "lit",
-          "type": {
-            "kind": "int"
-          },
-          "value": 10
-        },
-        "body": {
-          "kind": "let",
-          "name": "x",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "int"
-            },
-            "value": 20
-          },
-          "body": {
-            "kind": "ref",
-            "id": "x"
-          },
-          "type": {
-            "kind": "int"
-          }
-        },
-        "type": {
-          "kind": "int"
-        }
-      }
-    },
-    {
-      "id": "nestedScopesExample",
-      "expr": {
-        "kind": "let",
-        "name": "x",
-        "value": {
-          "kind": "lit",
-          "type": {
-            "kind": "int"
-          },
-          "value": 5
-        },
-        "body": {
-          "kind": "let",
-          "name": "y",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "int"
-            },
-            "value": 15
-          },
-          "body": {
-            "kind": "call",
-            "ns": "core",
-            "name": "add",
-            "args": [
-              {
-                "kind": "ref",
-                "id": "x"
-              },
-              {
-                "kind": "let",
-                "name": "x",
-                "value": {
-                  "kind": "lit",
-                  "type": {
-                    "kind": "int"
-                  },
-                  "value": 30
-                },
-                "body": {
-                  "kind": "call",
-                  "ns": "core",
-                  "name": "add",
-                  "args": [
-                    {
-                      "kind": "ref",
-                      "id": "x"
-                    },
-                    {
-                      "kind": "ref",
-                      "id": "y"
-                    }
-                  ]
-                },
-                "type": {
-                  "kind": "int"
-                }
-              }
-            ]
-          },
-          "type": {
-            "kind": "int"
-          }
-        },
-        "type": {
-          "kind": "int"
-        }
-      }
-    },
-    {
-      "id": "accessOuterScopeExample",
-      "expr": {
-        "kind": "let",
-        "name": "x",
-        "value": {
-          "kind": "lit",
-          "type": {
-            "kind": "int"
-          },
-          "value": 5
-        },
-        "body": {
-          "kind": "let",
-          "name": "z",
-          "value": {
-            "kind": "lit",
-            "type": {
-              "kind": "int"
-            },
-            "value": 30
-          },
-          "body": {
-            "kind": "let",
-            "name": "y",
-            "value": {
-              "kind": "lit",
-              "type": {
-                "kind": "int"
-              },
-              "value": 10
-            },
-            "body": {
-              "kind": "call",
-              "ns": "core",
-              "name": "add",
-              "args": [
-                {
-                  "kind": "ref",
-                  "id": "y"
-                },
-                {
-                  "kind": "lit",
-                  "type": {
-                    "kind": "int"
-                  },
-                  "value": 200
-                }
-              ]
-            },
-            "type": {
-              "kind": "int"
-            }
-          },
-          "type": {
-            "kind": "int"
-          }
-        },
-        "type": {
-          "kind": "int"
-        }
-      }
-    }
-  ],
-  "result": "shadowingExample",
-  "note": "Shadowing example returns 20 (inner x shadows outer x)",
-  "expected_result": 20
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/air.schema.json",
+	"version": "1.0.0",
+	"description": "Demonstrates let expression scoping: variable shadowing, nested scopes, and accessing outer scope variables.",
+	"airDefs": [
+		{
+			"ns": "core",
+			"name": "add",
+			"params": [
+				"a",
+				"b"
+			],
+			"result": {
+				"kind": "int"
+			},
+			"body": {
+				"kind": "ref",
+				"id": "a"
+			}
+		}
+	],
+	"nodes": [
+		{
+			"id": "shadowingExample",
+			"expr": {
+				"kind": "let",
+				"type": {
+					"kind": "int"
+				},
+				"name": "x",
+				"value": {
+					"kind": "lit",
+					"type": {
+						"kind": "int"
+					},
+					"value": 10
+				},
+				"body": {
+					"kind": "let",
+					"type": {
+						"kind": "int"
+					},
+					"name": "x",
+					"value": {
+						"kind": "lit",
+						"type": {
+							"kind": "int"
+						},
+						"value": 20
+					},
+					"body": {
+						"kind": "ref",
+						"id": "x"
+					}
+				}
+			}
+		},
+		{
+			"id": "nestedScopesExample",
+			"expr": {
+				"kind": "let",
+				"type": {
+					"kind": "int"
+				},
+				"name": "x",
+				"value": {
+					"kind": "lit",
+					"type": {
+						"kind": "int"
+					},
+					"value": 5
+				},
+				"body": {
+					"kind": "let",
+					"type": {
+						"kind": "int"
+					},
+					"name": "y",
+					"value": {
+						"kind": "lit",
+						"type": {
+							"kind": "int"
+						},
+						"value": 15
+					},
+					"body": {
+						"kind": "call",
+						"ns": "core",
+						"name": "add",
+						"args": [
+							{
+								"kind": "ref",
+								"id": "x"
+							},
+							{
+								"kind": "let",
+								"type": {
+									"kind": "int"
+								},
+								"name": "x",
+								"value": {
+									"kind": "lit",
+									"type": {
+										"kind": "int"
+									},
+									"value": 30
+								},
+								"body": {
+									"kind": "call",
+									"ns": "core",
+									"name": "add",
+									"args": [
+										{
+											"kind": "ref",
+											"id": "x"
+										},
+										{
+											"kind": "ref",
+											"id": "y"
+										}
+									]
+								}
+							}
+						]
+					}
+				}
+			}
+		},
+		{
+			"id": "accessOuterScopeExample",
+			"expr": {
+				"kind": "let",
+				"type": {
+					"kind": "int"
+				},
+				"name": "x",
+				"value": {
+					"kind": "lit",
+					"type": {
+						"kind": "int"
+					},
+					"value": 5
+				},
+				"body": {
+					"kind": "let",
+					"type": {
+						"kind": "int"
+					},
+					"name": "z",
+					"value": {
+						"kind": "lit",
+						"type": {
+							"kind": "int"
+						},
+						"value": 30
+					},
+					"body": {
+						"kind": "let",
+						"type": {
+							"kind": "int"
+						},
+						"name": "y",
+						"value": {
+							"kind": "lit",
+							"type": {
+								"kind": "int"
+							},
+							"value": 10
+						},
+						"body": {
+							"kind": "call",
+							"ns": "core",
+							"name": "add",
+							"args": [
+								{
+									"kind": "ref",
+									"id": "y"
+								},
+								{
+									"kind": "lit",
+									"type": {
+										"kind": "int"
+									},
+									"value": 200
+								}
+							]
+						}
+					}
+				}
+			}
+		}
+	],
+	"result": "shadowingExample",
+	"expected_result": 20,
+	"note": "Shadowing example returns 20 (inner x shadows outer x)"
 }

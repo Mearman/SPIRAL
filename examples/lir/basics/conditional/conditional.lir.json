@@ -1,107 +1,107 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
-  "version": "1.0.0",
-  "description": "Demonstrates conditional branching in LIR using a branch terminator. The branch selects between two blocks based on a boolean condition.",
-  "nodes": [
-    {
-      "id": "main",
-      "blocks": [
-        {
-          "id": "entry",
-          "instructions": [
-            {
-              "kind": "assign",
-              "target": "x",
-              "value": {
-                "kind": "lit",
-                "type": {
-                  "kind": "int"
-                },
-                "value": 10
-              }
-            },
-            {
-              "kind": "assign",
-              "target": "limit",
-              "value": {
-                "kind": "lit",
-                "type": {
-                  "kind": "int"
-                },
-                "value": 5
-              }
-            },
-            {
-              "kind": "op",
-              "target": "condition",
-              "ns": "core",
-              "name": "gt",
-              "args": [
-                "x",
-                "limit"
-              ]
-            }
-          ],
-          "terminator": {
-            "kind": "branch",
-            "cond": "condition",
-            "then": "greaterBlock",
-            "else": "lesserBlock"
-          }
-        },
-        {
-          "id": "greaterBlock",
-          "instructions": [
-            {
-              "kind": "assign",
-              "target": "message",
-              "value": {
-                "kind": "lit",
-                "type": {
-                  "kind": "string"
-                },
-                "value": "x is greater"
-              }
-            }
-          ],
-          "terminator": {
-            "kind": "jump",
-            "to": "exit"
-          }
-        },
-        {
-          "id": "lesserBlock",
-          "instructions": [
-            {
-              "kind": "assign",
-              "target": "message",
-              "value": {
-                "kind": "lit",
-                "type": {
-                  "kind": "string"
-                },
-                "value": "x is not greater"
-              }
-            }
-          ],
-          "terminator": {
-            "kind": "jump",
-            "to": "exit"
-          }
-        },
-        {
-          "id": "exit",
-          "instructions": [],
-          "terminator": {
-            "kind": "return",
-            "value": "message"
-          }
-        }
-      ],
-      "entry": "entry"
-    }
-  ],
-  "result": "main",
-  "expected_result": "x is greater",
-  "note": "Branch on condition (10 > 5 = true) to greaterBlock, then jump to exit."
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
+	"version": "1.0.0",
+	"description": "Demonstrates conditional branching in LIR using a branch terminator. The branch selects between two blocks based on a boolean condition.",
+	"nodes": [
+		{
+			"id": "main",
+			"blocks": [
+				{
+					"id": "entry",
+					"instructions": [
+						{
+							"kind": "assign",
+							"target": "x",
+							"value": {
+								"kind": "lit",
+								"type": {
+									"kind": "int"
+								},
+								"value": 10
+							}
+						},
+						{
+							"kind": "assign",
+							"target": "limit",
+							"value": {
+								"kind": "lit",
+								"type": {
+									"kind": "int"
+								},
+								"value": 5
+							}
+						},
+						{
+							"kind": "op",
+							"ns": "core",
+							"name": "gt",
+							"target": "condition",
+							"args": [
+								"x",
+								"limit"
+							]
+						}
+					],
+					"terminator": {
+						"kind": "branch",
+						"cond": "condition",
+						"then": "greaterBlock",
+						"else": "lesserBlock"
+					}
+				},
+				{
+					"id": "greaterBlock",
+					"instructions": [
+						{
+							"kind": "assign",
+							"target": "message",
+							"value": {
+								"kind": "lit",
+								"type": {
+									"kind": "string"
+								},
+								"value": "x is greater"
+							}
+						}
+					],
+					"terminator": {
+						"kind": "jump",
+						"to": "exit"
+					}
+				},
+				{
+					"id": "lesserBlock",
+					"instructions": [
+						{
+							"kind": "assign",
+							"target": "message",
+							"value": {
+								"kind": "lit",
+								"type": {
+									"kind": "string"
+								},
+								"value": "x is not greater"
+							}
+						}
+					],
+					"terminator": {
+						"kind": "jump",
+						"to": "exit"
+					}
+				},
+				{
+					"id": "exit",
+					"instructions": [],
+					"terminator": {
+						"kind": "return",
+						"value": "message"
+					}
+				}
+			],
+			"entry": "entry"
+		}
+	],
+	"result": "main",
+	"expected_result": "x is greater",
+	"note": "Branch on condition (10 > 5 = true) to greaterBlock, then jump to exit."
 }
