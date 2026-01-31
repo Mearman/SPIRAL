@@ -7,7 +7,6 @@ const LAYER_ORDER: Record<Layer, number> = {
 	air: 0,
 	cir: 1,
 	eir: 2,
-	pir: 3,
 };
 
 function maxLayer(a: Layer, b: Layer): Layer {
@@ -37,7 +36,7 @@ function hasReassignment(sourceFile: ts.SourceFile, name: string): boolean {
 
 // ---------- per-category detectors ----------
 
-function detectPir(node: ts.Node): boolean {
+function detectAsync(node: ts.Node): boolean {
 	if (
 		ts.isFunctionDeclaration(node) &&
 		node.modifiers?.some(
@@ -111,14 +110,14 @@ export function scanFeatures(sourceFile: ts.SourceFile): Layer {
 	let layer: Layer = "air";
 
 	function visit(node: ts.Node): void {
-		if (detectPir(node)) {
-			layer = "pir";
+		if (detectAsync(node)) {
+			layer = "eir";
 			return;
 		}
-		if (layer !== "pir" && detectEir(node, sourceFile)) {
+		if (detectEir(node, sourceFile)) {
 			layer = maxLayer(layer, "eir");
 		}
-		if (layer !== "pir" && layer !== "eir" && detectCir(node)) {
+		if (layer !== "eir" && detectCir(node)) {
 			layer = maxLayer(layer, "cir");
 		}
 		ts.forEachChild(node, visit);

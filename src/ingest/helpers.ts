@@ -5,7 +5,6 @@ import type {
 	AIRDocument,
 	CIRDocument,
 	EIRDocument,
-	PIRDocument,
 	Type,
 } from "../types.js";
 import type { IngestNode, IngestState, Layer } from "./types.js";
@@ -167,20 +166,20 @@ interface BuildDocumentArgs {
 
 function isSpiralDocument(
 	_d: unknown,
-): _d is AIRDocument | CIRDocument | EIRDocument | PIRDocument {
+): _d is AIRDocument | CIRDocument | EIRDocument {
 	return true;
 }
 
 function toSpiralDocument(
 	doc: unknown,
-): AIRDocument | CIRDocument | EIRDocument | PIRDocument {
+): AIRDocument | CIRDocument | EIRDocument {
 	if (isSpiralDocument(doc)) return doc;
 	throw new Error("Invalid SPIRAL document");
 }
 
 export function buildDocument(
 	args: BuildDocumentArgs,
-): AIRDocument | CIRDocument | EIRDocument | PIRDocument {
+): AIRDocument | CIRDocument | EIRDocument {
 	const base = {
 		version: args.version,
 		airDefs: [],
@@ -188,8 +187,5 @@ export function buildDocument(
 		result: args.result,
 	};
 
-	if (args.layer === "pir") {
-		return toSpiralDocument({ ...base, capabilities: ["async"] });
-	}
 	return toSpiralDocument(base);
 }

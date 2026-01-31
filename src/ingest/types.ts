@@ -1,6 +1,6 @@
 // Internal types shared across ingest sub-modules
 
-export type Layer = "air" | "cir" | "eir" | "pir";
+export type Layer = "air" | "cir" | "eir";
 
 export interface IngestNode {
 	id: string;

@@ -1,5 +1,5 @@
 // SPIRAL TypeScript Ingest Converter
-// Converts TypeScript source code to SPIRAL IR documents (AIR/CIR/EIR/PIR)
+// Converts TypeScript source code to SPIRAL IR documents (AIR/CIR/EIR)
 // Two-pass architecture: feature scan (layer selection) then AST conversion
 
 import ts from "typescript";
@@ -7,7 +7,6 @@ import type {
 	AIRDocument,
 	CIRDocument,
 	EIRDocument,
-	PIRDocument,
 } from "../types.js";
 import type { IngestState } from "./types.js";
 import { scanFeatures } from "./scan.js";
@@ -19,7 +18,7 @@ import { convertNode } from "./convert-node.js";
 //==============================================================================
 
 export interface TypeScriptIngestOptions {
-	forceLayer?: "air" | "cir" | "eir" | "pir";
+	forceLayer?: "air" | "cir" | "eir";
 	version?: string;
 	floatNumbers?: boolean;
 }
@@ -27,11 +26,10 @@ export interface TypeScriptIngestOptions {
 export function ingestTypeScript(
 	source: string,
 	options?: TypeScriptIngestOptions,
-): AIRDocument | CIRDocument | EIRDocument | PIRDocument {
+): AIRDocument | CIRDocument | EIRDocument {
 	const sourceFile = parseSource(source);
 	const layer = options?.forceLayer ?? scanFeatures(sourceFile);
-	const version =
-		options?.version ?? (layer === "pir" ? "2.0.0" : "1.0.0");
+	const version = options?.version ?? "1.0.0";
 
 	const state = createState(layer, options?.floatNumbers ?? false);
 	const result = convertTopLevel(sourceFile, state);
@@ -54,7 +52,7 @@ function parseSource(source: string): ts.SourceFile {
 }
 
 function createState(
-	layer: "air" | "cir" | "eir" | "pir",
+	layer: "air" | "cir" | "eir",
 	floatNumbers: boolean,
 ): IngestState {
 	return {
