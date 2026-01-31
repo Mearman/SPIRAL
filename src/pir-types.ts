@@ -1,16 +1,15 @@
-// SPIRAL PIR (Parallel IR) Runtime Types
+// SPIRAL Async Runtime Types
 // Extracted from types.ts to reduce file size
 
 import type { ValueEnv } from "./env.js";
 import type {
-	Expr, Type, PirExpr,
+	Type, EirExpr,
 	FutureType, ChannelType, TaskType, AsyncFnType,
-	PirParExpr, PirSpawnExpr, PirAwaitExpr,
 } from "./zod-schemas.js";
 import type { Value, EvalState, ErrorVal } from "./types.js";
 
 //==============================================================================
-// PIR Value Domain — kept as manual interfaces (runtime only)
+// Async Value Domain — kept as manual interfaces (runtime only)
 //==============================================================================
 
 export interface FutureVal {
@@ -51,7 +50,7 @@ export interface AsyncEvalState extends EvalState {
 }
 
 export interface TaskState {
-	expr: PirExpr;
+	expr: EirExpr;
 	env: ValueEnv;
 	status: "running" | "completed" | "failed";
 	result?: Value;
@@ -59,7 +58,7 @@ export interface TaskState {
 }
 
 //==============================================================================
-// PIR Value Constructors
+// Async Value Constructors
 //==============================================================================
 
 export const futureVal = (
@@ -84,7 +83,7 @@ export const taskVal = (id: string, returnType: Type): TaskVal => ({
 });
 
 //==============================================================================
-// PIR Type Constructors
+// Async Type Constructors
 //==============================================================================
 
 export const futureType = (of: Type): FutureType => ({ kind: "future", of });
@@ -128,7 +127,7 @@ export interface AsyncChannel {
 }
 
 //==============================================================================
-// Type Guards for PIR Types
+// Type Guards for Async Types
 //==============================================================================
 
 export function isFuture(v: Value): v is FutureVal {
@@ -141,16 +140,4 @@ export function isChannel(v: Value): v is ChannelVal {
 
 export function isTask(v: Value): v is TaskVal {
 	return v.kind === "task";
-}
-
-export function isPirParExpr(expr: Expr): expr is PirParExpr {
-	return expr.kind === "par";
-}
-
-export function isPirSpawnExpr(expr: Expr): expr is PirSpawnExpr {
-	return expr.kind === "spawn";
-}
-
-export function isPirAwaitExpr(expr: Expr): expr is PirAwaitExpr {
-	return expr.kind === "await";
 }

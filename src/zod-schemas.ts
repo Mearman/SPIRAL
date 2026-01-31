@@ -17,8 +17,6 @@ import { z } from "zod/v4";
 /** Semantic version pattern */
 const SemVer = z.string().regex(/^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/);
 
-/** PIR version pattern (must be 2.x.x) */
-const PirVersion = z.string().regex(/^2\.\d+\.\d+$/);
 
 //==============================================================================
 // Type Domain - Manual Interfaces
@@ -76,29 +74,27 @@ export interface EirRefCellExpr { kind: "refCell"; target: string }
 export interface EirDerefExpr { kind: "deref"; target: string }
 export interface EirTryExpr { kind: "try"; tryBody: string | Expr; catchParam: string; catchBody: string | Expr; fallback?: string | Expr | undefined }
 
-// PIR extensions
-export interface PirParExpr { kind: "par"; branches: string[] }
-export interface PirSpawnExpr { kind: "spawn"; task: string }
-export interface PirAwaitExpr { kind: "await"; future: string; timeout?: string | Expr | undefined; fallback?: string | Expr | undefined; returnIndex?: boolean | undefined }
-export interface PirChannelExpr { kind: "channel"; channelType: "mpsc" | "spsc" | "mpmc" | "broadcast"; bufferSize?: string | Expr | undefined }
-export interface PirSendExpr { kind: "send"; channel: string; value: string | Expr }
-export interface PirRecvExpr { kind: "recv"; channel: string }
-export interface PirSelectExpr { kind: "select"; futures: string[]; timeout?: string | Expr | undefined; fallback?: string | Expr | undefined; returnIndex?: boolean | undefined }
-export interface PirRaceExpr { kind: "race"; tasks: string[] }
+// EIR async extensions
+export interface EirParExpr { kind: "par"; branches: string[] }
+export interface EirSpawnExpr { kind: "spawn"; task: string }
+export interface EirAwaitExpr { kind: "await"; future: string; timeout?: string | Expr | undefined; fallback?: string | Expr | undefined; returnIndex?: boolean | undefined }
+export interface EirChannelExpr { kind: "channel"; channelType: "mpsc" | "spsc" | "mpmc" | "broadcast"; bufferSize?: string | Expr | undefined }
+export interface EirSendExpr { kind: "send"; channel: string; value: string | Expr }
+export interface EirRecvExpr { kind: "recv"; channel: string }
+export interface EirSelectExpr { kind: "select"; futures: string[]; timeout?: string | Expr | undefined; fallback?: string | Expr | undefined; returnIndex?: boolean | undefined }
+export interface EirRaceExpr { kind: "race"; tasks: string[] }
 
 export type Expr =
 	| LitExpr | RefExpr | VarExpr | CallExpr | IfExpr | LetExpr
 	| AirRefExpr | PredicateExpr
-	| LambdaExpr | CallFnExpr | FixExpr | DoExpr
-	| PirParExpr | PirSpawnExpr | PirAwaitExpr | PirChannelExpr
-	| PirSendExpr | PirRecvExpr | PirSelectExpr | PirRaceExpr;
+	| LambdaExpr | CallFnExpr | FixExpr | DoExpr;
 
-export type EirExpr = Expr | EirSeqExpr | EirAssignExpr | EirWhileExpr | EirForExpr | EirIterExpr | EirEffectExpr | EirRefCellExpr | EirDerefExpr | EirTryExpr;
-
-export type PirExpr =
-	| EirExpr
-	| PirParExpr | PirSpawnExpr | PirAwaitExpr | PirChannelExpr
-	| PirSendExpr | PirRecvExpr | PirSelectExpr | PirRaceExpr;
+export type EirExpr =
+	| Expr
+	| EirSeqExpr | EirAssignExpr | EirWhileExpr | EirForExpr | EirIterExpr
+	| EirEffectExpr | EirRefCellExpr | EirDerefExpr | EirTryExpr
+	| EirParExpr | EirSpawnExpr | EirAwaitExpr | EirChannelExpr
+	| EirSendExpr | EirRecvExpr | EirSelectExpr | EirRaceExpr;
 
 //==============================================================================
 // LIR Domain - Manual Interfaces
@@ -135,27 +131,22 @@ export type CirInstruction = AirInstruction;
 
 export type EirInsEffect = LirInsEffect;
 export type EirInsAssignRef = LirInsAssignRef;
-export type EirInstruction = CirInstruction | EirInsEffect | EirInsAssignRef;
+
+// EIR async block instructions
+export interface EirInsSpawn { kind: "spawn"; target: string; entry: string; args?: string[] | undefined }
+export interface EirInsChannelOp { kind: "channelOp"; op: "send" | "recv" | "trySend" | "tryRecv"; target?: string | undefined; channel: string; value?: string | undefined }
+export interface EirInsAwait { kind: "await"; target: string; future: string }
+export type EirInstruction = CirInstruction | EirInsEffect | EirInsAssignRef | EirInsSpawn | EirInsChannelOp | EirInsAwait;
+
+// EIR async terminators
+export interface EirTermFork { kind: "fork"; branches: { block: string; taskId: string }[]; continuation: string }
+export interface EirTermJoin { kind: "join"; tasks: string[]; results?: string[] | undefined; to: string }
+export interface EirTermSuspend { kind: "suspend"; future: string; resumeBlock: string }
+export type EirTerminator = LirTerminator | EirTermFork | EirTermJoin | EirTermSuspend;
 
 export interface AirBlock { id: string; instructions: AirInstruction[]; terminator: LirTerminator }
 export interface CirBlock { id: string; instructions: CirInstruction[]; terminator: LirTerminator }
-export interface EirBlock { id: string; instructions: EirInstruction[]; terminator: LirTerminator }
-
-//==============================================================================
-// PIR Block/Instruction/Terminator Types
-//==============================================================================
-
-export interface PirInsSpawn { kind: "spawn"; target: string; entry: string; args?: string[] | undefined }
-export interface PirInsChannelOp { kind: "channelOp"; op: "send" | "recv" | "trySend" | "tryRecv"; target?: string | undefined; channel: string; value?: string | undefined }
-export interface PirInsAwait { kind: "await"; target: string; future: string }
-export type PirInstruction = EirInstruction | PirInsSpawn | PirInsChannelOp | PirInsAwait;
-
-export interface PirTermFork { kind: "fork"; branches: { block: string; taskId: string }[]; continuation: string }
-export interface PirTermJoin { kind: "join"; tasks: string[]; results?: string[] | undefined; to: string }
-export interface PirTermSuspend { kind: "suspend"; future: string; resumeBlock: string }
-export type PirTerminator = LirTerminator | PirTermFork | PirTermJoin | PirTermSuspend;
-
-export interface PirBlock { id: string; instructions: PirInstruction[]; terminator: PirTerminator }
+export interface EirBlock { id: string; instructions: EirInstruction[]; terminator: EirTerminator }
 
 //==============================================================================
 // Node & Document Types
@@ -170,10 +161,8 @@ export type AirHybridNode = HybridNode<Expr, AirBlock>;
 export type CirHybridNode = HybridNode<Expr, CirBlock>;
 export type EirHybridNode = HybridNode<EirExpr, EirBlock>;
 export type LirHybridNode = HybridNode;
-export type PirHybridNode = HybridNode<PirExpr, PirBlock>;
 
 export type EirNode = Node<EirExpr>;
-export type PirNode = Node<PirExpr>;
 
 export interface LambdaParam {
 	name: string;
@@ -220,7 +209,7 @@ export interface EIRDocument {
 	version: string;
 	capabilities?: string[] | undefined;
 	functionSigs?: FunctionSignature[] | undefined;
-	airDefs: AIRDef[];
+	airDefs?: AIRDef[] | undefined;
 	nodes: EirHybridNode[];
 	result: string;
 }
@@ -231,15 +220,6 @@ export interface LIRDocument {
 	functionSigs?: FunctionSignature[] | undefined;
 	airDefs?: AIRDef[] | undefined;
 	nodes: LirHybridNode[];
-	result: string;
-}
-
-export interface PIRDocument {
-	version: string;
-	capabilities?: string[] | undefined;
-	functionSigs?: FunctionSignature[] | undefined;
-	airDefs?: AIRDef[] | undefined;
-	nodes: PirHybridNode[];
 	result: string;
 }
 
@@ -500,20 +480,20 @@ export const EirTryExprSchema: z.ZodType<EirTryExpr> = z.object({
 });
 
 //==============================================================================
-// Zod Schemas - Expression Domain - PIR extensions (8 variants)
+// Zod Schemas - Expression Domain - EIR async extensions (8 variants)
 //==============================================================================
 
-export const PirParExprSchema = z.object({
+export const EirParExprSchema = z.object({
 	kind: z.literal("par"),
 	branches: z.array(z.string()),
 });
 
-export const PirSpawnExprSchema = z.object({
+export const EirSpawnExprSchema = z.object({
 	kind: z.literal("spawn"),
 	task: z.string(),
 });
 
-export const PirAwaitExprSchema: z.ZodType<PirAwaitExpr> = z.object({
+export const EirAwaitExprSchema: z.ZodType<EirAwaitExpr> = z.object({
 	kind: z.literal("await"),
 	future: z.string(),
 	get timeout() { return stringOrExpr().optional(); },
@@ -521,24 +501,24 @@ export const PirAwaitExprSchema: z.ZodType<PirAwaitExpr> = z.object({
 	returnIndex: z.boolean().optional(),
 });
 
-export const PirChannelExprSchema: z.ZodType<PirChannelExpr> = z.object({
+export const EirChannelExprSchema: z.ZodType<EirChannelExpr> = z.object({
 	kind: z.literal("channel"),
 	channelType: z.enum(["mpsc", "spsc", "mpmc", "broadcast"]),
 	get bufferSize() { return stringOrExpr().optional(); },
 });
 
-export const PirSendExprSchema: z.ZodType<PirSendExpr> = z.object({
+export const EirSendExprSchema: z.ZodType<EirSendExpr> = z.object({
 	kind: z.literal("send"),
 	channel: z.string(),
 	get value() { return stringOrExpr(); },
 });
 
-export const PirRecvExprSchema = z.object({
+export const EirRecvExprSchema = z.object({
 	kind: z.literal("recv"),
 	channel: z.string(),
 });
 
-export const PirSelectExprSchema: z.ZodType<PirSelectExpr> = z.object({
+export const EirSelectExprSchema: z.ZodType<EirSelectExpr> = z.object({
 	kind: z.literal("select"),
 	futures: z.array(z.string()),
 	get timeout() { return stringOrExpr().optional(); },
@@ -546,7 +526,7 @@ export const PirSelectExprSchema: z.ZodType<PirSelectExpr> = z.object({
 	returnIndex: z.boolean().optional(),
 });
 
-export const PirRaceExprSchema = z.object({
+export const EirRaceExprSchema = z.object({
 	kind: z.literal("race"),
 	tasks: z.array(z.string()),
 });
@@ -555,7 +535,7 @@ export const PirRaceExprSchema = z.object({
 // Combined Expression Schema
 //==============================================================================
 
-/** AIR-only expression variants (no CIR/EIR/PIR extensions). */
+/** AIR-only expression variants (no CIR/EIR/async extensions). */
 export const AirExprSchema: z.ZodType<Expr> = z.union([
 	LitExprSchema,
 	RefExprSchema,
@@ -567,7 +547,7 @@ export const AirExprSchema: z.ZodType<Expr> = z.union([
 	PredicateExprSchema,
 ] as [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]);
 
-/** CIR-only expression variants: AIR plus lambda/callExpr/fix/do. No PIR extensions. */
+/** CIR-only expression variants: AIR plus lambda/callExpr/fix/do. No async extensions. */
 export const CirExprSchema: z.ZodType<Expr> = z.union([
 	LitExprSchema,
 	RefExprSchema,
@@ -585,7 +565,7 @@ export const CirExprSchema: z.ZodType<Expr> = z.union([
 
 /**
  * Wide expression union used by the recursive stringOrExpr() helper.
- * Includes all expression kinds (AIR+CIR+PIR) because Zod's recursive
+ * Includes all expression kinds (AIR+CIR+EIR async) because Zod's recursive
  * schema model prevents per-layer restriction of nested inline expressions.
  * For layer-specific top-level validation, use AirExprSchema, CirExprSchema, etc.
  */
@@ -602,17 +582,9 @@ export const ExprSchema: z.ZodType<Expr> = z.union([
 	CallFnExprSchema,
 	FixExprSchema,
 	DoExprSchema,
-	PirParExprSchema,
-	PirSpawnExprSchema,
-	PirAwaitExprSchema,
-	PirChannelExprSchema,
-	PirSendExprSchema,
-	PirRecvExprSchema,
-	PirSelectExprSchema,
-	PirRaceExprSchema,
 ] as [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]);
 
-/** EIR expression variants: all base expressions plus EIR-specific ones. */
+/** EIR expression variants: all base expressions plus EIR imperative and async extensions. */
 export const EirExprSchema: z.ZodType<EirExpr> = z.union([
 	LitExprSchema,
 	RefExprSchema,
@@ -635,40 +607,15 @@ export const EirExprSchema: z.ZodType<EirExpr> = z.union([
 	EirRefCellExprSchema,
 	EirDerefExprSchema,
 	EirTryExprSchema,
+	EirParExprSchema,
+	EirSpawnExprSchema,
+	EirAwaitExprSchema,
+	EirChannelExprSchema,
+	EirSendExprSchema,
+	EirRecvExprSchema,
+	EirSelectExprSchema,
+	EirRaceExprSchema,
 ] as [z.ZodType<EirExpr>, z.ZodType<EirExpr>, ...z.ZodType<EirExpr>[]]);
-
-/** PIR expression variants: all EIR expressions plus PIR-specific ones. */
-export const PirExprSchema: z.ZodType<PirExpr> = z.union([
-	LitExprSchema,
-	RefExprSchema,
-	VarExprSchema,
-	CallExprSchema,
-	IfExprSchema,
-	LetExprSchema,
-	AirRefExprSchema,
-	PredicateExprSchema,
-	LambdaExprSchema,
-	CallFnExprSchema,
-	FixExprSchema,
-	DoExprSchema,
-	EirSeqExprSchema,
-	EirAssignExprSchema,
-	EirWhileExprSchema,
-	EirForExprSchema,
-	EirIterExprSchema,
-	EirEffectExprSchema,
-	EirRefCellExprSchema,
-	EirDerefExprSchema,
-	EirTryExprSchema,
-	PirParExprSchema,
-	PirSpawnExprSchema,
-	PirAwaitExprSchema,
-	PirChannelExprSchema,
-	PirSendExprSchema,
-	PirRecvExprSchema,
-	PirSelectExprSchema,
-	PirRaceExprSchema,
-] as [z.ZodType<PirExpr>, z.ZodType<PirExpr>, ...z.ZodType<PirExpr>[]]);
 
 //==============================================================================
 // Zod Schemas - LIR Domain
@@ -764,7 +711,7 @@ export const LirTerminatorSchema: z.ZodType<LirTerminator> = z.union([
 export const LirBlockSchema: z.ZodType<LirBlock> = z.object({
 	id: z.string(),
 	instructions: z.array(LirInstructionSchema),
-	get terminator() { return PirTerminatorSchema; },
+	get terminator() { return EirTerminatorZodSchema; },
 }) as z.ZodType<LirBlock>;
 
 //==============================================================================
@@ -803,24 +750,18 @@ export const CirBlockSchema: z.ZodType<CirBlock> = z.object({
 	terminator: LirTerminatorSchema,
 });
 
-export const EirBlockSchema: z.ZodType<EirBlock> = z.object({
-	id: z.string(),
-	instructions: z.array(EirBlockInstructionSchema),
-	terminator: LirTerminatorSchema,
-});
-
 //==============================================================================
-// Zod Schemas - PIR Block/Instruction/Terminator
+// Zod Schemas - EIR Async Block/Instruction/Terminator
 //==============================================================================
 
-export const PirInsSpawnSchema = z.object({
+export const EirInsSpawnSchema = z.object({
 	kind: z.literal("spawn"),
 	target: z.string(),
 	entry: z.string(),
 	args: z.array(z.string()).optional(),
 });
 
-export const PirInsChannelOpSchema = z.object({
+export const EirInsChannelOpSchema = z.object({
 	kind: z.literal("channelOp"),
 	op: z.enum(["send", "recv", "trySend", "tryRecv"]),
 	target: z.string().optional(),
@@ -828,52 +769,52 @@ export const PirInsChannelOpSchema = z.object({
 	value: z.string().optional(),
 });
 
-export const PirInsAwaitSchema = z.object({
+export const EirInsAwaitSchema = z.object({
 	kind: z.literal("await"),
 	target: z.string(),
 	future: z.string(),
 });
 
-export const PirInstructionSchema: z.ZodType<PirInstruction> = z.union([
+export const EirFullInstructionSchema: z.ZodType<EirInstruction> = z.union([
 	EirBlockInstructionSchema,
-	PirInsSpawnSchema,
-	PirInsChannelOpSchema,
-	PirInsAwaitSchema,
+	EirInsSpawnSchema,
+	EirInsChannelOpSchema,
+	EirInsAwaitSchema,
 ]);
 
-export const PirTermForkSchema = z.object({
+export const EirTermForkSchema = z.object({
 	kind: z.literal("fork"),
 	branches: z.array(z.object({ block: z.string(), taskId: z.string() })),
 	continuation: z.string(),
 });
 
-export const PirTermJoinSchema = z.object({
+export const EirTermJoinSchema = z.object({
 	kind: z.literal("join"),
 	tasks: z.array(z.string()),
 	results: z.array(z.string()).optional(),
 	to: z.string(),
 });
 
-export const PirTermSuspendSchema = z.object({
+export const EirTermSuspendSchema = z.object({
 	kind: z.literal("suspend"),
 	future: z.string(),
 	resumeBlock: z.string(),
 });
 
-export const PirTerminatorSchema: z.ZodType<PirTerminator> = z.union([
+export const EirTerminatorZodSchema: z.ZodType<EirTerminator> = z.union([
 	LirTermJumpSchema,
 	LirTermBranchSchema,
 	LirTermReturnSchema,
 	LirTermExitSchema,
-	PirTermForkSchema,
-	PirTermJoinSchema,
-	PirTermSuspendSchema,
+	EirTermForkSchema,
+	EirTermJoinSchema,
+	EirTermSuspendSchema,
 ]);
 
-export const PirBlockSchema: z.ZodType<PirBlock> = z.object({
+export const EirBlockSchema: z.ZodType<EirBlock> = z.object({
 	id: z.string(),
-	instructions: z.array(PirInstructionSchema),
-	terminator: PirTerminatorSchema,
+	instructions: z.array(EirFullInstructionSchema),
+	terminator: EirTerminatorZodSchema,
 });
 
 //==============================================================================
@@ -901,13 +842,6 @@ export const EirExprNodeSchema: z.ZodType<ExprNode<EirExpr>> = z.object({
 	expr: EirExprSchema,
 }) as z.ZodType<ExprNode<EirExpr>>;
 
-/** Expression-based node for PIR layer */
-export const PirExprNodeSchema: z.ZodType<ExprNode<PirExpr>> = z.object({
-	id: z.string(),
-	type: TypeSchema.optional(),
-	expr: PirExprSchema,
-}) as z.ZodType<ExprNode<PirExpr>>;
-
 /** Block-based node (generic) */
 function blockNodeSchema<B>(blockSchema: z.ZodType<B>): z.ZodType<BlockNode<B>> {
 	return z.object({
@@ -919,7 +853,7 @@ function blockNodeSchema<B>(blockSchema: z.ZodType<B>): z.ZodType<BlockNode<B>> 
 }
 
 export const AirHybridNodeSchema: z.ZodType<AirHybridNode> = z.union([AirExprNodeSchema, blockNodeSchema(AirBlockSchema)]) as z.ZodType<AirHybridNode>;
-/** Expression-based node for CIR layer (no PIR expressions) */
+/** Expression-based node for CIR layer (no async expressions) */
 export const CirExprNodeSchema: z.ZodType<ExprNode> = z.object({
 	id: z.string(),
 	type: TypeSchema.optional(),
@@ -928,7 +862,7 @@ export const CirExprNodeSchema: z.ZodType<ExprNode> = z.object({
 
 export const CirHybridNodeSchema: z.ZodType<CirHybridNode> = z.union([CirExprNodeSchema, blockNodeSchema(CirBlockSchema)]) as z.ZodType<CirHybridNode>;
 export const EirHybridNodeSchema: z.ZodType<EirHybridNode> = z.union([EirExprNodeSchema, blockNodeSchema(EirBlockSchema)]) as z.ZodType<EirHybridNode>;
-/** Expression-based node for LIR layer (no PIR expressions) */
+/** Expression-based node for LIR layer (no async expressions) */
 export const LirExprNodeSchema: z.ZodType<ExprNode> = z.object({
 	id: z.string(),
 	type: TypeSchema.optional(),
@@ -936,7 +870,6 @@ export const LirExprNodeSchema: z.ZodType<ExprNode> = z.object({
 }) as z.ZodType<ExprNode>;
 
 export const LirHybridNodeSchema: z.ZodType<LirHybridNode> = z.union([LirExprNodeSchema, blockNodeSchema(LirBlockSchema)]) as z.ZodType<LirHybridNode>;
-export const PirHybridNodeSchema: z.ZodType<PirHybridNode> = z.union([PirExprNodeSchema, blockNodeSchema(PirBlockSchema)]) as z.ZodType<PirHybridNode>;
 
 //==============================================================================
 // Zod Schemas - Supporting
@@ -984,7 +917,7 @@ export const EIRDocumentSchema: z.ZodType<EIRDocument> = z.object({
 	version: SemVer,
 	capabilities: z.array(z.string()).optional(),
 	functionSigs: z.array(FunctionSignatureSchema).optional(),
-	airDefs: z.array(AIRDefSchema),
+	airDefs: z.array(AIRDefSchema).optional(),
 	nodes: z.array(EirHybridNodeSchema),
 	result: z.string(),
 }).describe("EIRDocument");
@@ -997,12 +930,3 @@ export const LIRDocumentSchema: z.ZodType<LIRDocument> = z.object({
 	nodes: z.array(LirHybridNodeSchema),
 	result: z.string(),
 }).describe("LIRDocument");
-
-export const PIRDocumentSchema: z.ZodType<PIRDocument> = z.object({
-	version: PirVersion,
-	capabilities: z.array(z.string()).optional(),
-	functionSigs: z.array(FunctionSignatureSchema).optional(),
-	airDefs: z.array(AIRDefSchema).optional(),
-	nodes: z.array(PirHybridNodeSchema),
-	result: z.string(),
-}).describe("PIRDocument");
