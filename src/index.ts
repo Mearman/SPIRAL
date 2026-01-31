@@ -189,6 +189,7 @@ export {
 //==============================================================================
 
 export { synthesizePython, type PythonSynthOptions } from "./synth/python.js";
+export { synthesizeTypeScript, type TypeScriptSynthOptions } from "./synth/typescript.js";
 
 //==============================================================================
 // CLI Utilities
