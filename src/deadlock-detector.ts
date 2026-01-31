@@ -1,5 +1,5 @@
 // SPIRAL Deadlock Detector
-// Deadlock detection for PIR async/parallel execution
+// Deadlock detection for async/parallel execution
 
 import type { DetectionOptions } from "./detectors.js";
 

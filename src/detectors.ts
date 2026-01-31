@@ -1,5 +1,5 @@
 // SPIRAL Concurrent Execution Detectors
-// Race condition and deadlock detection for PIR async/parallel execution
+// Race condition and deadlock detection for async/parallel execution
 
 import type { Value } from "./types.js";
 import { DeadlockDetector } from "./deadlock-detector.js";

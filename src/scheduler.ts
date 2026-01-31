@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 
 // SPIRAL Task Scheduler
-// Cooperative task scheduling for PIR async/parallel execution
+// Cooperative task scheduling for async/parallel execution
 
 import type { Value } from "./types.js";
 import { DefaultTaskScheduler } from "./default-scheduler.js";
@@ -14,7 +14,7 @@ export { AsyncBarrier } from "./async-barrier.js";
 //==============================================================================
 
 /**
- * TaskScheduler manages async task execution in PIR
+ * TaskScheduler manages async task execution in EIR async
  * Uses cooperative scheduling with Promise-based execution
  */
 export interface TaskScheduler {
