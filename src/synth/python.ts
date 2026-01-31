@@ -1,10 +1,10 @@
 /* eslint-disable max-lines, max-statements, complexity, @typescript-eslint/no-unnecessary-condition */
 // SPIRAL Python Synthesizer
-// Translates SPIRAL documents (AIR/CIR/EIR/PIR/LIR) to executable Python code
+// Translates SPIRAL documents (AIR/CIR/EIR/LIR) to executable Python code
 
 import type {
-	AIRDef, AIRDocument, CIRDocument, EIRDocument, PIRDocument,
-	Expr, EirExpr, PirExpr, Node, EirNode,
+	AIRDef, AIRDocument, CIRDocument, EIRDocument,
+	Expr, EirExpr, Node, EirNode,
 	LIRDocument, LirBlock,
 	CallExpr, AirRefExpr, DoExpr, LitExpr, FixExpr,
 	EirAssignExpr, EirEffectExpr,
@@ -18,7 +18,7 @@ export interface PythonSynthOptions {
 	debugComments?: boolean;
 }
 
-type Document = AIRDocument | CIRDocument | EIRDocument | LIRDocument | PIRDocument;
+type Document = AIRDocument | CIRDocument | EIRDocument | LIRDocument;
 
 interface OperatorMapping {
 	pythonOp: string;
@@ -50,7 +50,7 @@ function isLIRDocument(doc: Document): doc is LIRDocument {
 	return "nodes" in doc && doc.nodes.some((n) => "blocks" in n && "entry" in n);
 }
 
-function isExprBasedDocument(doc: Document): doc is AIRDocument | CIRDocument | EIRDocument | PIRDocument {
+function isExprBasedDocument(doc: Document): doc is AIRDocument | CIRDocument | EIRDocument {
 	return "nodes" in doc && doc.nodes.some((n) => "expr" in n);
 }
 
@@ -147,7 +147,7 @@ function synthFix(ctx: ExprCtx, expr: FixExpr): string {
 	return `(lambda ${v}: ${ref(expr.fn)}(${v}))(${v})`;
 }
 
-function synthPirExpr(ctx: ExprCtx, expr: Expr | EirExpr | PirExpr): string | null {
+function synthEirExpr(ctx: ExprCtx, expr: Expr | EirExpr): string | null {
 	switch (expr.kind) {
 	case "spawn":
 		return `asyncio.create_task(${ref(expr.task)}())`;
@@ -184,7 +184,7 @@ function synthSimpleKind(ctx: ExprCtx, expr: Expr | EirExpr): string | null {
 	}
 }
 
-function synthesizeExpr(ctx: ExprCtx, expr: Expr | EirExpr | PirExpr): string {
+function synthesizeExpr(ctx: ExprCtx, expr: Expr | EirExpr): string {
 	switch (expr.kind) {
 	case "lit": return synthLit(expr);
 	case "call": return synthCall(ctx, expr);
@@ -194,11 +194,11 @@ function synthesizeExpr(ctx: ExprCtx, expr: Expr | EirExpr | PirExpr): string {
 	case "effect": return synthEffect(ctx, expr);
 	case "fix": return synthFix(ctx, expr);
 	case "seq": return `(lambda _: ${refOrInline(ctx, expr.then)})(${refOrInline(ctx, expr.first)})`;
-	default: return synthPirExpr(ctx, expr) ?? synthSimpleKind(ctx, expr) ?? (() => { throw new Error(`Unsupported expression kind: ${expr.kind}`); })();
+	default: return synthEirExpr(ctx, expr) ?? synthSimpleKind(ctx, expr) ?? (() => { throw new Error(`Unsupported expression kind: ${expr.kind}`); })();
 	}
 }
 
-function initState(doc: AIRDocument | CIRDocument | EIRDocument | PIRDocument, moduleName: string): ExprSynthState {
+function initState(doc: AIRDocument | CIRDocument | EIRDocument, moduleName: string): ExprSynthState {
 	const state: ExprSynthState = { lines: [], varIndex: 0, airDefs: new Map() };
 	const airDefs = doc.airDefs ?? [];
 	for (const airDef of airDefs) state.airDefs.set(`${airDef.ns}:${airDef.name}`, airDef);
@@ -227,21 +227,21 @@ function insertMutableCells(lines: string[], cellInitLines: string[]): void {
 	if (idx >= 0) lines.splice(idx, 0, "# Mutable cells", ...cellInitLines.map((l) => `    ${l}`), "");
 }
 
-function emitNodeBindings(state: ExprSynthState, doc: AIRDocument | CIRDocument | EIRDocument | PIRDocument): ExprCtx {
+function emitNodeBindings(state: ExprSynthState, doc: AIRDocument | CIRDocument | EIRDocument): ExprCtx {
 	state.lines.push("# Node bindings");
 	const ctx: ExprCtx = { state, mutableCells: new Map(), cellInitLines: [] };
 	for (const node of doc.nodes) { if (isExprNode(node)) emitNodeBinding(ctx, node); }
 	return ctx;
 }
 
-function synthesizeExprBased(doc: AIRDocument | CIRDocument | EIRDocument | PIRDocument, opts: PythonSynthOptions): string {
+function synthesizeExprBased(doc: AIRDocument | CIRDocument | EIRDocument, opts: PythonSynthOptions): string {
 	const state = initState(doc, opts.moduleName ?? "spiral_generated");
 	const airDefs = doc.airDefs ?? [];
 	if (airDefs.length > 0) { emitAirDefs(state, airDefs); state.lines.push(""); }
 	const ctx = emitNodeBindings(state, doc);
-	// Add asyncio import if PIR expressions are detected
-	const pirKinds = new Set(["spawn", "await", "par", "channel", "send", "recv", "select", "race"]);
-	if (doc.nodes.some(n => "expr" in n && n.expr && typeof n.expr === "object" && "kind" in n.expr && pirKinds.has(n.expr.kind))) {
+	// Add asyncio import if async expressions are detected
+	const asyncKinds = new Set(["spawn", "await", "par", "channel", "send", "recv", "select", "race"]);
+	if (doc.nodes.some(n => "expr" in n && n.expr && typeof n.expr === "object" && "kind" in n.expr && asyncKinds.has(n.expr.kind))) {
 		state.lines.splice(state.lines.indexOf("# Node bindings"), 0, "import asyncio", "");
 	}
 	insertMutableCells(state.lines, ctx.cellInitLines);

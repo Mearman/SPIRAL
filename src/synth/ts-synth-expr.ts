@@ -1,8 +1,8 @@
 // Expression-based synthesis (AIR/CIR/EIR) for TypeScript
 
 import type {
-	AIRDef, AIRDocument, CIRDocument, EIRDocument, PIRDocument,
-	Expr, EirExpr, PirExpr, Node, EirNode,
+	AIRDef, AIRDocument, CIRDocument, EIRDocument,
+	Expr, EirExpr, Node, EirNode,
 } from "../types.js";
 import { isExprNode } from "../types.js";
 import type { ExprSynthState, SynthContext, TypeScriptSynthOptions } from "./ts-synth-shared.js";
@@ -14,7 +14,7 @@ import { exprHasFreeVars, exprHasParamRefs, markInlinedBodies } from "./ts-synth
 //==============================================================================
 
 export function synthesizeExprBased(
-	doc: AIRDocument | CIRDocument | EIRDocument | PIRDocument,
+	doc: AIRDocument | CIRDocument | EIRDocument,
 	opts: TypeScriptSynthOptions,
 ): string {
 	const state = initState(doc);
@@ -38,7 +38,7 @@ function emitAirDefsIfPresent(state: ExprSynthState, airDefs: AIRDef[]): void {
 	state.lines.push("");
 }
 
-function initState(doc: AIRDocument | CIRDocument | EIRDocument | PIRDocument): ExprSynthState {
+function initState(doc: AIRDocument | CIRDocument | EIRDocument): ExprSynthState {
 	const state: ExprSynthState = {
 		lines: [], varIndex: 0,
 		airDefs: new Map(), nodeMap: new Map(), inlinedNodes: new Set(),
@@ -60,7 +60,7 @@ function emitHeader(state: ExprSynthState, opts: TypeScriptSynthOptions, version
 
 function preScanInlinedBodies(
 	state: ExprSynthState,
-	doc: AIRDocument | CIRDocument | EIRDocument | PIRDocument,
+	doc: AIRDocument | CIRDocument | EIRDocument,
 ): void {
 	for (const node of doc.nodes) {
 		if (!isExprNode(node)) continue;
@@ -72,7 +72,7 @@ function preScanInlinedBodies(
 
 function emitAllNodeBindings(
 	state: ExprSynthState,
-	doc: AIRDocument | CIRDocument | EIRDocument | PIRDocument,
+	doc: AIRDocument | CIRDocument | EIRDocument,
 ): void {
 	state.lines.push("// Node bindings");
 	const ctx: SynthContext = { state, mutableCells: new Map(), cellInitLines: [], paramScope: new Set() };
@@ -275,7 +275,7 @@ function synthEirEffectExpr(ctx: SynthContext, expr: Expr | EirExpr): string | u
 	}
 }
 
-function synthPirExpr(ctx: SynthContext, expr: Expr | EirExpr | PirExpr): string | undefined {
+function synthAsyncExpr(ctx: SynthContext, expr: Expr | EirExpr): string | undefined {
 	switch (expr.kind) {
 	case "spawn":
 		return `(async () => ${refOrInline(ctx, expr.task)})()`;
@@ -302,8 +302,8 @@ function synthPirExpr(ctx: SynthContext, expr: Expr | EirExpr | PirExpr): string
 // synthesizeExpr - thin dispatcher
 //==============================================================================
 
-export function synthesizeExpr(ctx: SynthContext, expr: Expr | EirExpr | PirExpr): string {
-	const result = synthAirExpr(ctx, expr) ?? synthCirExpr(ctx, expr) ?? synthEirControlExpr(ctx, expr) ?? synthEirEffectExpr(ctx, expr) ?? synthPirExpr(ctx, expr);
+export function synthesizeExpr(ctx: SynthContext, expr: Expr | EirExpr): string {
+	const result = synthAirExpr(ctx, expr) ?? synthCirExpr(ctx, expr) ?? synthEirControlExpr(ctx, expr) ?? synthEirEffectExpr(ctx, expr) ?? synthAsyncExpr(ctx, expr);
 	if (result !== undefined) return result;
 	throw new Error(`Unsupported expression kind: ${expr.kind}`);
 }
