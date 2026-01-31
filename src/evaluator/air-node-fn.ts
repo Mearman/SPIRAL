@@ -39,13 +39,19 @@ export function evalNodeCallExpr(
 
 function resolveCallExprArgs(
 	ctx: ProgramCtx,
-	args: string[],
+	args: (string | Expr)[],
 	env: ValueEnv,
 ): Value[] | Value {
 	const values: Value[] = [];
-	for (const argId of args) {
-		const val = ctx.nodeValues.get(argId) ?? lookupValue(env, argId);
-		if (!val) return errorVal(ErrorCodes.DomainError, "Argument node not evaluated: " + argId);
+	for (const arg of args) {
+		if (typeof arg !== "string") {
+			const val = evalExprInline(ctx, arg, env);
+			if (isError(val)) return val;
+			values.push(val);
+			continue;
+		}
+		const val = ctx.nodeValues.get(arg) ?? lookupValue(env, arg);
+		if (!val) return errorVal(ErrorCodes.DomainError, "Argument node not evaluated: " + arg);
 		if (isError(val)) return val;
 		values.push(val);
 	}

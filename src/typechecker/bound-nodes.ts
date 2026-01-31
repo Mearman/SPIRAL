@@ -108,12 +108,12 @@ function visitIfRefs(
 
 function visitCallExprRefs(
 	state: BoundNodeState,
-	expr: { fn: string; args: string[] },
+	expr: { fn: string; args: (string | Expr)[] },
 	visited: Set<string>,
 ): void {
 	if (state.nodeMap.has(expr.fn)) collectDeps(state, expr.fn, visited);
-	for (const argId of expr.args) {
-		if (state.nodeMap.has(argId)) collectDeps(state, argId, visited);
+	for (const arg of expr.args) {
+		if (typeof arg === "string" && state.nodeMap.has(arg)) collectDeps(state, arg, visited);
 	}
 }
 

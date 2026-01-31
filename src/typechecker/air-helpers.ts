@@ -89,7 +89,7 @@ export function checkCallExprParamOrBound(
 
 export function checkCallExprWithFnType(
 	ctx: AIRCheckContext,
-	expr: { fn: string; args: string[] },
+	expr: { fn: string; args: (string | Expr)[] },
 ): TypeCheckResult {
 	const fnType = ctx.nodeTypes.get(expr.fn);
 	if (!fnType) {
@@ -121,22 +121,22 @@ function checkSingleArgType(input: ArgTypeCheck): void {
 
 function verifyCallExprArgTypes(
 	ctx: AIRCheckContext,
-	args: string[],
+	args: (string | Expr)[],
 	fnType: { kind: "fn"; params: Type[]; returns: Type },
 ): void {
 	for (let i = 0; i < args.length; i++) {
-		const argId = args[i];
-		if (argId === undefined) continue;
-		if (ctx.lambdaParams.has(argId)) continue;
+		const arg = args[i];
+		if (arg === undefined || typeof arg !== "string") continue;
+		if (ctx.lambdaParams.has(arg)) continue;
 		const expected = fnType.params[i];
 		if (expected === undefined) continue;
-		checkSingleArgType({ ctx, argId, expected, index: i });
+		checkSingleArgType({ ctx, argId: arg, expected, index: i });
 	}
 }
 
 function callExprReturnType(
 	ctx: AIRCheckContext,
-	args: string[],
+	args: (string | Expr)[],
 	fnType: { kind: "fn"; params: Type[]; returns: Type },
 ): TypeCheckResult {
 	if (args.length < fnType.params.length) {
