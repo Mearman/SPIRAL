@@ -67,6 +67,12 @@ export function sanitizeId(id: string): string {
 	return id.replace(/[^a-zA-Z0-9_]/g, "_");
 }
 
+export function stableVarName(nodeId: string): string {
+	const sanitized = sanitizeId(nodeId);
+	const base = sanitized.startsWith("v_") ? sanitized.slice(2) : sanitized;
+	return `v_${base}`;
+}
+
 export function freshVar(state: ExprSynthState): string {
 	return `_v${state.varIndex++}`;
 }
@@ -139,7 +145,7 @@ function tsExprCall(expr: Expr & { kind: "call" }): string {
 	const mapping = OPERATOR_MAP[qualName];
 	if (!mapping) return "null";
 	const argCodes = expr.args.map((arg) =>
-		typeof arg === "string" ? `v_${sanitizeId(arg)}` : tsExpr(arg),
+		typeof arg === "string" ? stableVarName(arg) : tsExpr(arg),
 	);
 	if (mapping.customImpl) return mapping.customImpl(argCodes);
 	if (argCodes.length === 1) return `${mapping.tsOp}${argCodes[0]}`;
@@ -150,7 +156,7 @@ function tsExprCall(expr: Expr & { kind: "call" }): string {
 export function tsExpr(expr: Expr): string {
 	switch (expr.kind) {
 	case "ref":
-		return `v_${sanitizeId(expr.id)}`;
+		return stableVarName(expr.id);
 	case "var":
 		return expr.name;
 	case "lit": {

@@ -77,6 +77,12 @@ function sanitizeId(id: string): string {
 	return id.replace(/[^a-zA-Z0-9_]/g, "_");
 }
 
+function stableVarName(nodeId: string): string {
+	const sanitized = sanitizeId(nodeId);
+	const base = sanitized.startsWith("v_") ? sanitized.slice(2) : sanitized;
+	return `v_${base}`;
+}
+
 function freshVar(state: ExprSynthState): string {
 	return `_v${state.varIndex++}`;
 }
@@ -86,7 +92,7 @@ function isValue(value: object): value is Value {
 }
 
 function ref(nodeId: string): string {
-	return `v_${sanitizeId(nodeId)}`;
+	return stableVarName(nodeId);
 }
 
 function refOrInline(ctx: ExprCtx, val: string | Expr | EirExpr): string {
@@ -208,7 +214,7 @@ function initState(doc: AIRDocument | CIRDocument | EIRDocument, moduleName: str
 }
 
 function emitNodeBinding(ctx: ExprCtx, node: Node | EirNode): void {
-	const varName = `v_${sanitizeId(node.id)}`;
+	const varName = stableVarName(node.id);
 	if (ctx.state.lines.some((l) => l.startsWith(`${varName} =`))) return;
 	ctx.state.lines.push(`${varName} = ${synthesizeExpr(ctx, node.expr)}`, "");
 }
@@ -245,7 +251,7 @@ function synthesizeExprBased(doc: AIRDocument | CIRDocument | EIRDocument, opts:
 		state.lines.splice(state.lines.indexOf("# Node bindings"), 0, "import asyncio", "");
 	}
 	insertMutableCells(state.lines, ctx.cellInitLines);
-	state.lines.push("", "# Result", `print(v_${sanitizeId(doc.result)})`, "");
+	state.lines.push("", "# Result", `print(${stableVarName(doc.result)})`, "");
 	return state.lines.join("\n");
 }
 
@@ -349,7 +355,7 @@ function pythonExprCall(expr: CallExpr): string {
 	const qualName = `${expr.ns}:${expr.name}`;
 	const mapping = OPERATOR_MAP[qualName];
 	if (!mapping) return "None";
-	const argCodes = expr.args.map((arg) => typeof arg === "string" ? `v_${sanitizeId(arg)}` : pythonExpr(arg));
+	const argCodes = expr.args.map((arg) => typeof arg === "string" ? stableVarName(arg) : pythonExpr(arg));
 	if (mapping.customImpl) return mapping.customImpl(argCodes);
 	if (argCodes.length === 1) return `${mapping.pythonOp}${argCodes[0]}`;
 	if (argCodes.length === 2) return `(${argCodes[0]} ${mapping.pythonOp} ${argCodes[1]})`;
@@ -358,7 +364,7 @@ function pythonExprCall(expr: CallExpr): string {
 
 function pythonExpr(expr: Expr): string {
 	switch (expr.kind) {
-	case "ref": return `v_${sanitizeId(expr.id)}`;
+	case "ref": return stableVarName(expr.id);
 	case "var": return expr.name;
 	case "lit": {
 		const v = expr.value;
