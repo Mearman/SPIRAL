@@ -70,7 +70,7 @@ function generateSchema(
 
 function writeSchema(name: string, schema: Record<string, unknown>): void {
 	const filePath = resolve(repoRoot, `${name}.schema.json`);
-	writeFileSync(filePath, JSON.stringify(schema, null, 2) + "\n");
+	writeFileSync(filePath, JSON.stringify(schema, null, "\t") + "\n");
 	console.log(`Generated ${name}.schema.json`);
 }
 
