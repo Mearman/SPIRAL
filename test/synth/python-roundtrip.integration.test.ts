@@ -521,3 +521,66 @@ describe("Multi-Hop: Py -> TS -> TS", { skip: !pythonAvailable }, () => {
 		});
 	}
 });
+
+//==============================================================================
+// Multi-Hop Test Cases (TS source)
+//==============================================================================
+
+const multiHopTsCases: Array<{ name: string; source: string; expected: unknown }> = [
+	{ name: "addition", source: "2 + 3", expected: 5 },
+	{ name: "subtraction", source: "10 - 3", expected: 7 },
+	{ name: "boolean and", source: "true && false", expected: false },
+	{ name: "boolean not", source: "!false", expected: true },
+	{ name: "comparison", source: "5 > 3", expected: true },
+	{ name: "ternary", source: "true ? 1 : 2", expected: 1 },
+	{ name: "string concat", source: '"hello" + " world"', expected: "hello world" },
+	{ name: "negation", source: "-5", expected: -5 },
+];
+
+//==============================================================================
+// Direction 9: TS -> Py -> Py (TypeScript through Python, execute as Python)
+//==============================================================================
+
+describe("Multi-Hop: TS -> Py -> Py", { skip: !pythonAvailable }, () => {
+	for (const { name, source, expected } of multiHopTsCases) {
+		it(`should multi-hop TS->Py->Py: ${name}`, () => {
+			assert.deepStrictEqual(multiHop(source, "typescript", "python", "python"), expected);
+		});
+	}
+});
+
+//==============================================================================
+// Direction 10: TS -> Py -> TS (TypeScript through Python and back)
+//==============================================================================
+
+describe("Multi-Hop: TS -> Py -> TS", { skip: !pythonAvailable }, () => {
+	for (const { name, source, expected } of multiHopTsCases) {
+		it(`should multi-hop TS->Py->TS: ${name}`, () => {
+			assert.deepStrictEqual(multiHop(source, "typescript", "python", "typescript"), expected);
+		});
+	}
+});
+
+//==============================================================================
+// Direction 11: TS -> TS -> Py (TypeScript through TypeScript, execute as Python)
+//==============================================================================
+
+describe("Multi-Hop: TS -> TS -> Py", { skip: !pythonAvailable }, () => {
+	for (const { name, source, expected } of multiHopTsCases) {
+		it(`should multi-hop TS->TS->Py: ${name}`, () => {
+			assert.deepStrictEqual(multiHop(source, "typescript", "typescript", "python"), expected);
+		});
+	}
+});
+
+//==============================================================================
+// Direction 12: TS -> TS -> TS (double TypeScript roundtrip)
+//==============================================================================
+
+describe("Multi-Hop: TS -> TS -> TS", { skip: !pythonAvailable }, () => {
+	for (const { name, source, expected } of multiHopTsCases) {
+		it(`should survive double roundtrip: ${name}`, () => {
+			assert.deepStrictEqual(multiHop(source, "typescript", "typescript", "typescript"), expected);
+		});
+	}
+});
