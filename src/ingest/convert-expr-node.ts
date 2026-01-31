@@ -255,18 +255,19 @@ function tryConvertLiteral(
 }
 
 // Dispatch: operators and references
+function convertIdentifierToNode(node: ts.Identifier, state: IngestState): string {
+	const existingId = resolveExistingNodeId(state, node.text);
+	if (existingId !== undefined) return existingId;
+	const id = freshId(state);
+	addNode(state, id, { kind: "ref", id: node.text });
+	return id;
+}
+
 function tryConvertOperator(
 	node: ts.Expression,
 	state: IngestState,
 ): string | undefined {
-	if (ts.isIdentifier(node)) {
-		const existingId = resolveExistingNodeId(state, node.text);
-		if (existingId !== undefined) return existingId;
-
-		const id = freshId(state);
-		addNode(state, id, { kind: "ref", id: node.text });
-		return id;
-	}
+	if (ts.isIdentifier(node)) return convertIdentifierToNode(node, state);
 	if (ts.isParenthesizedExpression(node)) return convertExpressionToNode(node.expression, state);
 	if (ts.isBinaryExpression(node)) return convertBinaryExprToNode(node, state);
 	if (ts.isPrefixUnaryExpression(node)) return convertPrefixUnaryToNode(node, state);
