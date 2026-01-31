@@ -325,8 +325,11 @@ function synthesizeExpr(
 	}
 
 	case "fix": {
-		const varName = freshVar(state);
-		return `((${varName}: any) => ${refToTs(expr.fn)}(${varName}))(${varName})`;
+		// Z-combinator for strict evaluation: fix(f) = (g => g(g))(g => f((...a) => g(g)(...a)))
+		const g1 = freshVar(state);
+		const g2 = freshVar(state);
+		const a = freshVar(state);
+		return `((${g1}: any) => ${g1}(${g1}))((${g2}: any) => ${refToTs(expr.fn)}((...${a}: any[]) => ${g2}(${g2})(...${a})))`;
 	}
 
 	case "do": {
