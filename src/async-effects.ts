@@ -173,26 +173,33 @@ export class AsyncChannelImpl implements AsyncChannel {
 		this.capacity = capacity;
 	}
 
+	private assertNotClosed(): void {
+		if (this.closed) {
+			throw new Error("Cannot send to closed channel");
+		}
+	}
+
+	private deliverToReceiver(value: Value): boolean {
+		if (this.waitingReceivers.length > 0) {
+			const receiver = this.waitingReceivers.shift();
+			if (receiver) {
+				receiver.resolve(value);
+			}
+			return true;
+		}
+		return false;
+	}
+
 	/**
 	 * Send a value to the channel
 	 * Blocks if buffer is full, unless channel is closed
 	 * @param value - Value to send
 	 */
 	async send(value: Value): Promise<void> {
-		if (this.closed) {
-			throw new Error("Cannot send to closed channel");
-		}
+		this.assertNotClosed();
 
-		// If there's a waiting receiver, deliver directly
-		if (this.waitingReceivers.length > 0) {
-			const receiver = this.waitingReceivers.shift();
-			if (receiver) {
-				receiver.resolve(value);
-			}
-			return;
-		}
+		if (this.deliverToReceiver(value)) return;
 
-		// If buffer has space, add to buffer
 		if (this.buffer.length < this.capacity) {
 			this.buffer.push(value);
 			return;
@@ -201,12 +208,9 @@ export class AsyncChannelImpl implements AsyncChannel {
 		// Buffer is full, wait for space
 		return new Promise<void>((resolve, reject) => {
 			this.waitingSenders.push({
-				resolve: () => {
-					this.buffer.push(value);
-					resolve();
-				},
+				resolve: () => { this.buffer.push(value); resolve(); },
 				reject,
-				value,  // Store value for rendezvous in recv()
+				value,
 			});
 		});
 	}
@@ -217,20 +221,10 @@ export class AsyncChannelImpl implements AsyncChannel {
 	 * @returns true if send succeeded, false if channel is full
 	 */
 	trySend(value: Value): boolean {
-		if (this.closed) {
-			throw new Error("Cannot send to closed channel");
-		}
+		this.assertNotClosed();
 
-		// If there's a waiting receiver, deliver directly
-		if (this.waitingReceivers.length > 0) {
-			const receiver = this.waitingReceivers.shift();
-			if (receiver) {
-				receiver.resolve(value);
-			}
-			return true;
-		}
+		if (this.deliverToReceiver(value)) return true;
 
-		// If buffer has space, add to buffer
 		if (this.buffer.length < this.capacity) {
 			this.buffer.push(value);
 			return true;
@@ -239,49 +233,41 @@ export class AsyncChannelImpl implements AsyncChannel {
 		return false;
 	}
 
+	private takeFromBuffer(): Value | null {
+		if (this.buffer.length === 0) return null;
+		const value = this.buffer.shift();
+		if (value === undefined) {
+			throw new Error("Buffer unexpectedly empty");
+		}
+		if (this.waitingSenders.length > 0) {
+			const sender = this.waitingSenders.shift();
+			if (sender) sender.resolve();
+		}
+		return value;
+	}
+
+	private takeFromSender(): Value | null {
+		if (this.waitingSenders.length === 0) return null;
+		const sender = this.waitingSenders.shift();
+		if (!sender) throw new Error("Sender unexpectedly missing");
+		sender.resolve();
+		return sender.value;
+	}
+
 	/**
 	 * Receive a value from the channel
 	 * Blocks if buffer is empty, until a value arrives or channel is closed
 	 * @returns Promise that resolves with the received value
 	 */
 	async recv(): Promise<Value> {
-		// If buffer has value, return immediately
-		if (this.buffer.length > 0) {
-			const value = this.buffer.shift();
-			// Check if shift returned undefined (not false, 0, or "")
-			if (value === undefined) {
-				throw new Error("Buffer unexpectedly empty");
-			}
+		const buffered = this.takeFromBuffer();
+		if (buffered !== null) return buffered;
 
-			// Wake up a waiting sender if any
-			if (this.waitingSenders.length > 0) {
-				const sender = this.waitingSenders.shift();
-				if (sender) {
-					sender.resolve();
-				}
-			}
+		if (this.closed) throw new Error("Cannot receive from closed channel");
 
-			return value;
-		}
+		const fromSender = this.takeFromSender();
+		if (fromSender !== null) return fromSender;
 
-		// If channel is closed and buffer is empty
-		if (this.closed) {
-			throw new Error("Cannot receive from closed channel");
-		}
-
-		// If there's a waiting sender (rendezvous for unbuffered channels), complete the handshake
-		if (this.waitingSenders.length > 0) {
-			const sender = this.waitingSenders.shift();
-			if (!sender) {
-				throw new Error("Sender unexpectedly missing");
-			}
-			// Resolve the sender's promise (so send() completes)
-			sender.resolve();
-			// Return the value the sender was trying to send
-			return sender.value;
-		}
-
-		// Wait for a value
 		return new Promise<Value>((resolve, reject) => {
 			this.waitingReceivers.push({ resolve, reject });
 		});
@@ -292,29 +278,10 @@ export class AsyncChannelImpl implements AsyncChannel {
 	 * @returns Received value or null if channel is empty
 	 */
 	tryRecv(): Value | null {
-		// If buffer has value, return immediately
-		if (this.buffer.length > 0) {
-			const value = this.buffer.shift();
-			// Check if shift returned undefined (not false, 0, or "")
-			if (value === undefined) {
-				throw new Error("Buffer unexpectedly empty");
-			}
+		const buffered = this.takeFromBuffer();
+		if (buffered !== null) return buffered;
 
-			// Wake up a waiting sender if any
-			if (this.waitingSenders.length > 0) {
-				const sender = this.waitingSenders.shift();
-				if (sender) {
-					sender.resolve();
-				}
-			}
-
-			return value;
-		}
-
-		// Channel is empty
-		if (this.closed) {
-			throw new Error("Cannot receive from closed channel");
-		}
+		if (this.closed) throw new Error("Cannot receive from closed channel");
 
 		return null;
 	}
@@ -398,111 +365,53 @@ export class ConcurrentEffectLog {
 	private seqCounter = 0;
 	private startTime = Date.now();
 
-	/**
-	 * Append an effect to the log
-	 * @param taskId - Task that generated the effect
-	 * @param effect - Effect to log
-	 */
+	private pushEffect(taskId: string, effect: Effect): void {
+		this.effects.push({ taskId, seqNum: this.seqCounter++, timestamp: Date.now() - this.startTime, effect });
+	}
+
+	/** Append an effect to the log */
 	append(taskId: string, effect: Effect): void {
-		this.effects.push({
-			taskId,
-			seqNum: this.seqCounter++,
-			timestamp: Date.now() - this.startTime,
-			effect,
-		});
+		this.pushEffect(taskId, effect);
 	}
 
-	/**
-	 * Append an effect with result
-	 * @param taskId - Task that generated the effect
-	 * @param effect - Effect to log
-	 * @param result - Result of the effect
-	 */
+	/** Append an effect with result */
 	appendWithResult(taskId: string, effect: Effect, result: Value): void {
-		this.effects.push({
-			taskId,
-			seqNum: this.seqCounter++,
-			timestamp: Date.now() - this.startTime,
-			effect: { ...effect, result },
-		});
+		this.pushEffect(taskId, { ...effect, result });
 	}
 
-	/**
-	 * Append an effect with error
-	 * @param taskId - Task that generated the effect
-	 * @param effect - Effect to log
-	 * @param error - Error from the effect
-	 */
+	/** Append an effect with error */
 	// biome-ignore lint/suspiciousNoExplicitAny: ErrorVal type is imported with namespace
 	appendWithError(taskId: string, effect: Effect, error: ErrorVal | any): void {
-		this.effects.push({
-			taskId,
-			seqNum: this.seqCounter++,
-			timestamp: Date.now() - this.startTime,
-			effect: { ...effect, error },
-		});
+		this.pushEffect(taskId, { ...effect, error });
 	}
 
-	/**
-	 * Get all effects ordered by sequence number
-	 */
+	/** Get all effects ordered by sequence number */
 	getOrdered(): Effect[] {
-		return [...this.effects]
-			.sort((a, b) => a.seqNum - b.seqNum)
-			.map((e) => e.effect);
+		return [...this.effects].sort((a, b) => a.seqNum - b.seqNum).map((e) => e.effect);
 	}
 
-	/**
-	 * Get all effects for a specific task
-	 * @param taskId - Task ID to filter by
-	 */
+	/** Get all effects for a specific task */
 	getByTask(taskId: string): Effect[] {
-		return this.effects
-			.filter((e) => e.taskId === taskId)
-			.sort((a, b) => a.seqNum - b.seqNum)
-			.map((e) => e.effect);
+		return this.effects.filter((e) => e.taskId === taskId).sort((a, b) => a.seqNum - b.seqNum).map((e) => e.effect);
 	}
 
-	/**
-	 * Discard all effects from a task (e.g., on cancellation)
-	 * @param taskId - Task ID whose effects to discard
-	 */
-	discardTask(taskId: string): void {
-		this.effects = this.effects.filter((e) => e.taskId !== taskId);
-	}
+	/** Discard all effects from a task (e.g., on cancellation) */
+	discardTask(taskId: string): void { this.effects = this.effects.filter((e) => e.taskId !== taskId); }
 
-	/**
-	 * Clear all effects
-	 */
-	clear(): void {
-		this.effects = [];
-		this.seqCounter = 0;
-		this.startTime = Date.now();
-	}
+	/** Clear all effects */
+	clear(): void { this.effects = []; this.seqCounter = 0; this.startTime = Date.now(); }
 
-	/**
-	 * Get the number of effects logged
-	 */
-	size(): number {
-		return this.effects.length;
-	}
+	/** Get the number of effects logged */
+	size(): number { return this.effects.length; }
 
-	/**
-	 * Get effect statistics
-	 */
-	getStats(): {
-		total: number;
-		byTask: Map<string, number>;
-		byOp: Map<string, number>;
-		} {
+	/** Get effect statistics */
+	getStats(): { total: number; byTask: Map<string, number>; byOp: Map<string, number> } {
 		const byTask = new Map<string, number>();
 		const byOp = new Map<string, number>();
-
 		for (const e of this.effects) {
 			byTask.set(e.taskId, (byTask.get(e.taskId) ?? 0) + 1);
 			byOp.set(e.effect.op, (byOp.get(e.effect.op) ?? 0) + 1);
 		}
-
 		return { total: this.effects.length, byTask, byOp };
 	}
 }
@@ -517,49 +426,24 @@ export class ConcurrentEffectLog {
 export class AsyncRefCellStore {
 	private cells = new Map<string, AsyncRefCell>();
 
-	/**
-	 * Get or create a ref cell by name
-	 * @param name - Cell identifier
-	 * @param initialValue - Initial value if creating new cell
-	 */
+	/** Get or create a ref cell by name */
 	getOrCreate(name: string, initialValue: Value): AsyncRefCell {
 		let cell = this.cells.get(name);
-		if (!cell) {
-			cell = new AsyncRefCell(initialValue);
-			this.cells.set(name, cell);
-		}
+		if (!cell) { cell = new AsyncRefCell(initialValue); this.cells.set(name, cell); }
 		return cell;
 	}
 
-	/**
-	 * Get an existing ref cell
-	 * @param name - Cell identifier
-	 */
-	get(name: string): AsyncRefCell | undefined {
-		return this.cells.get(name);
-	}
+	/** Get an existing ref cell */
+	get(name: string): AsyncRefCell | undefined { return this.cells.get(name); }
 
-	/**
-	 * Delete a ref cell
-	 * @param name - Cell identifier
-	 */
-	delete(name: string): boolean {
-		return this.cells.delete(name);
-	}
+	/** Delete a ref cell */
+	delete(name: string): boolean { return this.cells.delete(name); }
 
-	/**
-	 * Clear all cells
-	 */
-	clear(): void {
-		this.cells.clear();
-	}
+	/** Clear all cells */
+	clear(): void { this.cells.clear(); }
 
-	/**
-	 * Get the number of cells
-	 */
-	size(): number {
-		return this.cells.size;
-	}
+	/** Get the number of cells */
+	size(): number { return this.cells.size; }
 }
 
 //==============================================================================
@@ -573,101 +457,53 @@ export class AsyncChannelStore {
 	private channels = new Map<string, AsyncChannelImpl>();
 	private nextId = 0;
 
-	/**
-	 * Create a new channel
-	 * @param capacity - Channel buffer capacity
-	 * @returns Channel ID
-	 */
+	/** Create a new channel */
 	create(capacity: number): string {
 		const id = `ch_${this.nextId++}`;
-		const channel = new AsyncChannelImpl(capacity);
-		this.channels.set(id, channel);
+		this.channels.set(id, new AsyncChannelImpl(capacity));
 		return id;
 	}
 
-	/**
-	 * Get an existing channel
-	 * @param id - Channel identifier
-	 */
-	get(id: string): AsyncChannelImpl | undefined {
-		return this.channels.get(id);
-	}
+	/** Get an existing channel */
+	get(id: string): AsyncChannelImpl | undefined { return this.channels.get(id); }
 
-	/**
-	 * Delete and close a channel
-	 * @param id - Channel identifier
-	 */
+	/** Delete and close a channel */
 	delete(id: string): boolean {
-		const channel = this.channels.get(id);
-		if (channel) {
-			channel.close();
-		}
+		this.channels.get(id)?.close();
 		return this.channels.delete(id);
 	}
 
-	/**
-	 * Clear all channels
-	 */
+	/** Clear all channels */
 	clear(): void {
-		for (const channel of this.channels.values()) {
-			channel.close();
-		}
+		for (const channel of this.channels.values()) channel.close();
 		this.channels.clear();
 	}
 
-	/**
-	 * Get the number of channels
-	 */
-	size(): number {
-		return this.channels.size;
-	}
+	/** Get the number of channels */
+	size(): number { return this.channels.size; }
 }
 
 //==============================================================================
 // Factory Functions
 //==============================================================================
 
-/**
- * Create an async mutex
- */
-export function createAsyncMutex(): AsyncMutex {
-	return new AsyncMutex();
-}
+/** Create an async mutex */
+export function createAsyncMutex(): AsyncMutex { return new AsyncMutex(); }
 
-/**
- * Create an async ref cell
- */
-export function createAsyncRefCell(initialValue: Value): AsyncRefCell {
-	return new AsyncRefCell(initialValue);
-}
+/** Create an async ref cell */
+export function createAsyncRefCell(initialValue: Value): AsyncRefCell { return new AsyncRefCell(initialValue); }
 
-/**
- * Create an async channel
- */
-export function createAsyncChannel(capacity: number): AsyncChannelImpl {
-	return new AsyncChannelImpl(capacity);
-}
+/** Create an async channel */
+export function createAsyncChannel(capacity: number): AsyncChannelImpl { return new AsyncChannelImpl(capacity); }
 
-/**
- * Create a concurrent effect log
- */
-export function createConcurrentEffectLog(): ConcurrentEffectLog {
-	return new ConcurrentEffectLog();
-}
+/** Create a concurrent effect log */
+export function createConcurrentEffectLog(): ConcurrentEffectLog { return new ConcurrentEffectLog(); }
 
-/**
- * Create an async ref cell store
- */
-export function createAsyncRefCellStore(): AsyncRefCellStore {
-	return new AsyncRefCellStore();
-}
+/** Create an async ref cell store */
+export function createAsyncRefCellStore(): AsyncRefCellStore { return new AsyncRefCellStore(); }
 
-/**
- * Create an async channel store
- */
-export function createAsyncChannelStore(): AsyncChannelStore {
-	return new AsyncChannelStore();
-}
+/** Create an async channel store */
+export function createAsyncChannelStore(): AsyncChannelStore { return new AsyncChannelStore(); }
 
 //==============================================================================
 // Type Adapter for use with types.ts
