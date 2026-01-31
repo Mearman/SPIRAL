@@ -1355,16 +1355,7 @@ describe("Validator - Unit Tests", () => {
 						blocks: [
 							{
 								id: "entry",
-								instructions: [
-									{
-										kind: "phi",
-										target: "x",
-										sources: [
-											{ block: "a", value: "1" },
-											{ block: "b", value: "2" },
-										],
-									},
-								],
+								instructions: [],
 								terminator: { kind: "branch", cond: "c", then: "a", else: "b" },
 							},
 							{
@@ -1379,7 +1370,16 @@ describe("Validator - Unit Tests", () => {
 							},
 							{
 								id: "merge",
-								instructions: [],
+								instructions: [
+									{
+										kind: "phi",
+										target: "x",
+										sources: [
+											{ block: "a", value: "1" },
+											{ block: "b", value: "2" },
+										],
+									},
+								],
 								terminator: { kind: "return" },
 							},
 						],
