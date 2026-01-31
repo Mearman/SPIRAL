@@ -14,14 +14,12 @@ import type {
 	CIRDocument,
 	EIRDocument,
 	LIRDocument,
-	PIRDocument,
 } from "./types.js";
 import {
 	AIRDocumentSchema,
 	CIRDocumentSchema,
 	EIRDocumentSchema,
 	LIRDocumentSchema,
-	PIRDocumentSchema,
 } from "./zod-schemas.js";
 
 //==============================================================================
@@ -988,14 +986,14 @@ function checkPhiPredecessors(
 }
 
 //==============================================================================
-// PIR Expression Node Reference Check
+// Async Expression Node Reference Check
 //==============================================================================
 
 /**
- * Validate PIR expression node references.
- * Checks that string references in PIR-specific expressions point to existing nodes.
+ * Validate async expression node references.
+ * Checks that string references in async-specific expressions point to existing nodes.
  */
-function checkPirNodeReferences(
+function checkAsyncNodeReferences(
 	state: ValidationState,
 	nodes: { id: string; expr?: unknown }[],
 	nodeIds: Set<string>,
@@ -1076,7 +1074,7 @@ function checkPirNodeReferences(
 
 /**
  * Run all semantic validation checks on a parsed document.
- * Used by all 5 layer validators after Zod structural validation.
+ * Used by all 4 layer validators after Zod structural validation.
  */
 function semanticValidateDocument<T extends { nodes: { id: string; expr?: unknown; blocks?: unknown; entry?: unknown }[]; result: string }>(
 	doc: T,
@@ -1086,7 +1084,7 @@ function semanticValidateDocument<T extends { nodes: { id: string; expr?: unknow
 		checkEirRefs?: boolean;
 		checkBlockReachability?: boolean;
 		checkPhiPredecessors?: boolean;
-		checkPirRefs?: boolean;
+		checkAsyncRefs?: boolean;
 	},
 ): ValidationResult<T> {
 	const state: ValidationState = { errors: [], path: [] };
@@ -1123,9 +1121,9 @@ function semanticValidateDocument<T extends { nodes: { id: string; expr?: unknow
 		checkPhiPredecessors(state, doc.nodes);
 	}
 
-	// 8. PIR expression node reference checking
-	if (options?.checkPirRefs) {
-		checkPirNodeReferences(state, doc.nodes, nodeIds);
+	// 8. Async expression node reference checking
+	if (options?.checkAsyncRefs) {
+		checkAsyncNodeReferences(state, doc.nodes, nodeIds);
 	}
 
 	if (state.errors.length > 0) {
@@ -1169,7 +1167,7 @@ export function validateEIR(doc: unknown): ValidationResult<EIRDocument> {
 	}
 
 	// Phase 2: Semantic validation on typed data
-	return semanticValidateDocument(parsed.data, { checkEirRefs: true });
+	return semanticValidateDocument(parsed.data, { checkEirRefs: true, checkAsyncRefs: true, checkBlockReachability: true });
 }
 
 export function validateLIR(doc: unknown): ValidationResult<LIRDocument> {
@@ -1183,13 +1181,3 @@ export function validateLIR(doc: unknown): ValidationResult<LIRDocument> {
 	return semanticValidateDocument(parsed.data, { checkBlockReachability: true, checkPhiPredecessors: true });
 }
 
-export function validatePIR(doc: unknown): ValidationResult<PIRDocument> {
-	// Phase 1: Structural validation via Zod
-	const parsed = PIRDocumentSchema.safeParse(doc);
-	if (!parsed.success) {
-		return invalidResult<PIRDocument>(zodToValidationErrors(parsed.error));
-	}
-
-	// Phase 2: Semantic validation on typed data
-	return semanticValidateDocument(parsed.data, { checkPirRefs: true, checkBlockReachability: true });
-}
