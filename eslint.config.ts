@@ -183,13 +183,13 @@ export default [
 		},
 	},
 
-	// TypeScript (basic rules without type checking) - for test and examples
+	// TypeScript (basic rules without type checking) - for test, examples, and scripts
 	...tseslint.configs.recommended.map((config) => ({
 		...config,
-		files: ["test/**/*.ts", "examples/**/*.ts"],
+		files: ["test/**/*.ts", "examples/**/*.ts", "scripts/**/*.ts"],
 	})),
 	{
-		files: ["test/**/*.ts", "examples/**/*.ts"],
+		files: ["test/**/*.ts", "examples/**/*.ts", "scripts/**/*.ts"],
 		rules: {
 			"@typescript-eslint/no-unused-vars": "error",
 			"@typescript-eslint/no-explicit-any": "off", // Tests often need any
