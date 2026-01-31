@@ -6,7 +6,7 @@ import type {
 } from "../types.js";
 import { isExprNode } from "../types.js";
 import type { ExprSynthState, SynthContext, TypeScriptSynthOptions } from "./ts-synth-shared.js";
-import { OPERATOR_MAP, sanitizeId, freshVar, isValue, formatLiteral, formatUnknownValue, tsExpr } from "./ts-synth-shared.js";
+import { OPERATOR_MAP, sanitizeId, stableVarName, freshVar, isValue, formatLiteral, formatUnknownValue, tsExpr } from "./ts-synth-shared.js";
 import { exprHasFreeVars, exprHasParamRefs, markInlinedBodies } from "./ts-synth-utils.js";
 
 //==============================================================================
@@ -28,7 +28,7 @@ export function synthesizeExprBased(
 
 function emitResult(state: ExprSynthState, result: string): void {
 	state.lines.push("// Result");
-	state.lines.push(`console.log(v_${sanitizeId(result)});`);
+	state.lines.push(`console.log(${stableVarName(result)});`);
 	state.lines.push("");
 }
 
@@ -86,7 +86,7 @@ function emitAllNodeBindings(
 
 function emitNodeBinding(ctx: SynthContext, node: Node | EirNode): void {
 	if (ctx.state.inlinedNodes.has(node.id)) return;
-	const varName = `v_${sanitizeId(node.id)}`;
+	const varName = stableVarName(node.id);
 	if (ctx.state.lines.some((l) => l.startsWith(`const ${varName} =`) || l.startsWith(`let ${varName} =`))) return;
 	ctx.state.lines.push(`const ${varName} = ${synthesizeExpr(ctx, node.expr)};`);
 	ctx.state.lines.push("");
@@ -109,7 +109,7 @@ function emitAirDefs(state: ExprSynthState, airDefs: AIRDef[]): void {
 
 function refToTs(ctx: SynthContext, id: string): string {
 	if (ctx.paramScope.has(id) && !ctx.state.nodeMap.has(id)) return id;
-	return `v_${sanitizeId(id)}`;
+	return stableVarName(id);
 }
 
 function refOrInline(ctx: SynthContext, val: string | Expr | EirExpr): string {
