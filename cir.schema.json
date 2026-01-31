@@ -2,502 +2,89 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/cir.schema.json",
 	"title": "CIR (Computational IR)",
+	"description": "CIRDocument",
 	"type": "object",
 	"properties": {
 		"airDefs": {
+			"type": "array",
 			"items": {
-				"additionalProperties": false,
-				"properties": {
-					"body": {
-						"anyOf": [
-							{
-								"additionalProperties": false,
-								"properties": {
-									"kind": {
-										"const": "lit",
-										"type": "string"
-									},
-									"type": {
-										"$ref": "spiral.schema.json#/$defs/Type"
-									},
-									"value": {}
-								},
-								"required": [
-									"kind",
-									"type",
-									"value"
-								],
-								"type": "object"
-							},
-							{
-								"additionalProperties": false,
-								"properties": {
-									"kind": {
-										"const": "ref",
-										"type": "string"
-									},
-									"id": {
-										"type": "string"
-									}
-								},
-								"required": [
-									"kind",
-									"id"
-								],
-								"type": "object"
-							},
-							{
-								"additionalProperties": false,
-								"properties": {
-									"kind": {
-										"const": "var",
-										"type": "string"
-									},
-									"name": {
-										"type": "string"
-									}
-								},
-								"required": [
-									"kind",
-									"name"
-								],
-								"type": "object"
-							},
-							{
-								"$ref": "spiral.schema.json#/$defs/CallExpr"
-							},
-							{
-								"additionalProperties": false,
-								"properties": {
-									"kind": {
-										"const": "if",
-										"type": "string"
-									},
-									"type": {
-										"$ref": "spiral.schema.json#/$defs/Type"
-									},
-									"cond": {
-										"anyOf": [
-											{
-												"type": "string"
-											},
-											{
-												"$ref": "spiral.schema.json#/$defs/Expr"
-											}
-										]
-									},
-									"then": {
-										"anyOf": [
-											{
-												"type": "string"
-											},
-											{
-												"$ref": "spiral.schema.json#/$defs/Expr"
-											}
-										]
-									},
-									"else": {
-										"anyOf": [
-											{
-												"type": "string"
-											},
-											{
-												"$ref": "spiral.schema.json#/$defs/Expr"
-											}
-										]
-									}
-								},
-								"required": [
-									"kind",
-									"cond",
-									"then",
-									"else"
-								],
-								"type": "object"
-							},
-							{
-								"additionalProperties": false,
-								"properties": {
-									"kind": {
-										"const": "let",
-										"type": "string"
-									},
-									"type": {
-										"$ref": "spiral.schema.json#/$defs/Type"
-									},
-									"name": {
-										"type": "string"
-									},
-									"value": {
-										"anyOf": [
-											{
-												"type": "string"
-											},
-											{
-												"$ref": "spiral.schema.json#/$defs/Expr"
-											}
-										]
-									},
-									"body": {
-										"anyOf": [
-											{
-												"type": "string"
-											},
-											{
-												"$ref": "spiral.schema.json#/$defs/Expr"
-											}
-										]
-									}
-								},
-								"required": [
-									"kind",
-									"name",
-									"value",
-									"body"
-								],
-								"type": "object"
-							},
-							{
-								"additionalProperties": false,
-								"properties": {
-									"kind": {
-										"const": "airRef",
-										"type": "string"
-									},
-									"ns": {
-										"type": "string"
-									},
-									"name": {
-										"type": "string"
-									},
-									"args": {
-										"items": {
-											"type": "string"
-										},
-										"type": "array"
-									}
-								},
-								"required": [
-									"kind",
-									"ns",
-									"name",
-									"args"
-								],
-								"type": "object"
-							},
-							{
-								"additionalProperties": false,
-								"properties": {
-									"kind": {
-										"const": "predicate",
-										"type": "string"
-									},
-									"name": {
-										"type": "string"
-									},
-									"value": {
-										"type": "string"
-									}
-								},
-								"required": [
-									"kind",
-									"name",
-									"value"
-								],
-								"type": "object"
-							}
-						]
-					},
-					"name": {
-						"type": "string"
-					},
-					"ns": {
-						"type": "string"
-					},
-					"params": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array"
-					},
-					"result": {
-						"$ref": "spiral.schema.json#/$defs/Type"
-					}
-				},
-				"required": [
-					"ns",
-					"name",
-					"params",
-					"result",
-					"body"
-				],
-				"type": "object"
-			},
-			"type": "array"
+				"$ref": "spiral.schema.json#/$defs/AIRDef"
+			}
 		},
 		"capabilities": {
+			"type": "array",
 			"items": {
 				"type": "string"
-			},
-			"type": "array"
+			}
 		},
 		"functionSigs": {
+			"type": "array",
 			"items": {
-				"additionalProperties": false,
-				"properties": {
-					"name": {
-						"type": "string"
-					},
-					"ns": {
-						"type": "string"
-					},
-					"params": {
-						"items": {
-							"$ref": "spiral.schema.json#/$defs/Type"
-						},
-						"type": "array"
-					},
-					"pure": {
-						"type": "boolean"
-					},
-					"returns": {
-						"$ref": "spiral.schema.json#/$defs/Type"
-					}
-				},
-				"required": [
-					"ns",
-					"name",
-					"params",
-					"returns",
-					"pure"
-				],
-				"type": "object"
-			},
-			"type": "array"
+				"$ref": "spiral.schema.json#/$defs/FunctionSignature"
+			}
 		},
 		"nodes": {
+			"type": "array",
 			"items": {
 				"anyOf": [
 					{
-						"additionalProperties": false,
+						"type": "object",
 						"properties": {
+							"type": {
+								"$ref": "spiral.schema.json#/$defs/Type"
+							},
 							"expr": {
 								"anyOf": [
 									{
-										"additionalProperties": false,
-										"properties": {
-											"kind": {
-												"const": "lit",
-												"type": "string"
-											},
-											"type": {
-												"$ref": "spiral.schema.json#/$defs/Type"
-											},
-											"value": {}
-										},
-										"required": [
-											"kind",
-											"type",
-											"value"
-										],
-										"type": "object"
+										"$ref": "spiral.schema.json#/$defs/LitExpr"
 									},
 									{
-										"additionalProperties": false,
-										"properties": {
-											"kind": {
-												"const": "ref",
-												"type": "string"
-											},
-											"id": {
-												"type": "string"
-											}
-										},
-										"required": [
-											"kind",
-											"id"
-										],
-										"type": "object"
+										"$ref": "spiral.schema.json#/$defs/RefExpr"
 									},
 									{
-										"additionalProperties": false,
-										"properties": {
-											"kind": {
-												"const": "var",
-												"type": "string"
-											},
-											"name": {
-												"type": "string"
-											}
-										},
-										"required": [
-											"kind",
-											"name"
-										],
-										"type": "object"
+										"$ref": "spiral.schema.json#/$defs/VarExpr"
 									},
 									{
 										"$ref": "spiral.schema.json#/$defs/CallExpr"
 									},
 									{
-										"additionalProperties": false,
-										"properties": {
-											"kind": {
-												"const": "if",
-												"type": "string"
-											},
-											"type": {
-												"$ref": "spiral.schema.json#/$defs/Type"
-											},
-											"cond": {
-												"anyOf": [
-													{
-														"type": "string"
-													},
-													{
-														"$ref": "spiral.schema.json#/$defs/Expr"
-													}
-												]
-											},
-											"then": {
-												"anyOf": [
-													{
-														"type": "string"
-													},
-													{
-														"$ref": "spiral.schema.json#/$defs/Expr"
-													}
-												]
-											},
-											"else": {
-												"anyOf": [
-													{
-														"type": "string"
-													},
-													{
-														"$ref": "spiral.schema.json#/$defs/Expr"
-													}
-												]
-											}
-										},
-										"required": [
-											"kind",
-											"cond",
-											"then",
-											"else"
-										],
-										"type": "object"
+										"$ref": "spiral.schema.json#/$defs/IfExpr"
 									},
 									{
-										"additionalProperties": false,
+										"$ref": "spiral.schema.json#/$defs/LetExpr"
+									},
+									{
+										"$ref": "spiral.schema.json#/$defs/AirRefExpr"
+									},
+									{
+										"$ref": "spiral.schema.json#/$defs/PredicateExpr"
+									},
+									{
+										"type": "object",
 										"properties": {
-											"kind": {
-												"const": "let",
-												"type": "string"
-											},
 											"type": {
 												"$ref": "spiral.schema.json#/$defs/Type"
-											},
-											"name": {
-												"type": "string"
-											},
-											"value": {
-												"anyOf": [
-													{
-														"type": "string"
-													},
-													{
-														"$ref": "spiral.schema.json#/$defs/Expr"
-													}
-												]
 											},
 											"body": {
-												"anyOf": [
-													{
-														"type": "string"
-													},
-													{
-														"$ref": "spiral.schema.json#/$defs/Expr"
-													}
-												]
-											}
-										},
-										"required": [
-											"kind",
-											"name",
-											"value",
-											"body"
-										],
-										"type": "object"
-									},
-									{
-										"additionalProperties": false,
-										"properties": {
+												"type": "string"
+											},
 											"kind": {
-												"const": "airRef",
-												"type": "string"
-											},
-											"ns": {
-												"type": "string"
-											},
-											"name": {
-												"type": "string"
-											},
-											"args": {
-												"items": {
-													"type": "string"
-												},
-												"type": "array"
-											}
-										},
-										"required": [
-											"kind",
-											"ns",
-											"name",
-											"args"
-										],
-										"type": "object"
-									},
-									{
-										"additionalProperties": false,
-										"properties": {
-											"kind": {
-												"const": "predicate",
-												"type": "string"
-											},
-											"name": {
-												"type": "string"
-											},
-											"value": {
-												"type": "string"
-											}
-										},
-										"required": [
-											"kind",
-											"name",
-											"value"
-										],
-										"type": "object"
-									},
-									{
-										"additionalProperties": false,
-										"properties": {
-											"kind": {
-												"const": "lambda",
-												"type": "string"
-											},
-											"type": {
-												"$ref": "spiral.schema.json#/$defs/Type"
+												"type": "string",
+												"const": "lambda"
 											},
 											"params": {
+												"type": "array",
 												"items": {
 													"anyOf": [
 														{
 															"type": "string"
 														},
 														{
-															"additionalProperties": false,
+															"type": "object",
 															"properties": {
+																"type": {
+																	"$ref": "spiral.schema.json#/$defs/Type"
+																},
 																"default": {
 																	"$ref": "spiral.schema.json#/$defs/Expr"
 																},
@@ -506,40 +93,30 @@
 																},
 																"optional": {
 																	"type": "boolean"
-																},
-																"type": {
-																	"$ref": "spiral.schema.json#/$defs/Type"
 																}
 															},
+															"additionalProperties": false,
 															"required": [
 																"name"
-															],
-															"type": "object"
+															]
 														}
 													]
-												},
-												"type": "array"
-											},
-											"body": {
-												"type": "string"
+												}
 											}
 										},
+										"additionalProperties": false,
 										"required": [
 											"kind",
 											"params",
 											"body",
 											"type"
-										],
-										"type": "object"
+										]
 									},
 									{
-										"additionalProperties": false,
+										"type": "object",
 										"properties": {
-											"kind": {
-												"const": "callExpr",
-												"type": "string"
-											},
 											"args": {
+												"type": "array",
 												"items": {
 													"anyOf": [
 														{
@@ -549,49 +126,49 @@
 															"$ref": "spiral.schema.json#/$defs/Expr"
 														}
 													]
-												},
-												"type": "array"
+												}
 											},
 											"fn": {
 												"type": "string"
+											},
+											"kind": {
+												"type": "string",
+												"const": "callExpr"
 											}
 										},
+										"additionalProperties": false,
 										"required": [
 											"kind",
 											"fn",
 											"args"
-										],
-										"type": "object"
+										]
 									},
 									{
-										"additionalProperties": false,
+										"type": "object",
 										"properties": {
-											"kind": {
-												"const": "fix",
-												"type": "string"
-											},
 											"type": {
 												"$ref": "spiral.schema.json#/$defs/Type"
 											},
 											"fn": {
 												"type": "string"
+											},
+											"kind": {
+												"type": "string",
+												"const": "fix"
 											}
 										},
+										"additionalProperties": false,
 										"required": [
 											"kind",
 											"fn",
 											"type"
-										],
-										"type": "object"
+										]
 									},
 									{
-										"additionalProperties": false,
+										"type": "object",
 										"properties": {
-											"kind": {
-												"const": "do",
-												"type": "string"
-											},
 											"exprs": {
+												"type": "array",
 												"items": {
 													"anyOf": [
 														{
@@ -601,50 +178,55 @@
 															"$ref": "spiral.schema.json#/$defs/Expr"
 														}
 													]
-												},
-												"type": "array"
+												}
+											},
+											"kind": {
+												"type": "string",
+												"const": "do"
 											}
 										},
+										"additionalProperties": false,
 										"required": [
 											"kind",
 											"exprs"
-										],
-										"type": "object"
+										]
 									}
 								]
 							},
 							"id": {
 								"type": "string"
-							},
-							"type": {
-								"$ref": "spiral.schema.json#/$defs/Type"
 							}
 						},
+						"additionalProperties": false,
 						"required": [
 							"id",
 							"expr"
-						],
-						"type": "object"
+						]
 					},
 					{
-						"additionalProperties": false,
+						"type": "object",
 						"properties": {
+							"type": {
+								"$ref": "spiral.schema.json#/$defs/Type"
+							},
 							"blocks": {
+								"type": "array",
 								"items": {
-									"additionalProperties": false,
+									"type": "object",
 									"properties": {
 										"id": {
 											"type": "string"
 										},
 										"instructions": {
+											"type": "array",
 											"items": {
 												"anyOf": [
 													{
-														"additionalProperties": false,
+														"type": "object",
 														"properties": {
 															"kind": {
-																"const": "assign",
-																"type": "string"
+																"type": "string",
+																"const": "assign"
 															},
 															"target": {
 																"type": "string"
@@ -652,220 +234,55 @@
 															"value": {
 																"anyOf": [
 																	{
-																		"additionalProperties": false,
-																		"properties": {
-																			"kind": {
-																				"const": "lit",
-																				"type": "string"
-																			},
-																			"type": {
-																				"$ref": "spiral.schema.json#/$defs/Type"
-																			},
-																			"value": {}
-																		},
-																		"required": [
-																			"kind",
-																			"type",
-																			"value"
-																		],
-																		"type": "object"
+																		"$ref": "spiral.schema.json#/$defs/LitExpr"
 																	},
 																	{
-																		"additionalProperties": false,
-																		"properties": {
-																			"kind": {
-																				"const": "ref",
-																				"type": "string"
-																			},
-																			"id": {
-																				"type": "string"
-																			}
-																		},
-																		"required": [
-																			"kind",
-																			"id"
-																		],
-																		"type": "object"
+																		"$ref": "spiral.schema.json#/$defs/RefExpr"
 																	},
 																	{
-																		"additionalProperties": false,
-																		"properties": {
-																			"kind": {
-																				"const": "var",
-																				"type": "string"
-																			},
-																			"name": {
-																				"type": "string"
-																			}
-																		},
-																		"required": [
-																			"kind",
-																			"name"
-																		],
-																		"type": "object"
+																		"$ref": "spiral.schema.json#/$defs/VarExpr"
 																	},
 																	{
 																		"$ref": "spiral.schema.json#/$defs/CallExpr"
 																	},
 																	{
-																		"additionalProperties": false,
-																		"properties": {
-																			"kind": {
-																				"const": "if",
-																				"type": "string"
-																			},
-																			"type": {
-																				"$ref": "spiral.schema.json#/$defs/Type"
-																			},
-																			"cond": {
-																				"anyOf": [
-																					{
-																						"type": "string"
-																					},
-																					{
-																						"$ref": "spiral.schema.json#/$defs/Expr"
-																					}
-																				]
-																			},
-																			"then": {
-																				"anyOf": [
-																					{
-																						"type": "string"
-																					},
-																					{
-																						"$ref": "spiral.schema.json#/$defs/Expr"
-																					}
-																				]
-																			},
-																			"else": {
-																				"anyOf": [
-																					{
-																						"type": "string"
-																					},
-																					{
-																						"$ref": "spiral.schema.json#/$defs/Expr"
-																					}
-																				]
-																			}
-																		},
-																		"required": [
-																			"kind",
-																			"cond",
-																			"then",
-																			"else"
-																		],
-																		"type": "object"
+																		"$ref": "spiral.schema.json#/$defs/IfExpr"
 																	},
 																	{
-																		"additionalProperties": false,
+																		"$ref": "spiral.schema.json#/$defs/LetExpr"
+																	},
+																	{
+																		"$ref": "spiral.schema.json#/$defs/AirRefExpr"
+																	},
+																	{
+																		"$ref": "spiral.schema.json#/$defs/PredicateExpr"
+																	},
+																	{
+																		"type": "object",
 																		"properties": {
-																			"kind": {
-																				"const": "let",
-																				"type": "string"
-																			},
 																			"type": {
 																				"$ref": "spiral.schema.json#/$defs/Type"
-																			},
-																			"name": {
-																				"type": "string"
-																			},
-																			"value": {
-																				"anyOf": [
-																					{
-																						"type": "string"
-																					},
-																					{
-																						"$ref": "spiral.schema.json#/$defs/Expr"
-																					}
-																				]
 																			},
 																			"body": {
-																				"anyOf": [
-																					{
-																						"type": "string"
-																					},
-																					{
-																						"$ref": "spiral.schema.json#/$defs/Expr"
-																					}
-																				]
-																			}
-																		},
-																		"required": [
-																			"kind",
-																			"name",
-																			"value",
-																			"body"
-																		],
-																		"type": "object"
-																	},
-																	{
-																		"additionalProperties": false,
-																		"properties": {
+																				"type": "string"
+																			},
 																			"kind": {
-																				"const": "airRef",
-																				"type": "string"
-																			},
-																			"ns": {
-																				"type": "string"
-																			},
-																			"name": {
-																				"type": "string"
-																			},
-																			"args": {
-																				"items": {
-																					"type": "string"
-																				},
-																				"type": "array"
-																			}
-																		},
-																		"required": [
-																			"kind",
-																			"ns",
-																			"name",
-																			"args"
-																		],
-																		"type": "object"
-																	},
-																	{
-																		"additionalProperties": false,
-																		"properties": {
-																			"kind": {
-																				"const": "predicate",
-																				"type": "string"
-																			},
-																			"name": {
-																				"type": "string"
-																			},
-																			"value": {
-																				"type": "string"
-																			}
-																		},
-																		"required": [
-																			"kind",
-																			"name",
-																			"value"
-																		],
-																		"type": "object"
-																	},
-																	{
-																		"additionalProperties": false,
-																		"properties": {
-																			"kind": {
-																				"const": "lambda",
-																				"type": "string"
-																			},
-																			"type": {
-																				"$ref": "spiral.schema.json#/$defs/Type"
+																				"type": "string",
+																				"const": "lambda"
 																			},
 																			"params": {
+																				"type": "array",
 																				"items": {
 																					"anyOf": [
 																						{
 																							"type": "string"
 																						},
 																						{
-																							"additionalProperties": false,
+																							"type": "object",
 																							"properties": {
+																								"type": {
+																									"$ref": "spiral.schema.json#/$defs/Type"
+																								},
 																								"default": {
 																									"$ref": "spiral.schema.json#/$defs/Expr"
 																								},
@@ -874,40 +291,30 @@
 																								},
 																								"optional": {
 																									"type": "boolean"
-																								},
-																								"type": {
-																									"$ref": "spiral.schema.json#/$defs/Type"
 																								}
 																							},
+																							"additionalProperties": false,
 																							"required": [
 																								"name"
-																							],
-																							"type": "object"
+																							]
 																						}
 																					]
-																				},
-																				"type": "array"
-																			},
-																			"body": {
-																				"type": "string"
+																				}
 																			}
 																		},
+																		"additionalProperties": false,
 																		"required": [
 																			"kind",
 																			"params",
 																			"body",
 																			"type"
-																		],
-																		"type": "object"
+																		]
 																	},
 																	{
-																		"additionalProperties": false,
+																		"type": "object",
 																		"properties": {
-																			"kind": {
-																				"const": "callExpr",
-																				"type": "string"
-																			},
 																			"args": {
+																				"type": "array",
 																				"items": {
 																					"anyOf": [
 																						{
@@ -917,49 +324,49 @@
 																							"$ref": "spiral.schema.json#/$defs/Expr"
 																						}
 																					]
-																				},
-																				"type": "array"
+																				}
 																			},
 																			"fn": {
 																				"type": "string"
+																			},
+																			"kind": {
+																				"type": "string",
+																				"const": "callExpr"
 																			}
 																		},
+																		"additionalProperties": false,
 																		"required": [
 																			"kind",
 																			"fn",
 																			"args"
-																		],
-																		"type": "object"
+																		]
 																	},
 																	{
-																		"additionalProperties": false,
+																		"type": "object",
 																		"properties": {
-																			"kind": {
-																				"const": "fix",
-																				"type": "string"
-																			},
 																			"type": {
 																				"$ref": "spiral.schema.json#/$defs/Type"
 																			},
 																			"fn": {
 																				"type": "string"
+																			},
+																			"kind": {
+																				"type": "string",
+																				"const": "fix"
 																			}
 																		},
+																		"additionalProperties": false,
 																		"required": [
 																			"kind",
 																			"fn",
 																			"type"
-																		],
-																		"type": "object"
+																		]
 																	},
 																	{
-																		"additionalProperties": false,
+																		"type": "object",
 																		"properties": {
-																			"kind": {
-																				"const": "do",
-																				"type": "string"
-																			},
 																			"exprs": {
+																				"type": "array",
 																				"items": {
 																					"anyOf": [
 																						{
@@ -969,229 +376,122 @@
 																							"$ref": "spiral.schema.json#/$defs/Expr"
 																						}
 																					]
-																				},
-																				"type": "array"
+																				}
+																			},
+																			"kind": {
+																				"type": "string",
+																				"const": "do"
 																			}
 																		},
+																		"additionalProperties": false,
 																		"required": [
 																			"kind",
 																			"exprs"
-																		],
-																		"type": "object"
+																		]
 																	}
 																]
 															}
 														},
+														"additionalProperties": false,
 														"required": [
 															"kind",
 															"target",
 															"value"
-														],
-														"type": "object"
+														]
 													},
 													{
-														"additionalProperties": false,
+														"type": "object",
 														"properties": {
+															"args": {
+																"type": "array",
+																"items": {
+																	"type": "string"
+																}
+															},
 															"kind": {
-																"const": "op",
+																"type": "string",
+																"const": "op"
+															},
+															"name": {
 																"type": "string"
 															},
 															"ns": {
 																"type": "string"
 															},
-															"name": {
-																"type": "string"
-															},
 															"target": {
 																"type": "string"
-															},
-															"args": {
-																"items": {
-																	"type": "string"
-																},
-																"type": "array"
 															}
 														},
+														"additionalProperties": false,
 														"required": [
 															"kind",
 															"target",
 															"ns",
 															"name",
 															"args"
-														],
-														"type": "object"
+														]
 													},
 													{
-														"additionalProperties": false,
-														"properties": {
-															"kind": {
-																"const": "phi",
-																"type": "string"
-															},
-															"target": {
-																"type": "string"
-															},
-															"sources": {
-																"items": {
-																	"additionalProperties": false,
-																	"properties": {
-																		"block": {
-																			"type": "string"
-																		},
-																		"id": {
-																			"type": "string"
-																		}
-																	},
-																	"required": [
-																		"block",
-																		"id"
-																	],
-																	"type": "object"
-																},
-																"type": "array"
-															}
-														},
-														"required": [
-															"kind",
-															"target",
-															"sources"
-														],
-														"type": "object"
+														"$ref": "spiral.schema.json#/$defs/LirInsPhi"
 													}
 												]
-											},
-											"type": "array"
+											}
 										},
 										"terminator": {
 											"anyOf": [
 												{
-													"additionalProperties": false,
-													"properties": {
-														"kind": {
-															"const": "jump",
-															"type": "string"
-														},
-														"to": {
-															"type": "string"
-														}
-													},
-													"required": [
-														"kind",
-														"to"
-													],
-													"type": "object"
+													"$ref": "spiral.schema.json#/$defs/LirTermJump"
 												},
 												{
-													"additionalProperties": false,
-													"properties": {
-														"kind": {
-															"const": "branch",
-															"type": "string"
-														},
-														"cond": {
-															"type": "string"
-														},
-														"then": {
-															"type": "string"
-														},
-														"else": {
-															"type": "string"
-														}
-													},
-													"required": [
-														"kind",
-														"cond",
-														"then",
-														"else"
-													],
-													"type": "object"
+													"$ref": "spiral.schema.json#/$defs/LirTermBranch"
 												},
 												{
-													"additionalProperties": false,
-													"properties": {
-														"kind": {
-															"const": "return",
-															"type": "string"
-														},
-														"value": {
-															"type": "string"
-														}
-													},
-													"required": [
-														"kind"
-													],
-													"type": "object"
+													"$ref": "spiral.schema.json#/$defs/LirTermReturn"
 												},
 												{
-													"additionalProperties": false,
-													"properties": {
-														"kind": {
-															"const": "exit",
-															"type": "string"
-														},
-														"code": {
-															"anyOf": [
-																{
-																	"type": "string"
-																},
-																{
-																	"type": "number"
-																}
-															]
-														}
-													},
-													"required": [
-														"kind"
-													],
-													"type": "object"
+													"$ref": "spiral.schema.json#/$defs/LirTermExit"
 												}
 											]
 										}
 									},
+									"additionalProperties": false,
 									"required": [
 										"id",
 										"instructions",
 										"terminator"
-									],
-									"type": "object"
-								},
-								"type": "array"
+									]
+								}
 							},
 							"entry": {
 								"type": "string"
 							},
 							"id": {
 								"type": "string"
-							},
-							"type": {
-								"$ref": "spiral.schema.json#/$defs/Type"
 							}
 						},
+						"additionalProperties": false,
 						"required": [
 							"id",
 							"blocks",
 							"entry"
-						],
-						"type": "object"
+						]
 					}
 				]
-			},
-			"type": "array"
+			}
 		},
 		"result": {
 			"type": "string"
 		},
 		"version": {
-			"pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?$",
-			"type": "string"
+			"type": "string",
+			"pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?$"
 		}
 	},
+	"additionalProperties": false,
 	"required": [
 		"version",
 		"airDefs",
 		"nodes",
 		"result"
-	],
-	"additionalProperties": false,
-	"description": "CIRDocument"
+	]
 }
