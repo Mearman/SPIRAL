@@ -16,6 +16,10 @@ import { z } from "zod/v4";
 /** Semantic version pattern */
 const SemVer = z.string().regex(/^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/);
 
+/** Narrow unknown to record for z.preprocess callbacks. */
+function isRecord(val: unknown): val is Record<string, unknown> {
+	return val !== null && typeof val === "object" && !Array.isArray(val);
+}
 
 //==============================================================================
 // Type Domain - Manual Interfaces
@@ -234,11 +238,9 @@ export const VoidTypeSchema = z.object({ kind: z.literal("void") }).meta({ id: "
 
 export const SetTypeSchema: z.ZodType<SetType> = z.preprocess(
 	(val) => {
-		if (val && typeof val === "object" && "kind" in val && (val as Record<string, unknown>).kind === "set") {
-			const obj = val as Record<string, unknown>;
-			if (!obj.of && obj.elem) { return { ...obj, of: obj.elem }; }
-			if (!obj.of && obj.elementType) { return { ...obj, of: obj.elementType }; }
-		}
+		if (!isRecord(val) || val.kind !== "set") return val;
+		if (!val.of && val.elem) { return { ...val, of: val.elem }; }
+		if (!val.of && val.elementType) { return { ...val, of: val.elementType }; }
 		return val;
 	},
 	z.object({
@@ -646,9 +648,8 @@ export const LirInsPhiSchema = z.object({
 	target: z.string(),
 	sources: z.array(z.preprocess(
 		(val) => {
-			if (val && typeof val === "object" && "value" in val && !("id" in val)) {
-				const obj = val as Record<string, unknown>;
-				return { ...obj, id: obj.value };
+			if (isRecord(val) && "value" in val && !("id" in val)) {
+				return { ...val, id: val.value };
 			}
 			return val;
 		},
