@@ -22,8 +22,7 @@ pnpm run-example cir/algorithms/factorial/factorial --verbose
 |-------|-------------|-------------|
 | **[AIR](./air/)** | Algebraic IR - pure, declarative expressions | Mathematical relationships, static analysis |
 | **[CIR](./cir/)** | Computational IR - adds lambdas and recursion | Algorithms, higher-order functions |
-| **[EIR](./eir/)** | Execution IR - imperative features | Side effects, mutation, loops |
-| **[PIR](./pir/)** | Parallel IR - async/parallel primitives | Concurrency, async tasks, channels |
+| **[EIR](./eir/)** | Execution IR - imperative and async features | Side effects, mutation, loops, concurrency, channels |
 | **[LIR](./lir/)** | Low-level IR - CFG-based | Code generation, optimization |
 
 ## Example Structure
@@ -103,8 +102,8 @@ pnpm run-example eir/loops/while-loop --synth
 # Generate Python from LIR example
 pnpm run-example lir/control-flow/while-cfg --synth
 
-# Generate Python from PIR example
-pnpm run-example pir/async/spawn-await --synth
+# Generate Python from EIR async example
+pnpm run-example eir/async/spawn-await --synth
 ```
 
 The generated Python code mirrors the structure of the original SPIRAL document:
@@ -160,14 +159,9 @@ pnpm test:examples --coverage
 |   - Complex I/O | 5 | Conditional, loop, accumulative, mixed-cadence patterns |
 | [Loops](./eir/loops/) | 4 | While, for, iter, nested loops |
 | [Algorithms](./eir/algorithms/) | 4 | Counter, factorial, sum-list, accumulate |
+| [Async](./eir/async/) | 2 | Spawn/await, timeout and select |
+| [Channels](./eir/channels/) | 4 | Producer-consumer, worker pool, fan-in/fan-out |
 | [Advanced](./eir/advanced/) | 4 | State machine, I/O loop, mutable list, effects |
-
-### PIR Examples (6 files)
-
-| Category | Files | Concepts |
-|----------|-------|----------|
-| [Async](./pir/async/) | 2 | Spawn/await, timeout and select |
-| [Channels](./pir/channels/) | 4 | Producer-consumer, worker pool, fan-in/fan-out |
 
 ### LIR Examples (17 files)
 
@@ -218,11 +212,10 @@ For those new to SPIRAL, we recommend exploring examples in this order:
    - `eir/interactive/calculator.eir.json` - Multiple inputs, multiple outputs (compute and display results)
    - Try with `--inputs` flag: `pnpm run-example eir/interactive/add-two-ints --inputs "3,4"`
 
-8. **Learn PIR async/parallel patterns:**
-   - `pir/async/spawn-await.pir.json` - Basic async task creation and waiting
-   - `pir/async/timeout-select.pir.json` - Timeout and race conditions
-   - `pir/channels/producer-consumer.pir.json` - Channel-based communication
-   - Try with PIR evaluation: automatically uses async evaluator
+8. **Learn EIR async/parallel patterns:**
+   - `eir/async/spawn-await.eir.json` - Basic async task creation and waiting
+   - `eir/async/timeout-select.eir.json` - Timeout and race conditions
+   - `eir/channels/producer-consumer.eir.json` - Channel-based communication
 
 9. **Study LIR CFG representation:**
    - `lir/basics/straight-line.lir.json` - Basic blocks

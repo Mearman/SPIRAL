@@ -1,6 +1,6 @@
 {
-  "$schema": "../../pir.schema.json",
-  "version": "2.0.0",
+  "$schema": "../../../eir.schema.json",
+  "version": "1.0.0",
   "capabilities": ["async", "channels"],
   "description": "Producer sends values, consumer receives and sums",
   "nodes": [

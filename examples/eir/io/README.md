@@ -1,10 +1,10 @@
-# PIR Async I/O Examples
+# EIR Async I/O Examples
 
-This directory contains examples demonstrating async I/O operations in PIR (Parallel Intermediate Representation), including file I/O and HTTP requests with parallel execution patterns.
+This directory contains examples demonstrating async I/O operations in EIR (Execution Intermediate Representation), including file I/O and HTTP requests with parallel execution patterns.
 
 ## Overview
 
-PIR extends EIR with async I/O effects that return futures, enabling concurrent and parallel I/O operations. These examples show:
+EIR includes async I/O effects that return futures, enabling concurrent and parallel I/O operations. These examples show:
 
 - **Concurrent file operations** - Read/write multiple files in parallel
 - **Parallel HTTP requests** - Fetch multiple resources simultaneously
@@ -16,18 +16,18 @@ PIR extends EIR with async I/O effects that return futures, enabling concurrent 
 
 ```bash
 # Run async file operations example
-pnpm run-example pir/io/async-file-ops
+pnpm run-example eir/io/async-file-ops
 
 # Run parallel HTTP requests example
-pnpm run-example pir/io/parallel-http
+pnpm run-example eir/io/parallel-http
 
 # Run with verbose output
-pnpm run-example pir/io/parallel-http --verbose
+pnpm run-example eir/io/parallel-http --verbose
 ```
 
 ## Examples
 
-### 1. Async File Operations (`async-file-ops.pir.json`)
+### 1. Async File Operations (`async-file-ops.eir.json`)
 
 Demonstrates file I/O with concurrent reads and proper error handling.
 
@@ -95,7 +95,7 @@ Modify the `result` field to see different behaviors:
 3. **`"result": "awaitWithTimeout"`** - Single read with 5s timeout
 4. **`"result": "processFile"`** - Read then write workflow
 
-### 2. Parallel HTTP Requests (`parallel-http.pir.json`)
+### 2. Parallel HTTP Requests (`parallel-http.eir.json`)
 
 Demonstrates HTTP requests with parallel execution, race conditions, and channel-based response collection.
 
@@ -400,8 +400,8 @@ Coordinate async operations with channels:
 
 ## Related Documentation
 
-- [PIR README](../README.md) - PIR overview and expression reference
-- [PIR Schema](../../pir.schema.json) - Complete PIR document schema
+- [EIR README](../../eir/README.md) - EIR overview and expression reference
+- [EIR Schema](../../eir.schema.json) - EIR document schema
 - [EIR Effects](../../eir/basics/effects/README.md) - Basic synchronous effects
 - [Async/Spawn](../async/spawn-await/README.md) - Basic async operations
 - [Timeout/Select](../async/timeout-select/README.md) - Timeout and race patterns
