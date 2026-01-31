@@ -384,6 +384,20 @@ function synthesizeExpr(
 		return `console.log("${expr.op}", ${argCodes.join(", ")})`;
 	}
 
+	case "refCell": {
+		// Create a reference cell — store in a mutable cell variable
+		if (!mutableCells.has(expr.target)) {
+			cellInitLines.push(`let cell_${sanitizeId(expr.target)}_ref = ${refToTs(expr.target)};`);
+			mutableCells.set(expr.target + "_ref", true);
+		}
+		return `cell_${sanitizeId(expr.target)}_ref`;
+	}
+
+	case "deref": {
+		// Read from a reference cell
+		return `cell_${sanitizeId(expr.target)}_ref`;
+	}
+
 	default: {
 		throw new Error(`Unsupported expression kind: ${kind}`);
 	}
