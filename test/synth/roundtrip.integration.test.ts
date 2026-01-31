@@ -147,18 +147,28 @@ describe("Round-Trip: TS -> Spiral -> TS", () => {
 //==============================================================================
 
 describe("Round-Trip: TS -> Spiral -> TS (functions)", () => {
-	it("should round-trip constant function application", () => {
-		// Use a function that returns a constant (no closure-captured params in body node)
-		// Arrow functions with inline body expressions that reference params create
-		// nodes with var references that are only valid inside the lambda scope,
-		// which is a known limitation of the current synthesis approach.
-		const source = "const f = (x: number) => 42; f(5);";
+	it("should round-trip arrow function with param reference", () => {
+		const source = "const f = (x: number) => x + 1; f(5);";
 
 		// Evaluate original
-		const originalFn = new Function("const f = (x) => 42; return f(5);");
+		const originalFn = new Function("const f = (x) => x + 1; return f(5);");
 		const originalResult = originalFn();
 
 		// Ingest, synthesize, evaluate
+		const doc = ingestTypeScript(source);
+		const synthesized = synthesizeTypeScript(doc);
+		const synthesizedResult = evalSynthesizedTS(synthesized);
+
+		assert.deepStrictEqual(originalResult, 6);
+		assert.deepStrictEqual(synthesizedResult, 6);
+	});
+
+	it("should round-trip constant function application", () => {
+		const source = "const f = (x: number) => 42; f(5);";
+
+		const originalFn = new Function("const f = (x) => 42; return f(5);");
+		const originalResult = originalFn();
+
 		const doc = ingestTypeScript(source);
 		const synthesized = synthesizeTypeScript(doc);
 		const synthesizedResult = evalSynthesizedTS(synthesized);
