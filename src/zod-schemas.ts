@@ -320,7 +320,7 @@ export const TypeSchema: z.ZodType<Type> = z.union([
 	ChannelTypeSchema,
 	TaskTypeSchema,
 	AsyncFnTypeSchema,
-]);
+]).meta({ id: "Type" });
 
 //==============================================================================
 // Zod Schemas - Expression Domain - AIR (8 variants)
@@ -350,7 +350,7 @@ export const CallExprSchema: z.ZodType<CallExpr> = z.object({
 	ns: z.string(),
 	name: z.string(),
 	get args() { return z.array(stringOrExpr()); },
-});
+}).meta({ id: "CallExpr" });
 
 export const IfExprSchema: z.ZodType<IfExpr> = z.object({
 	kind: z.literal("if"),
@@ -581,7 +581,7 @@ export const ExprSchema: z.ZodType<Expr> = z.union([
 	CallFnExprSchema,
 	FixExprSchema,
 	DoExprSchema,
-] as [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]);
+] satisfies [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]).meta({ id: "Expr" });
 
 /** EIR expression variants: all base expressions plus EIR imperative and async extensions. */
 export const EirExprSchema: z.ZodType<EirExpr> = z.union([
@@ -614,7 +614,7 @@ export const EirExprSchema: z.ZodType<EirExpr> = z.union([
 	EirRecvExprSchema,
 	EirSelectExprSchema,
 	EirRaceExprSchema,
-] as [z.ZodType<EirExpr>, z.ZodType<EirExpr>, ...z.ZodType<EirExpr>[]]);
+] satisfies [z.ZodType<EirExpr>, z.ZodType<EirExpr>, ...z.ZodType<EirExpr>[]]).meta({ id: "EirExpr" });
 
 //==============================================================================
 // Zod Schemas - LIR Domain
