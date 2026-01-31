@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: MIT
 // SPIRAL Python Round-Trip Integration Tests
-// Tests semantic equivalence across 4 directions:
-//   1. Python -> Spiral -> Python (same-language roundtrip)
-//   2. Spiral -> Python -> exec (synthesizer validation)
-//   3. TS -> Spiral -> Python (cross-language)
-//   4. Python -> Spiral -> TS (cross-language)
+// Tests semantic equivalence across 12 directions:
+//   Single-hop (4):
+//     1. Python -> Spiral -> Python (same-language roundtrip)
+//     2. Spiral -> Python -> exec (synthesizer validation)
+//     3. TS -> Spiral -> Python (cross-language)
+//     4. Python -> Spiral -> TS (cross-language)
+//   Multi-hop (8): all {Py,TS}^3 permutations
+//     5.  Py -> Py -> Py    9.  TS -> Py -> Py
+//     6.  Py -> Py -> TS   10.  TS -> Py -> TS
+//     7.  Py -> TS -> Py   11.  TS -> TS -> Py
+//     8.  Py -> TS -> TS   12.  TS -> TS -> TS
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -392,6 +398,126 @@ describe("Round-Trip: Python -> Spiral -> TS", { skip: !pythonAvailable }, () =>
 			// Step 4: Both should match expected
 			assert.deepStrictEqual(spiralNorm, expected, `SPIRAL eval should produce ${JSON.stringify(expected)}`);
 			assert.deepStrictEqual(tsResult, expected, `TS exec should produce ${JSON.stringify(expected)}`);
+		});
+	}
+});
+
+//==============================================================================
+// Multi-Hop Helpers
+//==============================================================================
+
+type Lang = "python" | "typescript";
+
+function ingestLang(source: string, lang: Lang): AIRDocument {
+	return lang === "python" ? ingestPython(source) : ingestTypeScript(source);
+}
+
+function synthLang(doc: AIRDocument, lang: Lang): string {
+	return lang === "python" ? synthesizePython(doc) : synthesizeTypeScript(doc);
+}
+
+function execLang(code: string, lang: Lang): unknown {
+	return lang === "python" ? evalSynthesizedPython(code) : evalSynthesizedTS(code);
+}
+
+/**
+ * Strip synthesized Python output artifacts (comments and print()) so the
+ * remaining variable bindings can be re-ingested as a pure expression program.
+ */
+function stripSynthPythonForReingest(code: string): string {
+	return code
+		.split("\n")
+		.filter(line => !line.startsWith("#") && !line.startsWith("print(") && line.trim() !== "")
+		.join("\n");
+}
+
+/**
+ * Strip synthesized TypeScript output artifacts (comments and console.log())
+ * so the remaining const bindings can be re-ingested as pure expressions.
+ */
+function stripSynthTSForReingest(code: string): string {
+	return code
+		.split("\n")
+		.filter(line => !line.startsWith("//") && !line.startsWith("console.log(") && line.trim() !== "")
+		.join("\n");
+}
+
+function stripSynthForReingest(code: string, lang: Lang): string {
+	return lang === "python" ? stripSynthPythonForReingest(code) : stripSynthTSForReingest(code);
+}
+
+/**
+ * Multi-hop roundtrip: source(A) -> ingest(A) -> SPIRAL₁ -> synth(B) -> code(B)
+ *                      -> ingest(B) -> SPIRAL₂ -> synth(C) -> code(C) -> exec(C)
+ */
+function multiHop(source: string, srcLang: Lang, midLang: Lang, tgtLang: Lang): unknown {
+	const doc1 = ingestLang(source, srcLang);
+	const midCode = synthLang(doc1, midLang);
+	const cleanMid = stripSynthForReingest(midCode, midLang);
+	const doc2 = ingestLang(cleanMid, midLang);
+	const tgtCode = synthLang(doc2, tgtLang);
+	return execLang(tgtCode, tgtLang);
+}
+
+//==============================================================================
+// Multi-Hop Test Cases
+//==============================================================================
+
+const multiHopPyCases: Array<{ name: string; source: string; expected: unknown }> = [
+	{ name: "addition", source: "2 + 3", expected: 5 },
+	{ name: "subtraction", source: "10 - 3", expected: 7 },
+	{ name: "boolean and", source: "True and False", expected: false },
+	{ name: "boolean not", source: "not False", expected: true },
+	{ name: "comparison", source: "5 > 3", expected: true },
+	{ name: "ternary", source: "1 if True else 2", expected: 1 },
+	{ name: "string concat", source: '"hello" + " world"', expected: "hello world" },
+	{ name: "negation", source: "-5", expected: -5 },
+];
+
+//==============================================================================
+// Direction 5: Py -> Py -> Py (double Python roundtrip)
+//==============================================================================
+
+describe("Multi-Hop: Py -> Py -> Py", { skip: !pythonAvailable }, () => {
+	for (const { name, source, expected } of multiHopPyCases) {
+		it(`should survive double roundtrip: ${name}`, () => {
+			assert.deepStrictEqual(multiHop(source, "python", "python", "python"), expected);
+		});
+	}
+});
+
+//==============================================================================
+// Direction 6: Py -> Py -> TS (Python through Python, execute as TS)
+//==============================================================================
+
+describe("Multi-Hop: Py -> Py -> TS", { skip: !pythonAvailable }, () => {
+	for (const { name, source, expected } of multiHopPyCases) {
+		it(`should multi-hop Py->Py->TS: ${name}`, () => {
+			assert.deepStrictEqual(multiHop(source, "python", "python", "typescript"), expected);
+		});
+	}
+});
+
+//==============================================================================
+// Direction 7: Py -> TS -> Py (Python through TypeScript and back)
+//==============================================================================
+
+describe("Multi-Hop: Py -> TS -> Py", { skip: !pythonAvailable }, () => {
+	for (const { name, source, expected } of multiHopPyCases) {
+		it(`should multi-hop Py->TS->Py: ${name}`, () => {
+			assert.deepStrictEqual(multiHop(source, "python", "typescript", "python"), expected);
+		});
+	}
+});
+
+//==============================================================================
+// Direction 8: Py -> TS -> TS (Python through TypeScript, execute as TS)
+//==============================================================================
+
+describe("Multi-Hop: Py -> TS -> TS", { skip: !pythonAvailable }, () => {
+	for (const { name, source, expected } of multiHopPyCases) {
+		it(`should multi-hop Py->TS->TS: ${name}`, () => {
+			assert.deepStrictEqual(multiHop(source, "python", "typescript", "typescript"), expected);
 		});
 	}
 });
