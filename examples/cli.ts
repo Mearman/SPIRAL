@@ -20,7 +20,6 @@ import {
 	validateCIR,
 	validateEIR,
 	validateLIR,
-	validatePIR,
 	createCoreRegistry,
 	createBoolRegistry,
 	createListRegistry,
@@ -38,7 +37,6 @@ import {
 	type CIRDocument,
 	type EIRDocument,
 	type LIRDocument,
-	type PIRDocument,
 	type Value,
 	type Defs,
 	type ValidationError,
@@ -54,7 +52,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const EXAMPLES_DIR = __dirname;
 
 // Type for documents with optional expected_result field (used in examples)
-type ExampleDocument = AIRDocument | CIRDocument | EIRDocument | LIRDocument | PIRDocument;
+type ExampleDocument = AIRDocument | CIRDocument | EIRDocument | LIRDocument;
 
 // Helper to safely get expected_result from example documents
 function getExpectedResult(doc: ExampleDocument): unknown | undefined {
@@ -106,7 +104,7 @@ const colors = {
 
 interface ExampleInfo {
   path: string;
-  ir: "AIR" | "CIR" | "EIR" | "LIR" | "PIR";
+  ir: "AIR" | "CIR" | "EIR" | "LIR";
   category: string;
   name: string;
   description?: string;
@@ -196,15 +194,6 @@ async function findExamples(dir: string, baseDir = dir): Promise<ExampleInfo[]> 
 				category: parts.slice(0, -1).join("/"),
 				name: entry,
 			});
-		} else if (entry.endsWith(".pir.json")) {
-			const relPath = relative(baseDir, fullPath);
-			const parts = relPath.split("/");
-			examples.push({
-				path: relPath.replace(/\.pir\.json$/, ""),
-				ir: "PIR",
-				category: parts.slice(0, -1).join("/"),
-				name: entry,
-			});
 		}
 	}
 
@@ -245,7 +234,7 @@ function listExamples(examples: ExampleInfo[]): void {
 		for (const [category, items] of Object.entries(byCategory)) {
 			print(`  ${colors.dim}${category}/${colors.reset}`, "dim");
 			for (const item of items) {
-				const name = item.path.replace(/^air\//, "").replace(/^cir\//, "").replace(/^eir\//, "").replace(/^lir\//, "").replace(/^pir\//, "");
+				const name = item.path.replace(/^air\//, "").replace(/^cir\//, "").replace(/^eir\//, "").replace(/^lir\//, "");
 				print(`    ${colors.cyan}${name}${colors.reset}`, "cyan");
 			}
 		}
@@ -253,14 +242,12 @@ function listExamples(examples: ExampleInfo[]): void {
 	}
 }
 
-async function loadExample(path: string): Promise<{ doc: AIRDocument | CIRDocument | EIRDocument | LIRDocument | PIRDocument; ir: "AIR" | "CIR" | "EIR" | "LIR" | "PIR" } | null> {
-	const isPirHint = path.includes("pir/") || path.startsWith("pir/") || path.endsWith(".pir.json");
+async function loadExample(path: string): Promise<{ doc: AIRDocument | CIRDocument | EIRDocument | LIRDocument; ir: "AIR" | "CIR" | "EIR" | "LIR" } | null> {
 	const isCirHint = path.includes("cir/") || path.startsWith("cir/") || path.endsWith(".cir.json");
 	const isEirHint = path.includes("eir/") || path.startsWith("eir/") || path.endsWith(".eir.json");
 	const isLirHint = path.includes("lir/") || path.startsWith("lir/") || path.endsWith(".lir.json");
 	let defaultExt = ".air.json";
-	if (isPirHint) defaultExt = ".pir.json";
-	else if (isLirHint) defaultExt = ".lir.json";
+	if (isLirHint) defaultExt = ".lir.json";
 	else if (isEirHint) defaultExt = ".eir.json";
 	else if (isCirHint) defaultExt = ".cir.json";
 	const candidates: string[] = [];
@@ -272,13 +259,12 @@ async function loadExample(path: string): Promise<{ doc: AIRDocument | CIRDocume
 		candidates.push(`${path}${defaultExt}`);
 	}
 
-	// If the path is a directory, look for <basename>.{air|cir|eir|lir|pir}.json or a single json file inside.
+	// If the path is a directory, look for <basename>.{air|cir|eir|lir}.json or a single json file inside.
 	const dirPath = join(EXAMPLES_DIR, path);
 	try {
 		const s = await stat(dirPath);
 		if (s.isDirectory()) {
 			const baseName = path.split("/").pop() || "";
-			candidates.push(join(path, `${baseName}.pir.json`));
 			candidates.push(join(path, `${baseName}.lir.json`));
 			candidates.push(join(path, `${baseName}.eir.json`));
 			candidates.push(join(path, `${baseName}.cir.json`));
@@ -300,10 +286,9 @@ async function loadExample(path: string): Promise<{ doc: AIRDocument | CIRDocume
 		const fullPath = join(EXAMPLES_DIR, rel);
 		try {
 			const content = await readFile(fullPath, "utf-8");
-			const doc = JSON.parse(content) as AIRDocument | CIRDocument | EIRDocument | LIRDocument | PIRDocument;
-			let ir: "AIR" | "CIR" | "EIR" | "LIR" | "PIR" = "AIR";
-			if (fullPath.endsWith(".pir.json")) ir = "PIR";
-			else if (fullPath.endsWith(".lir.json")) ir = "LIR";
+			const doc = JSON.parse(content) as AIRDocument | CIRDocument | EIRDocument | LIRDocument;
+			let ir: "AIR" | "CIR" | "EIR" | "LIR" = "AIR";
+			if (fullPath.endsWith(".lir.json")) ir = "LIR";
 			else if (fullPath.endsWith(".eir.json")) ir = "EIR";
 			else if (fullPath.endsWith(".cir.json")) ir = "CIR";
 			return { doc, ir };
@@ -338,8 +323,6 @@ async function runExample(path: string, options: Options): Promise<boolean> {
 			validationResult = validateEIR(doc as EIRDocument);
 		} else if (ir === "LIR") {
 			validationResult = validateLIR(doc as LIRDocument);
-		} else {
-			validationResult = validatePIR(doc as PIRDocument);
 		}
 
 		if (!validationResult.valid) {
@@ -413,12 +396,7 @@ async function runExample(path: string, options: Options): Promise<boolean> {
 		}
 
 		// Synthesize Python code (if --synth flag is set)
-		// Only supported for AIR/CIR/EIR/LIR, not PIR
 		if (options.synth) {
-			if (ir === "PIR") {
-				print(`${colors.yellow}Python synthesis is not supported for PIR documents${colors.reset}\n`, "yellow");
-				return false;
-			}
 			print(`${colors.bold}Synthesizing Python code...${colors.reset}`, "reset");
 			const pythonCode = synthesizePython(doc as AIRDocument | CIRDocument | EIRDocument | LIRDocument, { moduleName: `spiral_example_${path.replace(/[/\\-]/g, "_")}` });
 			print(pythonCode);
@@ -428,7 +406,7 @@ async function runExample(path: string, options: Options): Promise<boolean> {
 
 		// Get inputs for interactive examples
 		let inputArray: (string | number)[] = [];
-		if (ir === "EIR" || ir === "LIR" || ir === "PIR") {
+		if (ir === "EIR" || ir === "LIR") {
 			// Try to get inputs from various sources in precedence order
 			if (options.inputs) {
 				inputArray = parseInputString(options.inputs);
@@ -466,20 +444,24 @@ async function runExample(path: string, options: Options): Promise<boolean> {
 			const effectRegistry = inputArray.length > 0
 				? createQueuedEffectRegistry(inputArray)
 				: createDefaultEffectRegistry();
-			const eirResult = evaluateEIR(doc as EIRDocument, registry, defs, undefined, { effects: effectRegistry });
-			evalResult = eirResult.result;
+			const docStr = JSON.stringify(doc);
+			const isAsync = docStr.includes('"kind":"spawn"') || docStr.includes('"kind":"par"') ||
+				docStr.includes('"kind":"await"') || docStr.includes('"kind":"channel"') ||
+				docStr.includes('"kind":"select"') || docStr.includes('"kind":"race"') ||
+				docStr.includes('"kind":"send"') || docStr.includes('"kind":"recv"');
+			if (isAsync) {
+				const evaluator = new AsyncEvaluator(registry, defs, effectRegistry);
+				evalResult = await evaluator.evaluateDocument(doc as EIRDocument);
+			} else {
+				const eirResult = evaluateEIR(doc as EIRDocument, registry, defs, undefined, { effects: effectRegistry });
+				evalResult = eirResult.result;
+			}
 		} else if (ir === "LIR") {
 			const effectRegistry = inputArray.length > 0
 				? createQueuedEffectRegistry(inputArray)
 				: createDefaultEffectRegistry();
 			const lirResult = evaluateLIR(doc as LIRDocument, registry, effectRegistry);
 			evalResult = lirResult.result;
-		} else if (ir === "PIR") {
-			const effectRegistry = inputArray.length > 0
-				? createQueuedEffectRegistry(inputArray)
-				: createDefaultEffectRegistry();
-			const evaluator = new AsyncEvaluator(registry, defs, effectRegistry);
-			evalResult = await evaluator.evaluateDocument(doc as PIRDocument);
 		} else {
 			evalResult = evaluateProgram(doc as AIRDocument | CIRDocument, registry, defs);
 		}
@@ -564,7 +546,6 @@ function showHelp(): void {
 	print("  pnpm run-example cir/algorithms/factorial", "cyan");
 	print("  pnpm run-example eir/interactive/prompt-uppercase --inputs 'hello'", "cyan");
 	print("  pnpm run-example lir/control-flow/while-cfg --synth", "cyan");
-	print("  pnpm run-example pir/async/timeout-select --verbose", "cyan");
 	print("  pnpm run-example --list\n", "cyan");
 	print(`${colors.bold}Options:${colors.reset}`, "reset");
 	print("  -v, --verbose         Show detailed output", "reset");
@@ -585,7 +566,7 @@ function showHelp(): void {
 	print("  eir/interactive/*      - Interactive input examples", "dim");
 	print("  eir/loops/*            - Loop constructs", "dim");
 	print("  lir/control-flow/*     - CFG-based control flow", "dim");
-	print("  pir/async/*            - Async patterns with timeout/select", "dim");
+	print("  eir/async/*            - Async patterns with timeout/select", "dim");
 	print("");
 }
 

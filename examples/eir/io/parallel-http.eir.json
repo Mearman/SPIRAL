@@ -1,6 +1,6 @@
 {
-  "$schema": "../../pir.schema.json",
-  "version": "2.0.0",
+  "$schema": "../../../eir.schema.json",
+  "version": "1.0.0",
   "capabilities": ["async", "parallel", "channels"],
   "description": "Demonstrates parallel HTTP requests with par, select for timeout/race handling, and channel-based producer-consumer for response processing",
   "nodes": [

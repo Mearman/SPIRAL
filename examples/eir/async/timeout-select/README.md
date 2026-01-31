@@ -1,12 +1,12 @@
-# PIR Timeout and Select Example
+# EIR Timeout and Select Example
 
-This example demonstrates the enhanced PIR `await` and `select` expressions with timeout, fallback, and returnIndex options.
+This example demonstrates the EIR `await` and `select` expressions with timeout, fallback, and returnIndex options.
 
 ## Features Demonstrated
 
 ### 1. Await with Timeout and Fallback
 
-The `await` expression now supports:
+The `await` expression supports:
 - **timeout**: Maximum time to wait (in milliseconds)
 - **fallback**: Value to return if timeout occurs
 - **returnIndex**: Return `{index: 0/1, value}` instead of just the value
@@ -27,7 +27,7 @@ The `await` expression now supports:
 
 ### 2. Select with Return Index
 
-The `select` expression now supports:
+The `select` expression supports:
 - **timeout**: Maximum time to wait for any future (in milliseconds)
 - **fallback**: Value to return if all futures timeout
 - **returnIndex**: Return which future won
@@ -56,7 +56,7 @@ The `select` expression now supports:
 ## Running
 
 ```bash
-pnpm run-example pir/async/timeout-select
+pnpm run-example eir/async/timeout-select
 ```
 
 ### Different Results
