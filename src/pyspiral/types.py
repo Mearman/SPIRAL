@@ -1,6 +1,6 @@
 """
 SPIRAL Type Definitions for Python
-Implements Type, Value, and Expression AST domains for AIR/CIR/EIR/PIR layers
+Implements Type, Value, and Expression AST domains for AIR/CIR/EIR layers
 
 This module provides frozen dataclasses for immutable type representations,
 using Union types with Literal 'kind' fields for pattern matching.
@@ -125,14 +125,14 @@ class VoidType:
 
 @dataclass(frozen=True)
 class FutureType:
-    """Future type (PIR only)"""
+    """Future type (EIR only)"""
     kind: Literal["future"]
     of: Type
 
 
 @dataclass(frozen=True)
 class ChannelType:
-    """Channel type (PIR only)"""
+    """Channel type (EIR only)"""
     kind: Literal["channel"]
     channel_type: Literal["mpsc", "spsc", "mpmc", "broadcast"]
     of: Type
@@ -140,14 +140,14 @@ class ChannelType:
 
 @dataclass(frozen=True)
 class TaskType:
-    """Task type (PIR only)"""
+    """Task type (EIR only)"""
     kind: Literal["task"]
     returns: Type
 
 
 @dataclass(frozen=True)
 class AsyncFnType:
-    """Async function type (PIR only)"""
+    """Async function type (EIR only)"""
     kind: Literal["async"]
     params: List[Type]
     returns: FutureType
@@ -167,10 +167,10 @@ Type: TypeAlias = Union[
     FnType,      # CIR only
     RefType,     # EIR only
     VoidType,    # EIR only
-    FutureType,  # PIR only
-    ChannelType, # PIR only
-    TaskType,    # PIR only
-    AsyncFnType, # PIR only
+    FutureType,  # EIR only
+    ChannelType, # EIR only
+    TaskType,    # EIR only
+    AsyncFnType, # EIR only
 ]
 
 
@@ -284,7 +284,7 @@ class ErrorVal:
 
 @dataclass(frozen=True)
 class FutureVal:
-    """Future value (PIR only)"""
+    """Future value (EIR only)"""
     kind: Literal["future"]
     task_id: str
     status: Literal["pending", "ready", "error"]
@@ -293,7 +293,7 @@ class FutureVal:
 
 @dataclass(frozen=True)
 class ChannelVal:
-    """Channel value (PIR only)"""
+    """Channel value (EIR only)"""
     kind: Literal["channel"]
     id: str
     channel_type: Literal["mpsc", "spsc", "mpmc", "broadcast"]
@@ -301,7 +301,7 @@ class ChannelVal:
 
 @dataclass(frozen=True)
 class TaskVal:
-    """Task value (PIR only)"""
+    """Task value (EIR only)"""
     kind: Literal["task"]
     id: str
     return_type: Type
@@ -309,7 +309,7 @@ class TaskVal:
 
 @dataclass(frozen=True)
 class SelectResultVal:
-    """Select/await result with index (PIR only)"""
+    """Select/await result with index (EIR only)"""
     kind: Literal["selectResult"]
     index: int  # -1=timeout, 0..n-1=winning future
     value: Value
@@ -341,10 +341,10 @@ Value: TypeAlias = Union[
     VoidVal,       # EIR only
     RefCellVal,    # EIR only
     ErrorVal,
-    FutureVal,     # PIR only
-    ChannelVal,    # PIR only
-    TaskVal,       # PIR only
-    SelectResultVal,  # PIR only
+    FutureVal,     # EIR only
+    ChannelVal,    # EIR only
+    TaskVal,       # EIR only
+    SelectResultVal,  # EIR only
 ]
 
 
@@ -528,27 +528,23 @@ class EirTryExpr:
     fallback: Optional[str] = None  # Node on success (optional)
 
 
-#==============================================================================
-# PIR Expression Types
-#==============================================================================
-
 @dataclass(frozen=True)
-class PirParExpr:
-    """Parallel composition expression (PIR only)"""
+class EirParExpr:
+    """Parallel composition expression (EIR only)"""
     kind: Literal["par"]
     branches: List[str]
 
 
 @dataclass(frozen=True)
-class PirSpawnExpr:
-    """Spawn task expression (PIR only)"""
+class EirSpawnExpr:
+    """Spawn task expression (EIR only)"""
     kind: Literal["spawn"]
     task: str
 
 
 @dataclass(frozen=True)
-class PirAwaitExpr:
-    """Await future expression (PIR only)"""
+class EirAwaitExpr:
+    """Await future expression (EIR only)"""
     kind: Literal["await"]
     future: str
     timeout: Optional[str] = None       # Timeout in milliseconds (node reference)
@@ -557,31 +553,31 @@ class PirAwaitExpr:
 
 
 @dataclass(frozen=True)
-class PirChannelExpr:
-    """Channel creation expression (PIR only)"""
+class EirChannelExpr:
+    """Channel creation expression (EIR only)"""
     kind: Literal["channel"]
     channel_type: Literal["mpsc", "spsc", "mpmc", "broadcast"]
     buffer_size: Optional[str] = None
 
 
 @dataclass(frozen=True)
-class PirSendExpr:
-    """Send to channel expression (PIR only)"""
+class EirSendExpr:
+    """Send to channel expression (EIR only)"""
     kind: Literal["send"]
     channel: str
     value: str
 
 
 @dataclass(frozen=True)
-class PirRecvExpr:
-    """Receive from channel expression (PIR only)"""
+class EirRecvExpr:
+    """Receive from channel expression (EIR only)"""
     kind: Literal["recv"]
     channel: str
 
 
 @dataclass(frozen=True)
-class PirSelectExpr:
-    """Select on futures expression (PIR only)"""
+class EirSelectExpr:
+    """Select on futures expression (EIR only)"""
     kind: Literal["select"]
     futures: List[str]
     timeout: Optional[str] = None       # Timeout in milliseconds (node reference)
@@ -590,8 +586,8 @@ class PirSelectExpr:
 
 
 @dataclass(frozen=True)
-class PirRaceExpr:
-    """Race on tasks expression (PIR only)"""
+class EirRaceExpr:
+    """Race on tasks expression (EIR only)"""
     kind: Literal["race"]
     tasks: List[str]
 
@@ -618,14 +614,14 @@ Expr: TypeAlias = Union[
     EirRefCellExpr,  # EIR only
     EirDerefExpr,    # EIR only
     EirTryExpr,      # EIR only
-    PirParExpr,      # PIR only
-    PirSpawnExpr,    # PIR only
-    PirAwaitExpr,    # PIR only
-    PirChannelExpr,  # PIR only
-    PirSendExpr,     # PIR only
-    PirRecvExpr,     # PIR only
-    PirSelectExpr,   # PIR only
-    PirRaceExpr,     # PIR only
+    EirParExpr,      # EIR only
+    EirSpawnExpr,    # EIR only
+    EirAwaitExpr,    # EIR only
+    EirChannelExpr,  # EIR only
+    EirSendExpr,     # EIR only
+    EirRecvExpr,     # EIR only
+    EirSelectExpr,   # EIR only
+    EirRaceExpr,     # EIR only
 ]
 
 
@@ -821,16 +817,10 @@ CirInstruction: TypeAlias = AirInstruction
 EirInsEffect = LirInsEffect
 EirInsAssignRef = LirInsAssignRef
 
-EirInstruction: TypeAlias = Union[CirInstruction, EirInsEffect, EirInsAssignRef]
-
-
-#==============================================================================
-# PIR Instruction Types
-#==============================================================================
 
 @dataclass(frozen=True)
-class PirInsSpawn:
-    """PIR spawn instruction"""
+class EirInsSpawn:
+    """EIR spawn instruction"""
     kind: Literal["spawn"]
     target: str
     entry: str
@@ -838,8 +828,8 @@ class PirInsSpawn:
 
 
 @dataclass(frozen=True)
-class PirInsChannelOp:
-    """PIR channel operation instruction"""
+class EirInsChannelOp:
+    """EIR channel operation instruction"""
     kind: Literal["channelOp"]
     op: Literal["send", "recv", "trySend", "tryRecv"]
     target: Optional[str]
@@ -848,14 +838,53 @@ class PirInsChannelOp:
 
 
 @dataclass(frozen=True)
-class PirInsAwait:
-    """PIR await instruction"""
+class EirInsAwait:
+    """EIR await instruction"""
     kind: Literal["await"]
     target: str
     future: str
 
 
-PirInstruction: TypeAlias = Union[EirInstruction, PirInsSpawn, PirInsChannelOp, PirInsAwait]
+EirInstruction: TypeAlias = Union[
+    CirInstruction,
+    EirInsEffect,
+    EirInsAssignRef,
+    EirInsSpawn,
+    EirInsChannelOp,
+    EirInsAwait,
+]
+
+
+#==============================================================================
+# EIR Terminator Types
+#==============================================================================
+
+@dataclass(frozen=True)
+class EirTermFork:
+    """EIR fork terminator"""
+    kind: Literal["fork"]
+    branches: List[Dict[str, str]]  # [{"block": str, "taskId": str}, ...]
+    continuation: str
+
+
+@dataclass(frozen=True)
+class EirTermJoin:
+    """EIR join terminator"""
+    kind: Literal["join"]
+    tasks: List[str]
+    to: str
+    results: Optional[List[str]] = None
+
+
+@dataclass(frozen=True)
+class EirTermSuspend:
+    """EIR suspend terminator"""
+    kind: Literal["suspend"]
+    future: str
+    resume_block: str
+
+
+EirTerminator: TypeAlias = Union[LirTerminator, EirTermFork, EirTermJoin, EirTermSuspend]
 
 
 #==============================================================================
@@ -883,47 +912,7 @@ class EirBlock:
     """EIR basic block"""
     id: str
     instructions: List[EirInstruction]
-    terminator: LirTerminator
-
-
-@dataclass(frozen=True)
-class PirBlock:
-    """PIR basic block"""
-    id: str
-    instructions: List[PirInstruction]
-    terminator: PirTerminator
-
-
-#==============================================================================
-# PIR Terminator Types
-#==============================================================================
-
-@dataclass(frozen=True)
-class PirTermFork:
-    """PIR fork terminator"""
-    kind: Literal["fork"]
-    branches: List[Dict[str, str]]  # [{"block": str, "taskId": str}, ...]
-    continuation: str
-
-
-@dataclass(frozen=True)
-class PirTermJoin:
-    """PIR join terminator"""
-    kind: Literal["join"]
-    tasks: List[str]
-    to: str
-    results: Optional[List[str]] = None
-
-
-@dataclass(frozen=True)
-class PirTermSuspend:
-    """PIR suspend terminator"""
-    kind: Literal["suspend"]
-    future: str
-    resume_block: str
-
-
-PirTerminator: TypeAlias = Union[LirTerminator, PirTermFork, PirTermJoin, PirTermSuspend]
+    terminator: EirTerminator
 
 
 #==============================================================================
@@ -947,22 +936,16 @@ class BlockNode:
     entry: str
 
 
-# Type aliases for hybrid nodes per layer
-AirHybridNode: TypeAlias = Union[ExprNode, "AirBlockNode"]
-CirHybridNode: TypeAlias = Union[ExprNode, "CirBlockNode"]
-EirHybridNode: TypeAlias = Union["EirExprNode", "EirBlockNode"]
-LirHybridNode: TypeAlias = Union[ExprNode, "LirBlockNode"]
-PirHybridNode: TypeAlias = Union["PirExprNode", "PirBlockNode"]
-
-
-# EIR expression node (with EIR-specific expressions)
+# EIR expression node (with EIR-specific expressions including async primitives)
 @dataclass(frozen=True)
 class EirExprNode:
     """EIR expression node"""
     id: str
     type_annotation: Optional[Type]
     expr: Union[Expr, EirSeqExpr, EirAssignExpr, EirWhileExpr, EirForExpr,
-                EirIterExpr, EirEffectExpr, EirRefCellExpr, EirDerefExpr, EirTryExpr]
+                EirIterExpr, EirEffectExpr, EirRefCellExpr, EirDerefExpr, EirTryExpr,
+                EirParExpr, EirSpawnExpr, EirAwaitExpr, EirChannelExpr,
+                EirSendExpr, EirRecvExpr, EirSelectExpr, EirRaceExpr]
 
 
 @dataclass(frozen=True)
@@ -984,27 +967,6 @@ class LirBlockNode:
     entry: str
 
 
-# PIR expression node (with PIR-specific expressions)
-@dataclass(frozen=True)
-class PirExprNode:
-    """PIR expression node"""
-    id: str
-    type_annotation: Optional[Type]
-    expr: Union[Expr, EirSeqExpr, EirAssignExpr, EirWhileExpr, EirForExpr,
-                EirIterExpr, EirEffectExpr, EirRefCellExpr, EirDerefExpr, EirTryExpr,
-                PirParExpr, PirSpawnExpr, PirAwaitExpr, PirChannelExpr,
-                PirSendExpr, PirRecvExpr, PirSelectExpr, PirRaceExpr]
-
-
-@dataclass(frozen=True)
-class PirBlockNode:
-    """PIR block node"""
-    id: str
-    type_annotation: Optional[Type]
-    blocks: List[PirBlock]
-    entry: str
-
-
 # AIR/CIR block nodes
 @dataclass(frozen=True)
 class AirBlockNode:
@@ -1022,6 +984,13 @@ class CirBlockNode:
     type_annotation: Optional[Type]
     blocks: List[CirBlock]
     entry: str
+
+
+# Type aliases for hybrid nodes per layer
+AirHybridNode: TypeAlias = Union[ExprNode, "AirBlockNode"]
+CirHybridNode: TypeAlias = Union[ExprNode, "CirBlockNode"]
+EirHybridNode: TypeAlias = Union["EirExprNode", "EirBlockNode"]
+LirHybridNode: TypeAlias = Union[ExprNode, "LirBlockNode"]
 
 
 #==============================================================================
@@ -1062,17 +1031,6 @@ class EIRDocument:
 
 
 @dataclass(frozen=True)
-class PIRDocument:
-    """PIR document structure"""
-    version: str
-    capabilities: Optional[List[str]] = None
-    function_sigs: Optional[List[FunctionSignature]] = None
-    air_defs: Optional[List[AIRDef]] = None
-    nodes: Optional[List[PirHybridNode]] = None
-    result: str = ""
-
-
-@dataclass(frozen=True)
 class LIRDocument:
     """LIR document structure"""
     version: str
@@ -1105,16 +1063,16 @@ class EvalState:
 
 
 #==============================================================================
-# Async Evaluation State (PIR)
+# Async Evaluation State (EIR)
 #==============================================================================
 
 @dataclass(frozen=True)
 class TaskState:
-    """Task state for PIR execution"""
+    """Task state for EIR async execution"""
     expr: Union[Expr, EirSeqExpr, EirAssignExpr, EirWhileExpr, EirForExpr,
                 EirIterExpr, EirEffectExpr, EirRefCellExpr, EirDerefExpr, EirTryExpr,
-                PirParExpr, PirSpawnExpr, PirAwaitExpr, PirChannelExpr,
-                PirSendExpr, PirRecvExpr, PirSelectExpr, PirRaceExpr]
+                EirParExpr, EirSpawnExpr, EirAwaitExpr, EirChannelExpr,
+                EirSendExpr, EirRecvExpr, EirSelectExpr, EirRaceExpr]
     env: Dict[str, Value]
     status: Literal["running", "completed", "failed"]
     result: Optional[Value] = None
@@ -1123,7 +1081,7 @@ class TaskState:
 
 @dataclass(frozen=True)
 class AsyncEvalState:
-    """Async evaluation state for PIR programs"""
+    """Async evaluation state for EIR programs"""
     task_id: str
     env: Dict[str, Value]
     ref_cells: Dict[str, Value]

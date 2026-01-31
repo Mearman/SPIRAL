@@ -1,5 +1,5 @@
 # SPIRAL Schema Validator
-# Manual structural validation for AIR, CIR, EIR, LIR, and PIR documents
+# Manual structural validation for AIR, CIR, EIR, and LIR documents
 
 from __future__ import annotations
 
@@ -848,6 +848,42 @@ def validate_eir_expr(state: ValidationState, expr: dict[str, Any]) -> None:
         if not validate_id(expr.get("target")):
             state.add_error("deref expression must have valid 'target' identifier", expr)
 
+    # Async/parallel expressions
+    elif kind == "par":
+        if not validate_array(expr.get("branches")) or len(expr.get("branches", [])) < 2:
+            state.add_error("par expression must have at least 2 branches", expr.get("branches"))
+
+    elif kind == "spawn":
+        if not validate_string(expr.get("task")):
+            state.add_error("spawn expression must have a task (node ID)", expr.get("task"))
+
+    elif kind == "await":
+        if not validate_string(expr.get("future")):
+            state.add_error("await expression must have a future (node ID)", expr.get("future"))
+
+    elif kind == "channel":
+        if not validate_string(expr.get("channelType")):
+            state.add_error("channel expression must have a channelType", expr.get("channelType"))
+
+    elif kind == "send":
+        if not validate_string(expr.get("channel")) or not validate_string(expr.get("value")):
+            state.add_error(
+                "send expression must have channel and value (node IDs)",
+                {"channel": expr.get("channel"), "value": expr.get("value")}
+            )
+
+    elif kind == "recv":
+        if not validate_string(expr.get("channel")):
+            state.add_error("recv expression must have a channel (node ID)", expr.get("channel"))
+
+    elif kind == "select":
+        if not validate_array(expr.get("futures")) or len(expr.get("futures", [])) < 1:
+            state.add_error("select expression must have at least 1 future", expr.get("futures"))
+
+    elif kind == "race":
+        if not validate_array(expr.get("tasks")) or len(expr.get("tasks", [])) < 2:
+            state.add_error("race expression must have at least 2 tasks", expr.get("tasks"))
+
     # CIR and AIR expressions are already validated
     elif kind in ("lit", "ref", "var", "call", "if", "let", "airRef", "predicate",
                   "lambda", "callExpr", "fix"):
@@ -899,6 +935,27 @@ def validate_eir_node_references(
         check_ref(expr.get("catchBody"), "try.catchBody")
         if "fallback" in expr:
             check_ref(expr["fallback"], "try.fallback")
+    elif kind == "spawn":
+        check_ref(expr.get("task"), "spawn.task")
+    elif kind == "await":
+        check_ref(expr.get("future"), "await.future")
+    elif kind == "par":
+        if validate_array(expr.get("branches")):
+            for i, branch in enumerate(expr["branches"]):
+                check_ref(branch, f"par.branches[{i}]")
+    elif kind == "send":
+        check_ref(expr.get("channel"), "send.channel")
+        check_ref(expr.get("value"), "send.value")
+    elif kind == "recv":
+        check_ref(expr.get("channel"), "recv.channel")
+    elif kind == "select":
+        if validate_array(expr.get("futures")):
+            for i, future in enumerate(expr["futures"]):
+                check_ref(future, f"select.futures[{i}]")
+    elif kind == "race":
+        if validate_array(expr.get("tasks")):
+            for i, task in enumerate(expr["tasks"]):
+                check_ref(task, f"race.tasks[{i}]")
 
 
 #==============================================================================
@@ -980,175 +1037,6 @@ def validate_lir(doc: Any) -> ValidationResult:
         return invalid_result(state.errors)
 
     return valid_result(doc)
-
-
-#==============================================================================
-# Document Validation - PIR
-#==============================================================================
-
-def validate_pir(doc: Any) -> ValidationResult:
-    """Validate a PIR document"""
-    state = ValidationState()
-
-    if not validate_object(doc):
-        state.add_error("Document must be an object", doc)
-        return invalid_result(state.errors)
-
-    # Check version (PIR uses version 2.x.x)
-    version = doc.get("version")
-    if version is not None and not validate_string(version):
-        state.add_error("version must be a string", version)
-    elif isinstance(version, str) and not re.match(r'^2\.\d+\.\d+$', version):
-        state.add_error("PIR version must match 2.x.x format", version)
-
-    # Check airDefs (optional)
-    if "airDefs" in doc and not validate_array(doc["airDefs"]):
-        state.add_error("airDefs must be an array", doc["airDefs"])
-
-    # Check functionSigs (optional)
-    if "functionSigs" in doc and not validate_array(doc["functionSigs"]):
-        state.add_error("functionSigs must be an array", doc["functionSigs"])
-
-    # Check capabilities (optional)
-    if "capabilities" in doc:
-        if not validate_array(doc["capabilities"]):
-            state.add_error("capabilities must be an array", doc["capabilities"])
-        else:
-            valid_capabilities = {"async", "parallel", "channels", "hybrid"}
-            for cap in doc["capabilities"]:
-                if not validate_string(cap) or cap not in valid_capabilities:
-                    state.add_error(f"Invalid capability: {cap}", cap)
-
-    # Check nodes (required)
-    if not validate_array(doc.get("nodes")):
-        state.add_error("nodes must be an array", doc.get("nodes"))
-    else:
-        for i, node in enumerate(doc.get("nodes", [])):
-            state.push_path(f"nodes[{i}]")
-            validate_pir_node(node, state)
-            state.pop_path()
-
-    # Check result (required)
-    if not validate_string(doc.get("result")):
-        state.add_error("result must be a string (node ID)", doc.get("result"))
-
-    if state.errors:
-        return invalid_result(state.errors)
-
-    return valid_result(doc)
-
-
-def validate_pir_node(node: Any, state: ValidationState) -> None:
-    """Validate a PIR node (expression or block-based)"""
-    if not validate_object(node):
-        state.add_error("Node must be an object", node)
-        return
-
-    # Check id
-    if not validate_string(node.get("id")) or not re.match(r'^[A-Za-z][A-Za-z0-9_-]*$', node["id"]):
-        state.add_error("id must be a valid identifier", node.get("id"))
-
-    # Check for expr OR (blocks + entry)
-    has_expr = "expr" in node
-    has_blocks = "blocks" in node
-    has_entry = "entry" in node
-
-    if has_expr and (has_blocks or has_entry):
-        state.add_error("Node cannot have both expr and blocks", node)
-    elif not has_expr and (not has_blocks or not has_entry):
-        state.add_error("Node must have either expr or (blocks + entry)", node)
-
-    if has_expr:
-        validate_pir_expr(node["expr"], state)
-
-    if has_blocks:
-        if not validate_array(node["blocks"]):
-            state.add_error("blocks must be an array", node["blocks"])
-        else:
-            for i, block in enumerate(node["blocks"]):
-                state.push_path(f"blocks[{i}]")
-                validate_pir_block(block, state)
-                state.pop_path()
-
-    if has_entry and not validate_string(node["entry"]):
-        state.add_error("entry must be a string (block ID)", node["entry"])
-
-
-def validate_pir_expr(expr: Any, state: ValidationState) -> None:
-    """Validate a PIR expression"""
-    if not validate_object(expr):
-        state.add_error("Expression must be an object", expr)
-        return
-
-    kind = expr.get("kind")
-
-    if not validate_string(kind):
-        state.add_error("Expression must have a 'kind' field", expr)
-        return
-
-    # PIR-specific expression kinds
-    pir_kinds = {"par", "spawn", "await", "channel", "send", "recv", "select", "race"}
-    # EIR expression kinds (PIR extends EIR)
-    eir_kinds = {
-        "lit", "var", "call", "if", "let", "lambda", "callExpr", "fix",
-        "seq", "assign", "while", "for", "iter", "effect", "refCell"
-    }
-
-    if kind not in pir_kinds | eir_kinds:
-        state.add_error(f"Unknown expression kind in PIR: {kind}", kind)
-        return
-
-    # Validate PIR-specific expressions
-    if kind == "par":
-        if not validate_array(expr.get("branches")) or len(expr["branches"]) < 2:
-            state.add_error("par expression must have at least 2 branches", expr.get("branches"))
-
-    elif kind == "spawn":
-        if not validate_string(expr.get("task")):
-            state.add_error("spawn expression must have a task (node ID)", expr.get("task"))
-
-    elif kind == "await":
-        if not validate_string(expr.get("future")):
-            state.add_error("await expression must have a future (node ID)", expr.get("future"))
-
-    elif kind == "channel":
-        if not validate_string(expr.get("channelType")):
-            state.add_error("channel expression must have a channelType", expr.get("channelType"))
-
-    elif kind == "send":
-        if not validate_string(expr.get("channel")) or not validate_string(expr.get("value")):
-            state.add_error(
-                "send expression must have channel and value (node IDs)",
-                {"channel": expr.get("channel"), "value": expr.get("value")}
-            )
-
-    elif kind == "recv":
-        if not validate_string(expr.get("channel")):
-            state.add_error("recv expression must have a channel (node ID)", expr.get("channel"))
-
-    elif kind == "select":
-        if not validate_array(expr.get("futures")) or len(expr["futures"]) < 1:
-            state.add_error("select expression must have at least 1 future", expr.get("futures"))
-
-    elif kind == "race":
-        if not validate_array(expr.get("tasks")) or len(expr["tasks"]) < 2:
-            state.add_error("race expression must have at least 2 tasks", expr.get("tasks"))
-
-
-def validate_pir_block(block: Any, state: ValidationState) -> None:
-    """Validate a PIR block"""
-    if not validate_object(block):
-        state.add_error("Block must be an object", block)
-        return
-
-    if not validate_string(block.get("id")):
-        state.add_error("Block must have an id", block.get("id"))
-
-    if not validate_array(block.get("instructions")):
-        state.add_error("Block must have instructions array", block.get("instructions"))
-
-    if not validate_object(block.get("terminator")):
-        state.add_error("Block must have a terminator object", block.get("terminator"))
 
 
 #==============================================================================

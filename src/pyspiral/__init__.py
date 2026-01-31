@@ -2,7 +2,7 @@
 SPIRAL Python Implementation
 
 A Python implementation of the SPIRAL intermediate representation,
-supporting AIR, CIR, EIR, PIR, and LIR layers with expression and CFG forms.
+supporting AIR, CIR, EIR, and LIR layers with expression and CFG forms.
 
 This module provides a clean public API mirroring the TypeScript implementation.
 """
@@ -26,7 +26,6 @@ from pyspiral.types import (
     CIRDocument,
     EIRDocument,
     LIRDocument,
-    PIRDocument,
     # LIR types
     LirBlock,
     LirInsAssign,
@@ -49,15 +48,15 @@ from pyspiral.types import (
     EirRefCellExpr,
     EirDerefExpr,
     EirTryExpr,
-    # PIR expression types
-    PirParExpr,
-    PirSpawnExpr,
-    PirAwaitExpr,
-    PirChannelExpr,
-    PirSendExpr,
-    PirRecvExpr,
-    PirSelectExpr,
-    PirRaceExpr,
+    # EIR async/parallel expression types
+    EirParExpr,
+    EirSpawnExpr,
+    EirAwaitExpr,
+    EirChannelExpr,
+    EirSendExpr,
+    EirRecvExpr,
+    EirSelectExpr,
+    EirRaceExpr,
     # Evaluation state
     EvalState,
     Effect,
@@ -175,7 +174,6 @@ from pyspiral.validator import (
     validate_cir,
     validate_eir,
     validate_lir,
-    validate_pir,
 )
 
 #==============================================================================
@@ -242,7 +240,7 @@ from pyspiral.lir import (
 )
 
 #==============================================================================
-# PIR (Parallel IR) - Scheduler
+# Scheduler
 #==============================================================================
 
 from pyspiral.scheduler import (
@@ -252,10 +250,12 @@ from pyspiral.scheduler import (
     DefaultTaskScheduler,
     DeterministicScheduler,
     create_deterministic_scheduler,
+    TaskScheduler,
+    create_task_scheduler,
 )
 
 #==============================================================================
-# PIR (Parallel IR) - Async Effects
+# Async Effects
 #==============================================================================
 
 from pyspiral.async_effects import (
@@ -282,12 +282,6 @@ from pyspiral.async_effects import (
     gather_futures,
     select_first,
     with_timeout,
-)
-
-# Import TaskScheduler once (from scheduler module)
-from pyspiral.scheduler import (
-    TaskScheduler,
-    create_task_scheduler,
 )
 
 #==============================================================================
@@ -324,7 +318,6 @@ __all__ = [
     "CIRDocument",
     "EIRDocument",
     "LIRDocument",
-    "PIRDocument",
     "LirBlock",
     "LirInsAssign",
     "LirInsCall",
@@ -345,14 +338,14 @@ __all__ = [
     "EirRefCellExpr",
     "EirDerefExpr",
     "EirTryExpr",
-    "PirParExpr",
-    "PirSpawnExpr",
-    "PirAwaitExpr",
-    "PirChannelExpr",
-    "PirSendExpr",
-    "PirRecvExpr",
-    "PirSelectExpr",
-    "PirRaceExpr",
+    "EirParExpr",
+    "EirSpawnExpr",
+    "EirAwaitExpr",
+    "EirChannelExpr",
+    "EirSendExpr",
+    "EirRecvExpr",
+    "EirSelectExpr",
+    "EirRaceExpr",
     "EvalState",
     "Effect",
     "AsyncEvalState",
@@ -441,7 +434,6 @@ __all__ = [
     "validate_cir",
     "validate_eir",
     "validate_lir",
-    "validate_pir",
 
     #==========================================================================
     # Evaluation
@@ -483,7 +475,7 @@ __all__ = [
     "LIRAsyncRuntimeState",
 
     #==========================================================================
-    # PIR (Parallel IR) - Scheduler
+    # Scheduler
     #==========================================================================
     "TaskScheduler",
     "SchedulerMode",
@@ -494,7 +486,7 @@ __all__ = [
     "create_deterministic_scheduler",
 
     #==========================================================================
-    # PIR (Parallel IR) - Async Effects
+    # Async Effects
     #==========================================================================
     "AsyncMutex",
     "AsyncRefCell",

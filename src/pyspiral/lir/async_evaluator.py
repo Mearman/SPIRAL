@@ -29,14 +29,14 @@ from pyspiral.types import (
     LirHybridNode,
     LirInstruction,
     LirTerminator,
-    PirInstruction,
-    PirTerminator,
-    PirInsSpawn,
-    PirInsChannelOp,
-    PirInsAwait,
-    PirTermFork,
-    PirTermJoin,
-    PirTermSuspend,
+    EirInstruction,
+    EirTerminator,
+    EirInsSpawn,
+    EirInsChannelOp,
+    EirInsAwait,
+    EirTermFork,
+    EirTermJoin,
+    EirTermSuspend,
     is_block_node,
     is_expr_node,
     is_error,
@@ -89,7 +89,7 @@ class LIRAsyncRuntimeState:
 
 class TaskScheduler:
     """
-    TaskScheduler manages async task execution in PIR
+    TaskScheduler manages async task execution in EIR
     Uses cooperative scheduling with asyncio-based execution
     """
 
@@ -527,7 +527,7 @@ async def execute_block_async(
 #==============================================================================
 
 async def execute_instruction_async(
-    ins: Union[LirInstruction, PirInstruction],
+    ins: Union[LirInstruction, EirInstruction],
     state: LIRAsyncRuntimeState,
     registry: OperatorRegistry,
     effect_registry: EffectRegistry,
@@ -679,7 +679,7 @@ async def execute_instruction_async(
         state.ref_cells[ins["target"]] = {"kind": "refCell", "value": value}
         return None
 
-    # PIR-specific async instructions
+    # EIR async instructions
     elif kind == "spawn":
         return await execute_spawn_instruction(ins, state)
 
@@ -695,11 +695,11 @@ async def execute_instruction_async(
 
 
 #==============================================================================
-# PIR Instruction Execution
+# EIR Async Instruction Execution
 #==============================================================================
 
 async def execute_spawn_instruction(
-    ins: PirInsSpawn,
+    ins: EirInsSpawn,
     state: LIRAsyncRuntimeState,
 ) -> Optional[Value]:
     """Execute a spawn instruction: creates a new async task"""
@@ -731,7 +731,7 @@ async def execute_spawn_instruction(
 
 
 async def execute_channel_op_instruction(
-    ins: PirInsChannelOp,
+    ins: EirInsChannelOp,
     state: LIRAsyncRuntimeState,
 ) -> Optional[Value]:
     """Execute a channel operation instruction: send/recv/trySend/tryRecv"""
@@ -789,7 +789,7 @@ async def execute_channel_op_instruction(
 
 
 async def execute_await_instruction(
-    ins: PirInsAwait,
+    ins: EirInsAwait,
     state: LIRAsyncRuntimeState,
 ) -> Optional[Value]:
     """Execute an await instruction: wait for a future and store result"""
@@ -808,7 +808,7 @@ async def execute_await_instruction(
 #==============================================================================
 
 async def execute_terminator_async(
-    term: Union[LirTerminator, PirTerminator],
+    term: Union[LirTerminator, EirTerminator],
     state: LIRAsyncRuntimeState,
     blocks: List[LirBlock],
     node_map: Dict[str, LirHybridNode],
@@ -866,7 +866,7 @@ async def execute_terminator_async(
                 return code_value
         return void_val()
 
-    # PIR-specific async terminators
+    # EIR async terminators
     elif kind == "fork":
         if not registry:
             return error_val(ErrorCodes.DOMAIN_ERROR.value, "Fork terminator requires operator registry")
@@ -886,11 +886,11 @@ async def execute_terminator_async(
 
 
 #==============================================================================
-# PIR Terminator Execution
+# EIR Async Terminator Execution
 #==============================================================================
 
 async def execute_fork_terminator(
-    term: PirTermFork,
+    term: EirTermFork,
     state: LIRAsyncRuntimeState,
     blocks: List[LirBlock],
     node_map: Dict[str, LirHybridNode],
@@ -951,7 +951,7 @@ async def execute_fork_terminator(
 
 
 async def execute_join_terminator(
-    term: PirTermJoin,
+    term: EirTermJoin,
     state: LIRAsyncRuntimeState,
 ) -> Union[str, Value]:
     """Execute join terminator: wait for tasks and bind results to variables"""
@@ -974,7 +974,7 @@ async def execute_join_terminator(
 
 
 async def execute_suspend_terminator(
-    term: PirTermSuspend,
+    term: EirTermSuspend,
     state: LIRAsyncRuntimeState,
 ) -> Union[str, Value]:
     """Execute suspend terminator: await a future, then resume at resumeBlock"""

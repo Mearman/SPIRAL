@@ -37,7 +37,7 @@ class ExpectedOutput:
 @dataclass(frozen=True)
 class FixtureMetadata:
     """Fixture metadata."""
-    layer: Literal["AIR", "CIR", "EIR", "PIR", "LIR"]
+    layer: Literal["AIR", "CIR", "EIR", "LIR"]
     category: str
     description: str
 
@@ -496,8 +496,8 @@ async def execute_fixture(fixture: ComplianceFixture) -> dict[str, Any]:
             result = evaluate_air_cir(doc, registry, defs, input_map)
             return result
 
-        case "EIR" | "PIR":
-            # EIR/PIR uses evaluate_eir
+        case "EIR":
+            # EIR uses evaluate_eir
             result = evaluate_eir(doc, registry, defs, input_map, effects)
             return result
 

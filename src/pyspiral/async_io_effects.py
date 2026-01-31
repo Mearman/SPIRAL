@@ -377,7 +377,7 @@ class AsyncIOEffectRegistry:
 #==============================================================================
 
 class AsyncEvalState:
-    """Async evaluation state for PIR programs"""
+    """Async evaluation state for EIR async programs"""
 
     def __init__(
         self,

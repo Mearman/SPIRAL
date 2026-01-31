@@ -1,6 +1,6 @@
 """
 SPIRAL Async Effects
-Async runtime primitives for PIR (Parallel IR)
+Async runtime primitives for EIR async/parallel execution
 Provides AsyncChannel, AsyncRefCell, AsyncMutex, and AsyncBarrier
 """
 
