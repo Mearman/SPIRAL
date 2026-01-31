@@ -3,7 +3,7 @@
 import { SPIRALError } from "../errors.js";
 import { lookupType } from "../env.js";
 import type {
-	AirHybridNode, EirHybridNode, Expr, Type,
+	EirHybridNode, Expr, Type,
 	EirSeqExpr, EirAssignExpr, EirWhileExpr,
 	EirForExpr, EirIterExpr, EirEffectExpr,
 	EirRefCellExpr, EirDerefExpr, EirTryExpr,
@@ -65,9 +65,9 @@ function dispatchEirExpr(
 function fallThroughToAIR(
 	ctx: EIRCheckContext,
 	node: EirHybridNode,
-	expr: Expr,
+	expr: import("../types.js").EirExpr,
 ): TypeCheckResult {
-	const baseNode: AirHybridNode = { id: node.id, type: node.type, expr };
+	const baseNode: EirHybridNode = { id: node.id, type: node.type, expr };
 	return typeCheckNode(
 		{
 			checker: ctx.checker,

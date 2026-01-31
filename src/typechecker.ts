@@ -76,8 +76,8 @@ function dispatchSimpleExpr(expr: Expr, env: TypeEnv): TypeCheckResult | undefin
 	}
 }
 
-/** PIR expression kinds that all return void. */
-function isPirExpr(expr: Expr): boolean {
+/** Async expression kinds that all return void. */
+function isAsyncExpr(expr: { kind: string }): boolean {
 	switch (expr.kind) {
 	case "par":
 	case "spawn":
@@ -96,7 +96,7 @@ function isPirExpr(expr: Expr): boolean {
 function dispatchExpr(checker: TypeChecker, expr: Expr, env: TypeEnv): TypeCheckResult {
 	const simple = dispatchSimpleExpr(expr, env);
 	if (simple) return simple;
-	if (isPirExpr(expr)) return { type: voidType, env };
+	if (isAsyncExpr(expr)) return { type: voidType, env };
 
 	switch (expr.kind) {
 	case "var":

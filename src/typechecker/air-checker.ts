@@ -2,7 +2,7 @@
 
 import { SPIRALError } from "../errors.js";
 import { extendTypeEnv } from "../env.js";
-import type { AirHybridNode, Expr, Type } from "../types.js";
+import type { EirExpr, EirHybridNode, Expr, Type } from "../types.js";
 import { isBlockNode } from "../types.js";
 import {
 	boolType,
@@ -26,7 +26,7 @@ import {
  */
 export function typeCheckNode(
 	ctx: AIRCheckContext,
-	node: AirHybridNode,
+	node: EirHybridNode,
 ): TypeCheckResult {
 	if (isBlockNode(node)) {
 		return { type: node.type ?? intType, env: ctx.env };
@@ -34,7 +34,7 @@ export function typeCheckNode(
 	return checkExprKind(ctx, node.expr);
 }
 
-function checkExprKind(ctx: AIRCheckContext, expr: Expr): TypeCheckResult {
+function checkExprKind(ctx: AIRCheckContext, expr: EirExpr): TypeCheckResult {
 	switch (expr.kind) {
 	case "lit":
 	case "var":
@@ -52,11 +52,11 @@ function checkExprKind(ctx: AIRCheckContext, expr: Expr): TypeCheckResult {
 	case "predicate":
 		return checkPredicate(ctx, expr);
 	default:
-		return checkCirOrPir(ctx, expr);
+		return checkCirOrAsync(ctx, expr);
 	}
 }
 
-function checkCirOrPir(ctx: AIRCheckContext, expr: Expr): TypeCheckResult {
+function checkCirOrAsync(ctx: AIRCheckContext, expr: EirExpr): TypeCheckResult {
 	switch (expr.kind) {
 	case "lambda":
 		return checkLambda(ctx, expr);
@@ -67,11 +67,11 @@ function checkCirOrPir(ctx: AIRCheckContext, expr: Expr): TypeCheckResult {
 	case "do":
 		return checkDo(ctx, expr);
 	default:
-		return checkPirOrExhaustive(ctx, expr);
+		return checkAsyncOrExhaustive(ctx, expr);
 	}
 }
 
-function checkPirOrExhaustive(ctx: AIRCheckContext, expr: Expr): TypeCheckResult {
+function checkAsyncOrExhaustive(ctx: AIRCheckContext, expr: { kind: string }): TypeCheckResult {
 	switch (expr.kind) {
 	case "par":
 	case "spawn":

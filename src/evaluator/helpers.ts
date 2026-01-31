@@ -75,10 +75,10 @@ export class Evaluator {
 		if (isProgramEvalKind(expr.kind)) {
 			throw new Error(expr.kind + " must be resolved during program evaluation");
 		}
-		if (isPirKind(expr.kind)) {
+		if (isAsyncKind(expr.kind)) {
 			return errorVal(
 				ErrorCodes.DomainError,
-				"PIR expressions require AsyncEvaluator: " + expr.kind,
+				"Async expressions require AsyncEvaluator: " + expr.kind,
 			);
 		}
 		return this.dispatchCore(expr, env, state);
@@ -210,7 +210,7 @@ const PROGRAM_EVAL_KINDS = new Set([
 	"airRef", "predicate", "lambda", "callExpr", "fix",
 ]);
 
-const PIR_KINDS = new Set([
+const ASYNC_KINDS = new Set([
 	"par", "spawn", "await", "channel", "send", "recv", "select", "race",
 ]);
 
@@ -218,8 +218,8 @@ function isProgramEvalKind(kind: string): boolean {
 	return PROGRAM_EVAL_KINDS.has(kind);
 }
 
-function isPirKind(kind: string): boolean {
-	return PIR_KINDS.has(kind);
+function isAsyncKind(kind: string): boolean {
+	return ASYNC_KINDS.has(kind);
 }
 
 function evalVarSimple(expr: { name: string }, env: ValueEnv): Value {

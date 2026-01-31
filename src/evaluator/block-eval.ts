@@ -5,6 +5,8 @@ import { type ValueEnv, extendValueEnv, lookupValue } from "../env.js";
 import { SPIRALError, ErrorCodes } from "../errors.js";
 import {
 	type BlockNode,
+	type EirInstruction,
+	type EirTerminator,
 	type LirInstruction,
 	type LirTerminator,
 	type Value,
@@ -24,7 +26,10 @@ export interface BlockCtx {
 	options?: EvalOptions | undefined;
 }
 
-interface BlockType { id: string; instructions: LirInstruction[]; terminator: LirTerminator }
+type AnyInstruction = LirInstruction | EirInstruction;
+type AnyTerminator = LirTerminator | EirTerminator;
+
+interface BlockType { id: string; instructions: AnyInstruction[]; terminator: AnyTerminator }
 
 /** Evaluate a block node (CFG structure) and return its result. */
 export function evaluateBlockNode<B extends BlockType>(
@@ -101,7 +106,7 @@ function executeOneBlock(
 }
 
 function handleTerminator(
-	term: LirTerminator,
+	term: AnyTerminator,
 	vars: ValueEnv,
 	nodeValues: Map<string, Value>,
 ): BlockStepResult {
@@ -131,7 +136,7 @@ interface InsResult {
 }
 
 function executeInstructions(
-	instructions: LirInstruction[],
+	instructions: AnyInstruction[],
 	vars: ValueEnv,
 	ctx: BlockCtx,
 ): InsResult {
@@ -145,7 +150,7 @@ function executeInstructions(
 }
 
 function executeSingleInstruction(
-	ins: LirInstruction,
+	ins: AnyInstruction,
 	vars: ValueEnv,
 	ctx: BlockCtx,
 ): InsResult {
@@ -166,7 +171,7 @@ function executeSingleInstruction(
 }
 
 function executeAssign(
-	ins: LirInstruction & { kind: "assign" },
+	ins: AnyInstruction & { kind: "assign" },
 	vars: ValueEnv,
 	nodeValues: Map<string, Value>,
 ): InsResult {
@@ -203,7 +208,7 @@ function resolveOpArgs(
 }
 
 function executeOp(
-	ins: LirInstruction & { kind: "op" },
+	ins: AnyInstruction & { kind: "op" },
 	vars: ValueEnv,
 	ctx: BlockCtx,
 ): InsResult {
@@ -223,7 +228,7 @@ function executeOp(
 }
 
 function executePhi(
-	ins: LirInstruction & { kind: "phi" },
+	ins: AnyInstruction & { kind: "phi" },
 	vars: ValueEnv,
 ): InsResult {
 	let phiValue: Value | undefined;
@@ -251,7 +256,7 @@ interface TermResult {
 }
 
 function executeTerminator(
-	term: LirTerminator,
+	term: AnyTerminator,
 	vars: ValueEnv,
 	nodeValues: Map<string, Value>,
 ): TermResult {
@@ -270,7 +275,7 @@ function executeTerminator(
 }
 
 function executeBranch(
-	term: LirTerminator & { kind: "branch" },
+	term: AnyTerminator & { kind: "branch" },
 	vars: ValueEnv,
 	nodeValues: Map<string, Value>,
 ): TermResult {
@@ -285,7 +290,7 @@ function executeBranch(
 }
 
 function executeReturn(
-	term: LirTerminator & { kind: "return" },
+	term: AnyTerminator & { kind: "return" },
 	vars: ValueEnv,
 	nodeValues: Map<string, Value>,
 ): TermResult {
