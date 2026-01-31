@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/require-await */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
  
  
 
@@ -59,7 +55,7 @@ export class AsyncMutex {
 	 * @param fn - Async function to execute
 	 * @returns Promise that resolves with the function's result
 	 */
-	async withLock<T>(fn: () => Promise<T>): Promise<T> {
+	async withLock<T>(fn: () => T | Promise<T>): Promise<T> {
 		await this.acquire();
 		try {
 			return await fn();
@@ -96,8 +92,8 @@ export class AsyncRefCell {
 	 * Read the current value
 	 * @returns Promise that resolves with the current value
 	 */
-	async read(): Promise<Value> {
-		return this.mutex.withLock(async () => {
+	read(): Promise<Value> {
+		return this.mutex.withLock(() => {
 			return this.value;
 		});
 	}
@@ -106,8 +102,8 @@ export class AsyncRefCell {
 	 * Write a new value
 	 * @param newValue - New value to store
 	 */
-	async write(newValue: Value): Promise<void> {
-		return this.mutex.withLock(async () => {
+	write(newValue: Value): Promise<void> {
+		return this.mutex.withLock(() => {
 			this.value = newValue;
 		});
 	}
@@ -116,8 +112,8 @@ export class AsyncRefCell {
 	 * Update the value using a function
 	 * @param fn - Function that takes the current value and returns the new value
 	 */
-	async update(fn: (current: Value) => Value): Promise<void> {
-		return this.mutex.withLock(async () => {
+	update(fn: (current: Value) => Value): Promise<void> {
+		return this.mutex.withLock(() => {
 			this.value = fn(this.value);
 		});
 	}
@@ -380,8 +376,7 @@ export class ConcurrentEffectLog {
 	}
 
 	/** Append an effect with error */
-	// biome-ignore lint/suspiciousNoExplicitAny: ErrorVal type is imported with namespace
-	appendWithError(taskId: string, effect: Effect, error: ErrorVal | any): void {
+	appendWithError(taskId: string, effect: Effect, error: ErrorVal): void {
 		this.pushEffect(taskId, { ...effect, error });
 	}
 
