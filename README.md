@@ -14,6 +14,113 @@ SPIRAL is a JSON-first intermediate representation spanning AIR, CIR, EIR, and L
 | **EIR** | Execution IR | Turing-Complete | Sequencing, mutation, loops, effects, async/parallel |
 | **LIR** | Low-Level IR | Turing-Complete | CFG-based, SSA with phi nodes |
 
+### When to use each layer
+
+- **AIR** — Pure data transformations, arithmetic pipelines, config evaluation. Guaranteed termination makes it safe for untrusted or sandboxed execution.
+- **CIR** — Recursive algorithms (factorial, tree traversal), higher-order functions (map, fold, compose). Functional style without side effects.
+- **EIR** — Real-world programs with I/O, mutable state, loops, error handling, and concurrency (spawn/await, channels). The primary authoring layer for most use cases.
+- **LIR** — Compiler backends, optimization passes, and code generation. Programs are lowered from EIR to explicit basic blocks with SSA phi nodes.
+
+<details>
+<summary><b>AIR</b> — Pure arithmetic: 10 + 20 = 30</summary>
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/air.schema.json",
+  "version": "1.0.0",
+  "airDefs": [],
+  "nodes": [
+    { "id": "ten",    "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 10 } },
+    { "id": "twenty", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 20 } },
+    { "id": "sum",    "expr": { "kind": "call", "ns": "core", "name": "add", "args": ["ten", "twenty"] } }
+  ],
+  "result": "sum"
+}
+```
+
+Nodes define literal values and pure function calls. No side effects, no recursion.
+</details>
+
+<details>
+<summary><b>CIR</b> — Lambda closure: addFive(10) = 15</summary>
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+  "version": "1.0.0",
+  "airDefs": [],
+  "nodes": [
+    { "id": "five", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 } },
+    { "id": "addFive", "expr": { "kind": "call", "ns": "core", "name": "add", "args": ["x", "five"] } },
+    {
+      "id": "addFiveLambda",
+      "expr": {
+        "kind": "lambda", "params": ["x"], "body": "addFive",
+        "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "int" } }
+      }
+    },
+    { "id": "ten", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 10 } },
+    { "id": "result", "expr": { "kind": "callExpr", "fn": "addFiveLambda", "args": ["ten"] } }
+  ],
+  "result": "result"
+}
+```
+
+Adds `lambda` and `callExpr` to AIR. The lambda captures `five` from its environment.
+</details>
+
+<details>
+<summary><b>EIR</b> — Side effects: Hello, World!</summary>
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/eir.schema.json",
+  "version": "1.0.0",
+  "airDefs": [],
+  "nodes": [
+    { "id": "msg", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "Hello, World!" } },
+    { "id": "greeting", "expr": { "kind": "effect", "op": "print", "args": ["msg"] } }
+  ],
+  "result": "greeting"
+}
+```
+
+Adds `effect` for I/O. Also supports `seq`, `assign`, `while`, `spawn`, `await`, channels.
+</details>
+
+<details>
+<summary><b>LIR</b> — Basic block CFG: x + y + z = 35</summary>
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/lir.schema.json",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "id": "main",
+      "blocks": [
+        {
+          "id": "entry",
+          "instructions": [
+            { "kind": "assign", "target": "x", "value": { "kind": "lit", "type": { "kind": "int" }, "value": 10 } },
+            { "kind": "assign", "target": "y", "value": { "kind": "lit", "type": { "kind": "int" }, "value": 20 } },
+            { "kind": "op", "target": "sum", "ns": "core", "name": "add", "args": ["x", "y"] },
+            { "kind": "assign", "target": "z", "value": { "kind": "lit", "type": { "kind": "int" }, "value": 5 } },
+            { "kind": "op", "target": "result", "ns": "core", "name": "add", "args": ["sum", "z"] }
+          ],
+          "terminator": { "kind": "return", "value": "result" }
+        }
+      ],
+      "entry": "entry"
+    }
+  ],
+  "result": "main"
+}
+```
+
+Explicit basic blocks with instructions and terminators. Supports `branch`, `jump`, and `phi` nodes for SSA.
+</details>
+
 ### Stratified Capability Lattice
 
 SPIRAL's layers form a strict capability hierarchy where each transition adds
