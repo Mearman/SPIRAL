@@ -41,9 +41,9 @@ export type {
 	LambdaExpr, CallFnExpr, FixExpr, DoExpr,
 	EirSeqExpr, EirAssignExpr, EirWhileExpr, EirForExpr, EirIterExpr,
 	EirEffectExpr, EirRefCellExpr, EirDerefExpr, EirTryExpr,
-	PirParExpr, PirSpawnExpr, PirAwaitExpr, PirChannelExpr,
-	PirSendExpr, PirRecvExpr, PirSelectExpr, PirRaceExpr,
-	EirExpr, PirExpr,
+	EirParExpr, EirSpawnExpr, EirAwaitExpr, EirChannelExpr,
+	EirSendExpr, EirRecvExpr, EirSelectExpr, EirRaceExpr,
+	EirExpr,
 } from "./zod-schemas.js";
 
 //==============================================================================
@@ -58,9 +58,9 @@ export type { AIRDef, FunctionSignature, LambdaParam } from "./zod-schemas.js";
 
 export type {
 	Node, ExprNode, BlockNode, HybridNode,
-	AirHybridNode, CirHybridNode, EirHybridNode, LirHybridNode, PirHybridNode,
-	EirNode, PirNode,
-	AIRDocument, CIRDocument, EIRDocument, LIRDocument, PIRDocument,
+	AirHybridNode, CirHybridNode, EirHybridNode, LirHybridNode,
+	EirNode,
+	AIRDocument, CIRDocument, EIRDocument, LIRDocument,
 } from "./zod-schemas.js";
 
 //==============================================================================
@@ -81,17 +81,9 @@ export type {
 	AirInstruction, AirInsAssign, AirInsOp, AirInsPhi,
 	CirInstruction,
 	EirInstruction, EirInsEffect, EirInsAssignRef,
+	EirInsSpawn, EirInsChannelOp, EirInsAwait,
+	EirTerminator, EirTermFork, EirTermJoin, EirTermSuspend,
 	AirBlock, CirBlock, EirBlock,
-} from "./zod-schemas.js";
-
-//==============================================================================
-// PIR Block/Instruction/Terminator Types (re-exported from Zod schemas)
-//==============================================================================
-
-export type {
-	PirInstruction, PirInsSpawn, PirInsChannelOp, PirInsAwait,
-	PirBlock,
-	PirTerminator, PirTermFork, PirTermJoin, PirTermSuspend,
 } from "./zod-schemas.js";
 
 //==============================================================================
@@ -101,11 +93,12 @@ export type {
 
 import type { ValueEnv } from "./env.js";
 import type {
-	Expr, Type, LambdaParam,
+	Expr, EirExpr, Type, LambdaParam,
 	BoolType, IntType, FloatType, StringType,
 	SetType, ListType, MapType, OptionType, OpaqueType, FnType,
 	VoidType, RefType,
 	HybridNode, BlockNode, ExprNode,
+	EirParExpr, EirSpawnExpr, EirAwaitExpr,
 } from "./zod-schemas.js";
 
 import type {
@@ -136,10 +129,10 @@ export type Value =
 	| VoidVal // EIR void value
 	| RefCellVal // EIR reference cell value
 	| ErrorVal // Err(code, message?, meta?)
-	| FutureVal // PIR future value
-	| ChannelVal // PIR channel value
-	| TaskVal // PIR task value
-	| SelectResultVal; // PIR select/await result with index
+	| FutureVal // EIR async future value
+	| ChannelVal // EIR async channel value
+	| TaskVal // EIR async task value
+	| SelectResultVal; // EIR async select/await result with index
 
 export interface BoolVal {
 	kind: "bool";
@@ -410,7 +403,7 @@ export const voidType: VoidType = { kind: "void" };
 export const refType = (of: Type): RefType => ({ kind: "ref", of });
 
 //==============================================================================
-// PIR Types (re-exported from pir-types.ts)
+// Async Runtime Types (re-exported from pir-types.ts)
 //==============================================================================
 
 export type {
@@ -423,5 +416,16 @@ export {
 	futureVal, channelVal, taskVal,
 	futureType, channelTypeCtor, taskType, asyncFnType,
 	isFuture, isChannel, isTask,
-	isPirParExpr, isPirSpawnExpr, isPirAwaitExpr,
 } from "./pir-types.js";
+
+export function isEirParExpr(expr: Expr | EirExpr): expr is EirParExpr {
+	return expr.kind === "par";
+}
+
+export function isEirSpawnExpr(expr: Expr | EirExpr): expr is EirSpawnExpr {
+	return expr.kind === "spawn";
+}
+
+export function isEirAwaitExpr(expr: Expr | EirExpr): expr is EirAwaitExpr {
+	return expr.kind === "await";
+}

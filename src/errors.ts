@@ -42,7 +42,7 @@ export const ErrorCodes = {
 	InvalidExprForLayer: "InvalidExprForLayer",
 	UnreachableBlock: "UnreachableBlock",
 	PhiSourceMismatch: "PhiSourceMismatch",
-	InvalidPirRef: "InvalidPirRef",
+	InvalidAsyncRef: "InvalidAsyncRef",
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
