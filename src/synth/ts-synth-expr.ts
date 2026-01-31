@@ -2,8 +2,10 @@
 
 import type {
 	AIRDef, AIRDocument, CIRDocument, EIRDocument,
-	Expr, EirExpr, Node, EirNode,
+	Expr, EirExpr, Node, EirNode, LambdaParam,
 } from "../types.js";
+
+const paramName = (p: string | LambdaParam): string => typeof p === "string" ? p : p.name;
 import { isExprNode } from "../types.js";
 import type { ExprSynthState, SynthContext, TypeScriptSynthOptions } from "./ts-synth-shared.js";
 import { OPERATOR_MAP, sanitizeId, stableVarName, freshVar, isValue, formatLiteral, formatUnknownValue, tsExpr } from "./ts-synth-shared.js";
@@ -65,7 +67,7 @@ function preScanInlinedBodies(
 	for (const node of doc.nodes) {
 		if (!isExprNode(node)) continue;
 		const expr = node.expr;
-		if (expr.kind === "lambda") markInlinedBodies(state, expr.body, new Set(expr.params));
+		if (expr.kind === "lambda") markInlinedBodies(state, expr.body, new Set(expr.params.map(paramName)));
 		else if (expr.kind === "let" && typeof expr.body === "string") markInlinedBodies(state, expr.body, new Set([expr.name]));
 	}
 }
@@ -211,8 +213,8 @@ function synthCirExpr(ctx: SynthContext, expr: Expr | EirExpr): string | undefin
 }
 
 function synthLambdaExpr(ctx: SynthContext, expr: Expr & { kind: "lambda" }): string {
-	const paramNames = expr.params.map(p => `${p}: any`).join(", ");
-	const lambdaParams = new Set([...ctx.paramScope, ...expr.params]);
+	const paramNames = expr.params.map(p => `${paramName(p)}: any`).join(", ");
+	const lambdaParams = new Set([...ctx.paramScope, ...expr.params.map(paramName)]);
 	const inlined = needsBodyInline(ctx, expr.body, lambdaParams);
 	if (inlined) {
 		ctx.state.inlinedNodes.add(expr.body);

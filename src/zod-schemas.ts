@@ -61,7 +61,7 @@ export interface AirRefExpr { kind: "airRef"; ns: string; name: string; args: st
 export interface PredicateExpr { kind: "predicate"; name: string; value: string }
 
 // CIR extensions
-export interface LambdaExpr { kind: "lambda"; params: string[]; body: string; type: Type }
+export interface LambdaExpr { kind: "lambda"; params: (string | LambdaParam)[]; body: string; type: Type }
 export interface CallFnExpr { kind: "callExpr"; fn: string; args: string[] }
 export interface FixExpr { kind: "fix"; fn: string; type: Type }
 export interface DoExpr { kind: "do"; exprs: (string | Expr)[] }
@@ -400,7 +400,7 @@ export const LambdaExprSchema: z.ZodType<LambdaExpr> = z.object({
 	params: z.array(z.union([z.string(), LambdaParamSchema])),
 	body: z.string(),
 	type: TypeSchema,
-}).meta({ id: "LambdaExpr", title: "Lambda Expression", description: "Anonymous function with parameters and a body node" }) as z.ZodType<LambdaExpr>;
+}).meta({ id: "LambdaExpr", title: "Lambda Expression", description: "Anonymous function with parameters and a body node" });
 
 export const CallFnExprSchema: z.ZodType<CallFnExpr> = z.object({
 	kind: z.literal("callExpr"),

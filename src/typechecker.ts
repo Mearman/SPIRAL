@@ -4,7 +4,7 @@
 import { lookupOperator, type OperatorRegistry } from "./domains/registry.js";
 import { type TypeEnv, emptyTypeEnv, lookupDef, type Defs } from "./env.js";
 import { SPIRALError } from "./errors.js";
-import type { AIRDocument, Expr, Type } from "./types.js";
+import type { AIRDocument, Expr, LambdaParam, Type } from "./types.js";
 import {
 	boolType,
 	fnType as fnTypeCtor,
@@ -198,7 +198,7 @@ function typeCheckAirRef(
 }
 
 function typeCheckLambda(
-	expr: { kind: "lambda"; params: string[]; body: string; type: Type },
+	expr: { kind: "lambda"; params: (string | LambdaParam)[]; body: string; type: Type },
 	env: TypeEnv,
 ): TypeCheckResult {
 	if (expr.type.kind !== "fn") {

@@ -2,7 +2,7 @@
 
 import { SPIRALError } from "../errors.js";
 import { extendTypeEnv } from "../env.js";
-import type { EirExpr, EirHybridNode, Expr, Type } from "../types.js";
+import type { EirExpr, EirHybridNode, Expr, LambdaParam, Type } from "../types.js";
 import { isBlockNode } from "../types.js";
 import {
 	boolType,
@@ -187,7 +187,7 @@ function checkPredicate(
 
 function checkLambda(
 	ctx: AIRCheckContext,
-	expr: { kind: "lambda"; params: string[]; body: string; type: Type },
+	expr: { kind: "lambda"; params: (string | LambdaParam)[]; body: string; type: Type },
 ): TypeCheckResult {
 	if (!ctx.nodeMap.has(expr.body)) {
 		throw SPIRALError.validation("lambda", "Body node not found: " + expr.body);
