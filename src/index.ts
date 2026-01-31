@@ -211,10 +211,12 @@ export {
 	cirSchema,
 	eirSchema,
 	lirSchema,
+	pirSchema,
 	isAIRSchema,
 	isCIRSchema,
 	isEIRSchema,
 	isLIRSchema,
+	isPIRSchema,
 } from "./schemas.js";
 
 //==============================================================================
