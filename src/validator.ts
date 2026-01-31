@@ -532,7 +532,8 @@ function checkDuplicateNodeIds(
 ): Set<string> {
 	const nodeIds = new Set<string>();
 	for (let i = 0; i < nodes.length; i++) {
-		const node = nodes[i]!;
+		const node = nodes[i];
+		if (!node) continue;
 		if (nodeIds.has(node.id)) {
 			pushPath(state, "nodes[" + String(i) + "].id");
 			addError(state, "Duplicate node id: " + node.id, node.id);
@@ -571,12 +572,12 @@ function checkBlockNodeCFG(
 	nodes: { id: string; blocks?: unknown; entry?: unknown }[],
 ): void {
 	for (let i = 0; i < nodes.length; i++) {
-		const node = nodes[i] as Record<string, unknown>;
-		if (!Array.isArray(node.blocks)) continue;
+		const node = nodes[i];
+		if (!node || !Array.isArray(node.blocks)) continue;
 
 		pushPath(state, "nodes[" + String(i) + "]");
 
-		const blocks = node.blocks as Record<string, unknown>[];
+		const blocks: unknown[] = node.blocks;
 		const blockIds = new Set<string>();
 
 		// Check duplicate block IDs
@@ -780,12 +781,12 @@ function checkBlockReachability(
 	nodes: { id: string; blocks?: unknown; entry?: unknown }[],
 ): void {
 	for (let i = 0; i < nodes.length; i++) {
-		const node = nodes[i] as Record<string, unknown>;
-		if (!Array.isArray(node.blocks) || typeof node.entry !== "string") continue;
+		const node = nodes[i];
+		if (!node || !Array.isArray(node.blocks) || typeof node.entry !== "string") continue;
 
 		pushPath(state, "nodes[" + String(i) + "]");
 
-		const blocks = node.blocks as Record<string, unknown>[];
+		const blocks: unknown[] = node.blocks;
 		const blockMap = new Map<string, Record<string, unknown>>();
 		for (const block of blocks) {
 			if (isRecord(block) && typeof block.id === "string") {
@@ -799,7 +800,8 @@ function checkBlockReachability(
 		visited.add(node.entry);
 
 		while (queue.length > 0) {
-			const blockId = queue.shift()!;
+			const blockId = queue.shift();
+			if (blockId === undefined) continue;
 			const block = blockMap.get(blockId);
 			if (!block) continue;
 
@@ -868,12 +870,12 @@ function checkPhiPredecessors(
 	nodes: { id: string; blocks?: unknown; entry?: unknown }[],
 ): void {
 	for (let i = 0; i < nodes.length; i++) {
-		const node = nodes[i] as Record<string, unknown>;
-		if (!Array.isArray(node.blocks)) continue;
+		const node = nodes[i];
+		if (!node || !Array.isArray(node.blocks)) continue;
 
 		pushPath(state, "nodes[" + String(i) + "]");
 
-		const blocks = node.blocks as Record<string, unknown>[];
+		const blocks: unknown[] = node.blocks;
 
 		// Build block lookup map
 		const blockMap = new Map<string, Record<string, unknown>>();
@@ -931,7 +933,8 @@ function checkPhiPredecessors(
 			for (const be of branchEntries) branchVisited.add(be);
 
 			while (branchQueue.length > 0) {
-				const bid = branchQueue.shift()!;
+				const bid = branchQueue.shift();
+				if (bid === undefined) continue;
 				const bblock = blockMap.get(bid);
 				if (!bblock) continue;
 				const bterm = bblock.terminator;
