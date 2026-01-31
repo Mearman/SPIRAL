@@ -15,6 +15,34 @@ SPIRAL is a JSON-first intermediate representation spanning AIR, CIR, EIR, PIR, 
 | **PIR** | Parallel IR | Turing-Complete | Async/parallel primitives (`spawn`, `await`, channels) |
 | **LIR** | Low-Level IR | Turing-Complete | CFG-based, SSA with phi nodes |
 
+### Stratified Capability Lattice
+
+SPIRAL's layers form a strict capability hierarchy where each transition adds
+constructs the previous layer cannot express:
+
+```
+AIR (pure, bounded)
+ |  +lambda, +fix, +callExpr, +do
+CIR (functional, recursive)
+ |  +seq, +assign, +while, +for, +iter, +effect, +refCell, +deref, +try
+EIR (imperative, effectful)
+ |  +spawn, +await, +par, +channel, +send, +recv, +select, +race
+PIR (concurrent, async)
+ |  lowered to CFG
+LIR (control-flow graph, SSA)
+```
+
+This is analogous to the Chomsky hierarchy of formal languages, where each level
+adds a capability the previous provably lacks. The analogy is imperfect: while
+AIR is strictly less powerful than CIR (primitive recursive vs Turing-complete),
+CIR/EIR/PIR are all Turing-complete. Their distinction is in *expressible
+programming paradigms*, not raw computational power. An EIR program can simulate
+concurrency but cannot directly express `spawn` or `await`; these require PIR.
+
+Layer enforcement is structural: each layer's Zod schema restricts which
+expression kinds are permitted. A CIR document containing a `spawn` expression
+will fail validation.
+
 See [wiki/Architecture.md](wiki/Architecture.md) for details.
 
 ## Quick start
