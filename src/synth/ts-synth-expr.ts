@@ -1,8 +1,8 @@
 // Expression-based synthesis (AIR/CIR/EIR) for TypeScript
 
 import type {
-	AIRDef, AIRDocument, CIRDocument, EIRDocument,
-	Expr, EirExpr, Node, EirNode,
+	AIRDef, AIRDocument, CIRDocument, EIRDocument, PIRDocument,
+	Expr, EirExpr, PirExpr, Node, EirNode,
 } from "../types.js";
 import { isExprNode } from "../types.js";
 import type { ExprSynthState, SynthContext, TypeScriptSynthOptions } from "./ts-synth-shared.js";
@@ -14,12 +14,12 @@ import { exprHasFreeVars, exprHasParamRefs, markInlinedBodies } from "./ts-synth
 //==============================================================================
 
 export function synthesizeExprBased(
-	doc: AIRDocument | CIRDocument | EIRDocument,
+	doc: AIRDocument | CIRDocument | EIRDocument | PIRDocument,
 	opts: TypeScriptSynthOptions,
 ): string {
 	const state = initState(doc);
 	emitHeader(state, opts, doc.version);
-	emitAirDefsIfPresent(state, doc.airDefs);
+	emitAirDefsIfPresent(state, doc.airDefs ?? []);
 	preScanInlinedBodies(state, doc);
 	emitAllNodeBindings(state, doc);
 	emitResult(state, doc.result);
@@ -38,12 +38,13 @@ function emitAirDefsIfPresent(state: ExprSynthState, airDefs: AIRDef[]): void {
 	state.lines.push("");
 }
 
-function initState(doc: AIRDocument | CIRDocument | EIRDocument): ExprSynthState {
+function initState(doc: AIRDocument | CIRDocument | EIRDocument | PIRDocument): ExprSynthState {
 	const state: ExprSynthState = {
 		lines: [], varIndex: 0,
 		airDefs: new Map(), nodeMap: new Map(), inlinedNodes: new Set(),
 	};
-	for (const d of doc.airDefs) state.airDefs.set(`${d.ns}:${d.name}`, d);
+	const airDefs = doc.airDefs ?? [];
+	for (const d of airDefs) state.airDefs.set(`${d.ns}:${d.name}`, d);
 	for (const n of doc.nodes) { if (isExprNode(n)) state.nodeMap.set(n.id, n); }
 	return state;
 }
@@ -59,7 +60,7 @@ function emitHeader(state: ExprSynthState, opts: TypeScriptSynthOptions, version
 
 function preScanInlinedBodies(
 	state: ExprSynthState,
-	doc: AIRDocument | CIRDocument | EIRDocument,
+	doc: AIRDocument | CIRDocument | EIRDocument | PIRDocument,
 ): void {
 	for (const node of doc.nodes) {
 		if (!isExprNode(node)) continue;
@@ -71,7 +72,7 @@ function preScanInlinedBodies(
 
 function emitAllNodeBindings(
 	state: ExprSynthState,
-	doc: AIRDocument | CIRDocument | EIRDocument,
+	doc: AIRDocument | CIRDocument | EIRDocument | PIRDocument,
 ): void {
 	state.lines.push("// Node bindings");
 	const ctx: SynthContext = { state, mutableCells: new Map(), cellInitLines: [], paramScope: new Set() };
@@ -274,12 +275,35 @@ function synthEirEffectExpr(ctx: SynthContext, expr: Expr | EirExpr): string | u
 	}
 }
 
+function synthPirExpr(ctx: SynthContext, expr: Expr | EirExpr | PirExpr): string | undefined {
+	switch (expr.kind) {
+	case "spawn":
+		return `(async () => ${refOrInline(ctx, expr.task)})()`;
+	case "await":
+		return `await ${refOrInline(ctx, expr.future)}`;
+	case "par":
+		return `await Promise.all([${expr.branches.map(b => refOrInline(ctx, b)).join(", ")}])`;
+	case "channel":
+		return `new Channel(${expr.bufferSize ? refOrInline(ctx, expr.bufferSize) : "0"})`;
+	case "send":
+		return `await ${refOrInline(ctx, expr.channel)}.send(${refOrInline(ctx, expr.value)})`;
+	case "recv":
+		return `await ${refOrInline(ctx, expr.channel)}.recv()`;
+	case "select":
+		return `await Promise.race([${expr.futures.map(f => refOrInline(ctx, f)).join(", ")}])`;
+	case "race":
+		return `await Promise.race([${expr.tasks.map(t => refOrInline(ctx, t)).join(", ")}])`;
+	default:
+		return undefined;
+	}
+}
+
 //==============================================================================
 // synthesizeExpr - thin dispatcher
 //==============================================================================
 
-export function synthesizeExpr(ctx: SynthContext, expr: Expr | EirExpr): string {
-	const result = synthAirExpr(ctx, expr) ?? synthCirExpr(ctx, expr) ?? synthEirControlExpr(ctx, expr) ?? synthEirEffectExpr(ctx, expr);
+export function synthesizeExpr(ctx: SynthContext, expr: Expr | EirExpr | PirExpr): string {
+	const result = synthAirExpr(ctx, expr) ?? synthCirExpr(ctx, expr) ?? synthEirControlExpr(ctx, expr) ?? synthEirEffectExpr(ctx, expr) ?? synthPirExpr(ctx, expr);
 	if (result !== undefined) return result;
 	throw new Error(`Unsupported expression kind: ${expr.kind}`);
 }
