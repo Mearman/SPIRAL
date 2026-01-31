@@ -90,6 +90,9 @@ export default [
 	})),
 	{
 		files: ["src/**/*.ts"],
+		linterOptions: {
+			noInlineConfig: true,
+		},
 		languageOptions: {
 			parserOptions: {
 				projectService: {
@@ -128,6 +131,58 @@ export default [
 		},
 	},
 
+	// Per-file overrides for structurally complex files
+	{
+		files: [
+			"src/validator.ts",
+			"src/zod-schemas.ts",
+			"src/synth/python.ts",
+			"src/async-effects.ts",
+		],
+		rules: {
+			"max-lines": "off",
+			"max-lines-per-function": "off",
+			"max-params": "off",
+			"max-statements": "off",
+			complexity: "off",
+			"max-depth": "off",
+		},
+	},
+	{
+		files: ["src/validator.ts"],
+		rules: {
+			"@typescript-eslint/no-unnecessary-condition": "off",
+			"@typescript-eslint/no-non-null-assertion": "off",
+			"@typescript-eslint/consistent-type-assertions": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+		},
+	},
+	{
+		files: ["src/zod-schemas.ts"],
+		rules: {
+			"@typescript-eslint/consistent-type-assertions": "off",
+		},
+	},
+	{
+		files: ["src/synth/python.ts"],
+		rules: {
+			"@typescript-eslint/no-unnecessary-condition": "off",
+		},
+	},
+	{
+		files: ["src/scheduler.ts", "src/default-scheduler.ts"],
+		rules: {
+			"@typescript-eslint/no-empty-function": "off",
+		},
+	},
+	{
+		files: ["src/default-scheduler.ts"],
+		rules: {
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/use-unknown-in-catch-callback-variable": "off",
+		},
+	},
+
 	// TypeScript (basic rules without type checking) - for test and examples
 	...tseslint.configs.recommended.map((config) => ({
 		...config,
@@ -138,6 +193,12 @@ export default [
 		rules: {
 			"@typescript-eslint/no-unused-vars": "error",
 			"@typescript-eslint/no-explicit-any": "off", // Tests often need any
+			"@typescript-eslint/ban-ts-comment": ["error", {
+				"ts-check": false,
+				"ts-expect-error": "allow-with-description",
+				"ts-ignore": true,
+				"ts-nocheck": true,
+			}],
 			"no-case-declarations": "off",
 			indent: ["error", "tab"],
 			quotes: ["error", "double", { avoidEscape: true }],
