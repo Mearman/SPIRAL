@@ -2,7 +2,7 @@
 // Extended async I/O effect system with file system simulation and HTTP mocking
 // Extends the base effects system with AsyncIOEffectRegistry and in-memory file store
 
-import type { Value, AsyncEvalState } from "./types.js";
+import type { Value, AsyncEvalState, Type } from "./types.js";
 import {
 	stringType,
 	intType,
@@ -29,15 +29,8 @@ import { emptyEffectRegistry, registerEffect } from "./effects.js";
 export class InMemoryFileSystem {
 	private files = new Map<string, string>();
 
-	/**
-	 * Read a file from memory
-	 * @param filename - Name of the file to read
-	 * @returns Promise resolving to file content or error if not found
-	 */
 	async readFile(filename: string): Promise<string> {
-		// Simulate async delay
 		await new Promise((resolve) => setTimeout(resolve, 10));
-
 		const content = this.files.get(filename);
 		if (content === undefined) {
 			throw new Error(`File not found: ${filename}`);
@@ -45,92 +38,44 @@ export class InMemoryFileSystem {
 		return content;
 	}
 
-	/**
-	 * Write content to a file in memory
-	 * @param filename - Name of the file to write
-	 * @param content - Content to write
-	 * @returns Promise that resolves when write completes
-	 */
 	async writeFile(filename: string, content: string): Promise<void> {
-		// Simulate async delay
 		await new Promise((resolve) => setTimeout(resolve, 10));
-
 		this.files.set(filename, content);
 	}
 
-	/**
-	 * Append content to a file in memory
-	 * @param filename - Name of the file to append to
-	 * @param content - Content to append
-	 * @returns Promise that resolves when append completes
-	 */
 	async appendFile(filename: string, content: string): Promise<void> {
-		// Simulate async delay
 		await new Promise((resolve) => setTimeout(resolve, 10));
-
 		const existing = this.files.get(filename) ?? "";
 		this.files.set(filename, existing + content);
 	}
 
-	/**
-	 * Delete a file from memory
-	 * @param filename - Name of the file to delete
-	 * @returns Promise that resolves when delete completes
-	 */
 	async deleteFile(filename: string): Promise<void> {
-		// Simulate async delay
 		await new Promise((resolve) => setTimeout(resolve, 5));
-
 		this.files.delete(filename);
 	}
 
-	/**
-	 * Check if a file exists
-	 * @param filename - Name of the file to check
-	 * @returns Promise resolving to true if file exists
-	 */
 	async exists(filename: string): Promise<boolean> {
-		// Simulate async delay
 		await new Promise((resolve) => setTimeout(resolve, 5));
-
 		return this.files.has(filename);
 	}
 
-	/**
-	 * List all files
-	 * @returns Promise resolving to array of filenames
-	 */
 	async listFiles(): Promise<string[]> {
-		// Simulate async delay
 		await new Promise((resolve) => setTimeout(resolve, 5));
-
 		return Array.from(this.files.keys());
 	}
 
-	/**
-	 * Set a file's content directly (synchronous, for setup)
-	 */
 	setFile(filename: string, content: string): void {
 		this.files.set(filename, content);
 	}
 
-	/**
-	 * Get a file's content directly (synchronous, for testing)
-	 */
 	getFile(filename: string): string | undefined {
 		return this.files.get(filename);
 	}
 
-	/**
-	 * Clear all files
-	 */
 	clear(): void {
 		this.files.clear();
 	}
 
-	/**
-	 * Get the number of files
-	 */
 	size(): number {
 		return this.files.size;
 	}
@@ -140,19 +85,12 @@ export class InMemoryFileSystem {
 // Mock HTTP Client (for testing)
 //==============================================================================
 
-/**
- * Mock HTTP response
- */
 export interface MockHttpResponse {
 	status: number;
 	headers: Map<string, string>;
 	body: string;
 }
 
-/**
- * Mock HTTP client for testing async HTTP effects
- * Simulates HTTP requests without making real network calls
- */
 export class MockHttpClient {
 	private responses = new Map<string, MockHttpResponse>();
 	private defaultResponse: MockHttpResponse = {
@@ -161,55 +99,28 @@ export class MockHttpClient {
 		body: "Not Found",
 	};
 
-	/**
-	 * Make a GET request
-	 * @param url - URL to request
-	 * @returns Promise resolving to response body
-	 */
 	async get(url: string): Promise<string> {
-		// Simulate network delay
 		await new Promise((resolve) => setTimeout(resolve, 50));
-
 		const response = this.responses.get(url) ?? this.defaultResponse;
-
 		if (response.status >= 400) {
 			throw new Error(`HTTP ${response.status}: ${response.body}`);
 		}
-
 		return response.body;
 	}
 
-	/**
-	 * Make a POST request
-	 * @param url - URL to request
-	 * @param body - Request body
-	 * @returns Promise resolving to response body
-	 */
 	async post(_url: string, body: string): Promise<string> {
-		// Simulate network delay
 		await new Promise((resolve) => setTimeout(resolve, 50));
-
-		// For mocking, just return echo of the body
 		return `Echo: ${body}`;
 	}
 
-	/**
-	 * Register a mock response for a URL
-	 */
 	setMockResponse(url: string, response: MockHttpResponse): void {
 		this.responses.set(url, response);
 	}
 
-	/**
-	 * Set the default response for unmatched URLs
-	 */
 	setDefaultResponse(response: MockHttpResponse): void {
 		this.defaultResponse = response;
 	}
 
-	/**
-	 * Clear all mock responses
-	 */
 	clear(): void {
 		this.responses.clear();
 	}
@@ -219,387 +130,220 @@ export class MockHttpClient {
 // Async I/O Effect Registry
 //==============================================================================
 
-/**
- * Configuration for async I/O effects
- */
 export interface AsyncIOEffectConfig {
 	fileSystem?: InMemoryFileSystem;
 	httpClient?: MockHttpClient;
 }
 
-/**
- * Async I/O effect registry extends the base effect registry
- * with async I/O operations that have access to file system and HTTP client
- */
+export interface AsyncEffectContext {
+	effectName: string;
+	state: AsyncEvalState;
+	config: AsyncIOEffectConfig;
+}
+
+interface EffectDef {
+	name: string;
+	params: Type[];
+	returns: Type;
+}
+
+const EFFECT_DEFS: EffectDef[] = [
+	{ name: "asyncRead", params: [stringType], returns: futureType(stringType) },
+	{ name: "asyncWrite", params: [stringType, stringType], returns: futureType(voidType) },
+	{ name: "sleep", params: [intType], returns: futureType(voidType) },
+	{ name: "httpGet", params: [stringType], returns: futureType(stringType) },
+	{ name: "httpPost", params: [stringType, stringType], returns: futureType(stringType) },
+	{ name: "asyncAppend", params: [stringType, stringType], returns: futureType(voidType) },
+	{ name: "asyncDelete", params: [stringType], returns: futureType(voidType) },
+	{ name: "asyncExists", params: [stringType], returns: futureType(intType) },
+];
+
 export class AsyncIOEffectRegistry {
-	// Store config for use when evaluating effects
 	private readonly _config: AsyncIOEffectConfig;
 
 	constructor(config: AsyncIOEffectConfig = {}) {
 		this._config = config;
 	}
 
-	/**
-	 * Get the stored config
-	 */
 	getConfig(): AsyncIOEffectConfig {
 		return this._config;
 	}
 
-	/**
-	 * Get the effect registry
-	 */
 	getRegistry(): EffectRegistry {
 		let registry = emptyEffectRegistry();
-
-		// Register all async I/O effects
-		registry = this.registerExtendedEffects(registry);
-
-		return registry;
-	}
-
-	/**
-	 * Register extended async I/O effects
-	 */
-	private registerExtendedEffects(registry: EffectRegistry): EffectRegistry {
-		// All effects are registered with placeholder functions
-		// The actual execution is handled by evalAsyncEffect
-
-		// asyncRead effect
-		registry = registerEffect(registry, {
-			name: "asyncRead",
-			params: [stringType],
-			returns: futureType(stringType),
-			pure: false,
-			fn: () => {
-				return errorVal(ErrorCodes.DomainError, "Use evalAsyncEffect for async operations");
-			},
-		});
-
-		// asyncWrite effect
-		registry = registerEffect(registry, {
-			name: "asyncWrite",
-			params: [stringType, stringType],
-			returns: futureType(voidType),
-			pure: false,
-			fn: () => {
-				return errorVal(ErrorCodes.DomainError, "Use evalAsyncEffect for async operations");
-			},
-		});
-
-		// sleep effect
-		registry = registerEffect(registry, {
-			name: "sleep",
-			params: [intType],
-			returns: futureType(voidType),
-			pure: false,
-			fn: () => {
-				return errorVal(ErrorCodes.DomainError, "Use evalAsyncEffect for async operations");
-			},
-		});
-
-		// httpGet effect
-		registry = registerEffect(registry, {
-			name: "httpGet",
-			params: [stringType],
-			returns: futureType(stringType),
-			pure: false,
-			fn: () => {
-				return errorVal(ErrorCodes.DomainError, "Use evalAsyncEffect for async operations");
-			},
-		});
-
-		// httpPost effect
-		registry = registerEffect(registry, {
-			name: "httpPost",
-			params: [stringType, stringType],
-			returns: futureType(stringType),
-			pure: false,
-			fn: () => {
-				return errorVal(ErrorCodes.DomainError, "Use evalAsyncEffect for async operations");
-			},
-		});
-
-		// asyncAppend effect
-		registry = registerEffect(registry, {
-			name: "asyncAppend",
-			params: [stringType, stringType],
-			returns: futureType(voidType),
-			pure: false,
-			fn: () => {
-				return errorVal(ErrorCodes.DomainError, "Use evalAsyncEffect for async operations");
-			},
-		});
-
-		// asyncDelete effect
-		registry = registerEffect(registry, {
-			name: "asyncDelete",
-			params: [stringType],
-			returns: futureType(voidType),
-			pure: false,
-			fn: () => {
-				return errorVal(ErrorCodes.DomainError, "Use evalAsyncEffect for async operations");
-			},
-		});
-
-		// asyncExists effect
-		registry = registerEffect(registry, {
-			name: "asyncExists",
-			params: [stringType],
-			returns: futureType(intType), // Using int as boolean (0/1)
-			pure: false,
-			fn: () => {
-				return errorVal(ErrorCodes.DomainError, "Use evalAsyncEffect for async operations");
-			},
-		});
-
+		for (const def of EFFECT_DEFS) {
+			registry = registerEffect(registry, {
+				name: def.name,
+				params: def.params,
+				returns: def.returns,
+				pure: false,
+				fn: () => errorVal(ErrorCodes.DomainError, "Use evalAsyncEffect for async operations"),
+			});
+		}
 		return registry;
 	}
 }
 
 //==============================================================================
-// Async Effect Evaluation Helper
+// Async Effect Evaluation
 //==============================================================================
+
+function generateTaskId(prefix: string): string {
+	return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
+function extractStringArg(args: Value[], index: number, label: string): { value: string } | { error: Value } {
+	const arg = args[index];
+	if (arg?.kind !== "string") {
+		return { error: errorVal(ErrorCodes.TypeError, `${label} must be a string`) };
+	}
+	return { value: arg.value };
+}
+
+function isExtractError(result: { value: string } | { error: Value }): result is { error: Value } {
+	return "error" in result;
+}
+
+function spawnTask(ctx: AsyncEffectContext, prefix: string, task: () => Promise<Value>): Value {
+	const taskId = generateTaskId(prefix);
+	ctx.state.scheduler.spawn(taskId, task);
+	return futureVal(taskId, "pending");
+}
+
+function handleAsyncRead(ctx: AsyncEffectContext, args: Value[]): Value {
+	if (args.length < 1) return errorVal(ErrorCodes.ArityError, "asyncRead requires 1 argument (filename)");
+	const r0 = extractStringArg(args, 0, "asyncRead filename");
+	if (isExtractError(r0)) return r0.error;
+	const fs = ctx.config.fileSystem ?? new InMemoryFileSystem();
+	return spawnTask(ctx, "asyncRead", async () => {
+		try { return stringVal(await fs.readFile(r0.value)); }
+		catch (e) { return errorVal(ErrorCodes.DomainError, String(e)); }
+	});
+}
+
+function handleAsyncWrite(ctx: AsyncEffectContext, args: Value[]): Value {
+	if (args.length < 2) return errorVal(ErrorCodes.ArityError, "asyncWrite requires 2 arguments (filename, content)");
+	const r0 = extractStringArg(args, 0, "asyncWrite filename");
+	if (isExtractError(r0)) return r0.error;
+	const r1 = extractStringArg(args, 1, "asyncWrite content");
+	if (isExtractError(r1)) return r1.error;
+	const fs = ctx.config.fileSystem ?? new InMemoryFileSystem();
+	return spawnTask(ctx, "asyncWrite", async () => {
+		try { await fs.writeFile(r0.value, r1.value); return voidVal(); }
+		catch (e) { return errorVal(ErrorCodes.DomainError, String(e)); }
+	});
+}
+
+function handleAsyncAppend(ctx: AsyncEffectContext, args: Value[]): Value {
+	if (args.length < 2) return errorVal(ErrorCodes.ArityError, "asyncAppend requires 2 arguments (filename, content)");
+	const r0 = extractStringArg(args, 0, "asyncAppend filename");
+	if (isExtractError(r0)) return r0.error;
+	const r1 = extractStringArg(args, 1, "asyncAppend content");
+	if (isExtractError(r1)) return r1.error;
+	const fs = ctx.config.fileSystem ?? new InMemoryFileSystem();
+	return spawnTask(ctx, "asyncAppend", async () => {
+		try { await fs.appendFile(r0.value, r1.value); return voidVal(); }
+		catch (e) { return errorVal(ErrorCodes.DomainError, String(e)); }
+	});
+}
+
+function handleAsyncDelete(ctx: AsyncEffectContext, args: Value[]): Value {
+	if (args.length < 1) return errorVal(ErrorCodes.ArityError, "asyncDelete requires 1 argument (filename)");
+	const r0 = extractStringArg(args, 0, "asyncDelete filename");
+	if (isExtractError(r0)) return r0.error;
+	const fs = ctx.config.fileSystem ?? new InMemoryFileSystem();
+	return spawnTask(ctx, "asyncDelete", async () => {
+		try { await fs.deleteFile(r0.value); return voidVal(); }
+		catch (e) { return errorVal(ErrorCodes.DomainError, String(e)); }
+	});
+}
+
+function handleAsyncExists(ctx: AsyncEffectContext, args: Value[]): Value {
+	if (args.length < 1) return errorVal(ErrorCodes.ArityError, "asyncExists requires 1 argument (filename)");
+	const r0 = extractStringArg(args, 0, "asyncExists filename");
+	if (isExtractError(r0)) return r0.error;
+	const fs = ctx.config.fileSystem ?? new InMemoryFileSystem();
+	return spawnTask(ctx, "asyncExists", async () => {
+		try { return intVal((await fs.exists(r0.value)) ? 1 : 0); }
+		catch (e) { return errorVal(ErrorCodes.DomainError, String(e)); }
+	});
+}
+
+function handleSleep(ctx: AsyncEffectContext, args: Value[]): Value {
+	if (args.length < 1) return errorVal(ErrorCodes.ArityError, "sleep requires 1 argument (milliseconds)");
+	const ms = args[0];
+	if (ms?.kind !== "int") return errorVal(ErrorCodes.TypeError, "sleep milliseconds must be an integer");
+	return spawnTask(ctx, "sleep", async () => {
+		await new Promise<void>((resolve) => setTimeout(resolve, ms.value));
+		return voidVal();
+	});
+}
+
+function handleHttpGet(ctx: AsyncEffectContext, args: Value[]): Value {
+	if (args.length < 1) return errorVal(ErrorCodes.ArityError, "httpGet requires 1 argument (url)");
+	const r0 = extractStringArg(args, 0, "httpGet url");
+	if (isExtractError(r0)) return r0.error;
+	const http = ctx.config.httpClient ?? new MockHttpClient();
+	return spawnTask(ctx, "httpGet", async () => {
+		try { return stringVal(await http.get(r0.value)); }
+		catch (e) { return errorVal(ErrorCodes.DomainError, String(e)); }
+	});
+}
+
+function handleHttpPost(ctx: AsyncEffectContext, args: Value[]): Value {
+	if (args.length < 2) return errorVal(ErrorCodes.ArityError, "httpPost requires 2 arguments (url, body)");
+	const r0 = extractStringArg(args, 0, "httpPost url");
+	if (isExtractError(r0)) return r0.error;
+	const r1 = extractStringArg(args, 1, "httpPost body");
+	if (isExtractError(r1)) return r1.error;
+	const http = ctx.config.httpClient ?? new MockHttpClient();
+	return spawnTask(ctx, "httpPost", async () => {
+		try { return stringVal(await http.post(r0.value, r1.value)); }
+		catch (e) { return errorVal(ErrorCodes.DomainError, String(e)); }
+	});
+}
+
+type EffectHandler = (ctx: AsyncEffectContext, args: Value[]) => Value;
+
+const EFFECT_HANDLERS: Record<string, EffectHandler> = {
+	asyncRead: handleAsyncRead,
+	asyncWrite: handleAsyncWrite,
+	asyncAppend: handleAsyncAppend,
+	asyncDelete: handleAsyncDelete,
+	asyncExists: handleAsyncExists,
+	sleep: handleSleep,
+	httpGet: handleHttpGet,
+	httpPost: handleHttpPost,
+};
 
 /**
  * Evaluate an async effect with access to AsyncEvalState
  * This function handles async effects that need the scheduler and file system
  */
-export function evalAsyncEffect(
-	effectName: string,
-	state: AsyncEvalState,
-	config: AsyncIOEffectConfig,
-	...args: Value[]
-): Value {
-	const fileSystem = config.fileSystem ?? new InMemoryFileSystem();
-	const httpClient = config.httpClient ?? new MockHttpClient();
-
-	switch (effectName) {
-	case "asyncRead": {
-		if (args.length < 1) {
-			return errorVal(ErrorCodes.ArityError, "asyncRead requires 1 argument (filename)");
-		}
-		const filename = args[0];
-		if (filename?.kind !== "string") {
-			return errorVal(ErrorCodes.TypeError, "asyncRead filename must be a string");
-		}
-
-		const taskId = `asyncRead_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-		state.scheduler.spawn(taskId, async () => {
-			try {
-				const content = await fileSystem.readFile(filename.value);
-				return stringVal(content);
-			} catch (e) {
-				return errorVal(ErrorCodes.DomainError, String(e));
-			}
-		});
-
-		return futureVal(taskId, "pending");
+export function evalAsyncEffect(ctx: AsyncEffectContext, args: Value[]): Value {
+	const handler = EFFECT_HANDLERS[ctx.effectName];
+	if (!handler) {
+		return errorVal(ErrorCodes.UnknownOperator, `Unknown async effect: ${ctx.effectName}`);
 	}
-
-	case "asyncWrite": {
-		if (args.length < 2) {
-			return errorVal(ErrorCodes.ArityError, "asyncWrite requires 2 arguments (filename, content)");
-		}
-		const filename = args[0];
-		const content = args[1];
-		if (filename?.kind !== "string") {
-			return errorVal(ErrorCodes.TypeError, "asyncWrite filename must be a string");
-		}
-		if (content?.kind !== "string") {
-			return errorVal(ErrorCodes.TypeError, "asyncWrite content must be a string");
-		}
-
-		const taskId = `asyncWrite_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-		state.scheduler.spawn(taskId, async () => {
-			try {
-				await fileSystem.writeFile(filename.value, content.value);
-				return voidVal();
-			} catch (e) {
-				return errorVal(ErrorCodes.DomainError, String(e));
-			}
-		});
-
-		return futureVal(taskId, "pending");
-	}
-
-	case "asyncAppend": {
-		if (args.length < 2) {
-			return errorVal(ErrorCodes.ArityError, "asyncAppend requires 2 arguments (filename, content)");
-		}
-		const filename = args[0];
-		const content = args[1];
-		if (filename?.kind !== "string") {
-			return errorVal(ErrorCodes.TypeError, "asyncAppend filename must be a string");
-		}
-		if (content?.kind !== "string") {
-			return errorVal(ErrorCodes.TypeError, "asyncAppend content must be a string");
-		}
-
-		const taskId = `asyncAppend_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-		state.scheduler.spawn(taskId, async () => {
-			try {
-				await fileSystem.appendFile(filename.value, content.value);
-				return voidVal();
-			} catch (e) {
-				return errorVal(ErrorCodes.DomainError, String(e));
-			}
-		});
-
-		return futureVal(taskId, "pending");
-	}
-
-	case "asyncDelete": {
-		if (args.length < 1) {
-			return errorVal(ErrorCodes.ArityError, "asyncDelete requires 1 argument (filename)");
-		}
-		const filename = args[0];
-		if (filename?.kind !== "string") {
-			return errorVal(ErrorCodes.TypeError, "asyncDelete filename must be a string");
-		}
-
-		const taskId = `asyncDelete_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-		state.scheduler.spawn(taskId, async () => {
-			try {
-				await fileSystem.deleteFile(filename.value);
-				return voidVal();
-			} catch (e) {
-				return errorVal(ErrorCodes.DomainError, String(e));
-			}
-		});
-
-		return futureVal(taskId, "pending");
-	}
-
-	case "asyncExists": {
-		if (args.length < 1) {
-			return errorVal(ErrorCodes.ArityError, "asyncExists requires 1 argument (filename)");
-		}
-		const filename = args[0];
-		if (filename?.kind !== "string") {
-			return errorVal(ErrorCodes.TypeError, "asyncExists filename must be a string");
-		}
-
-		const taskId = `asyncExists_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-		state.scheduler.spawn(taskId, async () => {
-			try {
-				const exists = await fileSystem.exists(filename.value);
-				return intVal(exists ? 1 : 0);
-			} catch (e) {
-				return errorVal(ErrorCodes.DomainError, String(e));
-			}
-		});
-
-		return futureVal(taskId, "pending");
-	}
-
-	case "sleep": {
-		if (args.length < 1) {
-			return errorVal(ErrorCodes.ArityError, "sleep requires 1 argument (milliseconds)");
-		}
-		const ms = args[0];
-		if (ms?.kind !== "int") {
-			return errorVal(ErrorCodes.TypeError, "sleep milliseconds must be an integer");
-		}
-
-		const taskId = `sleep_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-		state.scheduler.spawn(taskId, async () => {
-			await new Promise<void>((resolve) => setTimeout(resolve, ms.value));
-			return voidVal();
-		});
-
-		return futureVal(taskId, "pending");
-	}
-
-	case "httpGet": {
-		if (args.length < 1) {
-			return errorVal(ErrorCodes.ArityError, "httpGet requires 1 argument (url)");
-		}
-		const url = args[0];
-		if (url?.kind !== "string") {
-			return errorVal(ErrorCodes.TypeError, "httpGet url must be a string");
-		}
-
-		const taskId = `httpGet_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-		state.scheduler.spawn(taskId, async () => {
-			try {
-				const body = await httpClient.get(url.value);
-				return stringVal(body);
-			} catch (e) {
-				return errorVal(ErrorCodes.DomainError, String(e));
-			}
-		});
-
-		return futureVal(taskId, "pending");
-	}
-
-	case "httpPost": {
-		if (args.length < 2) {
-			return errorVal(ErrorCodes.ArityError, "httpPost requires 2 arguments (url, body)");
-		}
-		const url = args[0];
-		const body = args[1];
-		if (url?.kind !== "string") {
-			return errorVal(ErrorCodes.TypeError, "httpPost url must be a string");
-		}
-		if (body?.kind !== "string") {
-			return errorVal(ErrorCodes.TypeError, "httpPost body must be a string");
-		}
-
-		const taskId = `httpPost_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-		state.scheduler.spawn(taskId, async () => {
-			try {
-				const responseBody = await httpClient.post(url.value, body.value);
-				return stringVal(responseBody);
-			} catch (e) {
-				return errorVal(ErrorCodes.DomainError, String(e));
-			}
-		});
-
-		return futureVal(taskId, "pending");
-	}
-
-	default:
-		return errorVal(ErrorCodes.UnknownOperator, `Unknown async effect: ${effectName}`);
-	}
+	return handler(ctx, args);
 }
 
 //==============================================================================
 // Factory Functions
 //==============================================================================
 
-/**
- * Create an async I/O effect registry
- */
 export function createAsyncEffectRegistry(config?: AsyncIOEffectConfig): AsyncIOEffectRegistry {
 	return new AsyncIOEffectRegistry(config);
 }
 
-/**
- * Create an in-memory file system for testing
- */
 export function createInMemoryFileSystem(): InMemoryFileSystem {
 	return new InMemoryFileSystem();
 }
 
-/**
- * Create a mock HTTP client for testing
- */
 export function createMockHttpClient(): MockHttpClient {
 	return new MockHttpClient();
 }
 
-/**
- * Create async I/O effect config for testing
- */
 export function createAsyncIOConfig(config?: AsyncIOEffectConfig): AsyncIOEffectConfig {
 	return {
 		fileSystem: config?.fileSystem ?? new InMemoryFileSystem(),
