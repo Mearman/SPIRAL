@@ -25,7 +25,7 @@ import { createCoreRegistry } from "../../src/domains/core.js";
 import { createBoolRegistry } from "../../src/domains/bool.js";
 import { createStringRegistry } from "../../src/domains/string.js";
 import { emptyDefs } from "../../src/env.js";
-import type { AIRDocument, Value } from "../../src/types.js";
+import type { AIRDocument, Value, Node } from "../../src/types.js";
 import type { OperatorRegistry } from "../../src/domains/registry.js";
 
 //==============================================================================
@@ -581,6 +581,74 @@ describe("Multi-Hop: TS -> TS -> TS", { skip: !pythonAvailable }, () => {
 	for (const { name, source, expected } of multiHopTsCases) {
 		it(`should survive double roundtrip: ${name}`, () => {
 			assert.deepStrictEqual(multiHop(source, "typescript", "typescript", "typescript"), expected);
+		});
+	}
+});
+
+//==============================================================================
+// Structural Stability
+//==============================================================================
+
+/**
+ * Extract a signature from a SPIRAL document: an array of expression kinds
+ * for each node. Two documents with the same signature have the same
+ * structural shape (same number of nodes, same expression kinds in order).
+ */
+function nodeSignature(doc: AIRDocument): string[] {
+	return doc.nodes.map((n: Node) => {
+		const expr = n.expr as { kind: string };
+		return expr.kind;
+	});
+}
+
+describe("Structural Stability: Python roundtrip", { skip: !pythonAvailable }, () => {
+	const cases: Array<{ name: string; source: string }> = [
+		{ name: "addition", source: "2 + 3" },
+		{ name: "subtraction", source: "10 - 3" },
+		{ name: "boolean and", source: "True and False" },
+		{ name: "boolean not", source: "not False" },
+		{ name: "comparison gt", source: "5 > 3" },
+		{ name: "ternary", source: "1 if True else 2" },
+		{ name: "string concat", source: '"hello" + " world"' },
+		{ name: "negation", source: "-5" },
+	];
+
+	for (const { name, source } of cases) {
+		it(`should preserve structure through Py roundtrip: ${name}`, () => {
+			const doc1 = ingestPython(source);
+			const pyCode = synthesizePython(doc1);
+			const cleanPy = stripSynthPythonForReingest(pyCode);
+			const doc2 = ingestPython(cleanPy);
+
+			const sig1 = nodeSignature(doc1);
+			const sig2 = nodeSignature(doc2);
+			assert.deepStrictEqual(sig1, sig2, `Node signatures should match after Py roundtrip for "${name}"`);
+		});
+	}
+});
+
+describe("Structural Stability: TS roundtrip", { skip: !pythonAvailable }, () => {
+	const cases: Array<{ name: string; source: string }> = [
+		{ name: "addition", source: "2 + 3" },
+		{ name: "subtraction", source: "10 - 3" },
+		{ name: "boolean and", source: "true && false" },
+		{ name: "boolean not", source: "!false" },
+		{ name: "comparison gt", source: "5 > 3" },
+		{ name: "ternary", source: "true ? 1 : 2" },
+		{ name: "string concat", source: '"hello" + " world"' },
+		{ name: "negation", source: "-5" },
+	];
+
+	for (const { name, source } of cases) {
+		it(`should preserve structure through TS roundtrip: ${name}`, () => {
+			const doc1 = ingestTypeScript(source);
+			const tsCode = synthesizeTypeScript(doc1);
+			const cleanTs = stripSynthTSForReingest(tsCode);
+			const doc2 = ingestTypeScript(cleanTs);
+
+			const sig1 = nodeSignature(doc1);
+			const sig2 = nodeSignature(doc2);
+			assert.deepStrictEqual(sig1, sig2, `Node signatures should match after TS roundtrip for "${name}"`);
 		});
 	}
 });
