@@ -21,26 +21,6 @@ import {
 // Test Fixtures
 //==============================================================================
 
-const validAIRSchema = {
-	$schema: "http://json-schema.org/draft-07/schema#",
-	title: "AIR Document",
-};
-
-const validCIRSchema = {
-	$schema: "http://json-schema.org/draft-07/schema#",
-	title: "CIR Document",
-};
-
-const validEIRSchema = {
-	$schema: "http://json-schema.org/draft-07/schema#",
-	title: "EIR Document",
-};
-
-const validLIRSchema = {
-	$schema: "http://json-schema.org/draft-07/schema#",
-	title: "LIR Document",
-};
-
 const objectWithoutSchema = {
 	title: "Some Document",
 	type: "object",
@@ -121,6 +101,10 @@ describe("Schemas - Unit Tests", () => {
 			assert.ok(Object.keys(airSchema.definitions).length >= 2,
 				"Should have at least 2 definitions (type + expr unions)");
 		});
+
+		it("should have description AIRDocument", () => {
+			assert.strictEqual(airSchema.description, "AIRDocument");
+		});
 	});
 
 	//==========================================================================
@@ -153,6 +137,10 @@ describe("Schemas - Unit Tests", () => {
 			assert.ok(cirSchema.definitions);
 			assert.ok(Object.keys(cirSchema.definitions).length >= 2);
 		});
+
+		it("should have description CIRDocument", () => {
+			assert.strictEqual(cirSchema.description, "CIRDocument");
+		});
 	});
 
 	//==========================================================================
@@ -184,6 +172,10 @@ describe("Schemas - Unit Tests", () => {
 		it("should have definitions for recursive types", () => {
 			assert.ok(eirSchema.definitions);
 			assert.ok(Object.keys(eirSchema.definitions).length >= 2);
+		});
+
+		it("should have description EIRDocument", () => {
+			assert.strictEqual(eirSchema.description, "EIRDocument");
 		});
 	});
 
@@ -230,6 +222,10 @@ describe("Schemas - Unit Tests", () => {
 			assert.ok(lirSchema.properties);
 			assert.ok(lirSchema.properties.capabilities);
 			assert.strictEqual(lirSchema.properties.capabilities.type, "array");
+		});
+
+		it("should have description LIRDocument", () => {
+			assert.strictEqual(lirSchema.description, "LIRDocument");
 		});
 	});
 
@@ -287,6 +283,10 @@ describe("Schemas - Unit Tests", () => {
 			assert.ok(pirSchema.definitions);
 			assert.ok(Object.keys(pirSchema.definitions).length >= 2);
 		});
+
+		it("should have description PIRDocument", () => {
+			assert.strictEqual(pirSchema.description, "PIRDocument");
+		});
 	});
 
 	//==========================================================================
@@ -294,20 +294,24 @@ describe("Schemas - Unit Tests", () => {
 	//==========================================================================
 
 	describe("isAIRSchema", () => {
-		it("should return true for valid AIR schema object", () => {
-			assert.strictEqual(isAIRSchema(validAIRSchema), true);
+		it("should return true for AIR schema object", () => {
+			assert.strictEqual(isAIRSchema(airSchema), true);
 		});
 
-		it("should return true for CIR schema object", () => {
-			assert.strictEqual(isAIRSchema(validCIRSchema), true);
+		it("should return false for CIR schema object", () => {
+			assert.strictEqual(isAIRSchema(cirSchema), false);
 		});
 
-		it("should return true for EIR schema object", () => {
-			assert.strictEqual(isAIRSchema(validEIRSchema), true);
+		it("should return false for EIR schema object", () => {
+			assert.strictEqual(isAIRSchema(eirSchema), false);
 		});
 
-		it("should return true for LIR schema object", () => {
-			assert.strictEqual(isAIRSchema(validLIRSchema), true);
+		it("should return false for LIR schema object", () => {
+			assert.strictEqual(isAIRSchema(lirSchema), false);
+		});
+
+		it("should return false for PIR schema object", () => {
+			assert.strictEqual(isAIRSchema(pirSchema), false);
 		});
 
 		it("should return false for object without $schema", () => {
@@ -348,20 +352,24 @@ describe("Schemas - Unit Tests", () => {
 	//==========================================================================
 
 	describe("isCIRSchema", () => {
-		it("should return true for valid CIR schema object", () => {
-			assert.strictEqual(isCIRSchema(validCIRSchema), true);
+		it("should return true for CIR schema object", () => {
+			assert.strictEqual(isCIRSchema(cirSchema), true);
 		});
 
-		it("should return true for AIR schema object", () => {
-			assert.strictEqual(isCIRSchema(validAIRSchema), true);
+		it("should return false for AIR schema object", () => {
+			assert.strictEqual(isCIRSchema(airSchema), false);
 		});
 
-		it("should return true for EIR schema object", () => {
-			assert.strictEqual(isCIRSchema(validEIRSchema), true);
+		it("should return false for EIR schema object", () => {
+			assert.strictEqual(isCIRSchema(eirSchema), false);
 		});
 
-		it("should return true for LIR schema object", () => {
-			assert.strictEqual(isCIRSchema(validLIRSchema), true);
+		it("should return false for LIR schema object", () => {
+			assert.strictEqual(isCIRSchema(lirSchema), false);
+		});
+
+		it("should return false for PIR schema object", () => {
+			assert.strictEqual(isCIRSchema(pirSchema), false);
 		});
 
 		it("should return false for object without $schema", () => {
@@ -402,20 +410,24 @@ describe("Schemas - Unit Tests", () => {
 	//==========================================================================
 
 	describe("isEIRSchema", () => {
-		it("should return true for valid EIR schema object", () => {
-			assert.strictEqual(isEIRSchema(validEIRSchema), true);
+		it("should return true for EIR schema object", () => {
+			assert.strictEqual(isEIRSchema(eirSchema), true);
 		});
 
-		it("should return true for AIR schema object", () => {
-			assert.strictEqual(isEIRSchema(validAIRSchema), true);
+		it("should return false for AIR schema object", () => {
+			assert.strictEqual(isEIRSchema(airSchema), false);
 		});
 
-		it("should return true for CIR schema object", () => {
-			assert.strictEqual(isEIRSchema(validCIRSchema), true);
+		it("should return false for CIR schema object", () => {
+			assert.strictEqual(isEIRSchema(cirSchema), false);
 		});
 
-		it("should return true for LIR schema object", () => {
-			assert.strictEqual(isEIRSchema(validLIRSchema), true);
+		it("should return false for LIR schema object", () => {
+			assert.strictEqual(isEIRSchema(lirSchema), false);
+		});
+
+		it("should return false for PIR schema object", () => {
+			assert.strictEqual(isEIRSchema(pirSchema), false);
 		});
 
 		it("should return false for object without $schema", () => {
@@ -456,20 +468,24 @@ describe("Schemas - Unit Tests", () => {
 	//==========================================================================
 
 	describe("isLIRSchema", () => {
-		it("should return true for valid LIR schema object", () => {
-			assert.strictEqual(isLIRSchema(validLIRSchema), true);
+		it("should return true for LIR schema object", () => {
+			assert.strictEqual(isLIRSchema(lirSchema), true);
 		});
 
-		it("should return true for AIR schema object", () => {
-			assert.strictEqual(isLIRSchema(validAIRSchema), true);
+		it("should return false for AIR schema object", () => {
+			assert.strictEqual(isLIRSchema(airSchema), false);
 		});
 
-		it("should return true for CIR schema object", () => {
-			assert.strictEqual(isLIRSchema(validCIRSchema), true);
+		it("should return false for CIR schema object", () => {
+			assert.strictEqual(isLIRSchema(cirSchema), false);
 		});
 
-		it("should return true for EIR schema object", () => {
-			assert.strictEqual(isLIRSchema(validEIRSchema), true);
+		it("should return false for EIR schema object", () => {
+			assert.strictEqual(isLIRSchema(eirSchema), false);
+		});
+
+		it("should return false for PIR schema object", () => {
+			assert.strictEqual(isLIRSchema(pirSchema), false);
 		});
 
 		it("should return false for object without $schema", () => {
@@ -510,8 +526,24 @@ describe("Schemas - Unit Tests", () => {
 	//==========================================================================
 
 	describe("isPIRSchema", () => {
-		it("should return true for valid PIR schema object", () => {
-			assert.strictEqual(isPIRSchema({ $schema: "http://json-schema.org/draft-07/schema#", title: "PIR Document" }), true);
+		it("should return true for PIR schema object", () => {
+			assert.strictEqual(isPIRSchema(pirSchema), true);
+		});
+
+		it("should return false for AIR schema object", () => {
+			assert.strictEqual(isPIRSchema(airSchema), false);
+		});
+
+		it("should return false for CIR schema object", () => {
+			assert.strictEqual(isPIRSchema(cirSchema), false);
+		});
+
+		it("should return false for EIR schema object", () => {
+			assert.strictEqual(isPIRSchema(eirSchema), false);
+		});
+
+		it("should return false for LIR schema object", () => {
+			assert.strictEqual(isPIRSchema(lirSchema), false);
 		});
 
 		it("should return false for object without $schema", () => {
@@ -657,6 +689,18 @@ describe("Schemas - Unit Tests", () => {
 			assert.strictEqual(eirSchema.properties.result.type, "string");
 			assert.strictEqual(lirSchema.properties.result.type, "string");
 			assert.strictEqual(pirSchema.properties.result.type, "string");
+		});
+
+		it("all schemas should have unique descriptions", () => {
+			const descriptions = [
+				airSchema.description,
+				cirSchema.description,
+				eirSchema.description,
+				lirSchema.description,
+				pirSchema.description,
+			];
+			const unique = new Set(descriptions);
+			assert.strictEqual(unique.size, 5, "Each schema should have a unique description");
 		});
 	});
 });

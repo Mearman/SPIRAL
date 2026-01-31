@@ -24,22 +24,26 @@ export const pirSchema = z.toJSONSchema(PIRDocumentSchema, { target: "draft-07" 
 // Schema Type Guards
 //==============================================================================
 
+function isSchemaWithDescription(obj: unknown, description: string): obj is Record<string, unknown> {
+	return typeof obj === "object" && obj !== null && "$schema" in obj && "description" in obj && obj.description === description;
+}
+
 export function isAIRSchema(obj: unknown): obj is Record<string, unknown> {
-	return typeof obj === "object" && obj !== null && "$schema" in obj;
+	return isSchemaWithDescription(obj, "AIRDocument");
 }
 
 export function isCIRSchema(obj: unknown): obj is Record<string, unknown> {
-	return typeof obj === "object" && obj !== null && "$schema" in obj;
+	return isSchemaWithDescription(obj, "CIRDocument");
 }
 
 export function isEIRSchema(obj: unknown): obj is Record<string, unknown> {
-	return typeof obj === "object" && obj !== null && "$schema" in obj;
+	return isSchemaWithDescription(obj, "EIRDocument");
 }
 
 export function isLIRSchema(obj: unknown): obj is Record<string, unknown> {
-	return typeof obj === "object" && obj !== null && "$schema" in obj;
+	return isSchemaWithDescription(obj, "LIRDocument");
 }
 
 export function isPIRSchema(obj: unknown): obj is Record<string, unknown> {
-	return typeof obj === "object" && obj !== null && "$schema" in obj;
+	return isSchemaWithDescription(obj, "PIRDocument");
 }
