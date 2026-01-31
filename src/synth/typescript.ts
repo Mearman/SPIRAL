@@ -570,6 +570,16 @@ function exprHasFreeVars(expr: Expr | EirExpr): boolean {
 		return (typeof expr.fn !== "string" && exprHasFreeVars(expr.fn)) ||
 			expr.args.some(a => typeof a !== "string" && exprHasFreeVars(a));
 	}
+	if (expr.kind === "for") {
+		return (typeof expr.init !== "string" && exprHasFreeVars(expr.init)) ||
+			(typeof expr.cond !== "string" && exprHasFreeVars(expr.cond)) ||
+			(typeof expr.update !== "string" && exprHasFreeVars(expr.update)) ||
+			(typeof expr.body !== "string" && exprHasFreeVars(expr.body));
+	}
+	if (expr.kind === "try") {
+		return (typeof expr.tryBody !== "string" && exprHasFreeVars(expr.tryBody)) ||
+			(typeof expr.catchBody !== "string" && exprHasFreeVars(expr.catchBody));
+	}
 
 	return false;
 }
