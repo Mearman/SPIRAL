@@ -1,10 +1,8 @@
-// SPIRAL EIR to LIR Lowering
-// Converts expression-based EIR to CFG-based LIR
+// SPIRAL PIR to LIR Lowering
+// Converts expression-based PIR to CFG-based LIR
 
 import type {
-	EIRDocument,
-	EirHybridNode,
-	PirHybridNode,
+	PIRDocument,
 	HybridNode,
 	LIRDocument,
 } from "../types.js";
@@ -12,53 +10,40 @@ import { isExprNode } from "../types.js";
 import type { BlockResult, LoweringContext, LowerParams } from "./lower-types.js";
 import { freshBlock, addBlock, validationError } from "./lower-types.js";
 import { isEirOnlyExpr, lowerEirExpr } from "./lower-eir.js";
+import { isPirOnlyExpr, lowerPirExpr } from "./lower-pir.js";
 import { lowerCirExpr } from "./lower-cir.js";
-
-//==============================================================================
-// LowerNode function type (shared with sub-modules)
-//==============================================================================
-
-/** Arguments for the recursive lowerNode callback. */
-export interface LowerNodeArgs {
-	node: EirHybridNode | PirHybridNode;
-	currentBlock: string;
-	ctx: LoweringContext;
-	nextBlock: string | null;
-}
-
-/** Signature for the recursive lowerNode function. */
-export type LowerNodeFn = (args: LowerNodeArgs) => BlockResult;
+import type { LowerNodeArgs } from "./lower.js";
 
 //==============================================================================
 // Main Lowering Function
 //==============================================================================
 
 /**
- * Lower an EIR document to LIR (CFG form).
+ * Lower a PIR document to LIR (CFG form).
  *
  * Conversion strategy:
- * - Each EIR expression becomes one or more LIR blocks
- * - seq/if/while/for/assign/effect become CFG blocks
+ * - Reuses EIR lowering for non-PIR expressions
+ * - Routes PIR-specific expressions (spawn, await, par, channel, etc.) to PIR handlers
  */
-export function lowerEIRtoLIR(eir: EIRDocument): LIRDocument {
+export function lowerPIRtoLIR(pir: PIRDocument): LIRDocument {
 	const ctx: LoweringContext = {
 		blocks: [],
 		nextBlockId: 0,
 		nodeMap: new Map(),
 	};
 
-	for (const node of eir.nodes) {
+	for (const node of pir.nodes) {
 		ctx.nodeMap.set(node.id, node);
 	}
 
-	if (!ctx.nodeMap.has(eir.result)) {
-		validationError(`Result node not found: ${eir.result}`);
+	if (!ctx.nodeMap.has(pir.result)) {
+		validationError(`Result node not found: ${pir.result}`);
 	}
 
-	const entryBlock = lowerAllNodes(eir, ctx);
-	finalizeBlocks(ctx, eir.result);
+	const entryBlock = lowerAllNodes(pir, ctx);
+	finalizeBlocks(ctx, pir.result);
 
-	return buildLirDocument(eir, ctx, entryBlock);
+	return buildLirDocument(pir, ctx, entryBlock);
 }
 
 //==============================================================================
@@ -66,13 +51,13 @@ export function lowerEIRtoLIR(eir: EIRDocument): LIRDocument {
 //==============================================================================
 
 function lowerAllNodes(
-	eir: EIRDocument,
+	pir: PIRDocument,
 	ctx: LoweringContext,
 ): string | null {
 	let entryBlock: string | null = null;
 	let prevBlockId: string | null = null;
 
-	for (const node of eir.nodes) {
+	for (const node of pir.nodes) {
 		if (!isExprNode(node)) continue;
 
 		const blockId = freshBlock(ctx);
@@ -125,23 +110,23 @@ function finalizeBlocks(
 }
 
 function buildLirDocument(
-	eir: EIRDocument,
+	pir: PIRDocument,
 	ctx: LoweringContext,
 	entryBlock: string | null,
 ): LIRDocument {
 	const mainBlockNode: HybridNode = {
-		id: eir.result,
+		id: pir.result,
 		blocks: ctx.blocks,
 		entry: entryBlock ?? "bb0",
 	};
 
 	const lirDoc: LIRDocument = {
-		version: eir.version,
+		version: pir.version,
 		nodes: [mainBlockNode],
-		result: eir.result,
+		result: pir.result,
 	};
-	if (eir.capabilities) {
-		lirDoc.capabilities = eir.capabilities;
+	if (pir.capabilities) {
+		lirDoc.capabilities = pir.capabilities;
 	}
 	return lirDoc;
 }
@@ -150,9 +135,6 @@ function buildLirDocument(
 // Node Lowering
 //==============================================================================
 
-/**
- * Lower a single node to one or more blocks.
- */
 function lowerNode(args: LowerNodeArgs): BlockResult {
 	const { node, currentBlock, ctx, nextBlock } = args;
 
@@ -166,6 +148,10 @@ function lowerNode(args: LowerNodeArgs): BlockResult {
 		ctx,
 		nextBlock,
 	};
+
+	if (isPirOnlyExpr(node.expr)) {
+		return lowerPirExpr(p, node.expr, lowerNode);
+	}
 
 	if (isEirOnlyExpr(node.expr)) {
 		return lowerEirExpr(p, node.expr, lowerNode);
