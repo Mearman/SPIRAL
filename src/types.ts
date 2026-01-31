@@ -101,13 +101,16 @@ export type {
 
 import type { ValueEnv } from "./env.js";
 import type {
-	Expr, Type, LambdaParam, PirExpr,
+	Expr, Type, LambdaParam,
 	BoolType, IntType, FloatType, StringType,
 	SetType, ListType, MapType, OptionType, OpaqueType, FnType,
-	VoidType, RefType, FutureType, ChannelType, TaskType, AsyncFnType,
+	VoidType, RefType,
 	HybridNode, BlockNode, ExprNode,
-	PirParExpr, PirSpawnExpr, PirAwaitExpr,
 } from "./zod-schemas.js";
+
+import type {
+	FutureVal, ChannelVal, TaskVal, SelectResultVal,
+} from "./pir-types.js";
 
 // Forward declarations for EIR values (must be before Value union)
 export interface VoidVal {
@@ -321,76 +324,7 @@ export function isPrimitiveType(t: Type): boolean {
 	);
 }
 
-//==============================================================================
-// Type Equality
-//==============================================================================
-
-export function typeEqual(a: Type, b: Type): boolean {
-	if (a.kind !== b.kind) return false;
-
-	switch (a.kind) {
-	case "bool":
-	case "int":
-	case "float":
-	case "string":
-	case "void":
-		return true;
-	case "set":
-	case "list":
-	case "option":
-	case "ref":
-	case "future":
-	case "channel": {
-		if (b.kind !== "set" && b.kind !== "list" && b.kind !== "option" && b.kind !== "ref" && b.kind !== "future" && b.kind !== "channel") return false;
-		return typeEqual(a.of, b.of);
-	}
-	case "map": {
-		if (b.kind !== "map") return false;
-		return (
-			typeEqual(a.key, b.key) &&
-				typeEqual(a.value, b.value)
-		);
-	}
-	case "opaque": {
-		if (b.kind !== "opaque") return false;
-		return a.name === b.name;
-	}
-	case "fn": {
-		if (b.kind !== "fn") return false;
-		if (a.params.length !== b.params.length) return false;
-		for (let i = 0; i < a.params.length; i++) {
-			const paramA = a.params[i];
-			const paramB = b.params[i];
-			if (paramA === undefined || paramB === undefined) {
-				return false;
-			}
-			if (!typeEqual(paramA, paramB)) {
-				return false;
-			}
-		}
-		return typeEqual(a.returns, b.returns);
-	}
-	case "task": {
-		if (b.kind !== "task") return false;
-		return typeEqual(a.returns, b.returns);
-	}
-	case "async": {
-		if (b.kind !== "async") return false;
-		if (a.params.length !== b.params.length) return false;
-		for (let i = 0; i < a.params.length; i++) {
-			const paramA = a.params[i];
-			const paramB = b.params[i];
-			if (paramA === undefined || paramB === undefined) {
-				return false;
-			}
-			if (!typeEqual(paramA, paramB)) {
-				return false;
-			}
-		}
-		return typeEqual(a.returns, b.returns);
-	}
-	}
-}
+export { typeEqual } from "./type-equality.js";
 
 //==============================================================================
 // Value Constructors
@@ -476,147 +410,18 @@ export const voidType: VoidType = { kind: "void" };
 export const refType = (of: Type): RefType => ({ kind: "ref", of });
 
 //==============================================================================
-// PIR Value Domain — kept as manual interfaces (runtime only)
+// PIR Types (re-exported from pir-types.ts)
 //==============================================================================
 
-export interface FutureVal {
-	kind: "future";
-	taskId: string;
-	status: "pending" | "ready" | "error";
-	value?: Value;
-}
+export type {
+	FutureVal, ChannelVal, TaskVal, SelectResultVal,
+	AsyncEvalState, TaskState,
+	TaskScheduler, AsyncChannel,
+} from "./pir-types.js";
 
-export interface ChannelVal {
-	kind: "channel";
-	id: string;
-	channelType: "mpsc" | "spsc" | "mpmc" | "broadcast";
-}
-
-export interface TaskVal {
-	kind: "task";
-	id: string;
-	returnType: Type;
-}
-
-export interface SelectResultVal {
-	kind: "selectResult";
-	index: number; // -1=timeout, 0..n-1=winning future
-	value: Value;
-}
-
-//==============================================================================
-// Async Evaluation State — kept as manual interfaces (runtime only)
-//==============================================================================
-
-export interface AsyncEvalState extends EvalState {
-	taskId: string;
-	scheduler: TaskScheduler;
-	channels: unknown; // AsyncChannelStore (use unknown to avoid circular dependency)
-	taskPool: Map<string, TaskState>;
-	parentTaskId?: string;
-}
-
-export interface TaskState {
-	expr: PirExpr;
-	env: ValueEnv;
-	status: "running" | "completed" | "failed";
-	result?: Value;
-	error?: ErrorVal;
-}
-
-//==============================================================================
-// PIR Value Constructors
-//==============================================================================
-
-export const futureVal = (
-	taskId: string,
-	status: "pending" | "ready" | "error" = "pending",
-	value?: Value,
-): FutureVal => {
-	const result: FutureVal = { kind: "future", taskId, status };
-	if (value !== undefined) result.value = value;
-	return result;
-};
-
-export const channelVal = (
-	id: string,
-	channelType: "mpsc" | "spsc" | "mpmc" | "broadcast",
-): ChannelVal => ({ kind: "channel", id, channelType });
-
-export const taskVal = (id: string, returnType: Type): TaskVal => ({
-	kind: "task",
-	id,
-	returnType,
-});
-
-//==============================================================================
-// PIR Type Constructors
-//==============================================================================
-
-export const futureType = (of: Type): FutureType => ({ kind: "future", of });
-
-export const channelTypeCtor = (
-	chanType: "mpsc" | "spsc" | "mpmc" | "broadcast",
-	of: Type,
-): ChannelType => ({ kind: "channel", channelType: chanType, of });
-
-export const taskType = (returns: Type): TaskType => ({ kind: "task", returns });
-
-export const asyncFnType = (params: Type[], returns: Type): AsyncFnType => ({
-	kind: "async",
-	params,
-	returns: futureType(returns),
-});
-
-//==============================================================================
-// Async Runtime Types — kept as manual interfaces (runtime only)
-//==============================================================================
-
-/**
- * TaskScheduler interface - cooperative task scheduling
- * Implemented in src/scheduler.ts
- */
-export interface TaskScheduler {
-	spawn(taskId: string, fn: () => Promise<Value>): void;
-	await(taskId: string): Promise<Value>;
-	currentTaskId: string;
-	checkGlobalSteps(): Promise<void>;
-}
-
-/**
- * AsyncChannel interface - Go-style buffered channels
- * Implemented in src/async-effects.ts
- */
-export interface AsyncChannel {
-	send(value: Value): Promise<void>;
-	recv(): Promise<Value>;
-	close(): void;
-}
-
-//==============================================================================
-// Type Guards for PIR Types
-//==============================================================================
-
-export function isFuture(v: Value): v is FutureVal {
-	return v.kind === "future";
-}
-
-export function isChannel(v: Value): v is ChannelVal {
-	return v.kind === "channel";
-}
-
-export function isTask(v: Value): v is TaskVal {
-	return v.kind === "task";
-}
-
-export function isPirParExpr(expr: Expr): expr is PirParExpr {
-	return expr.kind === "par";
-}
-
-export function isPirSpawnExpr(expr: Expr): expr is PirSpawnExpr {
-	return expr.kind === "spawn";
-}
-
-export function isPirAwaitExpr(expr: Expr): expr is PirAwaitExpr {
-	return expr.kind === "await";
-}
+export {
+	futureVal, channelVal, taskVal,
+	futureType, channelTypeCtor, taskType, asyncFnType,
+	isFuture, isChannel, isTask,
+	isPirParExpr, isPirSpawnExpr, isPirAwaitExpr,
+} from "./pir-types.js";
