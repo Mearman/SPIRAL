@@ -65,17 +65,18 @@ function evalSynthesizedTS(code: string): unknown {
 }
 
 /**
- * Strip basic TypeScript type annotations so code can run as plain JS.
+ * Strip TypeScript type annotations so code can run as plain JS.
+ * Handles: parameter annotations, variable annotations, generic types,
+ * rest parameter annotations, and array type annotations.
  */
 function stripTypeAnnotations(line: string): string {
-	// Remove : any type annotations (common in synthesized output)
 	let result = line;
+	// Remove rest parameter annotations: ...args: any[]
+	result = result.replace(/(\.\.\.\w+): any\[\]/g, "$1");
 	// Remove parameter type annotations like (x: any) => but preserve ternary colons
 	result = result.replace(/(\w+): any/g, "$1");
 	// Remove Record<string, any> type annotations
 	result = result.replace(/: Record<string, any>/g, "");
-	// Remove : any from variable declarations
-	result = result.replace(/let (\w+): any/g, "let $1");
 	// Remove : string | null
 	result = result.replace(/: string \| null/g, "");
 	return result;
