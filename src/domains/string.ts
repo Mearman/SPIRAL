@@ -194,20 +194,13 @@ const substring: Operator = defineOperator("string", "substring")
  * Create the string domain registry with all string operators.
  */
 export function createStringRegistry(): OperatorRegistry {
-	let registry: OperatorRegistry = new Map();
+	const operators: Operator[] = [
+		concat, length, slice, indexOf, toUpper, toLower,
+		trim, split, includes, replace, charAt, substring,
+	];
 
-	registry = registerOperator(registry, concat);
-	registry = registerOperator(registry, length);
-	registry = registerOperator(registry, slice);
-	registry = registerOperator(registry, indexOf);
-	registry = registerOperator(registry, toUpper);
-	registry = registerOperator(registry, toLower);
-	registry = registerOperator(registry, trim);
-	registry = registerOperator(registry, split);
-	registry = registerOperator(registry, includes);
-	registry = registerOperator(registry, replace);
-	registry = registerOperator(registry, charAt);
-	registry = registerOperator(registry, substring);
-
-	return registry;
+	return operators.reduce<OperatorRegistry>(
+		(reg, op) => registerOperator(reg, op),
+		new Map(),
+	);
 }

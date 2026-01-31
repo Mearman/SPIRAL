@@ -253,24 +253,15 @@ const gte: Operator = defineOperator("core", "gte")
  * Operators are polymorphic and handle different numeric types at runtime.
  */
 export function createCoreRegistry(): OperatorRegistry {
-	let registry: OperatorRegistry = new Map();
+	const operators: Operator[] = [
+		// Arithmetic operators (polymorphic: returns int for int inputs, float for float inputs)
+		add, sub, mul, div, mod, pow, neg,
+		// Comparison operators (polymorphic)
+		eq, neq, lt, lte, gt, gte,
+	];
 
-	// Arithmetic operators (polymorphic: returns int for int inputs, float for float inputs)
-	registry = registerOperator(registry, add);
-	registry = registerOperator(registry, sub);
-	registry = registerOperator(registry, mul);
-	registry = registerOperator(registry, div);
-	registry = registerOperator(registry, mod);
-	registry = registerOperator(registry, pow);
-	registry = registerOperator(registry, neg);
-
-	// Comparison operators (polymorphic)
-	registry = registerOperator(registry, eq);
-	registry = registerOperator(registry, neq);
-	registry = registerOperator(registry, lt);
-	registry = registerOperator(registry, lte);
-	registry = registerOperator(registry, gt);
-	registry = registerOperator(registry, gte);
-
-	return registry;
+	return operators.reduce<OperatorRegistry>(
+		(reg, op) => registerOperator(reg, op),
+		new Map(),
+	);
 }
