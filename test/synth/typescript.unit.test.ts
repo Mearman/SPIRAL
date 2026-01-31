@@ -13,6 +13,7 @@ import type {
 	CIRDocument,
 	EIRDocument,
 	LIRDocument,
+	PIRDocument,
 	Node,
 } from "../../src/types.js";
 
@@ -902,6 +903,166 @@ describe("TypeScript Synthesizer - Unit Tests", () => {
 			const result = synthesizeTypeScript(airArithmeticDoc);
 			assert.ok(result.includes("const v_x"));
 			assert.ok(result.includes("const v_y"));
+		});
+	});
+
+	//==========================================================================
+	// PIR Document Tests
+	//==========================================================================
+
+	describe("PIR Documents", () => {
+		it("should synthesize par expression with Promise.all", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "branchA",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 1 } },
+					},
+					{
+						id: "branchB",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 2 } },
+					},
+					{
+						id: "result",
+						expr: { kind: "par", branches: ["branchA", "branchB"] },
+					},
+				],
+				result: "result",
+			};
+			const result = synthesizeTypeScript(doc);
+			assert.ok(result.includes("Promise.all"), "Should contain Promise.all for par expression");
+		});
+
+		it("should synthesize spawn expression with async", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "taskBody",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 42 } },
+					},
+					{
+						id: "result",
+						expr: { kind: "spawn", task: "taskBody" },
+					},
+				],
+				result: "result",
+			};
+			const result = synthesizeTypeScript(doc);
+			assert.ok(result.includes("async"), "Should contain async for spawn expression");
+		});
+
+		it("should synthesize await expression", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "taskBody",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 42 } },
+					},
+					{
+						id: "spawned",
+						expr: { kind: "spawn", task: "taskBody" },
+					},
+					{
+						id: "result",
+						expr: { kind: "await", future: "spawned" },
+					},
+				],
+				result: "result",
+			};
+			const result = synthesizeTypeScript(doc);
+			assert.ok(result.includes("await"), "Should contain await for await expression");
+		});
+
+		it("should synthesize channel expression", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "result",
+						expr: { kind: "channel", channelType: "mpsc" },
+					},
+				],
+				result: "result",
+			};
+			const result = synthesizeTypeScript(doc);
+			assert.ok(result.includes("Channel"), "Should contain Channel for channel expression");
+		});
+
+		it("should synthesize send and recv expressions", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "ch",
+						expr: { kind: "channel", channelType: "mpsc" },
+					},
+					{
+						id: "msg",
+						expr: { kind: "lit", type: { kind: "string" }, value: { kind: "string", value: "hello" } },
+					},
+					{
+						id: "sendOp",
+						expr: { kind: "send", channel: "ch", value: "msg" },
+					},
+					{
+						id: "result",
+						expr: { kind: "recv", channel: "ch" },
+					},
+				],
+				result: "result",
+			};
+			const result = synthesizeTypeScript(doc);
+			assert.ok(result.includes(".send("), "Should contain .send() for send expression");
+			assert.ok(result.includes(".recv()"), "Should contain .recv() for recv expression");
+		});
+
+		it("should synthesize select expression with Promise.race", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "futA",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 1 } },
+					},
+					{
+						id: "futB",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 2 } },
+					},
+					{
+						id: "result",
+						expr: { kind: "select", futures: ["futA", "futB"] },
+					},
+				],
+				result: "result",
+			};
+			const result = synthesizeTypeScript(doc);
+			assert.ok(result.includes("Promise.race"), "Should contain Promise.race for select expression");
+		});
+
+		it("should synthesize race expression with Promise.race", () => {
+			const doc: PIRDocument = {
+				version: "2.0.0",
+				nodes: [
+					{
+						id: "taskA",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 1 } },
+					},
+					{
+						id: "taskB",
+						expr: { kind: "lit", type: { kind: "int" }, value: { kind: "int", value: 2 } },
+					},
+					{
+						id: "result",
+						expr: { kind: "race", tasks: ["taskA", "taskB"] },
+					},
+				],
+				result: "result",
+			};
+			const result = synthesizeTypeScript(doc);
+			assert.ok(result.includes("Promise.race"), "Should contain Promise.race for race expression");
 		});
 	});
 
