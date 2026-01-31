@@ -210,11 +210,15 @@ export {
 	cirSchema,
 	eirSchema,
 	lirSchema,
+	spiralSchema,
 	isAIRSchema,
 	isCIRSchema,
 	isEIRSchema,
 	isLIRSchema,
+	isSPIRALSchema,
 } from "./schemas.js";
+
+export type { SPIRALDocument } from "./zod-schemas.js";
 
 //==============================================================================
 // Ingest

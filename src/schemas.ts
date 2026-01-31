@@ -7,6 +7,7 @@ import {
 	CIRDocumentSchema,
 	EIRDocumentSchema,
 	LIRDocumentSchema,
+	SPIRALDocument,
 } from "./zod-schemas.js";
 
 //==============================================================================
@@ -40,4 +41,14 @@ export function isEIRSchema(obj: unknown): obj is Record<string, unknown> {
 
 export function isLIRSchema(obj: unknown): obj is Record<string, unknown> {
 	return isSchemaWithDescription(obj, "LIRDocument");
+}
+
+//==============================================================================
+// Unified SPIRAL Schema
+//==============================================================================
+
+export const spiralSchema = z.toJSONSchema(SPIRALDocument, { target: "draft-07" });
+
+export function isSPIRALSchema(obj: unknown): obj is Record<string, unknown> {
+	return isAIRSchema(obj) || isCIRSchema(obj) || isEIRSchema(obj) || isLIRSchema(obj);
 }
