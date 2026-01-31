@@ -2,8 +2,7 @@
 // Capture-avoiding substitution for CIR expressions
 
 import type { ValueEnv } from "../env.js";
-import { exhaustive } from "../errors.js";
-import type { Expr, Value } from "../types.js";
+import type { Expr, LambdaExpr, Value } from "../types.js";
 
 //==============================================================================
 // Fresh Name Generation
@@ -27,131 +26,103 @@ export function freshName(base: string, context: Set<string>): string {
 // Capture-Avoiding Substitution
 //==============================================================================
 
+interface SubstContext {
+	varName: string;
+	value: Expr;
+	boundVars: Set<string>;
+}
+
+/** Kinds that are pass-through for substitution (use string refs only). */
+const substPassthroughKinds = new Set([
+	"call", "if", "airRef", "predicate", "callExpr", "fix", "do",
+	"par", "spawn", "await", "channel", "send", "recv", "select", "race",
+]);
+
 /**
  * Perform capture-avoiding substitution: e[x := v]
  * Replace all free occurrences of x in e with value v.
- *
- * For value-level substitution (used in closures), we use the environment
- * instead of actual substitution. This function is provided for completeness.
  */
 export function substitute(expr: Expr, varName: string, value: Expr): Expr {
-	return substituteExpr(expr, varName, value, new Set());
+	return substituteExpr(expr, { varName, value, boundVars: new Set() });
 }
 
-function substituteExpr(
-	expr: Expr,
-	varName: string,
-	value: Expr,
-	boundVars: Set<string>,
-): Expr {
+/** Handle substitution in lambda expressions (capture-avoiding). */
+function substituteLambda(expr: LambdaExpr, ctx: SubstContext): Expr {
+	// If varName is captured by lambda parameters, it's shadowed
+	if (expr.params.includes(ctx.varName)) {
+		return expr;
+	}
+
+	const paramsSet = new Set(expr.params);
+	const capturedInValue = collectFreeVars(ctx.value, new Set())
+		.filter((v) => paramsSet.has(v));
+
+	if (capturedInValue.length === 0) {
+		return { ...expr };
+	}
+
+	// Capture would occur - alpha-rename the lambda parameters
+	const paramRenaming = buildParamRenaming(expr.params, {
+		capturedInValue, paramsSet, boundVars: ctx.boundVars, varName: ctx.varName,
+	});
+
+	if (paramRenaming.size === 0) {
+		return expr;
+	}
+
+	return alphaRenameExpr(expr, { boundVars: new Set(), renaming: paramRenaming });
+}
+
+interface ParamRenamingContext {
+	capturedInValue: string[];
+	paramsSet: Set<string>;
+	boundVars: Set<string>;
+	varName: string;
+}
+
+/** Build a renaming map for lambda params that would cause capture. */
+function buildParamRenaming(
+	params: string[],
+	ctx: ParamRenamingContext,
+): Map<string, string> {
+	const paramRenaming = new Map<string, string>();
+	for (const param of params) {
+		if (ctx.capturedInValue.includes(param)) {
+			const allNames = new Set(Array.from(ctx.paramsSet).concat(Array.from(ctx.boundVars)).concat([ctx.varName]));
+			const newName = freshName(param, allNames);
+			paramRenaming.set(param, newName);
+		}
+	}
+	return paramRenaming;
+}
+
+function substituteExpr(expr: Expr, ctx: SubstContext): Expr {
+	if (substPassthroughKinds.has(expr.kind)) {
+		return { ...expr };
+	}
+
 	switch (expr.kind) {
 	case "lit":
 	case "ref":
-		// These expressions don't contain variables
 		return expr;
 
 	case "var":
-		// If this is the variable we're substituting, return the value
-		if (expr.name === varName && !boundVars.has(varName)) {
-			return value;
+		if (expr.name === ctx.varName && !ctx.boundVars.has(ctx.varName)) {
+			return ctx.value;
 		}
 		return expr;
 
-	case "call":
-		// Substitute in arguments (but call itself is a value reference)
-		return { ...expr };
-
-	case "if":
-		return {
-			...expr,
-			// Branches are node refs, not expressions, so no substitution needed
-		};
-
 	case "let": {
-		// If the bound name is the one we're substituting, shadow it
-		const newLetBoundVars = new Set(boundVars);
+		const newLetBoundVars = new Set(ctx.boundVars);
 		newLetBoundVars.add(expr.name);
-		return {
-			...expr,
-			// Value and body are node refs, not expressions
-		};
+		return { ...expr };
 	}
 
-	case "airRef":
-		return { ...expr };
-
-	case "predicate":
-		return { ...expr };
-
-	case "lambda": {
-		// Check if varName is captured by lambda parameters
-		if (expr.params.includes(varName)) {
-			// varName is bound by this lambda, so free occurrences inside are not the same
-			return expr;
-		}
-
-		// Check if any of the lambda's parameters occur free in value
-		const paramsSet = new Set(expr.params);
-		const capturedInValue = collectFreeVars(value, new Set()).filter((v) =>
-			paramsSet.has(v),
-		);
-
-		if (capturedInValue.length === 0) {
-			// No capture, can substitute directly
-			return {
-				...expr,
-				// Body is a node ref, not an expression
-			};
-		}
-
-		// Capture would occur! Need to alpha-rename the lambda parameters
-		const newParams: string[] = [];
-		const paramRenaming = new Map<string, string>();
-
-		for (const param of expr.params) {
-			if (capturedInValue.includes(param)) {
-				// This parameter would be captured, rename it
-				const newName = freshName(
-					param,
-					new Set([...paramsSet, ...boundVars, varName]),
-				);
-				newParams.push(newName);
-				paramRenaming.set(param, newName);
-			} else {
-				newParams.push(param);
-			}
-		}
-
-		if (paramRenaming.size === 0) {
-			return expr;
-		}
-
-		// Apply alpha renaming
-		return alphaRenameExpr(expr, new Set(), paramRenaming);
-	}
-
-	case "callExpr":
-		return { ...expr };
-
-	case "fix":
-		return { ...expr };
-
-	case "do":
-		return { ...expr };
-
-	// PIR expressions - no substitution needed (they use string refs)
-	case "par":
-	case "spawn":
-	case "await":
-	case "channel":
-	case "send":
-	case "recv":
-	case "select":
-	case "race":
-		return { ...expr };
+	case "lambda":
+		return substituteLambda(expr, ctx);
 
 	default:
-		return exhaustive(expr);
+		return { ...expr };
 	}
 }
 
@@ -159,82 +130,59 @@ function substituteExpr(
 // Free Variable Collection
 //==============================================================================
 
+/** Kinds that never contain free variables (use string refs). */
+const noFreeVarKinds = new Set([
+	"lit", "ref", "call", "if", "airRef", "predicate",
+	"callExpr", "fix", "do",
+	"par", "spawn", "await", "channel", "send", "recv", "select", "race",
+]);
+
 /**
  * Collect all free variables in an expression.
  * A variable is free if it is not bound by any enclosing lambda/let.
  */
 export function collectFreeVars(expr: Expr, boundVars: Set<string>): string[] {
-	switch (expr.kind) {
-	case "lit":
-	case "ref":
-		return [];
-
-	case "var":
-		if (boundVars.has(expr.name)) {
-			return [];
-		}
-		return [expr.name];
-
-	case "call":
-		// Arguments are node refs, not expressions
-		return [];
-
-	case "if":
-		// Branches are node refs, not expressions
-		return [];
-
-	case "let": {
-		// The name is bound in the body
-		const newBoundVars = new Set(boundVars);
-		newBoundVars.add(expr.name);
-		// Body is a node ref, not an expression
+	if (noFreeVarKinds.has(expr.kind)) {
 		return [];
 	}
 
-	case "airRef":
-		return [];
+	switch (expr.kind) {
+	case "var":
+		return boundVars.has(expr.name) ? [] : [expr.name];
 
-	case "predicate":
+	case "let": {
+		const newBoundVars = new Set(boundVars);
+		newBoundVars.add(expr.name);
 		return [];
+	}
 
 	case "lambda": {
-		// Parameters are bound in the body
 		const lambdaBoundVars = new Set(boundVars);
 		for (const param of expr.params) {
 			lambdaBoundVars.add(param);
 		}
-		// Body is a node ref, not an expression
 		return [];
 	}
 
-	case "callExpr":
-		return [];
-
-	case "fix":
-		return [];
-
-	case "do":
-		return [];
-
-	// PIR expressions - no free variables (they use string refs)
-	case "par":
-	case "spawn":
-	case "await":
-	case "channel":
-	case "send":
-	case "recv":
-	case "select":
-	case "race":
-		return [];
-
 	default:
-		return exhaustive(expr);
+		return [];
 	}
 }
 
 //==============================================================================
 // Alpha Renaming
 //==============================================================================
+
+interface RenameContext {
+	boundVars: Set<string>;
+	renaming: Map<string, string>;
+}
+
+/** Kinds that are pass-through for alpha renaming. */
+const renamePassthroughKinds = new Set([
+	"call", "if", "let", "airRef", "predicate", "callExpr", "fix", "do",
+	"par", "spawn", "await", "channel", "send", "recv", "select", "race",
+]);
 
 /**
  * Rename variables in an expression.
@@ -260,102 +208,81 @@ export function alphaRename(
 		}
 	}
 
-	return alphaRenameExpr(expr, new Set(), renaming);
+	return alphaRenameExpr(expr, { boundVars: new Set(), renaming });
 }
 
-function alphaRenameExpr(
-	expr: Expr,
-	boundVars: Set<string>,
-	renaming: Map<string, string>,
-): Expr {
+/** Handle alpha-renaming for a var expression. */
+function renameVar(expr: Expr & { kind: "var" }, ctx: RenameContext): Expr {
+	if (ctx.renaming.has(expr.name) && !ctx.boundVars.has(expr.name)) {
+		const newName = ctx.renaming.get(expr.name);
+		if (newName !== undefined) {
+			return { ...expr, name: newName };
+		}
+	}
+	return expr;
+}
+
+/** Rename a single lambda parameter if it appears in the renaming map. */
+function renameOneParam(
+	param: string,
+	ctx: RenameContext,
+	newBoundVars: Set<string>,
+): { newName: string; renamed: boolean } {
+	if (ctx.renaming.has(param)) {
+		const baseName = ctx.renaming.get(param);
+		if (baseName !== undefined) {
+			const fresh = freshName(baseName, newBoundVars);
+			return { newName: fresh, renamed: true };
+		}
+	}
+	return { newName: param, renamed: false };
+}
+
+/** Compute renamed params for a lambda. Returns [newParams, changed]. */
+function computeRenamedParams(
+	params: string[],
+	ctx: RenameContext,
+): [string[], boolean] {
+	const newBoundVars = new Set(ctx.boundVars);
+	let changeCount = 0;
+
+	const newParams = params.map((param) => {
+		newBoundVars.add(param);
+		const result = renameOneParam(param, ctx, newBoundVars);
+		if (result.renamed) {
+			changeCount++;
+			newBoundVars.add(result.newName);
+		}
+		return result.newName;
+	});
+
+	return [newParams, changeCount > 0];
+}
+
+/** Handle alpha-renaming for a lambda expression. */
+function renameLambda(expr: LambdaExpr, ctx: RenameContext): Expr {
+	const [newParams, changed] = computeRenamedParams(expr.params, ctx);
+	return changed ? { ...expr, params: newParams } : expr;
+}
+
+function alphaRenameExpr(expr: Expr, ctx: RenameContext): Expr {
+	if (renamePassthroughKinds.has(expr.kind)) {
+		return { ...expr };
+	}
+
 	switch (expr.kind) {
 	case "lit":
 	case "ref":
 		return expr;
 
 	case "var":
-		if (renaming.has(expr.name) && !boundVars.has(expr.name)) {
-			const newName = renaming.get(expr.name);
-			if (newName !== undefined) {
-				return { ...expr, name: newName };
-			}
-		}
-		return expr;
+		return renameVar(expr, ctx);
 
-	case "call":
-		return { ...expr };
-
-	case "if":
-		return { ...expr };
-
-	case "let":
-		return { ...expr };
-
-	case "airRef":
-		return { ...expr };
-
-	case "predicate":
-		return { ...expr };
-
-	case "lambda": {
-		// Check if any parameters are being renamed
-		const newParams: string[] = [];
-		const paramRenaming = new Map<string, string>();
-		const newBoundVars = new Set(boundVars);
-
-		for (const param of expr.params) {
-			newBoundVars.add(param);
-			if (renaming.has(param)) {
-				const baseName = renaming.get(param);
-				if (baseName !== undefined) {
-					const newName = freshName(baseName, newBoundVars);
-					newParams.push(newName);
-					paramRenaming.set(param, newName);
-					newBoundVars.add(newName);
-				}
-			} else {
-				newParams.push(param);
-			}
-		}
-
-		if (paramRenaming.size === 0) {
-			return expr;
-		}
-
-		// Create updated renaming for the body
-		const updatedRenaming = new Map(renaming);
-		for (const [old, newP] of paramRenaming) {
-			updatedRenaming.set(old, newP);
-		}
-
-		return {
-			...expr,
-			params: newParams,
-		};
-	}
-
-	case "callExpr":
-		return { ...expr };
-
-	case "fix":
-		return { ...expr };
-
-	case "do":
-		return { ...expr };
-
-	// PIR expressions - no renaming needed (they use string refs)
-	case "par":
-	case "spawn":
-	case "await":
-	case "channel":
-	case "send":
-	case "recv":
-	case "select":
-	case "race":
-		return { ...expr };
+	case "lambda":
+		return renameLambda(expr, ctx);
 
 	default:
-		return exhaustive(expr);
+		return { ...expr };
 	}
 }
 
