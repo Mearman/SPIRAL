@@ -226,11 +226,11 @@ export interface LIRDocument {
 // Zod Schemas - Type Domain (16 variants)
 //==============================================================================
 
-export const BoolTypeSchema = z.object({ kind: z.literal("bool") });
-export const IntTypeSchema = z.object({ kind: z.literal("int") });
-export const FloatTypeSchema = z.object({ kind: z.literal("float") });
-export const StringTypeSchema = z.object({ kind: z.literal("string") });
-export const VoidTypeSchema = z.object({ kind: z.literal("void") });
+export const BoolTypeSchema = z.object({ kind: z.literal("bool") }).meta({ id: "BoolType", title: "Boolean Type", description: "Boolean truth value type" });
+export const IntTypeSchema = z.object({ kind: z.literal("int") }).meta({ id: "IntType", title: "Integer Type", description: "Arbitrary-precision integer type" });
+export const FloatTypeSchema = z.object({ kind: z.literal("float") }).meta({ id: "FloatType", title: "Float Type", description: "IEEE 754 floating-point type" });
+export const StringTypeSchema = z.object({ kind: z.literal("string") }).meta({ id: "StringType", title: "String Type", description: "UTF-8 string type" });
+export const VoidTypeSchema = z.object({ kind: z.literal("void") }).meta({ id: "VoidType", title: "Void Type", description: "Unit type representing no value" });
 
 export const SetTypeSchema: z.ZodType<SetType> = z.preprocess(
 	(val) => {
@@ -245,62 +245,62 @@ export const SetTypeSchema: z.ZodType<SetType> = z.preprocess(
 		kind: z.literal("set"),
 		get of() { return TypeSchema; },
 	}),
-) as z.ZodType<SetType>;
+).meta({ id: "SetType", title: "Set Type", description: "Unordered collection of unique elements" });
 
 export const ListTypeSchema: z.ZodType<ListType> = z.object({
 	kind: z.literal("list"),
 	get of() { return TypeSchema; },
-});
+}).meta({ id: "ListType", title: "List Type", description: "Ordered sequence of elements" });
 
 export const MapTypeSchema: z.ZodType<MapType> = z.object({
 	kind: z.literal("map"),
 	get key() { return TypeSchema; },
 	get value() { return TypeSchema; },
-});
+}).meta({ id: "MapType", title: "Map Type", description: "Key-value associative container" });
 
 export const OptionTypeSchema: z.ZodType<OptionType> = z.object({
 	kind: z.literal("option"),
 	get of() { return TypeSchema; },
-});
+}).meta({ id: "OptionType", title: "Option Type", description: "Nullable wrapper type (Some or None)" });
 
 export const OpaqueTypeSchema = z.object({
 	kind: z.literal("opaque"),
 	name: z.string(),
-});
+}).meta({ id: "OpaqueType", title: "Opaque Type", description: "Named opaque type whose internal structure is hidden" });
 
 export const FnTypeSchema: z.ZodType<FnType> = z.object({
 	kind: z.literal("fn"),
 	get params() { return z.array(TypeSchema); },
 	get returns() { return TypeSchema; },
 	optionalParams: z.array(z.boolean()).optional(),
-});
+}).meta({ id: "FnType", title: "Function Type", description: "Function signature with parameter and return types" });
 
 export const RefTypeSchema: z.ZodType<RefType> = z.object({
 	kind: z.literal("ref"),
 	get of() { return TypeSchema; },
-});
+}).meta({ id: "RefType", title: "Reference Type", description: "Mutable reference to a value" });
 
 export const FutureTypeSchema: z.ZodType<FutureType> = z.object({
 	kind: z.literal("future"),
 	get of() { return TypeSchema; },
-});
+}).meta({ id: "FutureType", title: "Future Type", description: "Asynchronous value that resolves later" });
 
 export const ChannelTypeSchema: z.ZodType<ChannelType> = z.object({
 	kind: z.literal("channel"),
 	channelType: z.enum(["mpsc", "spsc", "mpmc", "broadcast"]),
 	get of() { return TypeSchema; },
-});
+}).meta({ id: "ChannelType", title: "Channel Type", description: "Typed communication channel between concurrent tasks" });
 
 export const TaskTypeSchema: z.ZodType<TaskType> = z.object({
 	kind: z.literal("task"),
 	get returns() { return TypeSchema; },
-});
+}).meta({ id: "TaskType", title: "Task Type", description: "Spawnable concurrent task with a return type" });
 
 export const AsyncFnTypeSchema: z.ZodType<AsyncFnType> = z.object({
 	kind: z.literal("async"),
 	get params() { return z.array(TypeSchema); },
 	get returns() { return FutureTypeSchema; },
-});
+}).meta({ id: "AsyncFnType", title: "Async Function Type", description: "Asynchronous function returning a Future" });
 
 /** Union of all 16 type variants. Uses z.union (not discriminatedUnion) due to recursion. */
 export const TypeSchema: z.ZodType<Type> = z.union([
@@ -320,7 +320,7 @@ export const TypeSchema: z.ZodType<Type> = z.union([
 	ChannelTypeSchema,
 	TaskTypeSchema,
 	AsyncFnTypeSchema,
-]).meta({ id: "Type" });
+]).meta({ id: "Type", title: "Type", description: "Union of all SPIRAL type annotations" });
 
 //==============================================================================
 // Zod Schemas - Expression Domain - AIR (8 variants)
@@ -333,24 +333,24 @@ export const LitExprSchema: z.ZodType<LitExpr> = z.object({
 	kind: z.literal("lit"),
 	type: TypeSchema,
 	value: z.unknown(),
-}).meta({ id: "LitExpr" });
+}).meta({ id: "LitExpr", title: "Literal Expression", description: "Constant value with an explicit type annotation" });
 
 export const RefExprSchema = z.object({
 	kind: z.literal("ref"),
 	id: z.string(),
-}).meta({ id: "RefExpr" });
+}).meta({ id: "RefExpr", title: "Reference Expression", description: "Reference to another node by its ID" });
 
 export const VarExprSchema = z.object({
 	kind: z.literal("var"),
 	name: z.string(),
-}).meta({ id: "VarExpr" });
+}).meta({ id: "VarExpr", title: "Variable Expression", description: "Named variable reference (e.g., lambda parameter)" });
 
 export const CallExprSchema: z.ZodType<CallExpr> = z.object({
 	kind: z.literal("call"),
 	ns: z.string(),
 	name: z.string(),
 	get args() { return z.array(stringOrExpr()); },
-}).meta({ id: "CallExpr" });
+}).meta({ id: "CallExpr", title: "Call Expression", description: "Namespaced operator call (e.g., core:add)" });
 
 export const IfExprSchema: z.ZodType<IfExpr> = z.object({
 	kind: z.literal("if"),
@@ -358,7 +358,7 @@ export const IfExprSchema: z.ZodType<IfExpr> = z.object({
 	get then() { return stringOrExpr(); },
 	get else() { return stringOrExpr(); },
 	type: TypeSchema.optional(),
-}).meta({ id: "IfExpr" }) as z.ZodType<IfExpr>;
+}).meta({ id: "IfExpr", title: "If Expression", description: "Conditional expression with then/else branches" }) as z.ZodType<IfExpr>;
 
 export const LetExprSchema: z.ZodType<LetExpr> = z.object({
 	kind: z.literal("let"),
@@ -366,20 +366,20 @@ export const LetExprSchema: z.ZodType<LetExpr> = z.object({
 	get value() { return stringOrExpr(); },
 	get body() { return stringOrExpr(); },
 	type: TypeSchema.optional(),
-}).meta({ id: "LetExpr" }) as z.ZodType<LetExpr>;
+}).meta({ id: "LetExpr", title: "Let Expression", description: "Local binding that scopes a name to a value within a body" }) as z.ZodType<LetExpr>;
 
 export const AirRefExprSchema = z.object({
 	kind: z.literal("airRef"),
 	ns: z.string(),
 	name: z.string(),
 	args: z.array(z.string()),
-}).meta({ id: "AirRefExpr" });
+}).meta({ id: "AirRefExpr", title: "AIR Definition Reference", description: "Call to a reusable AIR definition by namespace and name" });
 
 export const PredicateExprSchema = z.object({
 	kind: z.literal("predicate"),
 	name: z.string(),
 	value: z.string(),
-}).meta({ id: "PredicateExpr" });
+}).meta({ id: "PredicateExpr", title: "Predicate Expression", description: "Type predicate that always returns true for its argument" });
 
 //==============================================================================
 // Zod Schemas - Expression Domain - CIR extensions (4 variants)
@@ -390,31 +390,31 @@ export const LambdaParamSchema: z.ZodType<LambdaParam> = z.object({
 	type: TypeSchema.optional(),
 	optional: z.boolean().optional(),
 	get default() { return ExprSchema.optional(); },
-});
+}).meta({ id: "LambdaParam", title: "Lambda Parameter", description: "Named parameter with optional type, default value, and optionality flag" });
 
 export const LambdaExprSchema: z.ZodType<LambdaExpr> = z.object({
 	kind: z.literal("lambda"),
 	params: z.array(z.union([z.string(), LambdaParamSchema])),
 	body: z.string(),
 	type: TypeSchema,
-}) as z.ZodType<LambdaExpr>;
+}).meta({ id: "LambdaExpr", title: "Lambda Expression", description: "Anonymous function with parameters and a body node" }) as z.ZodType<LambdaExpr>;
 
 export const CallFnExprSchema: z.ZodType<CallFnExpr> = z.object({
 	kind: z.literal("callExpr"),
 	fn: z.string(),
 	get args() { return z.array(stringOrExpr()); },
-}) as z.ZodType<CallFnExpr>;
+}).meta({ id: "CallFnExpr", title: "Function Call Expression", description: "Invocation of a first-class function node with arguments" }) as z.ZodType<CallFnExpr>;
 
 export const FixExprSchema: z.ZodType<FixExpr> = z.object({
 	kind: z.literal("fix"),
 	fn: z.string(),
 	type: TypeSchema,
-});
+}).meta({ id: "FixExpr", title: "Fix-Point Combinator", description: "Y-combinator for general recursion (CIR and above)" });
 
 export const DoExprSchema: z.ZodType<DoExpr> = z.object({
 	kind: z.literal("do"),
 	get exprs() { return z.array(stringOrExpr()); },
-});
+}).meta({ id: "DoExpr", title: "Do Expression", description: "Sequence of expressions returning the last value" });
 
 //==============================================================================
 // Zod Schemas - Expression Domain - EIR extensions (9 variants)
@@ -424,19 +424,19 @@ export const EirSeqExprSchema: z.ZodType<EirSeqExpr> = z.object({
 	kind: z.literal("seq"),
 	get first() { return stringOrExpr(); },
 	get then() { return stringOrExpr(); },
-});
+}).meta({ id: "EirSeqExpr", title: "Sequence Expression", description: "Execute first, discard result, then evaluate and return second" });
 
 export const EirAssignExprSchema: z.ZodType<EirAssignExpr> = z.object({
 	kind: z.literal("assign"),
 	target: z.string(),
 	get value() { return stringOrExpr(); },
-});
+}).meta({ id: "EirAssignExpr", title: "Assignment Expression", description: "Assign a value to a mutable variable" });
 
 export const EirWhileExprSchema: z.ZodType<EirWhileExpr> = z.object({
 	kind: z.literal("while"),
 	get cond() { return stringOrExpr(); },
 	get body() { return stringOrExpr(); },
-});
+}).meta({ id: "EirWhileExpr", title: "While Loop", description: "Loop that repeats body while condition is true" });
 
 export const EirForExprSchema: z.ZodType<EirForExpr> = z.object({
 	kind: z.literal("for"),
@@ -445,30 +445,30 @@ export const EirForExprSchema: z.ZodType<EirForExpr> = z.object({
 	get cond() { return stringOrExpr(); },
 	get update() { return stringOrExpr(); },
 	get body() { return stringOrExpr(); },
-});
+}).meta({ id: "EirForExpr", title: "For Loop", description: "C-style for loop with init, condition, update, and body" });
 
 export const EirIterExprSchema: z.ZodType<EirIterExpr> = z.object({
 	kind: z.literal("iter"),
 	var: z.string(),
 	get iter() { return stringOrExpr(); },
 	get body() { return stringOrExpr(); },
-});
+}).meta({ id: "EirIterExpr", title: "Iterator Loop", description: "For-each loop binding each element to a variable" });
 
 export const EirEffectExprSchema: z.ZodType<EirEffectExpr> = z.object({
 	kind: z.literal("effect"),
 	op: z.string(),
 	get args() { return z.array(stringOrExpr()); },
-});
+}).meta({ id: "EirEffectExpr", title: "Effect Expression", description: "Side-effecting operation (e.g., print, I/O)" });
 
 export const EirRefCellExprSchema = z.object({
 	kind: z.literal("refCell"),
 	target: z.string(),
-});
+}).meta({ id: "EirRefCellExpr", title: "Ref Cell Expression", description: "Create a mutable reference cell wrapping a target" });
 
 export const EirDerefExprSchema = z.object({
 	kind: z.literal("deref"),
 	target: z.string(),
-});
+}).meta({ id: "EirDerefExpr", title: "Dereference Expression", description: "Read the current value of a mutable reference cell" });
 
 export const EirTryExprSchema: z.ZodType<EirTryExpr> = z.object({
 	kind: z.literal("try"),
@@ -476,7 +476,7 @@ export const EirTryExprSchema: z.ZodType<EirTryExpr> = z.object({
 	catchParam: z.string(),
 	get catchBody() { return stringOrExpr(); },
 	get fallback() { return stringOrExpr().optional(); },
-});
+}).meta({ id: "EirTryExpr", title: "Try/Catch Expression", description: "Error handling with a try body and catch clause" });
 
 //==============================================================================
 // Zod Schemas - Expression Domain - EIR async extensions (8 variants)
@@ -485,12 +485,12 @@ export const EirTryExprSchema: z.ZodType<EirTryExpr> = z.object({
 export const EirParExprSchema = z.object({
 	kind: z.literal("par"),
 	branches: z.array(z.string()),
-});
+}).meta({ id: "EirParExpr", title: "Parallel Expression", description: "Execute branches concurrently and collect all results" });
 
 export const EirSpawnExprSchema = z.object({
 	kind: z.literal("spawn"),
 	task: z.string(),
-});
+}).meta({ id: "EirSpawnExpr", title: "Spawn Expression", description: "Launch a concurrent task and return a future handle" });
 
 export const EirAwaitExprSchema: z.ZodType<EirAwaitExpr> = z.object({
 	kind: z.literal("await"),
@@ -498,24 +498,24 @@ export const EirAwaitExprSchema: z.ZodType<EirAwaitExpr> = z.object({
 	get timeout() { return stringOrExpr().optional(); },
 	get fallback() { return stringOrExpr().optional(); },
 	returnIndex: z.boolean().optional(),
-});
+}).meta({ id: "EirAwaitExpr", title: "Await Expression", description: "Block until a future resolves, with optional timeout and fallback" });
 
 export const EirChannelExprSchema: z.ZodType<EirChannelExpr> = z.object({
 	kind: z.literal("channel"),
 	channelType: z.enum(["mpsc", "spsc", "mpmc", "broadcast"]),
 	get bufferSize() { return stringOrExpr().optional(); },
-});
+}).meta({ id: "EirChannelExpr", title: "Channel Expression", description: "Create a typed communication channel with optional buffer" });
 
 export const EirSendExprSchema: z.ZodType<EirSendExpr> = z.object({
 	kind: z.literal("send"),
 	channel: z.string(),
 	get value() { return stringOrExpr(); },
-});
+}).meta({ id: "EirSendExpr", title: "Send Expression", description: "Send a value into a channel" });
 
 export const EirRecvExprSchema = z.object({
 	kind: z.literal("recv"),
 	channel: z.string(),
-});
+}).meta({ id: "EirRecvExpr", title: "Receive Expression", description: "Receive a value from a channel" });
 
 export const EirSelectExprSchema: z.ZodType<EirSelectExpr> = z.object({
 	kind: z.literal("select"),
@@ -523,12 +523,12 @@ export const EirSelectExprSchema: z.ZodType<EirSelectExpr> = z.object({
 	get timeout() { return stringOrExpr().optional(); },
 	get fallback() { return stringOrExpr().optional(); },
 	returnIndex: z.boolean().optional(),
-});
+}).meta({ id: "EirSelectExpr", title: "Select Expression", description: "Wait for the first of multiple futures to resolve" });
 
 export const EirRaceExprSchema = z.object({
 	kind: z.literal("race"),
 	tasks: z.array(z.string()),
-});
+}).meta({ id: "EirRaceExpr", title: "Race Expression", description: "Race multiple tasks, returning the first to complete" });
 
 //==============================================================================
 // Combined Expression Schema
@@ -544,7 +544,7 @@ export const AirExprSchema: z.ZodType<Expr> = z.union([
 	LetExprSchema,
 	AirRefExprSchema,
 	PredicateExprSchema,
-] satisfies [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]);
+] satisfies [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]).meta({ id: "AirExpr", title: "AIR Expression", description: "Pure, bounded expression (no recursion or side effects)" });
 
 /** CIR-only expression variants: AIR plus lambda/callExpr/fix/do. No async extensions. */
 export const CirExprSchema: z.ZodType<Expr> = z.union([
@@ -560,7 +560,7 @@ export const CirExprSchema: z.ZodType<Expr> = z.union([
 	CallFnExprSchema,
 	FixExprSchema,
 	DoExprSchema,
-] satisfies [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]);
+] satisfies [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]).meta({ id: "CirExpr", title: "CIR Expression", description: "Functional expression with lambdas and recursion (no side effects)" });
 
 /**
  * Wide expression union used by the recursive stringOrExpr() helper.
@@ -581,7 +581,7 @@ export const ExprSchema: z.ZodType<Expr> = z.union([
 	CallFnExprSchema,
 	FixExprSchema,
 	DoExprSchema,
-] satisfies [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]).meta({ id: "Expr" });
+] satisfies [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]).meta({ id: "Expr", title: "Expression", description: "Wide expression union used for recursive inline expressions" });
 
 /** EIR expression variants: all base expressions plus EIR imperative and async extensions. */
 export const EirExprSchema: z.ZodType<EirExpr> = z.union([
@@ -614,7 +614,7 @@ export const EirExprSchema: z.ZodType<EirExpr> = z.union([
 	EirRecvExprSchema,
 	EirSelectExprSchema,
 	EirRaceExprSchema,
-] satisfies [z.ZodType<EirExpr>, z.ZodType<EirExpr>, ...z.ZodType<EirExpr>[]]).meta({ id: "EirExpr" });
+] satisfies [z.ZodType<EirExpr>, z.ZodType<EirExpr>, ...z.ZodType<EirExpr>[]]).meta({ id: "EirExpr", title: "EIR Expression", description: "Imperative expression with effects, mutation, loops, and concurrency" });
 
 //==============================================================================
 // Zod Schemas - LIR Domain
@@ -624,14 +624,14 @@ export const LirInsAssignSchema: z.ZodType<LirInsAssign> = z.object({
 	kind: z.literal("assign"),
 	target: z.string(),
 	value: CirExprSchema,
-}).meta({ id: "LirInsAssign" });
+}).meta({ id: "LirInsAssign", title: "LIR Assign Instruction", description: "Assign an expression result to a target variable" });
 
 export const LirInsCallSchema = z.object({
 	kind: z.literal("call"),
 	target: z.string(),
 	callee: z.string(),
 	args: z.array(z.string()),
-});
+}).meta({ id: "LirInsCall", title: "LIR Call Instruction", description: "Direct function call storing result in target" });
 
 export const LirInsOpSchema = z.object({
 	kind: z.literal("op"),
@@ -639,7 +639,7 @@ export const LirInsOpSchema = z.object({
 	ns: z.string(),
 	name: z.string(),
 	args: z.array(z.string()),
-}).meta({ id: "LirInsOp" });
+}).meta({ id: "LirInsOp", title: "LIR Operator Instruction", description: "Namespaced operator application storing result in target" });
 
 export const LirInsPhiSchema = z.object({
 	kind: z.literal("phi"),
@@ -654,20 +654,20 @@ export const LirInsPhiSchema = z.object({
 		},
 		z.object({ block: z.string(), id: z.string() }),
 	)),
-}).meta({ id: "LirInsPhi" });
+}).meta({ id: "LirInsPhi", title: "LIR Phi Instruction", description: "SSA phi node selecting a value based on predecessor block" });
 
 export const LirInsEffectSchema = z.object({
 	kind: z.literal("effect"),
 	target: z.string().optional(),
 	op: z.string(),
 	args: z.array(z.string()),
-});
+}).meta({ id: "LirInsEffect", title: "LIR Effect Instruction", description: "Side-effecting operation within a basic block" });
 
 export const LirInsAssignRefSchema = z.object({
 	kind: z.literal("assignRef"),
 	target: z.string(),
 	value: z.string(),
-});
+}).meta({ id: "LirInsAssignRef", title: "LIR Assign-Ref Instruction", description: "Assign a value to a mutable reference cell" });
 
 export const LirInstructionSchema: z.ZodType<LirInstruction> = z.union([
 	LirInsAssignSchema,
@@ -676,42 +676,42 @@ export const LirInstructionSchema: z.ZodType<LirInstruction> = z.union([
 	LirInsPhiSchema,
 	LirInsEffectSchema,
 	LirInsAssignRefSchema,
-]);
+]).meta({ id: "LirInstruction", title: "LIR Instruction", description: "Single instruction within a basic block" });
 
 export const LirTermJumpSchema = z.object({
 	kind: z.literal("jump"),
 	to: z.string(),
-}).meta({ id: "LirTermJump" });
+}).meta({ id: "LirTermJump", title: "Jump Terminator", description: "Unconditional jump to a target block" });
 
 export const LirTermBranchSchema = z.object({
 	kind: z.literal("branch"),
 	cond: z.string(),
 	then: z.string(),
 	else: z.string(),
-}).meta({ id: "LirTermBranch" });
+}).meta({ id: "LirTermBranch", title: "Branch Terminator", description: "Conditional branch to then or else block based on a condition" });
 
 export const LirTermReturnSchema = z.object({
 	kind: z.literal("return"),
 	value: z.string().optional(),
-}).meta({ id: "LirTermReturn" });
+}).meta({ id: "LirTermReturn", title: "Return Terminator", description: "Return a value from the current function" });
 
 export const LirTermExitSchema = z.object({
 	kind: z.literal("exit"),
 	code: z.union([z.string(), z.number()]).optional(),
-}).meta({ id: "LirTermExit" });
+}).meta({ id: "LirTermExit", title: "Exit Terminator", description: "Terminate program execution with an optional exit code" });
 
 export const LirTerminatorSchema: z.ZodType<LirTerminator> = z.union([
 	LirTermJumpSchema,
 	LirTermBranchSchema,
 	LirTermReturnSchema,
 	LirTermExitSchema,
-]);
+]).meta({ id: "LirTerminator", title: "LIR Terminator", description: "Control-flow terminator ending a basic block" });
 
 export const LirBlockSchema: z.ZodType<LirBlock> = z.object({
 	id: z.string(),
 	instructions: z.array(LirInstructionSchema),
 	get terminator() { return EirTerminatorZodSchema; },
-}) as z.ZodType<LirBlock>;
+}).meta({ id: "LirBlock", title: "Basic Block", description: "Sequence of instructions ending with a control-flow terminator" }) as z.ZodType<LirBlock>;
 
 //==============================================================================
 // Zod Schemas - Layer-Specific Block Instructions
@@ -758,7 +758,7 @@ export const EirInsSpawnSchema = z.object({
 	target: z.string(),
 	entry: z.string(),
 	args: z.array(z.string()).optional(),
-});
+}).meta({ id: "EirInsSpawn", title: "EIR Spawn Instruction", description: "Spawn a concurrent task from an entry block" });
 
 export const EirInsChannelOpSchema = z.object({
 	kind: z.literal("channelOp"),
@@ -766,13 +766,13 @@ export const EirInsChannelOpSchema = z.object({
 	target: z.string().optional(),
 	channel: z.string(),
 	value: z.string().optional(),
-});
+}).meta({ id: "EirInsChannelOp", title: "EIR Channel Operation", description: "Send or receive on a typed channel within a block" });
 
 export const EirInsAwaitSchema = z.object({
 	kind: z.literal("await"),
 	target: z.string(),
 	future: z.string(),
-});
+}).meta({ id: "EirInsAwait", title: "EIR Await Instruction", description: "Block until a future resolves, storing result in target" });
 
 export const EirFullInstructionSchema: z.ZodType<EirInstruction> = z.union([
 	EirBlockInstructionSchema,
@@ -785,20 +785,20 @@ export const EirTermForkSchema = z.object({
 	kind: z.literal("fork"),
 	branches: z.array(z.object({ block: z.string(), taskId: z.string() })),
 	continuation: z.string(),
-});
+}).meta({ id: "EirTermFork", title: "Fork Terminator", description: "Fork execution into multiple concurrent branches" });
 
 export const EirTermJoinSchema = z.object({
 	kind: z.literal("join"),
 	tasks: z.array(z.string()),
 	results: z.array(z.string()).optional(),
 	to: z.string(),
-});
+}).meta({ id: "EirTermJoin", title: "Join Terminator", description: "Wait for all tasks to complete, then continue" });
 
 export const EirTermSuspendSchema = z.object({
 	kind: z.literal("suspend"),
 	future: z.string(),
 	resumeBlock: z.string(),
-});
+}).meta({ id: "EirTermSuspend", title: "Suspend Terminator", description: "Suspend until a future resolves, then resume at a block" });
 
 export const EirTerminatorZodSchema: z.ZodType<EirTerminator> = z.union([
 	LirTermJumpSchema,
@@ -880,7 +880,7 @@ export const FunctionSignatureSchema: z.ZodType<FunctionSignature> = z.object({
 	params: z.array(TypeSchema),
 	returns: TypeSchema,
 	pure: z.boolean(),
-}).meta({ id: "FunctionSignature" });
+}).meta({ id: "FunctionSignature", title: "Function Signature", description: "Declared function signature with purity annotation" });
 
 export const AIRDefSchema: z.ZodType<AIRDef> = z.object({
 	ns: z.string(),
@@ -888,7 +888,7 @@ export const AIRDefSchema: z.ZodType<AIRDef> = z.object({
 	params: z.array(z.string()),
 	result: TypeSchema,
 	body: AirExprSchema,
-}).meta({ id: "AIRDef" });
+}).meta({ id: "AIRDef", title: "AIR Definition", description: "Reusable pure function definition scoped to AIR" });
 
 //==============================================================================
 // Zod Schemas - Documents
@@ -901,7 +901,7 @@ export const AIRDocumentSchema: z.ZodType<AIRDocument> = z.object({
 	airDefs: z.array(AIRDefSchema),
 	nodes: z.array(AirHybridNodeSchema),
 	result: z.string(),
-}).describe("AIRDocument");
+}).meta({ id: "AIRDocument", title: "AIR Document", description: "AIRDocument" });
 
 export const CIRDocumentSchema: z.ZodType<CIRDocument> = z.object({
 	version: SemVer,
@@ -910,7 +910,7 @@ export const CIRDocumentSchema: z.ZodType<CIRDocument> = z.object({
 	airDefs: z.array(AIRDefSchema),
 	nodes: z.array(CirHybridNodeSchema),
 	result: z.string(),
-}).describe("CIRDocument");
+}).meta({ id: "CIRDocument", title: "CIR Document", description: "CIRDocument" });
 
 export const EIRDocumentSchema: z.ZodType<EIRDocument> = z.object({
 	version: SemVer,
@@ -919,7 +919,7 @@ export const EIRDocumentSchema: z.ZodType<EIRDocument> = z.object({
 	airDefs: z.array(AIRDefSchema).optional(),
 	nodes: z.array(EirHybridNodeSchema),
 	result: z.string(),
-}).describe("EIRDocument");
+}).meta({ id: "EIRDocument", title: "EIR Document", description: "EIRDocument" });
 
 export const LIRDocumentSchema: z.ZodType<LIRDocument> = z.object({
 	version: SemVer,
@@ -928,13 +928,13 @@ export const LIRDocumentSchema: z.ZodType<LIRDocument> = z.object({
 	airDefs: z.array(AIRDefSchema).optional(),
 	nodes: z.array(LirHybridNodeSchema),
 	result: z.string(),
-}).describe("LIRDocument");
+}).meta({ id: "LIRDocument", title: "LIR Document", description: "LIRDocument" });
 
 export const SPIRALDocument = z.union([
 	AIRDocumentSchema,
 	CIRDocumentSchema,
 	EIRDocumentSchema,
 	LIRDocumentSchema,
-]).describe("SPIRALDocument");
+]).meta({ id: "SPIRALDocument", title: "SPIRAL Document", description: "SPIRALDocument" });
 
 export type SPIRALDocument = z.infer<typeof SPIRALDocument>;
