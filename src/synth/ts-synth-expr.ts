@@ -66,7 +66,7 @@ function preScanInlinedBodies(
 		if (!isExprNode(node)) continue;
 		const expr = node.expr;
 		if (expr.kind === "lambda") markInlinedBodies(state, expr.body, new Set(expr.params));
-		else if (expr.kind === "let") markInlinedBodies(state, expr.body, new Set([expr.name]));
+		else if (expr.kind === "let" && typeof expr.body === "string") markInlinedBodies(state, expr.body, new Set([expr.name]));
 	}
 }
 
@@ -156,7 +156,7 @@ function synthAirExpr(ctx: SynthContext, expr: Expr | EirExpr): string | undefin
 	case "call":
 		return synthCallExpr(ctx, expr);
 	case "if":
-		return `(${refToTs(ctx, expr.cond)} ? ${refToTs(ctx, expr.then)} : ${refToTs(ctx, expr.else)})`;
+		return `(${refOrInline(ctx, expr.cond)} ? ${refOrInline(ctx, expr.then)} : ${refOrInline(ctx, expr.else)})`;
 	case "let":
 		return synthLetExpr(ctx, expr);
 	case "airRef":
@@ -179,13 +179,13 @@ function synthCallExpr(ctx: SynthContext, expr: Expr & { kind: "call" }): string
 
 function synthLetExpr(ctx: SynthContext, expr: Expr & { kind: "let" }): string {
 	const letParams = new Set([...ctx.paramScope, expr.name]);
-	const inlined = needsBodyInline(ctx, expr.body, letParams);
-	if (inlined) {
+	const inlined = typeof expr.body === "string" ? needsBodyInline(ctx, expr.body, letParams) : undefined;
+	if (inlined && typeof expr.body === "string") {
 		ctx.state.inlinedNodes.add(expr.body);
 		const bodyCode = synthesizeExpr({ ...ctx, paramScope: letParams }, inlined.expr);
-		return `((${expr.name}: any) => ${bodyCode})(${refToTs(ctx, expr.value)})`;
+		return `((${expr.name}: any) => ${bodyCode})(${refOrInline(ctx, expr.value)})`;
 	}
-	return `((${expr.name}: any) => ${refToTs(ctx, expr.body)})(${refToTs(ctx, expr.value)})`;
+	return `((${expr.name}: any) => ${refOrInline(ctx, expr.body)})(${refOrInline(ctx, expr.value)})`;
 }
 
 function synthCirExpr(ctx: SynthContext, expr: Expr | EirExpr): string | undefined {
