@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 // evalNode - dispatch per expression kind for AIR/CIR nodes
 
 import {
@@ -17,8 +16,10 @@ import {
 	isExprNode,
 	voidVal,
 	closureVal,
+	boolVal,
+	errorVal,
+	isError,
 } from "../types.js";
-import { boolVal, errorVal, isError } from "../types.js";
 import type { EvalContext, NodeEvalResult } from "./types.js";
 import type { ProgramCtx } from "./air-program.js";
 import { applyOperator, type OpCall } from "./helpers.js";
@@ -103,8 +104,7 @@ export function makeState(ctx: ProgramCtx): EvalContext {
 }
 
 function evalNodeSimple(ctx: ProgramCtx, expr: Expr, env: ValueEnv): NodeEvalResult {
-	const state = makeState(ctx);
-	return { value: ctx.evaluator.evaluateWithState(expr, env, state), env };
+	return { value: ctx.evaluator.evaluateWithState(expr, env, makeState(ctx)), env };
 }
 
 const ASYNC_KINDS = new Set(["par", "spawn", "await", "channel", "send", "recv", "select", "race"]);
@@ -296,9 +296,7 @@ function resolveLetValueNode(ctx: ProgramCtx, valueId: string, env: ValueEnv): V
 	if (val) return val;
 	const node = ctx.nodeMap.get(valueId);
 	if (!node) return errorVal(ErrorCodes.DomainError, "Value node not evaluated: " + valueId);
-	if (isBlockNode(node)) {
-		return evaluateBlockNode(node, { registry: ctx.registry, nodeValues: ctx.nodeValues, options: ctx.options }, env);
-	}
+	if (isBlockNode(node)) return evaluateBlockNode(node, { registry: ctx.registry, nodeValues: ctx.nodeValues, options: ctx.options }, env);
 	return evalExprWithNodeMap(ctx, node.expr, env);
 }
 
@@ -359,8 +357,6 @@ function resolveDoRef(ctx: ProgramCtx, e: string, env: ValueEnv): Value {
 	if (cached) return cached;
 	const node = ctx.nodeMap.get(e);
 	if (!node) return errorVal(ErrorCodes.DomainError, "Do expr ref not found: " + e);
-	if (isBlockNode(node)) {
-		return evaluateBlockNode(node, { registry: ctx.registry, nodeValues: ctx.nodeValues, options: ctx.options }, env);
-	}
+	if (isBlockNode(node)) return evaluateBlockNode(node, { registry: ctx.registry, nodeValues: ctx.nodeValues, options: ctx.options }, env);
 	return evalExprWithNodeMap(ctx, node.expr, env);
 }
