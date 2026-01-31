@@ -208,12 +208,6 @@ export default [
 		},
 	},
 	{
-		files: ["src/zod-schemas.ts"],
-		rules: {
-			"@typescript-eslint/consistent-type-assertions": "off",
-		},
-	},
-	{
 		files: ["src/synth/python.ts"],
 		rules: {
 			"@typescript-eslint/no-unnecessary-condition": "off",
