@@ -28,11 +28,11 @@
           "params": {
             "type": "array",
             "items": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             }
           },
           "returns": {
-            "$ref": "#/$defs/__schema0"
+            "$ref": "#/$defs/Type"
           },
           "pure": {
             "type": "boolean"
@@ -66,7 +66,7 @@
             }
           },
           "result": {
-            "$ref": "#/$defs/__schema0"
+            "$ref": "#/$defs/Type"
           },
           "body": {
             "anyOf": [
@@ -78,7 +78,7 @@
                     "const": "lit"
                   },
                   "type": {
-                    "$ref": "#/$defs/__schema0"
+                    "$ref": "#/$defs/Type"
                   },
                   "value": {}
                 },
@@ -124,7 +124,7 @@
                 "additionalProperties": false
               },
               {
-                "$ref": "#/$defs/__schema1"
+                "$ref": "#/$defs/CallExpr"
               },
               {
                 "type": "object",
@@ -139,7 +139,7 @@
                         "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/__schema2"
+                        "$ref": "#/$defs/Expr"
                       }
                     ]
                   },
@@ -149,7 +149,7 @@
                         "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/__schema2"
+                        "$ref": "#/$defs/Expr"
                       }
                     ]
                   },
@@ -159,12 +159,12 @@
                         "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/__schema2"
+                        "$ref": "#/$defs/Expr"
                       }
                     ]
                   },
                   "type": {
-                    "$ref": "#/$defs/__schema0"
+                    "$ref": "#/$defs/Type"
                   }
                 },
                 "required": [
@@ -191,7 +191,7 @@
                         "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/__schema2"
+                        "$ref": "#/$defs/Expr"
                       }
                     ]
                   },
@@ -201,12 +201,12 @@
                         "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/__schema2"
+                        "$ref": "#/$defs/Expr"
                       }
                     ]
                   },
                   "type": {
-                    "$ref": "#/$defs/__schema0"
+                    "$ref": "#/$defs/Type"
                   }
                 },
                 "required": [
@@ -290,7 +290,7 @@
                 "type": "string"
               },
               "type": {
-                "$ref": "#/$defs/__schema0"
+                "$ref": "#/$defs/Type"
               },
               "expr": {
                 "anyOf": [
@@ -302,7 +302,7 @@
                         "const": "lit"
                       },
                       "type": {
-                        "$ref": "#/$defs/__schema0"
+                        "$ref": "#/$defs/Type"
                       },
                       "value": {}
                     },
@@ -348,7 +348,7 @@
                     "additionalProperties": false
                   },
                   {
-                    "$ref": "#/$defs/__schema1"
+                    "$ref": "#/$defs/CallExpr"
                   },
                   {
                     "type": "object",
@@ -363,7 +363,7 @@
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/__schema2"
+                            "$ref": "#/$defs/Expr"
                           }
                         ]
                       },
@@ -373,7 +373,7 @@
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/__schema2"
+                            "$ref": "#/$defs/Expr"
                           }
                         ]
                       },
@@ -383,12 +383,12 @@
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/__schema2"
+                            "$ref": "#/$defs/Expr"
                           }
                         ]
                       },
                       "type": {
-                        "$ref": "#/$defs/__schema0"
+                        "$ref": "#/$defs/Type"
                       }
                     },
                     "required": [
@@ -415,7 +415,7 @@
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/__schema2"
+                            "$ref": "#/$defs/Expr"
                           }
                         ]
                       },
@@ -425,12 +425,12 @@
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/__schema2"
+                            "$ref": "#/$defs/Expr"
                           }
                         ]
                       },
                       "type": {
-                        "$ref": "#/$defs/__schema0"
+                        "$ref": "#/$defs/Type"
                       }
                     },
                     "required": [
@@ -506,7 +506,7 @@
                 "type": "string"
               },
               "type": {
-                "$ref": "#/$defs/__schema0"
+                "$ref": "#/$defs/Type"
               },
               "blocks": {
                 "type": "array",
@@ -540,7 +540,7 @@
                                         "const": "lit"
                                       },
                                       "type": {
-                                        "$ref": "#/$defs/__schema0"
+                                        "$ref": "#/$defs/Type"
                                       },
                                       "value": {}
                                     },
@@ -586,7 +586,7 @@
                                     "additionalProperties": false
                                   },
                                   {
-                                    "$ref": "#/$defs/__schema1"
+                                    "$ref": "#/$defs/CallExpr"
                                   },
                                   {
                                     "type": "object",
@@ -601,7 +601,7 @@
                                             "type": "string"
                                           },
                                           {
-                                            "$ref": "#/$defs/__schema2"
+                                            "$ref": "#/$defs/Expr"
                                           }
                                         ]
                                       },
@@ -611,7 +611,7 @@
                                             "type": "string"
                                           },
                                           {
-                                            "$ref": "#/$defs/__schema2"
+                                            "$ref": "#/$defs/Expr"
                                           }
                                         ]
                                       },
@@ -621,12 +621,12 @@
                                             "type": "string"
                                           },
                                           {
-                                            "$ref": "#/$defs/__schema2"
+                                            "$ref": "#/$defs/Expr"
                                           }
                                         ]
                                       },
                                       "type": {
-                                        "$ref": "#/$defs/__schema0"
+                                        "$ref": "#/$defs/Type"
                                       }
                                     },
                                     "required": [
@@ -653,7 +653,7 @@
                                             "type": "string"
                                           },
                                           {
-                                            "$ref": "#/$defs/__schema2"
+                                            "$ref": "#/$defs/Expr"
                                           }
                                         ]
                                       },
@@ -663,12 +663,12 @@
                                             "type": "string"
                                           },
                                           {
-                                            "$ref": "#/$defs/__schema2"
+                                            "$ref": "#/$defs/Expr"
                                           }
                                         ]
                                       },
                                       "type": {
-                                        "$ref": "#/$defs/__schema0"
+                                        "$ref": "#/$defs/Type"
                                       }
                                     },
                                     "required": [
@@ -931,7 +931,7 @@
   "additionalProperties": false,
   "description": "AIRDocument",
   "$defs": {
-    "__schema0": {
+    "Type": {
       "anyOf": [
         {
           "type": "object",
@@ -1006,7 +1006,7 @@
               "const": "set"
             },
             "of": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             }
           },
           "required": [
@@ -1023,7 +1023,7 @@
               "const": "list"
             },
             "of": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             }
           },
           "required": [
@@ -1040,10 +1040,10 @@
               "const": "map"
             },
             "key": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             },
             "value": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             }
           },
           "required": [
@@ -1061,7 +1061,7 @@
               "const": "option"
             },
             "of": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             }
           },
           "required": [
@@ -1097,11 +1097,11 @@
             "params": {
               "type": "array",
               "items": {
-                "$ref": "#/$defs/__schema0"
+                "$ref": "#/$defs/Type"
               }
             },
             "returns": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             },
             "optionalParams": {
               "type": "array",
@@ -1125,7 +1125,7 @@
               "const": "ref"
             },
             "of": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             }
           },
           "required": [
@@ -1142,7 +1142,7 @@
               "const": "future"
             },
             "of": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             }
           },
           "required": [
@@ -1168,7 +1168,7 @@
               ]
             },
             "of": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             }
           },
           "required": [
@@ -1186,7 +1186,7 @@
               "const": "task"
             },
             "returns": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             }
           },
           "required": [
@@ -1205,7 +1205,7 @@
             "params": {
               "type": "array",
               "items": {
-                "$ref": "#/$defs/__schema0"
+                "$ref": "#/$defs/Type"
               }
             },
             "returns": {
@@ -1216,7 +1216,7 @@
                   "const": "future"
                 },
                 "of": {
-                  "$ref": "#/$defs/__schema0"
+                  "$ref": "#/$defs/Type"
                 }
               },
               "required": [
@@ -1233,9 +1233,10 @@
           ],
           "additionalProperties": false
         }
-      ]
+      ],
+      "id": "Type"
     },
-    "__schema1": {
+    "CallExpr": {
       "type": "object",
       "properties": {
         "kind": {
@@ -1256,7 +1257,7 @@
                 "type": "string"
               },
               {
-                "$ref": "#/$defs/__schema2"
+                "$ref": "#/$defs/Expr"
               }
             ]
           }
@@ -1268,9 +1269,10 @@
         "name",
         "args"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "id": "CallExpr"
     },
-    "__schema2": {
+    "Expr": {
       "anyOf": [
         {
           "type": "object",
@@ -1280,7 +1282,7 @@
               "const": "lit"
             },
             "type": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             },
             "value": {}
           },
@@ -1326,7 +1328,7 @@
           "additionalProperties": false
         },
         {
-          "$ref": "#/$defs/__schema1"
+          "$ref": "#/$defs/CallExpr"
         },
         {
           "type": "object",
@@ -1341,7 +1343,7 @@
                   "type": "string"
                 },
                 {
-                  "$ref": "#/$defs/__schema2"
+                  "$ref": "#/$defs/Expr"
                 }
               ]
             },
@@ -1351,7 +1353,7 @@
                   "type": "string"
                 },
                 {
-                  "$ref": "#/$defs/__schema2"
+                  "$ref": "#/$defs/Expr"
                 }
               ]
             },
@@ -1361,12 +1363,12 @@
                   "type": "string"
                 },
                 {
-                  "$ref": "#/$defs/__schema2"
+                  "$ref": "#/$defs/Expr"
                 }
               ]
             },
             "type": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             }
           },
           "required": [
@@ -1393,7 +1395,7 @@
                   "type": "string"
                 },
                 {
-                  "$ref": "#/$defs/__schema2"
+                  "$ref": "#/$defs/Expr"
                 }
               ]
             },
@@ -1403,12 +1405,12 @@
                   "type": "string"
                 },
                 {
-                  "$ref": "#/$defs/__schema2"
+                  "$ref": "#/$defs/Expr"
                 }
               ]
             },
             "type": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             }
           },
           "required": [
@@ -1489,13 +1491,13 @@
                         "type": "string"
                       },
                       "type": {
-                        "$ref": "#/$defs/__schema0"
+                        "$ref": "#/$defs/Type"
                       },
                       "optional": {
                         "type": "boolean"
                       },
                       "default": {
-                        "$ref": "#/$defs/__schema2"
+                        "$ref": "#/$defs/Expr"
                       }
                     },
                     "required": [
@@ -1510,7 +1512,7 @@
               "type": "string"
             },
             "type": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             }
           },
           "required": [
@@ -1539,7 +1541,7 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/__schema2"
+                    "$ref": "#/$defs/Expr"
                   }
                 ]
               }
@@ -1563,7 +1565,7 @@
               "type": "string"
             },
             "type": {
-              "$ref": "#/$defs/__schema0"
+              "$ref": "#/$defs/Type"
             }
           },
           "required": [
@@ -1588,7 +1590,7 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/__schema2"
+                    "$ref": "#/$defs/Expr"
                   }
                 ]
               }
@@ -1600,7 +1602,8 @@
           ],
           "additionalProperties": false
         }
-      ]
+      ],
+      "id": "Expr"
     }
   }
 }
