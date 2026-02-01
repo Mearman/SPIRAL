@@ -120,5 +120,5 @@
 		}
 	],
 	"result": "containsExisting",
-	"expected_result": false
+	"expected_result": true
 }
