@@ -1,0 +1,36 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/air.schema.json",
+	"version": "1.0.0",
+	"description": "Build a record (map with string keys) and access a field with map:get",
+	"airDefs": [],
+	"nodes": [
+		{
+			"id": "kindStr",
+			"expr": { "kind": "lit", "type": { "kind": "string" }, "value": "lit" }
+		},
+		{
+			"id": "valInt",
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 42 }
+		},
+		{
+			"id": "node",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{ "key": "kind", "value": "kindStr" },
+					{ "key": "value", "value": "valInt" }
+				]
+			}
+		},
+		{
+			"id": "fieldName",
+			"expr": { "kind": "lit", "type": { "kind": "string" }, "value": "value" }
+		},
+		{
+			"id": "result",
+			"expr": { "kind": "call", "ns": "map", "name": "get", "args": ["node", "fieldName"] }
+		}
+	],
+	"result": "result",
+	"expected_result": 42
+}

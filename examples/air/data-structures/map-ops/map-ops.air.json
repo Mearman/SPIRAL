@@ -1,0 +1,44 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/air.schema.json",
+	"version": "1.0.0",
+	"description": "Demonstrate map operators: construct a record, set a field, check has, get size",
+	"airDefs": [],
+	"nodes": [
+		{
+			"id": "name",
+			"expr": { "kind": "lit", "type": { "kind": "string" }, "value": "Alice" }
+		},
+		{
+			"id": "age",
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 30 }
+		},
+		{
+			"id": "person",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{ "key": "name", "value": "name" },
+					{ "key": "age", "value": "age" }
+				]
+			}
+		},
+		{
+			"id": "cityKey",
+			"expr": { "kind": "lit", "type": { "kind": "string" }, "value": "city" }
+		},
+		{
+			"id": "cityVal",
+			"expr": { "kind": "lit", "type": { "kind": "string" }, "value": "NYC" }
+		},
+		{
+			"id": "withCity",
+			"expr": { "kind": "call", "ns": "map", "name": "set", "args": ["person", "cityKey", "cityVal"] }
+		},
+		{
+			"id": "result",
+			"expr": { "kind": "call", "ns": "map", "name": "size", "args": ["withCity"] }
+		}
+	],
+	"result": "result",
+	"expected_result": 3
+}

@@ -1,0 +1,43 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/air.schema.json",
+	"version": "1.0.0",
+	"description": "Match on a string value to dispatch to different branches",
+	"airDefs": [],
+	"nodes": [
+		{
+			"id": "exprKind",
+			"expr": { "kind": "lit", "type": { "kind": "string" }, "value": "call" }
+		},
+		{
+			"id": "litResult",
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+		},
+		{
+			"id": "callResult",
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 2 }
+		},
+		{
+			"id": "ifResult",
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 3 }
+		},
+		{
+			"id": "defaultResult",
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+		},
+		{
+			"id": "result",
+			"expr": {
+				"kind": "match",
+				"value": "exprKind",
+				"cases": [
+					{ "body": "litResult", "pattern": "lit" },
+					{ "body": "callResult", "pattern": "call" },
+					{ "body": "ifResult", "pattern": "if" }
+				],
+				"default": "defaultResult"
+			}
+		}
+	],
+	"result": "result",
+	"expected_result": 2
+}
