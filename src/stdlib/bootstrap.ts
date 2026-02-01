@@ -24,6 +24,7 @@ export function bootstrapRegistry(): OperatorRegistry {
 		"string.cir.json",
 		"map.cir.json",
 		"set.cir.json",
+		"meta.cir.json",
 	];
 
 	const paths: string[] = [];

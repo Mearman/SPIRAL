@@ -593,3 +593,84 @@ describe("set stdlib", () => {
 		assert.deepStrictEqual(subset.fn(emptySet, b), boolVal(true));
 	});
 });
+
+describe("meta stdlib", () => {
+	const kernel = createKernelRegistry();
+	const registry = loadStdlib(kernel, [
+		resolve(stdlibDir, "bool.cir.json"),
+		resolve(stdlibDir, "list.cir.json"),
+		resolve(stdlibDir, "string.cir.json"),
+		resolve(stdlibDir, "map.cir.json"),
+		resolve(stdlibDir, "set.cir.json"),
+		resolve(stdlibDir, "meta.cir.json"),
+	]);
+
+	function makeDoc(nodes: Value[], result: string): Value {
+		return mapVal(new Map([
+			["s:nodes", listVal(nodes)],
+			["s:result", stringVal(result)],
+		]));
+	}
+
+	function makeNode(id: string, expr: Value): Value {
+		return mapVal(new Map([
+			["s:id", stringVal(id)],
+			["s:expr", expr],
+		]));
+	}
+
+	function litExpr(value: number): Value {
+		return mapVal(new Map([
+			["s:kind", stringVal("lit")],
+			["s:value", intVal(value)],
+		]));
+	}
+
+	function callExpr(ns: string, name: string, args: string[]): Value {
+		return mapVal(new Map([
+			["s:kind", stringVal("call")],
+			["s:ns", stringVal(ns)],
+			["s:name", stringVal(name)],
+			["s:args", listVal(args.map(stringVal))],
+		]));
+	}
+
+	it("meta:eval evaluates simple addition (10 + 20 = 30)", () => {
+		const metaEval = lookupOperator(registry, "meta", "eval")!;
+		const doc = makeDoc([
+			makeNode("a", litExpr(10)),
+			makeNode("b", litExpr(20)),
+			makeNode("sum", callExpr("core", "add", ["a", "b"])),
+		], "sum");
+		assert.deepStrictEqual(metaEval.fn(doc), intVal(30));
+	});
+
+	it("meta:eval evaluates nested arithmetic", () => {
+		const metaEval = lookupOperator(registry, "meta", "eval")!;
+		const doc = makeDoc([
+			makeNode("x", litExpr(3)),
+			makeNode("y", litExpr(4)),
+			makeNode("prod", callExpr("core", "mul", ["x", "y"])),
+			makeNode("z", litExpr(2)),
+			makeNode("r", callExpr("core", "add", ["prod", "z"])),
+		], "r");
+		assert.deepStrictEqual(metaEval.fn(doc), intVal(14));
+	});
+
+	it("meta:eval evaluates if expression", () => {
+		const metaEval = lookupOperator(registry, "meta", "eval")!;
+		const ifExpr = mapVal(new Map([
+			["s:kind", stringVal("if")],
+			["s:cond", stringVal("cond")],
+			["s:then", stringVal("a")],
+			["s:else", stringVal("b")],
+		]));
+		const doc = makeDoc([
+			makeNode("a", litExpr(1)),
+			makeNode("b", litExpr(2)),
+			makeNode("cond", callExpr("core", "gt", ["a", "b"])),
+			makeNode("r", ifExpr),
+		], "r");
+		assert.deepStrictEqual(metaEval.fn(doc), intVal(2));
+	});
+});
