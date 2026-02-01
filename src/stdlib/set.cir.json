@@ -1,0 +1,234 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Set stdlib — union, intersect, difference, subset implemented in SPIRAL CIR using fix combinator. Kernel provides set:add, set:remove, set:contains, set:size, set:toList.",
+	"airDefs": [],
+	"nodes": [
+		{ "id": "zero", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 } },
+		{ "id": "one",  "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 } },
+		{ "id": "trueVal", "expr": { "kind": "lit", "type": { "kind": "bool" }, "value": true } },
+		{ "id": "falseVal", "expr": { "kind": "lit", "type": { "kind": "bool" }, "value": false } },
+		{ "id": "emptySet", "expr": { "kind": "lit", "type": { "kind": "set", "of": { "kind": "int" } }, "value": [] } },
+
+		{ "id": "unionRecBody", "expr": {
+			"kind": "let", "name": "check",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "len" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "check" },
+				"then": { "kind": "var", "name": "acc" },
+				"else": { "kind": "let", "name": "elem",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "elems" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "newAcc",
+						"value": { "kind": "call", "ns": "set", "name": "add", "args": [{ "kind": "var", "name": "acc" }, { "kind": "var", "name": "elem" }] },
+						"body": { "kind": "let", "name": "nextI",
+							"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+							"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }, { "kind": "var", "name": "newAcc" }], "fn": "rec" }
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "unionRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } },
+			"params": ["i", "acc"],
+			"body": "unionRecBody"
+		}},
+		{ "id": "unionRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } } },
+			"params": ["rec"],
+			"body": "unionRecInner"
+		}},
+		{ "id": "unionBody", "expr": {
+			"kind": "let", "name": "elems",
+			"value": { "kind": "call", "ns": "set", "name": "toList", "args": [{ "kind": "var", "name": "b" }] },
+			"body": { "kind": "let", "name": "len",
+				"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "elems" }] },
+				"body": { "kind": "let", "name": "iter",
+					"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } }, "fn": "unionRecOuter" },
+					"body": { "kind": "callExpr", "args": ["zero", { "kind": "var", "name": "a" }], "fn": "iter" }
+				}
+			}
+		}},
+		{ "id": "union", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "set", "of": { "kind": "int" } }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } },
+			"params": ["a", "b"],
+			"body": "unionBody"
+		}},
+
+		{ "id": "intersectRecBody", "expr": {
+			"kind": "let", "name": "check",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "len" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "check" },
+				"then": { "kind": "var", "name": "acc" },
+				"else": { "kind": "let", "name": "elem",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "elems" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "inB",
+						"value": { "kind": "call", "ns": "set", "name": "contains", "args": [{ "kind": "var", "name": "b" }, { "kind": "var", "name": "elem" }] },
+						"body": { "kind": "let", "name": "newAcc",
+							"value": { "kind": "if",
+								"cond": { "kind": "var", "name": "inB" },
+								"then": { "kind": "call", "ns": "set", "name": "add", "args": [{ "kind": "var", "name": "acc" }, { "kind": "var", "name": "elem" }] },
+								"else": { "kind": "var", "name": "acc" }
+							},
+							"body": { "kind": "let", "name": "nextI",
+								"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+								"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }, { "kind": "var", "name": "newAcc" }], "fn": "rec" }
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "intersectRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } },
+			"params": ["i", "acc"],
+			"body": "intersectRecBody"
+		}},
+		{ "id": "intersectRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } } },
+			"params": ["rec"],
+			"body": "intersectRecInner"
+		}},
+		{ "id": "intersectBody", "expr": {
+			"kind": "let", "name": "elems",
+			"value": { "kind": "call", "ns": "set", "name": "toList", "args": [{ "kind": "var", "name": "a" }] },
+			"body": { "kind": "let", "name": "len",
+				"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "elems" }] },
+				"body": { "kind": "let", "name": "iter",
+					"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } }, "fn": "intersectRecOuter" },
+					"body": { "kind": "callExpr", "args": ["zero", "emptySet"], "fn": "iter" }
+				}
+			}
+		}},
+		{ "id": "intersect", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "set", "of": { "kind": "int" } }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } },
+			"params": ["a", "b"],
+			"body": "intersectBody"
+		}},
+
+		{ "id": "differenceRecBody", "expr": {
+			"kind": "let", "name": "check",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "len" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "check" },
+				"then": { "kind": "var", "name": "acc" },
+				"else": { "kind": "let", "name": "elem",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "elems" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "inB",
+						"value": { "kind": "call", "ns": "set", "name": "contains", "args": [{ "kind": "var", "name": "b" }, { "kind": "var", "name": "elem" }] },
+						"body": { "kind": "let", "name": "newAcc",
+							"value": { "kind": "if",
+								"cond": { "kind": "var", "name": "inB" },
+								"then": { "kind": "var", "name": "acc" },
+								"else": { "kind": "call", "ns": "set", "name": "add", "args": [{ "kind": "var", "name": "acc" }, { "kind": "var", "name": "elem" }] }
+							},
+							"body": { "kind": "let", "name": "nextI",
+								"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+								"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }, { "kind": "var", "name": "newAcc" }], "fn": "rec" }
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "differenceRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } },
+			"params": ["i", "acc"],
+			"body": "differenceRecBody"
+		}},
+		{ "id": "differenceRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } } },
+			"params": ["rec"],
+			"body": "differenceRecInner"
+		}},
+		{ "id": "differenceBody", "expr": {
+			"kind": "let", "name": "elems",
+			"value": { "kind": "call", "ns": "set", "name": "toList", "args": [{ "kind": "var", "name": "a" }] },
+			"body": { "kind": "let", "name": "len",
+				"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "elems" }] },
+				"body": { "kind": "let", "name": "iter",
+					"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } }, "fn": "differenceRecOuter" },
+					"body": { "kind": "callExpr", "args": ["zero", "emptySet"], "fn": "iter" }
+				}
+			}
+		}},
+		{ "id": "difference", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "set", "of": { "kind": "int" } }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "set", "of": { "kind": "int" } } },
+			"params": ["a", "b"],
+			"body": "differenceBody"
+		}},
+
+		{ "id": "subsetRecBody", "expr": {
+			"kind": "let", "name": "check",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "len" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "check" },
+				"then": "trueVal",
+				"else": { "kind": "let", "name": "elem",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "elems" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "inB",
+						"value": { "kind": "call", "ns": "set", "name": "contains", "args": [{ "kind": "var", "name": "b" }, { "kind": "var", "name": "elem" }] },
+						"body": { "kind": "if",
+							"cond": { "kind": "var", "name": "inB" },
+							"then": { "kind": "let", "name": "nextI",
+								"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+								"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }], "fn": "rec" }
+							},
+							"else": "falseVal"
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "subsetRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "bool" } },
+			"params": ["i"],
+			"body": "subsetRecBody"
+		}},
+		{ "id": "subsetRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "bool" } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "bool" } } },
+			"params": ["rec"],
+			"body": "subsetRecInner"
+		}},
+		{ "id": "subsetBody", "expr": {
+			"kind": "let", "name": "elems",
+			"value": { "kind": "call", "ns": "set", "name": "toList", "args": [{ "kind": "var", "name": "a" }] },
+			"body": { "kind": "let", "name": "len",
+				"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "elems" }] },
+				"body": { "kind": "let", "name": "iter",
+					"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "bool" } }, "fn": "subsetRecOuter" },
+					"body": { "kind": "callExpr", "args": ["zero"], "fn": "iter" }
+				}
+			}
+		}},
+		{ "id": "subset", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "set", "of": { "kind": "int" } }, { "kind": "set", "of": { "kind": "int" } }], "returns": { "kind": "bool" } },
+			"params": ["a", "b"],
+			"body": "subsetBody"
+		}},
+
+		{ "id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{ "key": "set:union", "value": "union" },
+				{ "key": "set:intersect", "value": "intersect" },
+				{ "key": "set:difference", "value": "difference" },
+				{ "key": "set:subset", "value": "subset" }
+			]
+		}}
+	],
+	"result": "exports"
+}
