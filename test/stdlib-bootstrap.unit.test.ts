@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { createKernelRegistry } from "../src/stdlib/kernel.js";
 import { loadStdlib } from "../src/stdlib/loader.js";
 import { lookupOperator } from "../src/domains/registry.js";
-import { boolVal, intVal, listVal, mapVal, stringVal } from "../src/types.js";
+import { boolVal, intVal, listVal, mapVal, setVal, stringVal, hashValue } from "../src/types.js";
 import type { Value } from "../src/types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -53,14 +53,22 @@ describe("kernel registry", () => {
 		assert.ok(lookupOperator(kernel, "string", "charAt"));
 	});
 
+	it("has set primitives", () => {
+		assert.ok(lookupOperator(kernel, "set", "add"));
+		assert.ok(lookupOperator(kernel, "set", "remove"));
+		assert.ok(lookupOperator(kernel, "set", "contains"));
+		assert.ok(lookupOperator(kernel, "set", "size"));
+		assert.ok(lookupOperator(kernel, "set", "toList"));
+	});
+
 	it("does NOT have derived operators", () => {
 		assert.strictEqual(lookupOperator(kernel, "bool", "and"), undefined);
 		assert.strictEqual(lookupOperator(kernel, "bool", "or"), undefined);
 		assert.strictEqual(lookupOperator(kernel, "bool", "xor"), undefined);
 	});
 
-	it("has 32 total operators", () => {
-		assert.strictEqual(kernel.size, 32);
+	it("has 33 total operators", () => {
+		assert.strictEqual(kernel.size, 33);
 	});
 });
 
@@ -422,5 +430,125 @@ describe("map stdlib", () => {
 		if (result.kind === "map") {
 			assert.strictEqual(result.value.size, 1);
 		}
+	});
+});
+
+describe("set stdlib", () => {
+	const kernel = createKernelRegistry();
+	const registry = loadStdlib(kernel, [
+		resolve(stdlibDir, "bool.cir.json"),
+		resolve(stdlibDir, "list.cir.json"),
+		resolve(stdlibDir, "string.cir.json"),
+		resolve(stdlibDir, "map.cir.json"),
+		resolve(stdlibDir, "set.cir.json"),
+	]);
+
+	function makeSet(...vals: Value[]): Value {
+		return setVal(new Set(vals.map(hashValue)));
+	}
+	const emptySet = setVal(new Set<string>());
+
+	// union
+	it("set:union returns union of disjoint sets", () => {
+		const union = lookupOperator(registry, "set", "union")!;
+		const a = makeSet(intVal(1), intVal(2));
+		const b = makeSet(intVal(3), intVal(4));
+		const result = union.fn(a, b);
+		assert.strictEqual(result.kind, "set");
+		if (result.kind === "set") {
+			assert.strictEqual(result.value.size, 4);
+		}
+	});
+
+	it("set:union deduplicates overlapping elements", () => {
+		const union = lookupOperator(registry, "set", "union")!;
+		const a = makeSet(intVal(1), intVal(2), intVal(3));
+		const b = makeSet(intVal(2), intVal(3), intVal(4));
+		const result = union.fn(a, b);
+		assert.strictEqual(result.kind, "set");
+		if (result.kind === "set") {
+			assert.strictEqual(result.value.size, 4);
+		}
+	});
+
+	it("set:union with empty set", () => {
+		const union = lookupOperator(registry, "set", "union")!;
+		const a = makeSet(intVal(1), intVal(2));
+		const result = union.fn(a, emptySet);
+		assert.strictEqual(result.kind, "set");
+		if (result.kind === "set") {
+			assert.strictEqual(result.value.size, 2);
+		}
+	});
+
+	// intersect
+	it("set:intersect returns common elements", () => {
+		const intersect = lookupOperator(registry, "set", "intersect")!;
+		const a = makeSet(intVal(1), intVal(2), intVal(3));
+		const b = makeSet(intVal(2), intVal(3), intVal(4));
+		const result = intersect.fn(a, b);
+		assert.strictEqual(result.kind, "set");
+		if (result.kind === "set") {
+			assert.strictEqual(result.value.size, 2);
+			assert.ok(result.value.has(hashValue(intVal(2))));
+			assert.ok(result.value.has(hashValue(intVal(3))));
+		}
+	});
+
+	it("set:intersect returns empty for disjoint sets", () => {
+		const intersect = lookupOperator(registry, "set", "intersect")!;
+		const a = makeSet(intVal(1), intVal(2));
+		const b = makeSet(intVal(3), intVal(4));
+		const result = intersect.fn(a, b);
+		assert.deepStrictEqual(result, emptySet);
+	});
+
+	// difference
+	it("set:difference returns elements in a not in b", () => {
+		const difference = lookupOperator(registry, "set", "difference")!;
+		const a = makeSet(intVal(1), intVal(2), intVal(3));
+		const b = makeSet(intVal(2), intVal(3), intVal(4));
+		const result = difference.fn(a, b);
+		assert.strictEqual(result.kind, "set");
+		if (result.kind === "set") {
+			assert.strictEqual(result.value.size, 1);
+			assert.ok(result.value.has(hashValue(intVal(1))));
+		}
+	});
+
+	it("set:difference returns empty when sets are equal", () => {
+		const difference = lookupOperator(registry, "set", "difference")!;
+		const a = makeSet(intVal(1), intVal(2));
+		const b = makeSet(intVal(1), intVal(2));
+		const result = difference.fn(a, b);
+		assert.deepStrictEqual(result, emptySet);
+	});
+
+	// subset
+	it("set:subset returns true for proper subset", () => {
+		const subset = lookupOperator(registry, "set", "subset")!;
+		const a = makeSet(intVal(1), intVal(2));
+		const b = makeSet(intVal(1), intVal(2), intVal(3));
+		assert.deepStrictEqual(subset.fn(a, b), boolVal(true));
+	});
+
+	it("set:subset returns true for equal sets", () => {
+		const subset = lookupOperator(registry, "set", "subset")!;
+		const a = makeSet(intVal(1), intVal(2));
+		const b = makeSet(intVal(1), intVal(2));
+		assert.deepStrictEqual(subset.fn(a, b), boolVal(true));
+	});
+
+	it("set:subset returns false for partial overlap", () => {
+		const subset = lookupOperator(registry, "set", "subset")!;
+		const a = makeSet(intVal(1), intVal(2), intVal(3));
+		const b = makeSet(intVal(2), intVal(3));
+		assert.deepStrictEqual(subset.fn(a, b), boolVal(false));
+	});
+
+	it("set:subset returns true for empty subset", () => {
+		const subset = lookupOperator(registry, "set", "subset")!;
+		const b = makeSet(intVal(1), intVal(2));
+		assert.deepStrictEqual(subset.fn(emptySet, b), boolVal(true));
 	});
 });
