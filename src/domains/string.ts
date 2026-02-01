@@ -1,11 +1,12 @@
 // SPIRAL String Domain
 // String manipulation operators
 
-import { SPIRALError } from "../errors.js";
+import { SPIRALError, ErrorCodes } from "../errors.js";
 import type { Value } from "../types.js";
 import {
 	boolType,
 	boolVal,
+	errorVal,
 	intType,
 	intVal,
 	isError,
@@ -173,6 +174,28 @@ const charAt: Operator = defineOperator("string", "charAt")
 	})
 	.build();
 
+// join(list<string>, string) -> string
+// Joins a list of strings with a separator.
+const join: Operator = defineOperator("string", "join")
+	.setParams(listType(stringType), stringType)
+	.setReturns(stringType)
+	.setPure(true)
+	.setImpl((a, b) => {
+		if (isError(a)) return a;
+		if (isError(b)) return b;
+		if (a.kind !== "list") return errorVal(ErrorCodes.TypeError, "Expected list value");
+		if (b.kind !== "string") return errorVal(ErrorCodes.TypeError, "Expected string separator");
+		const parts: string[] = [];
+		for (const elem of a.value) {
+			if (elem.kind !== "string") {
+				return errorVal(ErrorCodes.TypeError, "Expected all list elements to be strings");
+			}
+			parts.push(elem.value);
+		}
+		return stringVal(parts.join(b.value));
+	})
+	.build();
+
 // substring(string, int, int) -> string
 const substring: Operator = defineOperator("string", "substring")
 	.setParams(stringType, intType, intType)
@@ -196,7 +219,7 @@ const substring: Operator = defineOperator("string", "substring")
 export function createStringRegistry(): OperatorRegistry {
 	const operators: Operator[] = [
 		concat, length, slice, indexOf, toUpper, toLower,
-		trim, split, includes, replace, charAt, substring,
+		trim, split, includes, replace, charAt, substring, join,
 	];
 
 	return operators.reduce<OperatorRegistry>(

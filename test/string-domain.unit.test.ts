@@ -12,6 +12,7 @@ import {
 	boolVal,
 	listVal,
 } from "../src/types.js";
+import type { Value } from "../src/types.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -309,6 +310,37 @@ describe("string domain", () => {
 		it("returns empty string for negative index", () => {
 			const result = op("charAt").fn(stringVal("abc"), intVal(-1));
 			assert.deepStrictEqual(result, stringVal(""));
+		});
+	});
+
+	// =======================================================================
+	// join
+	// =======================================================================
+	describe("join", () => {
+		it("joins strings with separator", () => {
+			const result = op("join").fn(
+				listVal([stringVal("a"), stringVal("b"), stringVal("c")]),
+				stringVal(","),
+			);
+			assert.deepStrictEqual(result, stringVal("a,b,c"));
+		});
+
+		it("returns empty string for empty list", () => {
+			const result = op("join").fn(listVal([]), stringVal(","));
+			assert.deepStrictEqual(result, stringVal(""));
+		});
+
+		it("returns single element without separator", () => {
+			const result = op("join").fn(listVal([stringVal("x")]), stringVal("-"));
+			assert.deepStrictEqual(result, stringVal("x"));
+		});
+
+		it("returns error for non-string elements", () => {
+			const result = op("join").fn(
+				listVal([stringVal("a"), intVal(1) as unknown as Value]),
+				stringVal(","),
+			);
+			assert.equal(result.kind, "error");
 		});
 	});
 
