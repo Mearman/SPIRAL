@@ -298,7 +298,7 @@ const strToUpper = unaryStr("toUpper", s => s.toUpperCase());
 const strToLower = unaryStr("toLower", s => s.toLowerCase());
 const strTrim = unaryStr("trim", s => s.trim());
 
-// set — Primitives (4): require hash-based lookup
+// set — Primitives (5): require hash-based lookup
 
 const setAdd: Operator = defineOperator("set", "add")
 	.setParams(setType(intType), intType).setReturns(setType(intType)).setPure(true)
@@ -337,7 +337,29 @@ const setSize: Operator = defineOperator("set", "size")
 		return intVal(a.value.size);
 	}).build();
 
-// Kernel Registry — 32 native operators
+function unhashValue(hash: string): Value | null {
+	if (hash.startsWith("i:")) return intVal(parseInt(hash.slice(2), 10));
+	if (hash.startsWith("s:")) return stringVal(hash.slice(2));
+	if (hash === "b:true") return boolVal(true);
+	if (hash === "b:false") return boolVal(false);
+	if (hash.startsWith("f:")) return floatVal(parseFloat(hash.slice(2)));
+	return null;
+}
+
+const setToList: Operator = defineOperator("set", "toList")
+	.setParams(setType(intType)).setReturns(listType(intType)).setPure(true)
+	.setImpl((a) => {
+		if (isError(a)) return a;
+		if (a.kind !== "set") return errorVal(ErrorCodes.TypeError, "Expected set value");
+		const elements: Value[] = [];
+		for (const hash of a.value) {
+			const v = unhashValue(hash);
+			if (v !== null) elements.push(v);
+		}
+		return listVal(elements);
+	}).build();
+
+// Kernel Registry — 33 native operators
 
 export function createKernelRegistry(): OperatorRegistry {
 	const operators: Operator[] = [
@@ -355,8 +377,8 @@ export function createKernelRegistry(): OperatorRegistry {
 		mapGet, mapSet, mapHas, mapKeys,
 		// string: primitives (6)
 		strConcat, strLength, strCharAt, strToUpper, strToLower, strTrim,
-		// set: primitives (4)
-		setAdd, setRemove, setContains, setSize,
+		// set: primitives (5)
+		setAdd, setRemove, setContains, setSize, setToList,
 	];
 
 	return operators.reduce<OperatorRegistry>(
