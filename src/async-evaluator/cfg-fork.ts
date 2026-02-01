@@ -65,19 +65,33 @@ function executeContinuation(input: ContinuationInput, ctx: AsyncEvalContext): P
 	return runContinuationBlock(nextBlock, input, ctx);
 }
 
+function tryExecuteContinuation(
+	nextBlock: string | undefined,
+	input: ForkBranchInput,
+	ctx: AsyncEvalContext,
+): Promise<Value> | Value | undefined {
+	if (nextBlock !== input.continuation || input.contState.executed) return undefined;
+	input.contState.executed = true;
+	const contInput: ContinuationInput = {
+		blockMap: input.blockMap, contState: input.contState, continuation: input.continuation,
+	};
+	return executeContinuation(contInput, ctx);
+}
+
 async function executeBranchBody(input: ForkBranchInput, ctx: AsyncEvalContext): Promise<Value> {
-	const instrErr = await runBranchInstructions(input.block, ctx);
-	if (instrErr) return instrErr;
+	let currentBlock: EirBlock | undefined = input.block;
 
-	const termResult = await ctx.svc.execTerminator(input.block.terminator, input.blockMap, ctx);
-	if (termResult.done) return termResult.value ?? voidVal();
+	for (let i = 0; i < 10_000 && currentBlock; i++) {
+		const instrErr = await runBranchInstructions(currentBlock, ctx);
+		if (instrErr) return instrErr;
 
-	if (termResult.nextBlock === input.continuation && !input.contState.executed) {
-		input.contState.executed = true;
-		const contInput: ContinuationInput = {
-			blockMap: input.blockMap, contState: input.contState, continuation: input.continuation,
-		};
-		return executeContinuation(contInput, ctx);
+		const termResult = await ctx.svc.execTerminator(currentBlock.terminator, input.blockMap, ctx);
+		if (termResult.done) return termResult.value ?? voidVal();
+
+		const contResult = tryExecuteContinuation(termResult.nextBlock, input, ctx);
+		if (contResult) return contResult;
+
+		currentBlock = termResult.nextBlock ? input.blockMap.get(termResult.nextBlock) : undefined;
 	}
 
 	return voidVal();
