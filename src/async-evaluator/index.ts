@@ -81,6 +81,9 @@ function evalEirCoreExpr(
 	case "callExpr": return eir.evalCallExpr(expr, env, ctx);
 	case "fix": return eir.evalFix(expr, env, ctx);
 	case "seq": return eir.evalSeq(expr, env, ctx);
+	case "record": return eir.evalRecord(expr, env, ctx);
+	case "listOf": return eir.evalListOf(expr, env, ctx);
+	case "match": return eir.evalMatch(expr, env, ctx);
 	}
 	return null;
 }

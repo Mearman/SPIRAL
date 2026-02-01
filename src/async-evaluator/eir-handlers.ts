@@ -13,6 +13,8 @@ import {
 	voidVal,
 	errorVal,
 	isError,
+	listVal,
+	mapVal,
 } from "../types.js";
 import {
 	boolVal as boolValCtor,
@@ -310,4 +312,63 @@ export async function evalAssignExpr(
 	}
 
 	return voidVal();
+}
+
+//==============================================================================
+// Record
+//==============================================================================
+
+export async function evalRecord(
+	expr: { kind: "record"; fields: { key: string; value: string | Expr }[] },
+	env: ValueEnv,
+	ctx: AsyncEvalContext,
+): Promise<Value> {
+	const entries = new Map<string, Value>();
+	for (const field of expr.fields) {
+		const val = await ctx.svc.resolveNodeRef(field.value, env, ctx);
+		if (isError(val)) return val;
+		entries.set("s:" + field.key, val);
+	}
+	return mapVal(entries);
+}
+
+//==============================================================================
+// ListOf
+//==============================================================================
+
+export async function evalListOf(
+	expr: { kind: "listOf"; elements: (string | Expr)[] },
+	env: ValueEnv,
+	ctx: AsyncEvalContext,
+): Promise<Value> {
+	const elements: Value[] = [];
+	for (const elem of expr.elements) {
+		const val = await ctx.svc.resolveNodeRef(elem, env, ctx);
+		if (isError(val)) return val;
+		elements.push(val);
+	}
+	return listVal(elements);
+}
+
+//==============================================================================
+// Match
+//==============================================================================
+
+export async function evalMatch(
+	expr: { kind: "match"; value: string | Expr; cases: { pattern: string; body: string | Expr }[]; default?: string | Expr | undefined },
+	env: ValueEnv,
+	ctx: AsyncEvalContext,
+): Promise<Value> {
+	const matchVal = await ctx.svc.resolveNodeRef(expr.value, env, ctx);
+	if (isError(matchVal)) return matchVal;
+	if (matchVal.kind !== "string") return errorVal(ErrorCodes.TypeError, "Match value must be a string, got: " + matchVal.kind);
+	for (const c of expr.cases) {
+		if (matchVal.value === c.pattern) {
+			return ctx.svc.resolveNodeRef(c.body, env, ctx);
+		}
+	}
+	if (expr.default !== undefined) {
+		return ctx.svc.resolveNodeRef(expr.default, env, ctx);
+	}
+	return errorVal(ErrorCodes.DomainError, "No matching case for: " + matchVal.value);
 }
