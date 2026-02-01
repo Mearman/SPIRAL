@@ -1,0 +1,312 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Meta-circular evaluator: a CIR program that evaluates an AIR program represented as data. Demonstrates SPIRAL running SPIRAL. The target program computes 10 + 20 = 30.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one",  "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+
+		{"id": "kindKey",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+		{"id": "idKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "id"}},
+		{"id": "exprKey",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+		{"id": "nsKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ns"}},
+		{"id": "nameKey",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "name"}},
+		{"id": "argsKey",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "args"}},
+		{"id": "condKey",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "cond"}},
+		{"id": "thenKey",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "then"}},
+		{"id": "elseKey",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "else"}},
+
+		{"id": "litStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lit"}},
+		{"id": "refStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ref"}},
+		{"id": "callStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call"}},
+		{"id": "ifStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "if"}},
+
+		{"id": "coreStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core"}},
+		{"id": "boolStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "bool"}},
+
+		{"id": "addStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "add"}},
+		{"id": "subStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "sub"}},
+		{"id": "mulStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "mul"}},
+		{"id": "divStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "div"}},
+		{"id": "modStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "mod"}},
+		{"id": "negStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "neg"}},
+		{"id": "eqStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "eq"}},
+		{"id": "neqStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "neq"}},
+		{"id": "ltStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lt"}},
+		{"id": "lteStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lte"}},
+		{"id": "gtStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "gt"}},
+		{"id": "gteStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "gte"}},
+		{"id": "notStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "not"}},
+
+		{
+			"id": "targetNodeA", "expr": {
+				"kind": "record",
+				"fields": [
+					{"key": "id", "value": "targetIdA"},
+					{"key": "expr", "value": "targetExprA"}
+				]
+			}
+		},
+		{"id": "targetIdA", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "a"}},
+		{
+			"id": "targetExprA", "expr": {
+				"kind": "record",
+				"fields": [
+					{"key": "kind", "value": "litStr"},
+					{"key": "value", "value": "targetValA"}
+				]
+			}
+		},
+		{"id": "targetValA", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 10}},
+
+		{
+			"id": "targetNodeB", "expr": {
+				"kind": "record",
+				"fields": [
+					{"key": "id", "value": "targetIdB"},
+					{"key": "expr", "value": "targetExprB"}
+				]
+			}
+		},
+		{"id": "targetIdB", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "b"}},
+		{
+			"id": "targetExprB", "expr": {
+				"kind": "record",
+				"fields": [
+					{"key": "kind", "value": "litStr"},
+					{"key": "value", "value": "targetValB"}
+				]
+			}
+		},
+		{"id": "targetValB", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 20}},
+
+		{
+			"id": "targetNodeSum", "expr": {
+				"kind": "record",
+				"fields": [
+					{"key": "id", "value": "targetIdSum"},
+					{"key": "expr", "value": "targetExprSum"}
+				]
+			}
+		},
+		{"id": "targetIdSum", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "sum"}},
+		{"id": "argIdA", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "a"}},
+		{"id": "argIdB", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "b"}},
+		{
+			"id": "targetArgsList", "expr": {
+				"kind": "listOf",
+				"elements": ["argIdA", "argIdB"]
+			}
+		},
+		{
+			"id": "targetExprSum", "expr": {
+				"kind": "record",
+				"fields": [
+					{"key": "kind", "value": "callStr"},
+					{"key": "ns", "value": "coreStr"},
+					{"key": "name", "value": "addStr"},
+					{"key": "args", "value": "targetArgsList"}
+				]
+			}
+		},
+
+		{
+			"id": "targetNodes", "expr": {
+				"kind": "listOf",
+				"elements": ["targetNodeA", "targetNodeB", "targetNodeSum"]
+			}
+		},
+		{"id": "targetResult", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "sum"}},
+
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+
+		{"id": "nodeCount", "expr": {"kind": "call", "ns": "list", "name": "length", "args": ["targetNodes"]}},
+
+		{"id": "idxVar",    "expr": {"kind": "var", "name": "idx"}},
+		{"id": "nvVar",     "expr": {"kind": "var", "name": "nv"}},
+		{"id": "recVar",    "expr": {"kind": "var", "name": "rec"}},
+
+		{"id": "curNode", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["targetNodes", "idxVar"]}},
+		{"id": "curId",   "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["curNode", "idKey"]}},
+		{"id": "curExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["curNode", "exprKey"]}},
+		{"id": "curKind", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["curExpr", "kindKey"]}},
+
+		{"id": "litValue", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["curExpr", "valueKey"]}},
+
+		{
+			"id": "refId", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["curExpr", "idKey"]}
+		},
+		{"id": "refValue", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["nvVar", "refId"]}},
+
+		{"id": "callNs",   "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["curExpr", "nsKey"]}},
+		{"id": "callName", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["curExpr", "nameKey"]}},
+		{"id": "callArgs", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["curExpr", "argsKey"]}},
+
+		{"id": "arg0Id", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["callArgs", "zero"]}},
+		{"id": "arg0",   "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["nvVar", "arg0Id"]}},
+
+		{"id": "argsLen", "expr": {"kind": "call", "ns": "list", "name": "length", "args": ["callArgs"]}},
+		{"id": "hasArg1", "expr": {"kind": "call", "ns": "core", "name": "gte", "args": ["argsLen", "two"]}},
+		{"id": "two", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 2}},
+
+		{"id": "arg1Id", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["callArgs", "one"]}},
+		{"id": "arg1",   "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["nvVar", "arg1Id"]}},
+
+		{"id": "dispatchAdd", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["arg0", "arg1"]}},
+		{"id": "dispatchSub", "expr": {"kind": "call", "ns": "core", "name": "sub", "args": ["arg0", "arg1"]}},
+		{"id": "dispatchMul", "expr": {"kind": "call", "ns": "core", "name": "mul", "args": ["arg0", "arg1"]}},
+		{"id": "dispatchDiv", "expr": {"kind": "call", "ns": "core", "name": "div", "args": ["arg0", "arg1"]}},
+		{"id": "dispatchMod", "expr": {"kind": "call", "ns": "core", "name": "mod", "args": ["arg0", "arg1"]}},
+		{"id": "dispatchNeg", "expr": {"kind": "call", "ns": "core", "name": "neg", "args": ["arg0"]}},
+		{"id": "dispatchEq",  "expr": {"kind": "call", "ns": "core", "name": "eq",  "args": ["arg0", "arg1"]}},
+		{"id": "dispatchNeq", "expr": {"kind": "call", "ns": "core", "name": "neq", "args": ["arg0", "arg1"]}},
+		{"id": "dispatchLt",  "expr": {"kind": "call", "ns": "core", "name": "lt",  "args": ["arg0", "arg1"]}},
+		{"id": "dispatchLte", "expr": {"kind": "call", "ns": "core", "name": "lte", "args": ["arg0", "arg1"]}},
+		{"id": "dispatchGt",  "expr": {"kind": "call", "ns": "core", "name": "gt",  "args": ["arg0", "arg1"]}},
+		{"id": "dispatchGte", "expr": {"kind": "call", "ns": "core", "name": "gte", "args": ["arg0", "arg1"]}},
+		{"id": "dispatchNot", "expr": {"kind": "call", "ns": "bool", "name": "not", "args": ["arg0"]}},
+
+		{
+			"id": "coreDispatch", "expr": {
+				"kind": "match",
+				"value": "callName",
+				"cases": [
+					{ "body": "dispatchAdd","pattern": "add"},
+					{ "body": "dispatchSub","pattern": "sub"},
+					{ "body": "dispatchMul","pattern": "mul"},
+					{ "body": "dispatchDiv","pattern": "div"},
+					{ "body": "dispatchMod","pattern": "mod"},
+					{ "body": "dispatchNeg","pattern": "neg"},
+					{  "body": "dispatchEq","pattern": "eq"},
+					{ "body": "dispatchNeq","pattern": "neq"},
+					{  "body": "dispatchLt","pattern": "lt"},
+					{ "body": "dispatchLte","pattern": "lte"},
+					{  "body": "dispatchGt","pattern": "gt"},
+					{ "body": "dispatchGte","pattern": "gte"}
+				],
+				"default": "zero"
+			}
+		},
+		{
+			"id": "boolDispatch", "expr": {
+				"kind": "match",
+				"value": "callName",
+				"cases": [
+					{ "body": "dispatchNot","pattern": "not"}
+				],
+				"default": "zero"
+			}
+		},
+		{
+			"id": "callValue", "expr": {
+				"kind": "match",
+				"value": "callNs",
+				"cases": [
+					{ "body": "coreDispatch","pattern": "core"},
+					{ "body": "boolDispatch","pattern": "bool"}
+				],
+				"default": "zero"
+			}
+		},
+
+		{"id": "ifCondId", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["curExpr", "condKey"]}},
+		{"id": "ifThenId", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["curExpr", "thenKey"]}},
+		{"id": "ifElseId", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["curExpr", "elseKey"]}},
+		{"id": "ifCondVal", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["nvVar", "ifCondId"]}},
+		{"id": "ifThenVal", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["nvVar", "ifThenId"]}},
+		{"id": "ifElseVal", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["nvVar", "ifElseId"]}},
+		{
+			"id": "ifValue", "expr": {
+				"kind": "if",
+				"type": {"kind": "int"},
+				"cond": "ifCondVal",
+				"then": "ifThenVal",
+				"else": "ifElseVal"
+			}
+		},
+
+		{
+			"id": "exprValue", "expr": {
+				"kind": "match",
+				"value": "curKind",
+				"cases": [
+					{  "body": "litValue","pattern": "lit"},
+					{  "body": "refValue","pattern": "ref"},
+					{ "body": "callValue","pattern": "call"},
+					{   "body": "ifValue","pattern": "if"}
+				],
+				"default": "zero"
+			}
+		},
+
+		{"id": "nextIdx", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["idxVar", "one"]}},
+		{"id": "updatedNv", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["nvVar", "curId", "exprValue"]}},
+		{
+			"id": "recurse", "expr": {
+				"kind": "callExpr",
+				"args": ["nextIdx", "updatedNv"],
+				"fn": "recVar"
+			}
+		},
+
+		{"id": "isDone", "expr": {"kind": "call", "ns": "core", "name": "gte", "args": ["idxVar", "nodeCount"]}},
+		{"id": "finalResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["nvVar", "targetResult"]}},
+
+		{
+			"id": "walkBody", "expr": {
+				"kind": "if",
+				"type": {"kind": "int"},
+				"cond": "isDone",
+				"then": "finalResult",
+				"else": "recurse"
+			}
+		},
+
+		{
+			"id": "innerLambda", "expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [{"kind": "int"}, {"kind": "map", "key": {"kind": "string"}, "value": {"kind": "int"}}],
+					"returns": {"kind": "int"}
+				},
+				"params": ["idx", "nv"],
+				"body": "walkBody"
+			}
+		},
+		{
+			"id": "outerLambda", "expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "map", "key": {"kind": "string"}, "value": {"kind": "int"}}], "returns": {"kind": "int"}}],
+					"returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "map", "key": {"kind": "string"}, "value": {"kind": "int"}}], "returns": {"kind": "int"}}
+				},
+				"params": ["rec"],
+				"body": "innerLambda"
+			}
+		},
+		{
+			"id": "evalWalker", "expr": {
+				"kind": "fix",
+				"type": {
+					"kind": "fn",
+					"params": [{"kind": "int"}, {"kind": "map", "key": {"kind": "string"}, "value": {"kind": "int"}}],
+					"returns": {"kind": "int"}
+				},
+				"fn": "outerLambda"
+			}
+		},
+		{
+			"id": "result", "expr": {
+				"kind": "callExpr",
+				"args": ["zero", "emptyMap"],
+				"fn": "evalWalker"
+			}
+		}
+	],
+	"result": "result",
+	"expected_result": 30
+}
