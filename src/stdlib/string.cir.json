@@ -1,0 +1,402 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "String stdlib — slice, substring, indexOf, includes, replace, split, join implemented in SPIRAL CIR. Kernel provides string:concat, string:length, string:charAt, string:toUpper, string:toLower, string:trim.",
+	"airDefs": [],
+	"nodes": [
+		{ "id": "zero",     "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 } },
+		{ "id": "one",      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 } },
+		{ "id": "negOne",   "expr": { "kind": "lit", "type": { "kind": "int" }, "value": -1 } },
+		{ "id": "emptyStr", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "" } },
+		{ "id": "trueLit",  "expr": { "kind": "lit", "type": { "kind": "bool" }, "value": true } },
+		{ "id": "falseLit", "expr": { "kind": "lit", "type": { "kind": "bool" }, "value": false } },
+		{ "id": "emptyList","expr": { "kind": "listOf", "elements": [] } },
+
+		{ "id": "sliceRecBody", "expr": {
+			"kind": "let", "name": "check",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "normEnd" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "check" },
+				"then": "emptyStr",
+				"else": { "kind": "let", "name": "ch",
+					"value": { "kind": "call", "ns": "string", "name": "charAt", "args": [{ "kind": "var", "name": "s" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "nextI",
+						"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+						"body": { "kind": "let", "name": "rest",
+							"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }], "fn": "rec" },
+							"body": { "kind": "call", "ns": "string", "name": "concat", "args": [{ "kind": "var", "name": "ch" }, { "kind": "var", "name": "rest" }] }
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "sliceRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "string" } },
+			"params": ["i"],
+			"body": "sliceRecBody"
+		}},
+		{ "id": "sliceRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "string" } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "string" } } },
+			"params": ["rec"],
+			"body": "sliceRecInner"
+		}},
+		{ "id": "sliceBody", "expr": {
+			"kind": "let", "name": "len",
+			"value": { "kind": "call", "ns": "string", "name": "length", "args": [{ "kind": "var", "name": "s" }] },
+			"body": { "kind": "let", "name": "startNeg",
+				"value": { "kind": "call", "ns": "core", "name": "lt", "args": [{ "kind": "var", "name": "start" }, "zero"] },
+				"body": { "kind": "let", "name": "rawStart",
+					"value": { "kind": "if",
+						"cond": { "kind": "var", "name": "startNeg" },
+						"then": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "len" }, { "kind": "var", "name": "start" }] },
+						"else": { "kind": "var", "name": "start" }
+					},
+					"body": { "kind": "let", "name": "normStartLow",
+						"value": { "kind": "if",
+							"cond": { "kind": "call", "ns": "core", "name": "lt", "args": [{ "kind": "var", "name": "rawStart" }, "zero"] },
+							"then": "zero",
+							"else": { "kind": "var", "name": "rawStart" }
+						},
+						"body": { "kind": "let", "name": "normStart",
+							"value": { "kind": "if",
+								"cond": { "kind": "call", "ns": "core", "name": "gt", "args": [{ "kind": "var", "name": "normStartLow" }, { "kind": "var", "name": "len" }] },
+								"then": { "kind": "var", "name": "len" },
+								"else": { "kind": "var", "name": "normStartLow" }
+							},
+							"body": { "kind": "let", "name": "endNeg",
+								"value": { "kind": "call", "ns": "core", "name": "lt", "args": [{ "kind": "var", "name": "end" }, "zero"] },
+								"body": { "kind": "let", "name": "rawEnd",
+									"value": { "kind": "if",
+										"cond": { "kind": "var", "name": "endNeg" },
+										"then": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "len" }, { "kind": "var", "name": "end" }] },
+										"else": { "kind": "var", "name": "end" }
+									},
+									"body": { "kind": "let", "name": "normEndLow",
+										"value": { "kind": "if",
+											"cond": { "kind": "call", "ns": "core", "name": "lt", "args": [{ "kind": "var", "name": "rawEnd" }, "zero"] },
+											"then": "zero",
+											"else": { "kind": "var", "name": "rawEnd" }
+										},
+										"body": { "kind": "let", "name": "normEnd",
+											"value": { "kind": "if",
+												"cond": { "kind": "call", "ns": "core", "name": "gt", "args": [{ "kind": "var", "name": "normEndLow" }, { "kind": "var", "name": "len" }] },
+												"then": { "kind": "var", "name": "len" },
+												"else": { "kind": "var", "name": "normEndLow" }
+											},
+											"body": { "kind": "let", "name": "iter",
+												"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "string" } }, "fn": "sliceRecOuter" },
+												"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "normStart" }], "fn": "iter" }
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "slice", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "string" }, { "kind": "int" }, { "kind": "int" }], "returns": { "kind": "string" } },
+			"params": ["s", "start", "end"],
+			"body": "sliceBody"
+		}},
+
+		{ "id": "indexOfInnerBody", "expr": {
+			"kind": "let", "name": "done",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "j" }, { "kind": "var", "name": "searchLen" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "done" },
+				"then": "trueLit",
+				"else": { "kind": "let", "name": "posJ",
+					"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "pos" }, { "kind": "var", "name": "j" }] },
+					"body": { "kind": "let", "name": "chStr",
+						"value": { "kind": "call", "ns": "string", "name": "charAt", "args": [{ "kind": "var", "name": "str" }, { "kind": "var", "name": "posJ" }] },
+						"body": { "kind": "let", "name": "chSearch",
+							"value": { "kind": "call", "ns": "string", "name": "charAt", "args": [{ "kind": "var", "name": "search" }, { "kind": "var", "name": "j" }] },
+							"body": { "kind": "let", "name": "match",
+								"value": { "kind": "call", "ns": "core", "name": "eq", "args": [{ "kind": "var", "name": "chStr" }, { "kind": "var", "name": "chSearch" }] },
+								"body": { "kind": "if",
+									"cond": { "kind": "var", "name": "match" },
+									"then": { "kind": "let", "name": "nextJ",
+										"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "j" }, "one"] },
+										"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextJ" }], "fn": "innerRec" }
+									},
+									"else": "falseLit"
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "indexOfInnerLambda", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "bool" } },
+			"params": ["j"],
+			"body": "indexOfInnerBody"
+		}},
+		{ "id": "indexOfInnerOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "bool" } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "bool" } } },
+			"params": ["innerRec"],
+			"body": "indexOfInnerLambda"
+		}},
+		{ "id": "indexOfOuterBody", "expr": {
+			"kind": "let", "name": "limit",
+			"value": { "kind": "call", "ns": "core", "name": "sub", "args": [{ "kind": "var", "name": "strLen" }, { "kind": "var", "name": "searchLen" }] },
+			"body": { "kind": "let", "name": "pastEnd",
+				"value": { "kind": "call", "ns": "core", "name": "gt", "args": [{ "kind": "var", "name": "pos" }, { "kind": "var", "name": "limit" }] },
+				"body": { "kind": "if",
+					"cond": { "kind": "var", "name": "pastEnd" },
+					"then": "negOne",
+					"else": { "kind": "let", "name": "innerIter",
+						"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "bool" } }, "fn": "indexOfInnerOuter" },
+						"body": { "kind": "let", "name": "matched",
+							"value": { "kind": "callExpr", "args": ["zero"], "fn": "innerIter" },
+							"body": { "kind": "if",
+								"cond": { "kind": "var", "name": "matched" },
+								"then": { "kind": "var", "name": "pos" },
+								"else": { "kind": "let", "name": "nextPos",
+									"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "pos" }, "one"] },
+									"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextPos" }], "fn": "outerRec" }
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "indexOfOuterLambda", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "int" } },
+			"params": ["pos"],
+			"body": "indexOfOuterBody"
+		}},
+		{ "id": "indexOfOuterOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "int" } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "int" } } },
+			"params": ["outerRec"],
+			"body": "indexOfOuterLambda"
+		}},
+		{ "id": "indexOfBody", "expr": {
+			"kind": "let", "name": "searchLen",
+			"value": { "kind": "call", "ns": "string", "name": "length", "args": [{ "kind": "var", "name": "search" }] },
+			"body": { "kind": "let", "name": "emptySearch",
+				"value": { "kind": "call", "ns": "core", "name": "eq", "args": [{ "kind": "var", "name": "searchLen" }, "zero"] },
+				"body": { "kind": "if",
+					"cond": { "kind": "var", "name": "emptySearch" },
+					"then": "zero",
+					"else": { "kind": "let", "name": "strLen",
+						"value": { "kind": "call", "ns": "string", "name": "length", "args": [{ "kind": "var", "name": "str" }] },
+						"body": { "kind": "let", "name": "iter",
+							"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "int" } }, "fn": "indexOfOuterOuter" },
+							"body": { "kind": "callExpr", "args": ["zero"], "fn": "iter" }
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "indexOf", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "string" }, { "kind": "string" }], "returns": { "kind": "int" } },
+			"params": ["str", "search"],
+			"body": "indexOfBody"
+		}},
+
+		{ "id": "includesBody", "expr": {
+			"kind": "let", "name": "idx",
+			"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "str" }, { "kind": "var", "name": "search" }], "fn": "indexOf" },
+			"body": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "idx" }, "zero"] }
+		}},
+		{ "id": "includes", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "string" }, { "kind": "string" }], "returns": { "kind": "bool" } },
+			"params": ["str", "search"],
+			"body": "includesBody"
+		}},
+
+		{ "id": "replaceBody", "expr": {
+			"kind": "let", "name": "idx",
+			"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "str" }, { "kind": "var", "name": "pattern" }], "fn": "indexOf" },
+			"body": { "kind": "let", "name": "notFound",
+				"value": { "kind": "call", "ns": "core", "name": "lt", "args": [{ "kind": "var", "name": "idx" }, "zero"] },
+				"body": { "kind": "if",
+					"cond": { "kind": "var", "name": "notFound" },
+					"then": { "kind": "var", "name": "str" },
+					"else": { "kind": "let", "name": "patLen",
+						"value": { "kind": "call", "ns": "string", "name": "length", "args": [{ "kind": "var", "name": "pattern" }] },
+						"body": { "kind": "let", "name": "strLen",
+							"value": { "kind": "call", "ns": "string", "name": "length", "args": [{ "kind": "var", "name": "str" }] },
+							"body": { "kind": "let", "name": "before",
+								"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "str" }, "zero", { "kind": "var", "name": "idx" }], "fn": "slice" },
+								"body": { "kind": "let", "name": "afterStart",
+									"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "idx" }, { "kind": "var", "name": "patLen" }] },
+									"body": { "kind": "let", "name": "after",
+										"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "str" }, { "kind": "var", "name": "afterStart" }, { "kind": "var", "name": "strLen" }], "fn": "slice" },
+										"body": { "kind": "let", "name": "tmp",
+											"value": { "kind": "call", "ns": "string", "name": "concat", "args": [{ "kind": "var", "name": "before" }, { "kind": "var", "name": "replacement" }] },
+											"body": { "kind": "call", "ns": "string", "name": "concat", "args": [{ "kind": "var", "name": "tmp" }, { "kind": "var", "name": "after" }] }
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "replace", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "string" }, { "kind": "string" }, { "kind": "string" }], "returns": { "kind": "string" } },
+			"params": ["str", "pattern", "replacement"],
+			"body": "replaceBody"
+		}},
+
+		{ "id": "splitRecBody", "expr": {
+			"kind": "let", "name": "remaining",
+			"value": { "kind": "call", "ns": "core", "name": "sub", "args": [{ "kind": "var", "name": "strLen" }, { "kind": "var", "name": "pos" }] },
+			"body": { "kind": "let", "name": "noMore",
+				"value": { "kind": "call", "ns": "core", "name": "gt", "args": [{ "kind": "var", "name": "pos" }, { "kind": "var", "name": "strLen" }] },
+				"body": { "kind": "if",
+					"cond": { "kind": "var", "name": "noMore" },
+					"then": "emptyList",
+					"else": { "kind": "let", "name": "tail",
+						"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "str" }, { "kind": "var", "name": "pos" }, { "kind": "var", "name": "strLen" }], "fn": "slice" },
+						"body": { "kind": "let", "name": "foundIdx",
+							"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "tail" }, { "kind": "var", "name": "delim" }], "fn": "indexOf" },
+							"body": { "kind": "let", "name": "notFound",
+								"value": { "kind": "call", "ns": "core", "name": "lt", "args": [{ "kind": "var", "name": "foundIdx" }, "zero"] },
+								"body": { "kind": "if",
+									"cond": { "kind": "var", "name": "notFound" },
+									"then": { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "tail" }, "emptyList"] },
+									"else": { "kind": "let", "name": "piece",
+										"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "tail" }, "zero", { "kind": "var", "name": "foundIdx" }], "fn": "slice" },
+										"body": { "kind": "let", "name": "newPos",
+											"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "pos" }, { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "foundIdx" }, { "kind": "var", "name": "delimLen" }] }] },
+											"body": { "kind": "let", "name": "rest",
+												"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "newPos" }], "fn": "splitRec" },
+												"body": { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "piece" }, { "kind": "var", "name": "rest" }] }
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "splitRecLambda", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "string" } } },
+			"params": ["pos"],
+			"body": "splitRecBody"
+		}},
+		{ "id": "splitRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "string" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "string" } } } },
+			"params": ["splitRec"],
+			"body": "splitRecLambda"
+		}},
+		{ "id": "splitBody", "expr": {
+			"kind": "let", "name": "strLen",
+			"value": { "kind": "call", "ns": "string", "name": "length", "args": [{ "kind": "var", "name": "str" }] },
+			"body": { "kind": "let", "name": "delimLen",
+				"value": { "kind": "call", "ns": "string", "name": "length", "args": [{ "kind": "var", "name": "delim" }] },
+				"body": { "kind": "let", "name": "emptyDelim",
+					"value": { "kind": "call", "ns": "core", "name": "eq", "args": [{ "kind": "var", "name": "delimLen" }, "zero"] },
+					"body": { "kind": "if",
+						"cond": { "kind": "var", "name": "emptyDelim" },
+						"then": { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "str" }, "emptyList"] },
+						"else": { "kind": "let", "name": "iter",
+							"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "string" } } }, "fn": "splitRecOuter" },
+							"body": { "kind": "callExpr", "args": ["zero"], "fn": "iter" }
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "split", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "string" }, { "kind": "string" }], "returns": { "kind": "list", "of": { "kind": "string" } } },
+			"params": ["str", "delim"],
+			"body": "splitBody"
+		}},
+
+		{ "id": "joinRecBody", "expr": {
+			"kind": "let", "name": "done",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "listLen" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "done" },
+				"then": { "kind": "var", "name": "acc" },
+				"else": { "kind": "let", "name": "elem",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "lst" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "withSep",
+						"value": { "kind": "call", "ns": "string", "name": "concat", "args": [{ "kind": "var", "name": "acc" }, { "kind": "var", "name": "sep" }] },
+						"body": { "kind": "let", "name": "newAcc",
+							"value": { "kind": "call", "ns": "string", "name": "concat", "args": [{ "kind": "var", "name": "withSep" }, { "kind": "var", "name": "elem" }] },
+							"body": { "kind": "let", "name": "nextI",
+								"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+								"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }, { "kind": "var", "name": "newAcc" }], "fn": "joinRec" }
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "joinRecLambda", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "string" }], "returns": { "kind": "string" } },
+			"params": ["i", "acc"],
+			"body": "joinRecBody"
+		}},
+		{ "id": "joinRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }, { "kind": "string" }], "returns": { "kind": "string" } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "string" }], "returns": { "kind": "string" } } },
+			"params": ["joinRec"],
+			"body": "joinRecLambda"
+		}},
+		{ "id": "joinBody", "expr": {
+			"kind": "let", "name": "listLen",
+			"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "lst" }] },
+			"body": { "kind": "let", "name": "isEmpty",
+				"value": { "kind": "call", "ns": "core", "name": "eq", "args": [{ "kind": "var", "name": "listLen" }, "zero"] },
+				"body": { "kind": "if",
+					"cond": { "kind": "var", "name": "isEmpty" },
+					"then": "emptyStr",
+					"else": { "kind": "let", "name": "first",
+						"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "lst" }, "zero"] },
+						"body": { "kind": "let", "name": "iter",
+							"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "string" }], "returns": { "kind": "string" } }, "fn": "joinRecOuter" },
+							"body": { "kind": "callExpr", "args": ["one", { "kind": "var", "name": "first" }], "fn": "iter" }
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "join", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "list", "of": { "kind": "string" } }, { "kind": "string" }], "returns": { "kind": "string" } },
+			"params": ["lst", "sep"],
+			"body": "joinBody"
+		}},
+
+		{ "id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{ "key": "string:slice", "value": "slice" },
+				{ "key": "string:substring", "value": "slice" },
+				{ "key": "string:indexOf", "value": "indexOf" },
+				{ "key": "string:includes", "value": "includes" },
+				{ "key": "string:replace", "value": "replace" },
+				{ "key": "string:split", "value": "split" },
+				{ "key": "string:join", "value": "join" }
+			]
+		}}
+	],
+	"result": "exports"
+}
