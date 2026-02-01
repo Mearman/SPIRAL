@@ -62,17 +62,38 @@
 	"packageManager": "npm@11.2.0",
 	"c8": {
 		"all": true,
+		"branches": 0,
+		"check-coverage": false,
 		"exclude": [
 			"src/**/*.test.ts",
-			"src/**/*.spec.ts"
+			"src/**/*.spec.ts",
+			"src/types.ts",
+			"dist/**",
+			"node_modules/**",
+			"coverage/**",
+			"examples/**",
+			"test/**",
+			"scripts/**",
+			"**/*.d.ts"
 		],
+		"extension": [
+			".ts"
+		],
+		"functions": 0,
 		"include": [
 			"src/**/*.ts"
 		],
+		"lines": 0,
 		"reporter": [
 			"text",
-			"html"
-		]
+			"text-summary"
+		],
+		"reports-directory": "./coverage",
+		"src": [
+			"src"
+		],
+		"statements": 0,
+		"temp-directory": "./coverage/tmp"
 	},
 	"lint-staged": {
 		"*.json": [
