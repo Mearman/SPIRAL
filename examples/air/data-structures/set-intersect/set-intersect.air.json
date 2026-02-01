@@ -238,5 +238,5 @@
 		}
 	],
 	"result": "basicIntersect",
-	"expected_result": { "kind": "set", "value": [] }
+	"expected_result": { "kind": "set", "value": ["i:2", "i:3"] }
 }
