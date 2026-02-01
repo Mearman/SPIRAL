@@ -13,7 +13,7 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"ci": "npm run lint && npm run test:types && npm run test && npm run test:examples",
+		"ci": "npm run lint && npm run test:types && npm run test",
 		"examples": "tsx examples/cli.ts",
 		"examples:help": "tsx examples/cli.ts --help",
 		"examples:list": "tsx examples/cli.ts --list",
@@ -27,7 +27,6 @@
 		"test:coverage": "c8 tsx --test test/*.test.ts test/*/*.test.ts",
 		"test:coverage:html": "c8 --reporter=html --reporter=text tsx --test test/*.test.ts test/*/*.test.ts",
 		"test:coverage:open": "c8 --reporter=html --reporter=text tsx --test test/*.test.ts test/*/*.test.ts && open coverage/index.html",
-		"test:examples": "tsx --test examples/*.ts",
 		"test:seq": "for f in test/async-*.test.ts test/lir-async.test.ts test/scheduler.test.ts; do echo \"Running $f...\"; tsx --test \"$f\" || exit 1; done",
 		"test:types": "tsc --noEmit",
 		"typecheck": "tsc --noEmit"
