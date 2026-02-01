@@ -19,7 +19,7 @@
 		"examples:list": "tsx examples/cli.ts --list",
 		"examples:validate": "tsx examples/cli.ts --validate",
 		"generate:schemas": "tsx scripts/generate-schemas.ts",
-		"lint": "eslint . && tsc --noEmit",
+		"lint": "eslint --cache . && tsc --noEmit",
 		"lint:fix": "eslint . --fix",
 		"prepare": "husky",
 		"run-example": "tsx examples/cli.ts",
