@@ -59,6 +59,9 @@ export interface IfExpr { kind: "if"; cond: string | Expr; then: string | Expr; 
 export interface LetExpr { kind: "let"; name: string; value: string | Expr; body: string | Expr }
 export interface AirRefExpr { kind: "airRef"; ns: string; name: string; args: string[] }
 export interface PredicateExpr { kind: "predicate"; name: string; value: string }
+export interface RecordExpr { kind: "record"; fields: { key: string; value: string | Expr }[]; type?: Type | undefined }
+export interface ListOfExpr { kind: "listOf"; elements: (string | Expr)[]; type?: Type | undefined }
+export interface MatchExpr { kind: "match"; value: string | Expr; cases: { pattern: string; body: string | Expr }[]; default?: string | Expr | undefined; type?: Type | undefined }
 
 // CIR extensions
 export interface LambdaExpr { kind: "lambda"; params: (string | LambdaParam)[]; body: string; type: Type }
@@ -90,6 +93,7 @@ export interface EirRaceExpr { kind: "race"; tasks: string[] }
 export type Expr =
 	| LitExpr | RefExpr | VarExpr | CallExpr | IfExpr | LetExpr
 	| AirRefExpr | PredicateExpr
+	| RecordExpr | ListOfExpr | MatchExpr
 	| LambdaExpr | CallFnExpr | FixExpr | DoExpr;
 
 export type EirExpr =
@@ -384,6 +388,32 @@ export const PredicateExprSchema = z.object({
 	value: z.string(),
 }).meta({ id: "PredicateExpr", title: "Predicate Expression", description: "Type predicate that always returns true for its argument" });
 
+export const RecordExprSchema: z.ZodType<RecordExpr> = z.object({
+	kind: z.literal("record"),
+	fields: z.array(z.object({
+		key: z.string(),
+		get value() { return stringOrExpr(); },
+	})),
+	type: TypeSchema.optional(),
+}).meta({ id: "RecordExpr", title: "Record Expression", description: "Construct a map/record from string keys and computed values" });
+
+export const ListOfExprSchema: z.ZodType<ListOfExpr> = z.object({
+	kind: z.literal("listOf"),
+	get elements() { return z.array(stringOrExpr()); },
+	type: TypeSchema.optional(),
+}).meta({ id: "ListOfExpr", title: "ListOf Expression", description: "Construct a list from computed node references and inline expressions" });
+
+export const MatchExprSchema: z.ZodType<MatchExpr> = z.object({
+	kind: z.literal("match"),
+	get value() { return stringOrExpr(); },
+	cases: z.array(z.object({
+		pattern: z.string(),
+		get body() { return stringOrExpr(); },
+	})),
+	get default() { return stringOrExpr().optional(); },
+	type: TypeSchema.optional(),
+}).meta({ id: "MatchExpr", title: "Match Expression", description: "Multi-way string matching that evaluates the body of the first matching case" });
+
 //==============================================================================
 // Zod Schemas - Expression Domain - CIR extensions (4 variants)
 //==============================================================================
@@ -547,6 +577,9 @@ export const AirExprSchema: z.ZodType<Expr> = z.union([
 	LetExprSchema,
 	AirRefExprSchema,
 	PredicateExprSchema,
+	RecordExprSchema,
+	ListOfExprSchema,
+	MatchExprSchema,
 ] satisfies [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]).meta({ id: "AirExpr", title: "AIR Expression", description: "Pure, bounded expression (no recursion or side effects)" });
 
 /** CIR-only expression variants: AIR plus lambda/callExpr/fix/do. No async extensions. */
@@ -559,6 +592,9 @@ export const CirExprSchema: z.ZodType<Expr> = z.union([
 	LetExprSchema,
 	AirRefExprSchema,
 	PredicateExprSchema,
+	RecordExprSchema,
+	ListOfExprSchema,
+	MatchExprSchema,
 	LambdaExprSchema,
 	CallFnExprSchema,
 	FixExprSchema,
@@ -580,6 +616,9 @@ export const ExprSchema: z.ZodType<Expr> = z.union([
 	LetExprSchema,
 	AirRefExprSchema,
 	PredicateExprSchema,
+	RecordExprSchema,
+	ListOfExprSchema,
+	MatchExprSchema,
 	LambdaExprSchema,
 	CallFnExprSchema,
 	FixExprSchema,
@@ -596,6 +635,9 @@ export const EirExprSchema: z.ZodType<EirExpr> = z.union([
 	LetExprSchema,
 	AirRefExprSchema,
 	PredicateExprSchema,
+	RecordExprSchema,
+	ListOfExprSchema,
+	MatchExprSchema,
 	LambdaExprSchema,
 	CallFnExprSchema,
 	FixExprSchema,

@@ -38,6 +38,7 @@ export type {
 	Expr,
 	LitExpr, RefExpr, VarExpr, CallExpr, IfExpr, LetExpr,
 	AirRefExpr, PredicateExpr,
+	RecordExpr, ListOfExpr, MatchExpr,
 	LambdaExpr, CallFnExpr, FixExpr, DoExpr,
 	EirSeqExpr, EirAssignExpr, EirWhileExpr, EirForExpr, EirIterExpr,
 	EirEffectExpr, EirRefCellExpr, EirDerefExpr, EirTryExpr,
