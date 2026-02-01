@@ -185,6 +185,12 @@ function markBoundRecursively(
 		if (typeof node.expr.then === "string") markBoundRecursively(node.expr.then, bound, nodeMap);
 		if (typeof node.expr.else === "string") markBoundRecursively(node.expr.else, bound, nodeMap);
 	}
+	if (node.expr.kind === "match") {
+		for (const c of node.expr.cases) {
+			if (typeof c.body === "string") markBoundRecursively(c.body, bound, nodeMap);
+		}
+		if (typeof node.expr.default === "string") markBoundRecursively(node.expr.default, bound, nodeMap);
+	}
 }
 
 function usesBoundNodes(expr: Expr, bound: Set<string>): boolean {
@@ -195,7 +201,25 @@ function usesBoundNodes(expr: Expr, bound: Set<string>): boolean {
 		if (bound.has(expr.fn)) return true;
 		return expr.args.some(a => typeof a === "string" && bound.has(a));
 	}
-	return expr.kind === "ref" && bound.has(expr.id);
+	if (expr.kind === "ref") return bound.has(expr.id);
+	if (expr.kind === "if") {
+		return [expr.cond, expr.then, expr.else].some(
+			id => typeof id === "string" && bound.has(id),
+		);
+	}
+	if (expr.kind === "match") {
+		if (typeof expr.value === "string" && bound.has(expr.value)) return true;
+		if (expr.cases.some(c => typeof c.body === "string" && bound.has(c.body))) return true;
+		if (typeof expr.default === "string" && bound.has(expr.default)) return true;
+		return false;
+	}
+	if (expr.kind === "record") {
+		return expr.fields.some(f => typeof f.value === "string" && bound.has(f.value));
+	}
+	if (expr.kind === "listOf") {
+		return expr.elements.some(e => typeof e === "string" && bound.has(e));
+	}
+	return false;
 }
 
 function markTransitiveBound(bc: BoundCtx): void {
