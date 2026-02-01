@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { createKernelRegistry } from "../src/stdlib/kernel.js";
 import { loadStdlib } from "../src/stdlib/loader.js";
 import { lookupOperator } from "../src/domains/registry.js";
-import { boolVal, intVal } from "../src/types.js";
+import { boolVal, intVal, listVal } from "../src/types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const stdlibDir = resolve(__dirname, "../src/stdlib");
@@ -95,5 +95,66 @@ describe("bool stdlib", () => {
 		assert.deepStrictEqual(xor.fn(boolVal(true), boolVal(false)), boolVal(true));
 		assert.deepStrictEqual(xor.fn(boolVal(false), boolVal(true)), boolVal(true));
 		assert.deepStrictEqual(xor.fn(boolVal(false), boolVal(false)), boolVal(false));
+	});
+});
+
+describe("list stdlib", () => {
+	const kernel = createKernelRegistry();
+	const registry = loadStdlib(kernel, [
+		resolve(stdlibDir, "bool.cir.json"),
+		resolve(stdlibDir, "list.cir.json"),
+	]);
+
+	it("loads list:concat as a SPIRAL-defined operator", () => {
+		assert.ok(lookupOperator(registry, "list", "concat"));
+	});
+
+	it("loads list:reverse as a SPIRAL-defined operator", () => {
+		assert.ok(lookupOperator(registry, "list", "reverse"));
+	});
+
+	it("loads list:slice as a SPIRAL-defined operator", () => {
+		assert.ok(lookupOperator(registry, "list", "slice"));
+	});
+
+	it("list:concat works correctly", () => {
+		const concat = lookupOperator(registry, "list", "concat")!;
+		const a = listVal([intVal(1), intVal(2), intVal(3)]);
+		const b = listVal([intVal(4), intVal(5)]);
+		assert.deepStrictEqual(concat.fn(a, b), listVal([intVal(1), intVal(2), intVal(3), intVal(4), intVal(5)]));
+	});
+
+	it("list:concat with empty lists", () => {
+		const concat = lookupOperator(registry, "list", "concat")!;
+		const a = listVal([intVal(1), intVal(2)]);
+		const empty = listVal([]);
+		assert.deepStrictEqual(concat.fn(a, empty), a);
+		assert.deepStrictEqual(concat.fn(empty, a), a);
+		assert.deepStrictEqual(concat.fn(empty, empty), empty);
+	});
+
+	it("list:reverse works correctly", () => {
+		const reverse = lookupOperator(registry, "list", "reverse")!;
+		const a = listVal([intVal(1), intVal(2), intVal(3)]);
+		assert.deepStrictEqual(reverse.fn(a), listVal([intVal(3), intVal(2), intVal(1)]));
+	});
+
+	it("list:reverse empty list", () => {
+		const reverse = lookupOperator(registry, "list", "reverse")!;
+		assert.deepStrictEqual(reverse.fn(listVal([])), listVal([]));
+	});
+
+	it("list:slice works correctly", () => {
+		const slice = lookupOperator(registry, "list", "slice")!;
+		const a = listVal([intVal(10), intVal(20), intVal(30), intVal(40)]);
+		assert.deepStrictEqual(slice.fn(a, intVal(1)), listVal([intVal(20), intVal(30), intVal(40)]));
+		assert.deepStrictEqual(slice.fn(a, intVal(2)), listVal([intVal(30), intVal(40)]));
+		assert.deepStrictEqual(slice.fn(a, intVal(0)), a);
+	});
+
+	it("list:slice past end returns empty", () => {
+		const slice = lookupOperator(registry, "list", "slice")!;
+		const a = listVal([intVal(1), intVal(2)]);
+		assert.deepStrictEqual(slice.fn(a, intVal(5)), listVal([]));
 	});
 });

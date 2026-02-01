@@ -64,6 +64,8 @@ function evalDataExpr(ctx: AirEvalCtx, expr: Expr, env: ValueEnv): Value {
 		return evalListOfExpr(ctx, expr, env);
 	case "match":
 		return evalMatchExpr(ctx, expr, env);
+	case "fix":
+		return evalFixInline(ctx, expr, env);
 	default:
 		return errorVal(ErrorCodes.DomainError, "Unsupported expression kind in closure body: " + expr.kind);
 	}
@@ -345,4 +347,29 @@ function evalMatchExpr(ctx: AirEvalCtx, expr: Expr & { kind: "match" }, env: Val
 		return resolveStringOrExprInCtx(ctx, expr.default, env);
 	}
 	return errorVal(ErrorCodes.DomainError, "No matching case for: " + matchVal.value);
+}
+
+function mergeEnvs(base: ValueEnv, overlay: ValueEnv): ValueEnv {
+	const merged = new Map(base);
+	for (const [k, v] of overlay) merged.set(k, v);
+	return merged;
+}
+
+function evalFixInline(ctx: AirEvalCtx, expr: Expr & { kind: "fix" }, env: ValueEnv): Value {
+	const fnValue = resolveStringOrExprInCtx(ctx, expr.fn, env);
+	if (isError(fnValue)) return fnValue;
+	if (fnValue.kind !== "closure") return errorVal(ErrorCodes.TypeError, "Expected closure, got: " + fnValue.kind);
+	if (fnValue.params.length !== 1) return errorVal(ErrorCodes.ArityError, "Fix requires single-parameter function");
+	const param = fnValue.params[0];
+	if (!param) return errorVal(ErrorCodes.ArityError, "fix requires a function with at least one parameter");
+	const mergedEnv = mergeEnvs(fnValue.env, env);
+	const selfRef: ClosureVal = { kind: "closure", params: [], body: fnValue.body, env: mergedEnv };
+	const fixEnv = extendValueEnv(mergedEnv, param.name, selfRef);
+	const inner = evalExprWithNodeMap(ctx, fnValue.body, fixEnv);
+	if (isError(inner)) return inner;
+	if (inner.kind !== "closure") return errorVal(ErrorCodes.TypeError, "Fix body should evaluate to closure, got: " + inner.kind);
+	selfRef.params = inner.params;
+	selfRef.body = inner.body;
+	selfRef.env = extendValueEnv(mergeEnvs(inner.env, env), param.name, selfRef);
+	return selfRef;
 }

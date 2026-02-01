@@ -1,0 +1,156 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "List stdlib — concat, reverse, slice implemented in SPIRAL CIR using fix combinator. Kernel provides list:length, list:nth, list:cons.",
+	"airDefs": [],
+	"nodes": [
+		{ "id": "zero", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 } },
+		{ "id": "one",  "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 } },
+		{ "id": "emptyList", "expr": { "kind": "listOf", "elements": [] } },
+
+		{ "id": "concatRecBody", "expr": {
+			"kind": "let", "name": "check",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "la" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "check" },
+				"then": { "kind": "var", "name": "b" },
+				"else": { "kind": "let", "name": "elem",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "a" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "nextI",
+						"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+						"body": { "kind": "let", "name": "rest",
+							"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }], "fn": "rec" },
+							"body": { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "elem" }, { "kind": "var", "name": "rest" }] }
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "concatRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } },
+			"params": ["i"],
+			"body": "concatRecBody"
+		}},
+		{ "id": "concatRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } } },
+			"params": ["rec"],
+			"body": "concatRecInner"
+		}},
+		{ "id": "concatBody", "expr": {
+			"kind": "let", "name": "la",
+			"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "a" }] },
+			"body": { "kind": "let", "name": "iter",
+				"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "fn": "concatRecOuter" },
+				"body": { "kind": "callExpr", "args": ["zero"], "fn": "iter" }
+			}
+		}},
+		{ "id": "concat", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "list", "of": { "kind": "int" } }, { "kind": "list", "of": { "kind": "int" } }], "returns": { "kind": "list", "of": { "kind": "int" } } },
+			"params": ["a", "b"],
+			"body": "concatBody"
+		}},
+
+		{ "id": "reverseRecBody", "expr": {
+			"kind": "let", "name": "check",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "la" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "check" },
+				"then": { "kind": "var", "name": "acc" },
+				"else": { "kind": "let", "name": "elem",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "lst" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "newAcc",
+						"value": { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "elem" }, { "kind": "var", "name": "acc" }] },
+						"body": { "kind": "let", "name": "nextI",
+							"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+							"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }, { "kind": "var", "name": "newAcc" }], "fn": "rec" }
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "reverseRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "list", "of": { "kind": "int" } }], "returns": { "kind": "list", "of": { "kind": "int" } } },
+			"params": ["i", "acc"],
+			"body": "reverseRecBody"
+		}},
+		{ "id": "reverseRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }, { "kind": "list", "of": { "kind": "int" } }], "returns": { "kind": "list", "of": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "list", "of": { "kind": "int" } }], "returns": { "kind": "list", "of": { "kind": "int" } } } },
+			"params": ["rec"],
+			"body": "reverseRecInner"
+		}},
+		{ "id": "reverseBody", "expr": {
+			"kind": "let", "name": "la",
+			"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "lst" }] },
+			"body": { "kind": "let", "name": "iter",
+				"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "list", "of": { "kind": "int" } }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "fn": "reverseRecOuter" },
+				"body": { "kind": "callExpr", "args": ["zero", "emptyList"], "fn": "iter" }
+			}
+		}},
+		{ "id": "reverse", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "list", "of": { "kind": "int" } }], "returns": { "kind": "list", "of": { "kind": "int" } } },
+			"params": ["lst"],
+			"body": "reverseBody"
+		}},
+
+		{ "id": "sliceRecBody", "expr": {
+			"kind": "let", "name": "check",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "la" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "check" },
+				"then": "emptyList",
+				"else": { "kind": "let", "name": "elem",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "lst" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "nextI",
+						"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+						"body": { "kind": "let", "name": "rest",
+							"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }], "fn": "rec" },
+							"body": { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "elem" }, { "kind": "var", "name": "rest" }] }
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "sliceRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } },
+			"params": ["i"],
+			"body": "sliceRecBody"
+		}},
+		{ "id": "sliceRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } } },
+			"params": ["rec"],
+			"body": "sliceRecInner"
+		}},
+		{ "id": "sliceBody", "expr": {
+			"kind": "let", "name": "la",
+			"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "lst" }] },
+			"body": { "kind": "let", "name": "iter",
+				"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "fn": "sliceRecOuter" },
+				"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "start" }], "fn": "iter" }
+			}
+		}},
+		{ "id": "slice", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "list", "of": { "kind": "int" } }, { "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } },
+			"params": ["lst", "start"],
+			"body": "sliceBody"
+		}},
+
+		{ "id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{ "key": "list:concat", "value": "concat" },
+				{ "key": "list:reverse", "value": "reverse" },
+				{ "key": "list:slice", "value": "slice" }
+			]
+		}}
+	],
+	"result": "exports"
+}
