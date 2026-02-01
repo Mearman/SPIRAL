@@ -21,7 +21,6 @@ import {
 	validateEIR,
 	validateLIR,
 	bootstrapRegistry,
-	createListRegistry,
 	evaluateProgram,
 	evaluateEIR,
 	evaluateLIR,
@@ -356,9 +355,8 @@ async function runExample(path: string, options: Options): Promise<boolean> {
 			return true;
 		}
 
-		// Merge all registries into one Map
-		let registry = bootstrapRegistry();
-		registry = new Map([...registry, ...createListRegistry()]);
+		// Bootstrap provides kernel + all stdlib operators
+		const registry = bootstrapRegistry();
 
 		// Build defs from airDefs (if applicable)
 		let defs: Defs = new Map();
