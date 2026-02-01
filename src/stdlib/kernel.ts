@@ -211,7 +211,7 @@ const listCons: Operator = defineOperator("list", "cons")
 		return listVal([a, ...b.value]);
 	}).build();
 
-// map — Primitives (3)
+// map — Primitives (4)
 
 const mapGet: Operator = defineOperator("map", "get")
 	.setParams(mapType(stringType, intType), stringType).setReturns(intType).setPure(true)
@@ -249,6 +249,20 @@ const mapHas: Operator = defineOperator("map", "has")
 		if (k.kind !== "string") return errorVal(ErrorCodes.TypeError, "Expected string key");
 		const hash = "s:" + k.value;
 		return boolVal(m.value.has(hash));
+	}).build();
+
+const mapKeys: Operator = defineOperator("map", "keys")
+	.setParams(mapType(stringType, intType)).setReturns(listType(stringType)).setPure(true)
+	.setImpl((m) => {
+		if (isError(m)) return m;
+		if (m.kind !== "map") return errorVal(ErrorCodes.TypeError, "Expected map value");
+		const keyList: Value[] = [];
+		for (const hash of m.value.keys()) {
+			if (hash.startsWith("s:")) {
+				keyList.push(stringVal(hash.slice(2)));
+			}
+		}
+		return listVal(keyList);
 	}).build();
 
 // string — Primitives (6): concat, length, charAt + Unicode host ops
@@ -323,7 +337,7 @@ const setSize: Operator = defineOperator("set", "size")
 		return intVal(a.value.size);
 	}).build();
 
-// Kernel Registry — 31 native operators
+// Kernel Registry — 32 native operators
 
 export function createKernelRegistry(): OperatorRegistry {
 	const operators: Operator[] = [
@@ -337,8 +351,8 @@ export function createKernelRegistry(): OperatorRegistry {
 		boolNot,
 		// list: primitives (3)
 		listLength, listNth, listCons,
-		// map: primitives (3)
-		mapGet, mapSet, mapHas,
+		// map: primitives (4)
+		mapGet, mapSet, mapHas, mapKeys,
 		// string: primitives (6)
 		strConcat, strLength, strCharAt, strToUpper, strToLower, strTrim,
 		// set: primitives (4)
