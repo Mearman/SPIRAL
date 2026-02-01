@@ -1,42 +1,49 @@
 // Smoke tests for the examples CLI tool
+// Discovers all examples and runs each through the CLI
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { resolve } from "node:path";
+import { resolve, relative } from "node:path";
 import { promisify } from "node:util";
+import { globSync } from "node:fs";
 
 const exec = promisify(execFile);
-const CLI = resolve(import.meta.dirname, "..", "examples", "cli.ts");
+const ROOT = resolve(import.meta.dirname, "..");
+const CLI = resolve(ROOT, "examples", "cli.ts");
 
 function run(...args: string[]): Promise<{ stdout: string; stderr: string }> {
 	return exec("tsx", [CLI, ...args], { timeout: 30_000 });
+}
+
+function discoverExamples(): { path: string; relativePath: string }[] {
+	const pattern = "examples/**/*.{air,cir,eir,lir}.json";
+	const files = globSync(pattern, { cwd: ROOT, absolute: true });
+	return files.map((filePath) => {
+		const rel = relative(resolve(ROOT, "examples"), filePath);
+		const cliPath = rel.replace(/\.(air|cir|eir|lir)\.json$/, "");
+		return { path: cliPath, relativePath: rel };
+	});
 }
 
 describe("Examples CLI", () => {
 	it("lists examples without error", async () => {
 		const { stdout } = await run("--list");
 		assert.ok(stdout.includes("AIR"), "should list AIR examples");
+		assert.ok(stdout.includes("CIR"), "should list CIR examples");
 		assert.ok(stdout.includes("EIR"), "should list EIR examples");
+		assert.ok(stdout.includes("LIR"), "should list LIR examples");
 	});
 
-	it("validates all examples", async () => {
-		const { stdout } = await run("--validate", "--list");
-		assert.ok(stdout.length > 0, "should produce output");
-	});
+	const examples = discoverExamples();
 
-	it("runs an AIR example", async () => {
-		const { stdout } = await run("air/basics/arithmetic");
-		assert.ok(stdout.includes("Result"), "should show result");
-	});
-
-	it("runs an EIR example", async () => {
-		const { stdout } = await run("eir/basics/sequencing");
-		assert.ok(stdout.includes("Result"), "should show result");
-	});
-
-	it("runs a LIR example", async () => {
-		const { stdout } = await run("lir/basics/straight-line");
-		assert.ok(stdout.includes("Result"), "should show result");
-	});
+	for (const example of examples) {
+		it(`runs ${example.relativePath}`, async () => {
+			const { stdout } = await run(example.path);
+			assert.ok(
+				stdout.includes("Result") || stdout.includes("Validation passed"),
+				`expected CLI output for ${example.relativePath}`,
+			);
+		});
+	}
 });
