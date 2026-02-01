@@ -1,0 +1,250 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Map stdlib — values, size, remove, entries, merge implemented in SPIRAL CIR. Kernel provides map:get, map:set, map:has, map:keys.",
+	"airDefs": [],
+	"nodes": [
+		{ "id": "zero",      "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 } },
+		{ "id": "one",       "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 } },
+		{ "id": "emptyList", "expr": { "kind": "listOf", "elements": [] } },
+		{ "id": "emptyMap",  "expr": { "kind": "record", "fields": [] } },
+
+		{ "id": "sizeBody", "expr": {
+			"kind": "let", "name": "ks",
+			"value": { "kind": "call", "ns": "map", "name": "keys", "args": [{ "kind": "var", "name": "m" }] },
+			"body": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "ks" }] }
+		}},
+		{ "id": "size", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "int" } },
+			"params": ["m"],
+			"body": "sizeBody"
+		}},
+
+		{ "id": "valuesRecBody", "expr": {
+			"kind": "let", "name": "done",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "numKeys" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "done" },
+				"then": "emptyList",
+				"else": { "kind": "let", "name": "k",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "ks" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "v",
+						"value": { "kind": "call", "ns": "map", "name": "get", "args": [{ "kind": "var", "name": "m" }, { "kind": "var", "name": "k" }] },
+						"body": { "kind": "let", "name": "nextI",
+							"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+							"body": { "kind": "let", "name": "rest",
+								"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }], "fn": "rec" },
+								"body": { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "v" }, { "kind": "var", "name": "rest" }] }
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "valuesRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } },
+			"params": ["i"],
+			"body": "valuesRecBody"
+		}},
+		{ "id": "valuesRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } } },
+			"params": ["rec"],
+			"body": "valuesRecInner"
+		}},
+		{ "id": "valuesBody", "expr": {
+			"kind": "let", "name": "ks",
+			"value": { "kind": "call", "ns": "map", "name": "keys", "args": [{ "kind": "var", "name": "m" }] },
+			"body": { "kind": "let", "name": "numKeys",
+				"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "ks" }] },
+				"body": { "kind": "let", "name": "iter",
+					"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "fn": "valuesRecOuter" },
+					"body": { "kind": "callExpr", "args": ["zero"], "fn": "iter" }
+				}
+			}
+		}},
+		{ "id": "values", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "list", "of": { "kind": "int" } } },
+			"params": ["m"],
+			"body": "valuesBody"
+		}},
+
+		{ "id": "entriesRecBody", "expr": {
+			"kind": "let", "name": "done",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "numKeys" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "done" },
+				"then": "emptyList",
+				"else": { "kind": "let", "name": "k",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "ks" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "v",
+						"value": { "kind": "call", "ns": "map", "name": "get", "args": [{ "kind": "var", "name": "m" }, { "kind": "var", "name": "k" }] },
+						"body": { "kind": "let", "name": "pair",
+							"value": { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "k" }, { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "v" }, "emptyList"] }] },
+							"body": { "kind": "let", "name": "nextI",
+								"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+								"body": { "kind": "let", "name": "rest",
+									"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }], "fn": "rec" },
+									"body": { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "pair" }, { "kind": "var", "name": "rest" }] }
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "entriesRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "list", "of": { "kind": "int" } } } },
+			"params": ["i"],
+			"body": "entriesRecBody"
+		}},
+		{ "id": "entriesRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "list", "of": { "kind": "int" } } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "list", "of": { "kind": "int" } } } } },
+			"params": ["rec"],
+			"body": "entriesRecInner"
+		}},
+		{ "id": "entriesBody", "expr": {
+			"kind": "let", "name": "ks",
+			"value": { "kind": "call", "ns": "map", "name": "keys", "args": [{ "kind": "var", "name": "m" }] },
+			"body": { "kind": "let", "name": "numKeys",
+				"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "ks" }] },
+				"body": { "kind": "let", "name": "iter",
+					"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "list", "of": { "kind": "int" } } } }, "fn": "entriesRecOuter" },
+					"body": { "kind": "callExpr", "args": ["zero"], "fn": "iter" }
+				}
+			}
+		}},
+		{ "id": "entries", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "list", "of": { "kind": "list", "of": { "kind": "int" } } } },
+			"params": ["m"],
+			"body": "entriesBody"
+		}},
+
+		{ "id": "removeRecBody", "expr": {
+			"kind": "let", "name": "done",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "numKeys" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "done" },
+				"then": { "kind": "var", "name": "acc" },
+				"else": { "kind": "let", "name": "k",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "ks" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "skip",
+						"value": { "kind": "call", "ns": "core", "name": "eq", "args": [{ "kind": "var", "name": "k" }, { "kind": "var", "name": "key" }] },
+						"body": { "kind": "let", "name": "nextI",
+							"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+							"body": { "kind": "if",
+								"cond": { "kind": "var", "name": "skip" },
+								"then": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }, { "kind": "var", "name": "acc" }], "fn": "rec" },
+								"else": { "kind": "let", "name": "v",
+									"value": { "kind": "call", "ns": "map", "name": "get", "args": [{ "kind": "var", "name": "m" }, { "kind": "var", "name": "k" }] },
+									"body": { "kind": "let", "name": "newAcc",
+										"value": { "kind": "call", "ns": "map", "name": "set", "args": [{ "kind": "var", "name": "acc" }, { "kind": "var", "name": "k" }, { "kind": "var", "name": "v" }] },
+										"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }, { "kind": "var", "name": "newAcc" }], "fn": "rec" }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "removeRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } },
+			"params": ["i", "acc"],
+			"body": "removeRecBody"
+		}},
+		{ "id": "removeRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }, { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } } },
+			"params": ["rec"],
+			"body": "removeRecInner"
+		}},
+		{ "id": "removeBody", "expr": {
+			"kind": "let", "name": "ks",
+			"value": { "kind": "call", "ns": "map", "name": "keys", "args": [{ "kind": "var", "name": "m" }] },
+			"body": { "kind": "let", "name": "numKeys",
+				"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "ks" }] },
+				"body": { "kind": "let", "name": "iter",
+					"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } }, "fn": "removeRecOuter" },
+					"body": { "kind": "callExpr", "args": ["zero", "emptyMap"], "fn": "iter" }
+				}
+			}
+		}},
+		{ "id": "remove", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }, { "kind": "string" }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } },
+			"params": ["m", "key"],
+			"body": "removeBody"
+		}},
+
+		{ "id": "mergeRecBody", "expr": {
+			"kind": "let", "name": "done",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "numKeys" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "done" },
+				"then": { "kind": "var", "name": "acc" },
+				"else": { "kind": "let", "name": "k",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "bKeys" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "v",
+						"value": { "kind": "call", "ns": "map", "name": "get", "args": [{ "kind": "var", "name": "b" }, { "kind": "var", "name": "k" }] },
+						"body": { "kind": "let", "name": "newAcc",
+							"value": { "kind": "call", "ns": "map", "name": "set", "args": [{ "kind": "var", "name": "acc" }, { "kind": "var", "name": "k" }, { "kind": "var", "name": "v" }] },
+							"body": { "kind": "let", "name": "nextI",
+								"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+								"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }, { "kind": "var", "name": "newAcc" }], "fn": "rec" }
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "mergeRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } },
+			"params": ["i", "acc"],
+			"body": "mergeRecBody"
+		}},
+		{ "id": "mergeRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }, { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } } },
+			"params": ["rec"],
+			"body": "mergeRecInner"
+		}},
+		{ "id": "mergeBody", "expr": {
+			"kind": "let", "name": "bKeys",
+			"value": { "kind": "call", "ns": "map", "name": "keys", "args": [{ "kind": "var", "name": "b" }] },
+			"body": { "kind": "let", "name": "numKeys",
+				"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "bKeys" }] },
+				"body": { "kind": "let", "name": "iter",
+					"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } }, "fn": "mergeRecOuter" },
+					"body": { "kind": "callExpr", "args": ["zero", { "kind": "var", "name": "a" }], "fn": "iter" }
+				}
+			}
+		}},
+		{ "id": "merge", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }, { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } },
+			"params": ["a", "b"],
+			"body": "mergeBody"
+		}},
+
+		{ "id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{ "key": "map:values", "value": "values" },
+				{ "key": "map:size", "value": "size" },
+				{ "key": "map:remove", "value": "remove" },
+				{ "key": "map:entries", "value": "entries" },
+				{ "key": "map:merge", "value": "merge" }
+			]
+		}}
+	],
+	"result": "exports"
+}
