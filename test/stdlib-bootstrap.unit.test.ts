@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { createKernelRegistry } from "../src/stdlib/kernel.js";
 import { loadStdlib } from "../src/stdlib/loader.js";
 import { lookupOperator } from "../src/domains/registry.js";
-import { boolVal, intVal, listVal, mapVal, setVal, stringVal, hashValue } from "../src/types.js";
+import { boolVal, floatVal, intVal, listVal, mapVal, setVal, stringVal, hashValue, voidVal } from "../src/types.js";
 import type { Value } from "../src/types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -67,8 +67,49 @@ describe("kernel registry", () => {
 		assert.strictEqual(lookupOperator(kernel, "bool", "xor"), undefined);
 	});
 
-	it("has 33 total operators", () => {
-		assert.strictEqual(kernel.size, 33);
+	it("has core:isError", () => {
+		const isErr = lookupOperator(kernel, "core", "isError");
+		assert.ok(isErr);
+		assert.deepStrictEqual(isErr.fn(intVal(1)), boolVal(false));
+		assert.deepStrictEqual(isErr.fn({ kind: "error", code: "TestError", message: "test" } as Value), boolVal(true));
+	});
+
+	it("has string:toInt", () => {
+		const toInt = lookupOperator(kernel, "string", "toInt");
+		assert.ok(toInt);
+		assert.deepStrictEqual(toInt.fn(stringVal("42")), intVal(42));
+		assert.equal(toInt.fn(stringVal("abc")).kind, "error");
+	});
+
+	it("has string:toFloat", () => {
+		const toFloat = lookupOperator(kernel, "string", "toFloat");
+		assert.ok(toFloat);
+		assert.deepStrictEqual(toFloat.fn(stringVal("3.14")), floatVal(3.14));
+		assert.equal(toFloat.fn(stringVal("abc")).kind, "error");
+	});
+
+	it("has json:parse", () => {
+		const parse = lookupOperator(kernel, "json", "parse");
+		assert.ok(parse);
+		// Parse number
+		assert.deepStrictEqual(parse.fn(stringVal("42")), intVal(42));
+		// Parse string
+		assert.deepStrictEqual(parse.fn(stringVal('"hello"')), stringVal("hello"));
+		// Parse boolean
+		assert.deepStrictEqual(parse.fn(stringVal("true")), boolVal(true));
+		// Parse null
+		assert.deepStrictEqual(parse.fn(stringVal("null")), voidVal());
+		// Parse array
+		assert.deepStrictEqual(parse.fn(stringVal("[1,2,3]")), listVal([intVal(1), intVal(2), intVal(3)]));
+		// Parse object
+		const obj = parse.fn(stringVal('{"a":1}'));
+		assert.equal(obj.kind, "map");
+		// Parse error
+		assert.equal(parse.fn(stringVal("{invalid")).kind, "error");
+	});
+
+	it("has 37 total operators", () => {
+		assert.strictEqual(kernel.size, 37);
 	});
 });
 

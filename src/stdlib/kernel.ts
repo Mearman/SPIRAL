@@ -23,6 +23,7 @@ import {
 	setVal,
 	stringType,
 	stringVal,
+	voidVal,
 } from "../types.js";
 import {
 	defineOperator,
@@ -359,7 +360,66 @@ const setToList: Operator = defineOperator("set", "toList")
 		return listVal(elements);
 	}).build();
 
-// Kernel Registry — 33 native operators
+// core — isError (1): runtime type check on error kind
+
+const coreIsError: Operator = defineOperator("core", "isError")
+	.setParams(intType).setReturns(boolType).setPure(true)
+	.setImpl((a) => {
+		return boolVal(isError(a));
+	}).build();
+
+// string — toInt, toFloat (2): native parsing
+
+const strToInt: Operator = defineOperator("string", "toInt")
+	.setParams(stringType).setReturns(intType).setPure(true)
+	.setImpl((a) => {
+		if (isError(a)) return a;
+		const s = expectString(a);
+		const n = parseInt(s, 10);
+		if (Number.isNaN(n)) return errorVal(ErrorCodes.TypeError, "Cannot parse as int: " + s);
+		return intVal(n);
+	}).build();
+
+const strToFloat: Operator = defineOperator("string", "toFloat")
+	.setParams(stringType).setReturns(floatType).setPure(true)
+	.setImpl((a) => {
+		if (isError(a)) return a;
+		const s = expectString(a);
+		const n = parseFloat(s);
+		if (Number.isNaN(n)) return errorVal(ErrorCodes.TypeError, "Cannot parse as float: " + s);
+		return floatVal(n);
+	}).build();
+
+// json — parse (1): native JSON parser
+
+function jsonToValue(raw: unknown): Value {
+	if (raw === null || raw === undefined) return voidVal();
+	if (typeof raw === "boolean") return boolVal(raw);
+	if (typeof raw === "number") return Number.isInteger(raw) ? intVal(raw) : floatVal(raw);
+	if (typeof raw === "string") return stringVal(raw);
+	if (Array.isArray(raw)) return listVal(raw.map(jsonToValue));
+	if (typeof raw === "object") {
+		const m = new Map<string, Value>();
+		for (const [k, v] of Object.entries(raw)) m.set("s:" + k, jsonToValue(v));
+		return mapVal(m);
+	}
+	return errorVal(ErrorCodes.TypeError, "Unsupported JSON value");
+}
+
+const jsonParse: Operator = defineOperator("json", "parse")
+	.setParams(stringType).setReturns(mapType(stringType, intType)).setPure(true)
+	.setImpl((a) => {
+		if (isError(a)) return a;
+		const s = expectString(a);
+		try {
+			const parsed: unknown = JSON.parse(s);
+			return jsonToValue(parsed);
+		} catch (e) {
+			return errorVal(ErrorCodes.DomainError, "JSON parse error: " + (e instanceof Error ? e.message : String(e)));
+		}
+	}).build();
+
+// Kernel Registry — 37 native operators
 
 export function createKernelRegistry(): OperatorRegistry {
 	const operators: Operator[] = [
@@ -379,6 +439,12 @@ export function createKernelRegistry(): OperatorRegistry {
 		strConcat, strLength, strCharAt, strToUpper, strToLower, strTrim,
 		// set: primitives (5)
 		setAdd, setRemove, setContains, setSize, setToList,
+		// core: isError (1)
+		coreIsError,
+		// string: parsing (2)
+		strToInt, strToFloat,
+		// json: parse (1)
+		jsonParse,
 	];
 
 	return operators.reduce<OperatorRegistry>(
