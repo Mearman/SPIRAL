@@ -22,6 +22,7 @@ import { createBoolRegistry } from "../src/domains/bool.js";
 import { createListRegistry } from "../src/domains/list.js";
 import { createSetRegistry } from "../src/domains/set.js";
 import { createMapRegistry } from "../src/domains/map.js";
+import { createStringRegistry } from "../src/domains/string.js";
 import {
 	validateAIR,
 	validateCIR,
@@ -106,6 +107,7 @@ function buildRegistry(): OperatorRegistry {
 	for (const [key, op] of createListRegistry()) registry.set(key, op);
 	for (const [key, op] of createSetRegistry()) registry.set(key, op);
 	for (const [key, op] of createMapRegistry()) registry.set(key, op);
+	for (const [key, op] of createStringRegistry()) registry.set(key, op);
 	return registry;
 }
 
