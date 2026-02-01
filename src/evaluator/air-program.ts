@@ -103,7 +103,7 @@ interface BoundCtx {
 	nodeMap: Map<string, AirHybridNode>;
 }
 
-function computeBoundNodes(
+export function computeBoundNodes(
 	doc: AIRDocument,
 	nodeMap: Map<string, AirHybridNode>,
 ): Set<string> {

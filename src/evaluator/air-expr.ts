@@ -51,6 +51,13 @@ export function evalExprWithNodeMap(ctx: AirEvalCtx, expr: Expr, env: ValueEnv):
 		return evalLitValue(expr);
 	case "do":
 		return evalDo(ctx, expr, env);
+	default:
+		return evalDataExpr(ctx, expr, env);
+	}
+}
+
+function evalDataExpr(ctx: AirEvalCtx, expr: Expr, env: ValueEnv): Value {
+	switch (expr.kind) {
 	case "record":
 		return evalRecordExpr(ctx, expr, env);
 	case "listOf":
@@ -278,54 +285,18 @@ function tryApplyAirDef(cCtx: CallCtx, args: Value[]): Value {
 //==============================================================================
 
 function evalLet(ctx: AirEvalCtx, expr: Expr & { kind: "let" }, env: ValueEnv): Value {
-	if (typeof expr.value !== "string" || typeof expr.body !== "string") {
-		return errorVal(ErrorCodes.DomainError, "Inline expressions not supported in evaluator");
-	}
-	const val = resolveLetVal(ctx, expr.value, env);
-	if (!val) return errorVal(ErrorCodes.DomainError, "Let value not found: " + expr.value);
+	const val = resolveStringOrExprInCtx(ctx, expr.value, env);
 	if (isError(val)) return val;
 	const letEnv = extendValueEnv(env, expr.name, val);
-	const bodyNode = ctx.nodeMap.get(expr.body);
-	if (!bodyNode) return errorVal(ErrorCodes.DomainError, "Let body node not found: " + expr.body);
-	return resolveNodeValue(ctx, bodyNode, letEnv);
-}
-
-function resolveLetVal(ctx: AirEvalCtx, valueRef: string, env: ValueEnv): Value | undefined {
-	let val = ctx.nodeValues.get(valueRef) ?? lookupValue(env, valueRef);
-	if (!val) {
-		const vNode = ctx.nodeMap.get(valueRef);
-		if (vNode) val = resolveNodeValue(ctx, vNode, env);
-	}
-	return val;
+	return resolveStringOrExprInCtx(ctx, expr.body, letEnv);
 }
 
 function evalIf(ctx: AirEvalCtx, expr: Expr & { kind: "if" }, env: ValueEnv): Value {
-	if (typeof expr.cond !== "string" || typeof expr.then !== "string" || typeof expr.else !== "string") {
-		return errorVal(ErrorCodes.DomainError, "Inline expressions not supported in evaluator");
-	}
-	const condValue = resolveIfCond(ctx, expr.cond, env);
-	if (!condValue) return errorVal(ErrorCodes.DomainError, "Condition node not evaluated: " + expr.cond);
+	const condValue = resolveStringOrExprInCtx(ctx, expr.cond, env);
 	if (isError(condValue)) return condValue;
 	if (condValue.kind !== "bool") return errorVal(ErrorCodes.TypeError, "Condition must be boolean, got: " + condValue.kind);
-	const branchId = condValue.value ? expr.then : expr.else;
-	return resolveIfBranch(ctx, branchId, env);
-}
-
-function resolveIfCond(ctx: AirEvalCtx, cond: string, env: ValueEnv): Value | undefined {
-	let val = ctx.nodeValues.get(cond) ?? lookupValue(env, cond);
-	if (!val) {
-		const condNode = ctx.nodeMap.get(cond);
-		if (condNode) val = resolveNodeValue(ctx, condNode, env);
-	}
-	return val;
-}
-
-function resolveIfBranch(ctx: AirEvalCtx, branchId: string, env: ValueEnv): Value {
-	const bVal = ctx.nodeValues.get(branchId) ?? lookupValue(env, branchId);
-	if (bVal) return bVal;
-	const bNode = ctx.nodeMap.get(branchId);
-	if (!bNode) return errorVal(ErrorCodes.DomainError, "Branch node not evaluated: " + branchId);
-	return resolveNodeValue(ctx, bNode, env);
+	const branch = condValue.value ? expr.then : expr.else;
+	return resolveStringOrExprInCtx(ctx, branch, env);
 }
 
 //==============================================================================

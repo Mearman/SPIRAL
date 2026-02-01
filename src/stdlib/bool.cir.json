@@ -1,0 +1,62 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Bool stdlib — and, or, xor implemented in SPIRAL CIR. Kernel provides only bool:not.",
+	"airDefs": [],
+	"nodes": [
+		{ "id": "true",  "expr": { "kind": "lit", "type": { "kind": "bool" }, "value": true } },
+		{ "id": "false", "expr": { "kind": "lit", "type": { "kind": "bool" }, "value": false } },
+
+		{ "id": "andBody", "expr": {
+			"kind": "if",
+			"type": { "kind": "bool" },
+			"cond": { "kind": "var", "name": "a" },
+			"then": { "kind": "var", "name": "b" },
+			"else": "false"
+		}},
+		{ "id": "and", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "bool" }, { "kind": "bool" }], "returns": { "kind": "bool" } },
+			"params": ["a", "b"],
+			"body": "andBody"
+		}},
+
+		{ "id": "orBody", "expr": {
+			"kind": "if",
+			"type": { "kind": "bool" },
+			"cond": { "kind": "var", "name": "a" },
+			"then": "true",
+			"else": { "kind": "var", "name": "b" }
+		}},
+		{ "id": "or", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "bool" }, { "kind": "bool" }], "returns": { "kind": "bool" } },
+			"params": ["a", "b"],
+			"body": "orBody"
+		}},
+
+		{ "id": "xorBody", "expr": {
+			"kind": "if",
+			"type": { "kind": "bool" },
+			"cond": { "kind": "var", "name": "a" },
+			"then": { "kind": "call", "ns": "bool", "name": "not", "args": [{ "kind": "var", "name": "b" }] },
+			"else": { "kind": "var", "name": "b" }
+		}},
+		{ "id": "xor", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "bool" }, { "kind": "bool" }], "returns": { "kind": "bool" } },
+			"params": ["a", "b"],
+			"body": "xorBody"
+		}},
+
+		{ "id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{ "key": "bool:and", "value": "and" },
+				{ "key": "bool:or",  "value": "or" },
+				{ "key": "bool:xor", "value": "xor" }
+			]
+		}}
+	],
+	"result": "exports"
+}
