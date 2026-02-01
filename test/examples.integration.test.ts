@@ -4,7 +4,8 @@
 import { describe, it } from "node:test";
 import * as assert from "node:assert";
 import { readFileSync, existsSync } from "fs";
-import { resolve, relative, basename } from "path";
+import { dirname, resolve, relative, basename } from "path";
+import { fileURLToPath } from "url";
 import { globSync } from "glob";
 
 import { evaluateProgram, evaluateEIR } from "../src/evaluator.js";
@@ -50,7 +51,7 @@ interface ExampleInfo {
 //==============================================================================
 
 function discoverExamples(): ExampleInfo[] {
-	const root = resolve(import.meta.dirname, "..");
+	const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 	const pattern = "examples/**/*.{air,cir,eir,lir}.json";
 	const files = globSync(pattern, { cwd: root, absolute: true });
 

@@ -4,12 +4,13 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { resolve, relative } from "node:path";
+import { dirname, resolve, relative } from "node:path";
 import { promisify } from "node:util";
-import { globSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { globSync } from "glob";
 
 const exec = promisify(execFile);
-const ROOT = resolve(import.meta.dirname, "..");
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = resolve(ROOT, "examples", "cli.ts");
 
 function run(...args: string[]): Promise<{ stdout: string; stderr: string }> {
