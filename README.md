@@ -147,6 +147,21 @@ will fail validation.
 
 See [wiki/Architecture.md](wiki/Architecture.md) for details.
 
+## Comparison with Other Systems
+
+SPIRAL is an intermediate representation, not a rule engine, query language, or policy engine. However, it shares the JSON ecosystem with several related systems. The table below shows where SPIRAL's layers sit relative to these tools:
+
+| System | Format | Computational Power | Types | Side Effects | Primary Use |
+|--------|--------|---------------------|-------|--------------|-------------|
+| **SPIRAL (AIR)** | JSON | Primitive Recursive | Static | No | Pure transforms, safe eval |
+| **SPIRAL (EIR)** | JSON | Turing-Complete | Static | Yes | General programs, I/O, concurrency |
+| **JsonLogic** | JSON | Sub-primitive-recursive | Untyped | No | Business rules |
+| **CEL** | Text | Primitive Recursive | Strong | No | Policy, validation |
+| **JMESPath** | Text | Sub-primitive-recursive | Untyped | No | JSON querying |
+| **OPA/Rego** | Text | Datalog + extensions | Inferred | No | Policy decisions |
+
+For detailed comparisons, see [wiki/Comparisons.md](wiki/Comparisons.md).
+
 ## Quick start
 ```bash
 pnpm install
