@@ -323,6 +323,7 @@ export class AsyncEvaluator {
 		switch (instr.kind) {
 		case "assign": return cfg.execAssign(instr, ctx);
 		case "op": return cfg.execOp(instr, ctx);
+		case "phi": return cfg.execPhi(instr, ctx);
 		case "spawn": return cfg.execSpawn(instr, ctx);
 		case "channelOp": return cfg.execChannelOp(instr, ctx);
 		case "await": return cfg.execAwait(instr, ctx);
