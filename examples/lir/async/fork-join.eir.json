@@ -274,5 +274,6 @@
 		}
 	],
 	"result": "main",
+	"expected_result": 120,
 	"note": "Parallel computation: task1 computes 10+20=30, task2 computes 5*4=20, task3 computes 100-30=70. Join merges all: 30+20+70=120. The fork terminator spawns 3 branches concurrently, each branch performs independent computation, phi nodes merge values at completion points, and final result combines all parallel outputs. Expected result is 120 when evaluated with an async-capable fork/join runtime."
 }

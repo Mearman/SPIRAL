@@ -154,7 +154,8 @@ async function executeExample(example: ExampleInfo): Promise<Value> {
 		const isAsync = docStr.includes('"kind":"spawn"') || docStr.includes('"kind":"par"') ||
 			docStr.includes('"kind":"await"') || docStr.includes('"kind":"channel"') ||
 			docStr.includes('"kind":"select"') || docStr.includes('"kind":"race"') ||
-			docStr.includes('"kind":"send"') || docStr.includes('"kind":"recv"');
+			docStr.includes('"kind":"send"') || docStr.includes('"kind":"recv"') ||
+			docStr.includes('"kind":"fork"');
 		if (isAsync) {
 			const evaluator = new AsyncEvaluator({
 				registry, defs, effectRegistry: effects, asyncIOConfig: {},
