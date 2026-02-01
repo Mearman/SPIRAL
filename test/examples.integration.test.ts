@@ -17,8 +17,7 @@ import {
 	createDefaultEffectRegistry,
 	createQueuedEffectRegistry,
 } from "../src/effects.js";
-import { createCoreRegistry } from "../src/domains/core.js";
-import { createBoolRegistry } from "../src/domains/bool.js";
+import { bootstrapRegistry } from "../src/stdlib/bootstrap.js";
 import { createListRegistry } from "../src/domains/list.js";
 import { createSetRegistry } from "../src/domains/set.js";
 import { createMapRegistry } from "../src/domains/map.js";
@@ -101,9 +100,7 @@ function detectLayer(filePath: string): Layer {
 //==============================================================================
 
 function buildRegistry(): OperatorRegistry {
-	const registry: OperatorRegistry = new Map();
-	for (const [key, op] of createCoreRegistry()) registry.set(key, op);
-	for (const [key, op] of createBoolRegistry()) registry.set(key, op);
+	const registry = bootstrapRegistry();
 	for (const [key, op] of createListRegistry()) registry.set(key, op);
 	for (const [key, op] of createSetRegistry()) registry.set(key, op);
 	for (const [key, op] of createMapRegistry()) registry.set(key, op);

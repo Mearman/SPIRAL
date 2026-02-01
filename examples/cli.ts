@@ -20,8 +20,7 @@ import {
 	validateCIR,
 	validateEIR,
 	validateLIR,
-	createCoreRegistry,
-	createBoolRegistry,
+	bootstrapRegistry,
 	createListRegistry,
 	createSetRegistry,
 	createMapRegistry,
@@ -361,8 +360,7 @@ async function runExample(path: string, options: Options): Promise<boolean> {
 		}
 
 		// Merge all registries into one Map
-		let registry = createCoreRegistry();
-		registry = new Map([...registry, ...createBoolRegistry()]);
+		let registry = bootstrapRegistry();
 		registry = new Map([...registry, ...createListRegistry()]);
 		registry = new Map([...registry, ...createSetRegistry()]);
 		registry = new Map([...registry, ...createMapRegistry()]);

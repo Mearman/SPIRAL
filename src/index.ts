@@ -98,6 +98,8 @@ export { evaluateEIR, type EIROptions } from "./evaluator.js";
 // Domains
 //==============================================================================
 
+export { bootstrapRegistry, createKernelRegistry } from "./stdlib/bootstrap.js";
+
 export { createCoreRegistry } from "./domains/core.js";
 
 export { createBoolRegistry } from "./domains/bool.js";
