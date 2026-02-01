@@ -21,6 +21,35 @@ import type { AsyncEvalContext } from "./types.js";
 export { execFork, execJoin, execSuspend } from "./cfg-fork.js";
 
 //==============================================================================
+// execPhi
+//==============================================================================
+
+function resolvePhiSource(
+	source: { block: string; id: string },
+	ctx: AsyncEvalContext,
+): Value | undefined {
+	const fromNode = ctx.nodeValues.get(source.id);
+	if (fromNode && !isError(fromNode)) return fromNode;
+	const cell = ctx.state.refCells.get(source.id);
+	if (cell?.kind === "refCell" && !isError(cell.value)) return cell.value;
+	return undefined;
+}
+
+export function execPhi(
+	instr: { kind: "phi"; target: string; sources: { block: string; id: string }[] },
+	ctx: AsyncEvalContext,
+): Value {
+	for (const source of instr.sources) {
+		const resolved = resolvePhiSource(source, ctx);
+		if (resolved) {
+			updateRefCell(instr.target, resolved, ctx);
+			return voidVal();
+		}
+	}
+	return errorVal(ErrorCodes.DomainError, `Phi node has no valid sources: ${instr.target}`);
+}
+
+//==============================================================================
 // execAssign
 //==============================================================================
 
