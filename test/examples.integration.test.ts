@@ -20,7 +20,6 @@ import {
 import { bootstrapRegistry } from "../src/stdlib/bootstrap.js";
 import { createListRegistry } from "../src/domains/list.js";
 import { createSetRegistry } from "../src/domains/set.js";
-import { createMapRegistry } from "../src/domains/map.js";
 import {
 	validateAIR,
 	validateCIR,
@@ -102,7 +101,6 @@ function buildRegistry(): OperatorRegistry {
 	const registry = bootstrapRegistry();
 	for (const [key, op] of createListRegistry()) registry.set(key, op);
 	for (const [key, op] of createSetRegistry()) registry.set(key, op);
-	for (const [key, op] of createMapRegistry()) registry.set(key, op);
 	return registry;
 }
 
