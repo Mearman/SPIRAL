@@ -144,6 +144,25 @@ const remove: Operator = defineOperator("map", "remove")
 	})
 	.build();
 
+// entries(map) -> list<list<[string, value]>>
+// Get all entries as a list of [key, value] pairs.
+const entries: Operator = defineOperator("map", "entries")
+	.setParams(mapType(stringType, intType))
+	.setReturns(intType) // placeholder, actually list<list<string, value>>
+	.setPure(true)
+	.setImpl((m) => {
+		if (isError(m)) return m;
+		if (m.kind !== "map") return errorVal(ErrorCodes.TypeError, "Expected map value");
+		const pairs: Value[] = [];
+		for (const [hash, val] of m.value) {
+			if (hash.startsWith("s:")) {
+				pairs.push(listVal([stringVal(hash.slice(2)), val]));
+			}
+		}
+		return listVal(pairs);
+	})
+	.build();
+
 // merge(map, map) -> map
 // Merge two maps. Right map values take precedence on key conflicts.
 const merge: Operator = defineOperator("map", "merge")
@@ -182,6 +201,7 @@ export function createMapRegistry(): OperatorRegistry {
 	registry = registerOperator(registry, size);
 	registry = registerOperator(registry, remove);
 	registry = registerOperator(registry, merge);
+	registry = registerOperator(registry, entries);
 
 	return registry;
 }

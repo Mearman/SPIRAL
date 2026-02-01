@@ -179,6 +179,43 @@ describe("map domain", () => {
 	});
 
 	// =======================================================================
+	// entries
+	// =======================================================================
+	describe("entries", () => {
+		it("returns list of [key, value] pairs", () => {
+			const m = makeMap([["a", intVal(1)], ["b", intVal(2)]]);
+			const result = op("entries").fn(m);
+			assert.equal(result.kind, "list");
+			if (result.kind === "list") {
+				assert.equal(result.value.length, 2);
+				// Each element should be a list of [stringVal, intVal]
+				const pairs = result.value.map((pair) => {
+					assert.equal(pair.kind, "list");
+					if (pair.kind === "list") {
+						return [
+							pair.value[0]?.kind === "string" ? pair.value[0].value : "?",
+							pair.value[1]?.kind === "int" ? pair.value[1].value : -1,
+						];
+					}
+					return null;
+				});
+				const sorted = pairs.sort((a, b) => String(a![0]).localeCompare(String(b![0])));
+				assert.deepEqual(sorted, [["a", 1], ["b", 2]]);
+			}
+		});
+
+		it("returns empty list for empty map", () => {
+			const result = op("entries").fn(emptyMap);
+			assert.deepEqual(result, listVal([]));
+		});
+
+		it("propagates error", () => {
+			const result = op("entries").fn(err);
+			assert.equal(result.kind, "error");
+		});
+	});
+
+	// =======================================================================
 	// merge
 	// =======================================================================
 	describe("merge", () => {
