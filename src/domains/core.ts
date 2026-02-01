@@ -13,6 +13,8 @@ import {
 	intVal,
 	isError,
 	opaqueType,
+	stringType,
+	stringVal,
 } from "../types.js";
 import {
 	defineOperator,
@@ -245,6 +247,22 @@ const gte: Operator = defineOperator("core", "gte")
 	.build();
 
 //==============================================================================
+// Introspection Operators
+//==============================================================================
+
+// typeof(value) -> string
+// Returns the runtime type kind of any value as a string.
+const typeofOp: Operator = defineOperator("core", "typeof")
+	.setParams(intType)
+	.setReturns(stringType)
+	.setPure(true)
+	.setImpl((a) => {
+		if (isError(a)) return a;
+		return stringVal(a.kind);
+	})
+	.build();
+
+//==============================================================================
 // Registry Creation
 //==============================================================================
 
@@ -258,6 +276,8 @@ export function createCoreRegistry(): OperatorRegistry {
 		add, sub, mul, div, mod, pow, neg,
 		// Comparison operators (polymorphic)
 		eq, neq, lt, lte, gt, gte,
+		// Introspection
+		typeofOp,
 	];
 
 	return operators.reduce<OperatorRegistry>(
