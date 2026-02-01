@@ -18,6 +18,8 @@ import {
 	voidVal,
 	closureVal,
 	undefinedVal,
+	listVal,
+	mapVal,
 } from "../types.js";
 import { errorVal, isError } from "../types.js";
 import type { AirEvalCtx } from "./types.js";
@@ -49,6 +51,12 @@ export function evalExprWithNodeMap(ctx: AirEvalCtx, expr: Expr, env: ValueEnv):
 		return evalLitValue(expr);
 	case "do":
 		return evalDo(ctx, expr, env);
+	case "record":
+		return evalRecordExpr(ctx, expr, env);
+	case "listOf":
+		return evalListOfExpr(ctx, expr, env);
+	case "match":
+		return evalMatchExpr(ctx, expr, env);
 	default:
 		return errorVal(ErrorCodes.DomainError, "Unsupported expression kind in closure body: " + expr.kind);
 	}
@@ -318,4 +326,52 @@ function resolveIfBranch(ctx: AirEvalCtx, branchId: string, env: ValueEnv): Valu
 	const bNode = ctx.nodeMap.get(branchId);
 	if (!bNode) return errorVal(ErrorCodes.DomainError, "Branch node not evaluated: " + branchId);
 	return resolveNodeValue(ctx, bNode, env);
+}
+
+//==============================================================================
+// record / listOf / match handlers
+//==============================================================================
+
+function resolveStringOrExprInCtx(ctx: AirEvalCtx, ref: string | Expr, env: ValueEnv): Value {
+	if (typeof ref !== "string") return evalExprWithNodeMap(ctx, ref, env);
+	const cached = ctx.nodeValues.get(ref) ?? lookupValue(env, ref);
+	if (cached) return cached;
+	const node = ctx.nodeMap.get(ref);
+	if (!node) return errorVal(ErrorCodes.DomainError, "Reference not found: " + ref);
+	return resolveNodeValue(ctx, node, env);
+}
+
+function evalRecordExpr(ctx: AirEvalCtx, expr: Expr & { kind: "record" }, env: ValueEnv): Value {
+	const entries = new Map<string, Value>();
+	for (const field of expr.fields) {
+		const val = resolveStringOrExprInCtx(ctx, field.value, env);
+		if (isError(val)) return val;
+		entries.set("s:" + field.key, val);
+	}
+	return mapVal(entries);
+}
+
+function evalListOfExpr(ctx: AirEvalCtx, expr: Expr & { kind: "listOf" }, env: ValueEnv): Value {
+	const elements: Value[] = [];
+	for (const elem of expr.elements) {
+		const val = resolveStringOrExprInCtx(ctx, elem, env);
+		if (isError(val)) return val;
+		elements.push(val);
+	}
+	return listVal(elements);
+}
+
+function evalMatchExpr(ctx: AirEvalCtx, expr: Expr & { kind: "match" }, env: ValueEnv): Value {
+	const matchVal = resolveStringOrExprInCtx(ctx, expr.value, env);
+	if (isError(matchVal)) return matchVal;
+	if (matchVal.kind !== "string") return errorVal(ErrorCodes.TypeError, "Match value must be a string, got: " + matchVal.kind);
+	for (const c of expr.cases) {
+		if (matchVal.value === c.pattern) {
+			return resolveStringOrExprInCtx(ctx, c.body, env);
+		}
+	}
+	if (expr.default !== undefined) {
+		return resolveStringOrExprInCtx(ctx, expr.default, env);
+	}
+	return errorVal(ErrorCodes.DomainError, "No matching case for: " + matchVal.value);
 }

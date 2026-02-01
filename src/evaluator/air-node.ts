@@ -19,6 +19,8 @@ import {
 	boolVal,
 	errorVal,
 	isError,
+	listVal,
+	mapVal,
 } from "../types.js";
 import type { EvalContext, NodeEvalResult } from "./types.js";
 import type { ProgramCtx } from "./air-program.js";
@@ -73,6 +75,12 @@ function dispatchBasicExpr(ctx: ProgramCtx, expr: Expr, env: ValueEnv): NodeEval
 		return evalNodeLet(ctx, expr, env);
 	case "do":
 		return evalNodeDo(ctx, expr, env);
+	case "record":
+		return evalNodeRecord(ctx, expr, env);
+	case "listOf":
+		return evalNodeListOf(ctx, expr, env);
+	case "match":
+		return evalNodeMatch(ctx, expr, env);
 	default:
 		return undefined;
 	}
@@ -359,4 +367,56 @@ function resolveDoRef(ctx: ProgramCtx, e: string, env: ValueEnv): Value {
 	if (!node) return errorVal(ErrorCodes.DomainError, "Do expr ref not found: " + e);
 	if (isBlockNode(node)) return evaluateBlockNode(node, { registry: ctx.registry, nodeValues: ctx.nodeValues, options: ctx.options }, env);
 	return evalExprWithNodeMap(ctx, node.expr, env);
+}
+
+//==============================================================================
+// evalNodeRecord / evalNodeListOf / evalNodeMatch
+//==============================================================================
+
+function resolveStringOrExpr(ctx: ProgramCtx, ref: string | Expr, env: ValueEnv): Value {
+	if (typeof ref !== "string") {
+		return evalExprWithNodeMap(ctx, ref, env);
+	}
+	const cached = ctx.nodeValues.get(ref) ?? lookupValue(env, ref);
+	if (cached) return cached;
+	const node = ctx.nodeMap.get(ref);
+	if (!node) return errorVal(ErrorCodes.DomainError, "Reference not found: " + ref);
+	return evalNode(ctx, node, env).value;
+}
+
+function evalNodeRecord(ctx: ProgramCtx, expr: Expr & { kind: "record" }, env: ValueEnv): NodeEvalResult {
+	const entries = new Map<string, Value>();
+	for (const field of expr.fields) {
+		const val = resolveStringOrExpr(ctx, field.value, env);
+		if (isError(val)) return { value: val, env };
+		entries.set("s:" + field.key, val);
+	}
+	return { value: mapVal(entries), env };
+}
+
+function evalNodeListOf(ctx: ProgramCtx, expr: Expr & { kind: "listOf" }, env: ValueEnv): NodeEvalResult {
+	const elements: Value[] = [];
+	for (const elem of expr.elements) {
+		const val = resolveStringOrExpr(ctx, elem, env);
+		if (isError(val)) return { value: val, env };
+		elements.push(val);
+	}
+	return { value: listVal(elements), env };
+}
+
+function evalNodeMatch(ctx: ProgramCtx, expr: Expr & { kind: "match" }, env: ValueEnv): NodeEvalResult {
+	const matchVal = resolveStringOrExpr(ctx, expr.value, env);
+	if (isError(matchVal)) return { value: matchVal, env };
+	if (matchVal.kind !== "string") return { value: errorVal(ErrorCodes.TypeError, "Match value must be a string, got: " + matchVal.kind), env };
+	for (const c of expr.cases) {
+		if (matchVal.value === c.pattern) {
+			const body = resolveStringOrExpr(ctx, c.body, env);
+			return { value: body, env };
+		}
+	}
+	if (expr.default !== undefined) {
+		const body = resolveStringOrExpr(ctx, expr.default, env);
+		return { value: body, env };
+	}
+	return { value: errorVal(ErrorCodes.DomainError, "No matching case for: " + matchVal.value), env };
 }
