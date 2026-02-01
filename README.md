@@ -1,8 +1,5 @@
 # SPIRAL (**Stratified Progressive Intermediate Representation Architecture Language**)
 
-[![npm](https://img.shields.io/npm/v/spiral)](https://www.npmjs.com/package/spiral)
-[![Node](https://img.shields.io/node/v/spiral)](https://nodejs.org)
-
 SPIRAL is a JSON-first intermediate representation spanning AIR, CIR, EIR, and LIR. All layers support expression and CFG block forms (hybrid documents).
 
 ## Layers & Computational Classes
