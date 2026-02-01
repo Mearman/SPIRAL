@@ -108,6 +108,8 @@ export { createSetRegistry } from "./domains/set.js";
 
 export { createStringRegistry } from "./domains/string.js";
 
+export { createMapRegistry } from "./domains/map.js";
+
 export {
 	defineOperator, lookupOperator, registerOperator, type OperatorBuilder
 } from "./domains/registry.js";
