@@ -294,6 +294,67 @@ function collectRefsAndLetBindings(
 				}
 			}
 		}
+	} else if (expr.kind === "record") {
+		const fields = expr.fields;
+		if (Array.isArray(fields)) {
+			for (const f of fields) {
+				if (isRecord(f)) {
+					const v = f.value;
+					if (typeof v === "string") {
+						if (!params?.has(v) && !bindings.has(v)) refs.push(v);
+					} else if (isRecord(v)) {
+						const result = collectRefsAndLetBindings(v, params, bindings);
+						refs.push(...result.refs);
+						for (const b of result.letBindings) bindings.add(b);
+					}
+				}
+			}
+		}
+	} else if (expr.kind === "listOf") {
+		const elements = expr.elements;
+		if (Array.isArray(elements)) {
+			for (const e of elements) {
+				if (typeof e === "string") {
+					if (!params?.has(e) && !bindings.has(e)) refs.push(e);
+				} else if (isRecord(e)) {
+					const result = collectRefsAndLetBindings(e, params, bindings);
+					refs.push(...result.refs);
+					for (const b of result.letBindings) bindings.add(b);
+				}
+			}
+		}
+	} else if (expr.kind === "match") {
+		const value = expr.value;
+		if (typeof value === "string") {
+			if (!params?.has(value) && !bindings.has(value)) refs.push(value);
+		} else if (isRecord(value)) {
+			const result = collectRefsAndLetBindings(value, params, bindings);
+			refs.push(...result.refs);
+			for (const b of result.letBindings) bindings.add(b);
+		}
+		const cases = expr.cases;
+		if (Array.isArray(cases)) {
+			for (const c of cases) {
+				if (isRecord(c)) {
+					const body = c.body;
+					if (typeof body === "string") {
+						if (!params?.has(body) && !bindings.has(body)) refs.push(body);
+					} else if (isRecord(body)) {
+						const result = collectRefsAndLetBindings(body, params, bindings);
+						refs.push(...result.refs);
+						for (const b of result.letBindings) bindings.add(b);
+					}
+				}
+			}
+		}
+		const def = expr.default;
+		if (typeof def === "string") {
+			if (!params?.has(def) && !bindings.has(def)) refs.push(def);
+		} else if (isRecord(def)) {
+			const result = collectRefsAndLetBindings(def, params, bindings);
+			refs.push(...result.refs);
+			for (const b of result.letBindings) bindings.add(b);
+		}
 	}
 
 	return { refs, letBindings: bindings };
@@ -431,6 +492,38 @@ function collectNodeDeps(
 				}
 			}
 		}
+		break;
+	case "record":
+		if (Array.isArray(expr.fields)) {
+			for (const f of expr.fields) {
+				if (isRecord(f)) {
+					if (typeof f.value === "string") addIfNode(f.value);
+					else if (isRecord(f.value)) collectNodeDeps(f.value, deps, validNodeIds, params);
+				}
+			}
+		}
+		break;
+	case "listOf":
+		if (Array.isArray(expr.elements)) {
+			for (const e of expr.elements) {
+				if (typeof e === "string") addIfNode(e);
+				else if (isRecord(e)) collectNodeDeps(e, deps, validNodeIds, params);
+			}
+		}
+		break;
+	case "match":
+		if (typeof expr.value === "string") addIfNode(expr.value);
+		else if (isRecord(expr.value)) collectNodeDeps(expr.value, deps, validNodeIds, params);
+		if (Array.isArray(expr.cases)) {
+			for (const c of expr.cases) {
+				if (isRecord(c)) {
+					if (typeof c.body === "string") addIfNode(c.body);
+					else if (isRecord(c.body)) collectNodeDeps(c.body, deps, validNodeIds, params);
+				}
+			}
+		}
+		if (typeof expr.default === "string") addIfNode(expr.default);
+		else if (isRecord(expr.default)) collectNodeDeps(expr.default, deps, validNodeIds, params);
 		break;
 	}
 }
