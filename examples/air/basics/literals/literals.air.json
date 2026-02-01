@@ -88,5 +88,6 @@
 			}
 		}
 	],
-	"result": "setLiteral"
+	"result": "setLiteral",
+	"expected_result": { "kind": "set", "value": ["i:1", "i:2", "i:3"] }
 }
