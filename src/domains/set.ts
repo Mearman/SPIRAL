@@ -10,9 +10,14 @@ import {
 	intType,
 	intVal,
 	isError,
+	listType,
+	listVal,
 	setType,
 	setVal,
+	stringVal,
+	floatVal,
 } from "../types.js";
+import type { Value } from "../types.js";
 import {
 	defineOperator,
 	Operator,
@@ -148,6 +153,34 @@ const remove: Operator = defineOperator("set", "remove")
 	})
 	.build();
 
+// toList(set<A>) -> list<A>
+function unhashValue(hash: string): Value | null {
+	if (hash.startsWith("i:")) return intVal(parseInt(hash.slice(2), 10));
+	if (hash.startsWith("s:")) return stringVal(hash.slice(2));
+	if (hash === "b:true") return boolVal(true);
+	if (hash === "b:false") return boolVal(false);
+	if (hash.startsWith("f:")) return floatVal(parseFloat(hash.slice(2)));
+	return null;
+}
+
+const toList: Operator = defineOperator("set", "toList")
+	.setParams(setType(intType))
+	.setReturns(listType(intType))
+	.setPure(true)
+	.setImpl((a) => {
+		if (isError(a)) return a;
+		if (a.kind !== "set") {
+			return errorVal(ErrorCodes.TypeError, "Expected set value");
+		}
+		const elements: Value[] = [];
+		for (const hash of a.value) {
+			const v = unhashValue(hash);
+			if (v !== null) elements.push(v);
+		}
+		return listVal(elements);
+	})
+	.build();
+
 // size(set<A>) -> int
 const size: Operator = defineOperator("set", "size")
 	.setParams(setType(intType))
@@ -180,6 +213,7 @@ export function createSetRegistry(): OperatorRegistry {
 	registry = registerOperator(registry, add);
 	registry = registerOperator(registry, remove);
 	registry = registerOperator(registry, size);
+	registry = registerOperator(registry, toList);
 
 	return registry;
 }

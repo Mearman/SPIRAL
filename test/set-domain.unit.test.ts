@@ -12,6 +12,7 @@ import {
 	boolVal,
 	errorVal,
 	hashValue,
+	listVal,
 } from "../src/types.js";
 import type { Value } from "../src/types.js";
 
@@ -406,6 +407,41 @@ describe("set domain", () => {
 
 		it("returns TypeError for non-set argument", () => {
 			const result = op("size").fn(intVal(1));
+			assert.equal(result.kind, "error");
+			if (result.kind === "error") assert.equal(result.code, "TypeError");
+		});
+	});
+
+	// =======================================================================
+	// toList
+	// =======================================================================
+	describe("toList", () => {
+		it("converts set to list of values", () => {
+			const s = makeSet(intVal(1), intVal(2), intVal(3));
+			const result = op("toList").fn(s);
+			assert.equal(result.kind, "list");
+			if (result.kind === "list") {
+				assert.equal(result.value.length, 3);
+				const sorted = result.value
+					.map((v) => (v.kind === "int" ? v.value : -1))
+					.sort((a, b) => a - b);
+				assert.deepStrictEqual(sorted, [1, 2, 3]);
+			}
+		});
+
+		it("returns empty list for empty set", () => {
+			const result = op("toList").fn(emptySet);
+			assert.deepStrictEqual(result, listVal([]));
+		});
+
+		it("propagates error argument", () => {
+			const result = op("toList").fn(err);
+			assert.equal(result.kind, "error");
+			if (result.kind === "error") assert.equal(result.code, "TestError");
+		});
+
+		it("returns TypeError for non-set argument", () => {
+			const result = op("toList").fn(intVal(1));
 			assert.equal(result.kind, "error");
 			if (result.kind === "error") assert.equal(result.code, "TypeError");
 		});
