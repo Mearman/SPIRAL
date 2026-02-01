@@ -252,11 +252,17 @@ async function loadExample(path: string): Promise<{ doc: AIRDocument | CIRDocume
 	else if (isCirHint) defaultExt = ".cir.json";
 	const candidates: string[] = [];
 
+	const allExts = [".lir.json", ".eir.json", ".cir.json", ".air.json"];
+
 	// If caller provided an explicit filename (with or without extension), try that first.
 	if (path.endsWith(".json")) {
 		candidates.push(path);
 	} else {
 		candidates.push(`${path}${defaultExt}`);
+		// Fallback: try all other extensions
+		for (const ext of allExts) {
+			if (ext !== defaultExt) candidates.push(`${path}${ext}`);
+		}
 	}
 
 	// If the path is a directory, look for <basename>.{air|cir|eir|lir}.json or a single json file inside.
