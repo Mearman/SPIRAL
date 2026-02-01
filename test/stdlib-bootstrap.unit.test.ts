@@ -7,7 +7,8 @@ import { fileURLToPath } from "node:url";
 import { createKernelRegistry } from "../src/stdlib/kernel.js";
 import { loadStdlib } from "../src/stdlib/loader.js";
 import { lookupOperator } from "../src/domains/registry.js";
-import { boolVal, intVal, listVal, stringVal } from "../src/types.js";
+import { boolVal, intVal, listVal, mapVal, stringVal } from "../src/types.js";
+import type { Value } from "../src/types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const stdlibDir = resolve(__dirname, "../src/stdlib");
@@ -43,6 +44,7 @@ describe("kernel registry", () => {
 		assert.ok(lookupOperator(kernel, "map", "get"));
 		assert.ok(lookupOperator(kernel, "map", "set"));
 		assert.ok(lookupOperator(kernel, "map", "has"));
+		assert.ok(lookupOperator(kernel, "map", "keys"));
 	});
 
 	it("has string primitives", () => {
@@ -57,8 +59,8 @@ describe("kernel registry", () => {
 		assert.strictEqual(lookupOperator(kernel, "bool", "xor"), undefined);
 	});
 
-	it("has 31 total operators", () => {
-		assert.strictEqual(kernel.size, 31);
+	it("has 32 total operators", () => {
+		assert.strictEqual(kernel.size, 32);
 	});
 });
 
@@ -302,5 +304,123 @@ describe("string stdlib", () => {
 	it("string:join single element", () => {
 		const join = lookupOperator(registry, "string", "join")!;
 		assert.deepStrictEqual(join.fn(listVal([stringVal("x")]), stringVal("-")), stringVal("x"));
+	});
+});
+
+describe("map stdlib", () => {
+	const kernel = createKernelRegistry();
+	const registry = loadStdlib(kernel, [
+		resolve(stdlibDir, "bool.cir.json"),
+		resolve(stdlibDir, "list.cir.json"),
+		resolve(stdlibDir, "string.cir.json"),
+		resolve(stdlibDir, "map.cir.json"),
+	]);
+
+	function makeMap(entries: [string, Value][]): Value {
+		return mapVal(new Map(entries.map(([k, v]) => ["s:" + k, v])));
+	}
+	const emptyMap = mapVal(new Map());
+
+	// size
+	it("map:size returns 0 for empty map", () => {
+		const size = lookupOperator(registry, "map", "size")!;
+		assert.deepStrictEqual(size.fn(emptyMap), intVal(0));
+	});
+
+	it("map:size returns correct count", () => {
+		const size = lookupOperator(registry, "map", "size")!;
+		const m = makeMap([["a", intVal(1)], ["b", intVal(2)], ["c", intVal(3)]]);
+		assert.deepStrictEqual(size.fn(m), intVal(3));
+	});
+
+	// values
+	it("map:values returns list of values", () => {
+		const values = lookupOperator(registry, "map", "values")!;
+		const m = makeMap([["a", intVal(1)], ["b", intVal(2)]]);
+		const result = values.fn(m);
+		assert.strictEqual(result.kind, "list");
+		if (result.kind === "list") {
+			assert.strictEqual(result.value.length, 2);
+		}
+	});
+
+	it("map:values returns empty list for empty map", () => {
+		const values = lookupOperator(registry, "map", "values")!;
+		assert.deepStrictEqual(values.fn(emptyMap), listVal([]));
+	});
+
+	// entries
+	it("map:entries returns list of [key, value] pairs", () => {
+		const entries = lookupOperator(registry, "map", "entries")!;
+		const m = makeMap([["a", intVal(1)], ["b", intVal(2)]]);
+		const result = entries.fn(m);
+		assert.strictEqual(result.kind, "list");
+		if (result.kind === "list") {
+			assert.strictEqual(result.value.length, 2);
+			const pairs = result.value.map((pair) => {
+				assert.strictEqual(pair.kind, "list");
+				if (pair.kind === "list") {
+					return [
+						pair.value[0]?.kind === "string" ? pair.value[0].value : "?",
+						pair.value[1]?.kind === "int" ? pair.value[1].value : -1,
+					];
+				}
+				return null;
+			});
+			const sorted = pairs.sort((a, b) => String(a![0]).localeCompare(String(b![0])));
+			assert.deepStrictEqual(sorted, [["a", 1], ["b", 2]]);
+		}
+	});
+
+	it("map:entries returns empty list for empty map", () => {
+		const entries = lookupOperator(registry, "map", "entries")!;
+		assert.deepStrictEqual(entries.fn(emptyMap), listVal([]));
+	});
+
+	// remove
+	it("map:remove removes existing key", () => {
+		const remove = lookupOperator(registry, "map", "remove")!;
+		const m = makeMap([["x", intVal(1)], ["y", intVal(2)]]);
+		const result = remove.fn(m, stringVal("x"));
+		assert.strictEqual(result.kind, "map");
+		if (result.kind === "map") {
+			assert.strictEqual(result.value.size, 1);
+			assert.strictEqual(result.value.has("s:x"), false);
+			assert.deepStrictEqual(result.value.get("s:y"), intVal(2));
+		}
+	});
+
+	it("map:remove is no-op for missing key", () => {
+		const remove = lookupOperator(registry, "map", "remove")!;
+		const m = makeMap([["x", intVal(1)]]);
+		const result = remove.fn(m, stringVal("z"));
+		assert.strictEqual(result.kind, "map");
+		if (result.kind === "map") {
+			assert.strictEqual(result.value.size, 1);
+		}
+	});
+
+	// merge
+	it("map:merge merges two maps with right precedence", () => {
+		const merge = lookupOperator(registry, "map", "merge")!;
+		const a = makeMap([["x", intVal(1)], ["y", intVal(2)]]);
+		const b = makeMap([["y", intVal(99)], ["z", intVal(3)]]);
+		const result = merge.fn(a, b);
+		assert.strictEqual(result.kind, "map");
+		if (result.kind === "map") {
+			assert.strictEqual(result.value.size, 3);
+			assert.deepStrictEqual(result.value.get("s:y"), intVal(99));
+			assert.deepStrictEqual(result.value.get("s:z"), intVal(3));
+		}
+	});
+
+	it("map:merge with empty map", () => {
+		const merge = lookupOperator(registry, "map", "merge")!;
+		const m = makeMap([["x", intVal(1)]]);
+		const result = merge.fn(m, emptyMap);
+		assert.strictEqual(result.kind, "map");
+		if (result.kind === "map") {
+			assert.strictEqual(result.value.size, 1);
+		}
 	});
 });
