@@ -58,7 +58,7 @@ function evalLitCompound(t: Type, v: unknown): Value {
 	case "list":
 		return evalLitList(t.of, v);
 	case "set":
-		return evalLitSet(v);
+		return evalLitSet(t.of, v);
 	case "map":
 		return evalLitMap(v);
 	case "option":
@@ -120,11 +120,14 @@ function convertRawPrimitive(elem: unknown, elementType: Type): Value {
 	return intVal(Number(elem));
 }
 
-function evalLitSet(v: unknown): Value {
+function evalLitSet(elementType: Type, v: unknown): Value {
 	if (!Array.isArray(v)) {
 		return errorVal(ErrorCodes.TypeError, "Set value must be array");
 	}
-	return setVal(new Set(v.map(hashValue)));
+	const elements = v.map((elem: unknown) =>
+		convertListElement(elem, elementType),
+	);
+	return setVal(new Set(elements.map(hashValue)));
 }
 
 function evalLitMap(v: unknown): Value {
