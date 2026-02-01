@@ -454,9 +454,12 @@ async function runExample(path: string, options: Options): Promise<boolean> {
 			const isAsync = docStr.includes('"kind":"spawn"') || docStr.includes('"kind":"par"') ||
 				docStr.includes('"kind":"await"') || docStr.includes('"kind":"channel"') ||
 				docStr.includes('"kind":"select"') || docStr.includes('"kind":"race"') ||
-				docStr.includes('"kind":"send"') || docStr.includes('"kind":"recv"');
+				docStr.includes('"kind":"send"') || docStr.includes('"kind":"recv"') ||
+				docStr.includes('"kind":"fork"');
 			if (isAsync) {
-				const evaluator = new AsyncEvaluator(registry, defs, effectRegistry);
+				const evaluator = new AsyncEvaluator({
+					registry, defs, effectRegistry, asyncIOConfig: {},
+				});
 				evalResult = await evaluator.evaluateDocument(doc as EIRDocument);
 			} else {
 				const eirResult = evaluateEIR(doc as EIRDocument, registry, defs, undefined, { effects: effectRegistry });
