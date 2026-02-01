@@ -24,6 +24,7 @@ import {
 	createBoolRegistry,
 	createListRegistry,
 	createSetRegistry,
+	createMapRegistry,
 	evaluateProgram,
 	evaluateEIR,
 	evaluateLIR,
@@ -363,6 +364,7 @@ async function runExample(path: string, options: Options): Promise<boolean> {
 		registry = new Map([...registry, ...createBoolRegistry()]);
 		registry = new Map([...registry, ...createListRegistry()]);
 		registry = new Map([...registry, ...createSetRegistry()]);
+		registry = new Map([...registry, ...createMapRegistry()]);
 
 		// Build defs from airDefs (if applicable)
 		let defs: Defs = new Map();
