@@ -45,6 +45,7 @@ pnpm-debug.log*
 .parcel-cache/
 .vite/
 .eslintcache
+*.tsbuildinfo
 
 # OS files
 Thumbs.db
