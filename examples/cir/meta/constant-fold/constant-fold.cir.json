@@ -1,0 +1,272 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Self-hosting proof: a CIR program that represents a small SPIRAL AST as data, walks its node list with a recursive function (fix combinator), and counts how many nodes are eligible for constant folding (calls where both args are literals). Demonstrates that SPIRAL can express its own transformations.",
+	"airDefs": [
+		{
+			"ns": "core",
+			"name": "add",
+			"params": ["a", "b"],
+			"result": { "kind": "int" },
+			"body": { "kind": "ref", "id": "a" }
+		},
+		{
+			"ns": "core",
+			"name": "eq",
+			"params": ["a", "b"],
+			"result": { "kind": "bool" },
+			"body": { "kind": "ref", "id": "a" }
+		},
+		{
+			"ns": "core",
+			"name": "gte",
+			"params": ["a", "b"],
+			"result": { "kind": "bool" },
+			"body": { "kind": "ref", "id": "a" }
+		},
+		{
+			"ns": "bool",
+			"name": "and",
+			"params": ["a", "b"],
+			"result": { "kind": "bool" },
+			"body": { "kind": "ref", "id": "a" }
+		},
+		{
+			"ns": "list",
+			"name": "length",
+			"params": ["l"],
+			"result": { "kind": "int" },
+			"body": { "kind": "ref", "id": "l" }
+		},
+		{
+			"ns": "list",
+			"name": "nth",
+			"params": ["l", "i"],
+			"result": { "kind": "int" },
+			"body": { "kind": "ref", "id": "l" }
+		},
+		{
+			"ns": "map",
+			"name": "get",
+			"params": ["m", "k"],
+			"result": { "kind": "string" },
+			"body": { "kind": "ref", "id": "m" }
+		}
+	],
+	"nodes": [
+		{ "id": "zero", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 } },
+		{ "id": "one",  "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 } },
+		{ "id": "litStr",  "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "lit" } },
+		{ "id": "callStr", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "call" } },
+		{ "id": "kindKey", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "kind" } },
+		{ "id": "argsKey", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "args" } },
+
+		{ "id": "valA", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 10 } },
+		{
+			"id": "exprA", "expr": {
+				"kind": "record",
+				"fields": [
+					{ "key": "kind", "value": "litStr" },
+					{ "key": "value", "value": "valA" }
+				]
+			}
+		},
+
+		{ "id": "valB", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 20 } },
+		{
+			"id": "exprB", "expr": {
+				"kind": "record",
+				"fields": [
+					{ "key": "kind", "value": "litStr" },
+					{ "key": "value", "value": "valB" }
+				]
+			}
+		},
+
+		{ "id": "idA", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "a" } },
+		{ "id": "idB", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "b" } },
+		{ "id": "idSum", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "sum" } },
+
+		{
+			"id": "argsList", "expr": {
+				"kind": "listOf",
+				"elements": ["idA", "idB"]
+			}
+		},
+		{
+			"id": "exprSum", "expr": {
+				"kind": "record",
+				"fields": [
+					{ "key": "kind", "value": "callStr" },
+					{ "key": "args", "value": "argsList" }
+				]
+			}
+		},
+
+		{
+			"id": "nodeA", "expr": {
+				"kind": "record",
+				"fields": [
+					{ "key": "id", "value": "idA" },
+					{ "key": "expr", "value": "exprA" }
+				]
+			}
+		},
+		{
+			"id": "nodeB", "expr": {
+				"kind": "record",
+				"fields": [
+					{ "key": "id", "value": "idB" },
+					{ "key": "expr", "value": "exprB" }
+				]
+			}
+		},
+		{
+			"id": "nodeSum", "expr": {
+				"kind": "record",
+				"fields": [
+					{ "key": "id", "value": "idSum" },
+					{ "key": "expr", "value": "exprSum" }
+				]
+			}
+		},
+
+		{
+			"id": "nodes", "expr": {
+				"kind": "listOf",
+				"elements": ["nodeA", "nodeB", "nodeSum"]
+			}
+		},
+
+		{
+			"id": "kindMap", "expr": {
+				"kind": "record",
+				"fields": [
+					{ "key": "a", "value": "litStr" },
+					{ "key": "b", "value": "litStr" },
+					{ "key": "sum", "value": "callStr" }
+				]
+			}
+		},
+
+		{ "id": "nodesLen", "expr": { "kind": "call", "ns": "list", "name": "length", "args": ["nodes"] } },
+
+		{ "id": "idxVar",   "expr": { "kind": "var", "name": "idx" } },
+		{ "id": "countVar", "expr": { "kind": "var", "name": "count" } },
+		{ "id": "recVar",   "expr": { "kind": "var", "name": "rec" } },
+
+		{ "id": "isDone", "expr": { "kind": "call", "ns": "core", "name": "gte", "args": ["idxVar", "nodesLen"] } },
+
+		{ "id": "curNode", "expr": { "kind": "call", "ns": "list", "name": "nth", "args": ["nodes", "idxVar"] } },
+		{ "id": "exprKey", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "expr" } },
+		{ "id": "curExpr", "expr": { "kind": "call", "ns": "map", "name": "get", "args": ["curNode", "exprKey"] } },
+		{ "id": "curKind", "expr": { "kind": "call", "ns": "map", "name": "get", "args": ["curExpr", "kindKey"] } },
+
+		{ "id": "isCall", "expr": { "kind": "call", "ns": "core", "name": "eq", "args": ["curKind", "callStr"] } },
+
+		{ "id": "curArgs", "expr": { "kind": "call", "ns": "map", "name": "get", "args": ["curExpr", "argsKey"] } },
+		{ "id": "arg0Id", "expr": { "kind": "call", "ns": "list", "name": "nth", "args": ["curArgs", "zero"] } },
+		{ "id": "arg1Id", "expr": { "kind": "call", "ns": "list", "name": "nth", "args": ["curArgs", "one"] } },
+		{ "id": "arg0Kind", "expr": { "kind": "call", "ns": "map", "name": "get", "args": ["kindMap", "arg0Id"] } },
+		{ "id": "arg1Kind", "expr": { "kind": "call", "ns": "map", "name": "get", "args": ["kindMap", "arg1Id"] } },
+		{ "id": "arg0IsLit", "expr": { "kind": "call", "ns": "core", "name": "eq", "args": ["arg0Kind", "litStr"] } },
+		{ "id": "arg1IsLit", "expr": { "kind": "call", "ns": "core", "name": "eq", "args": ["arg1Kind", "litStr"] } },
+		{ "id": "bothLit", "expr": { "kind": "call", "ns": "bool", "name": "and", "args": ["arg0IsLit", "arg1IsLit"] } },
+
+		{ "id": "nextIdx", "expr": { "kind": "call", "ns": "core", "name": "add", "args": ["idxVar", "one"] } },
+		{ "id": "incrCount", "expr": { "kind": "call", "ns": "core", "name": "add", "args": ["countVar", "one"] } },
+
+		{
+			"id": "recurseIncr", "expr": {
+				"kind": "callExpr",
+				"args": ["nextIdx", "incrCount"],
+				"fn": "recVar"
+			}
+		},
+		{
+			"id": "recurseSame", "expr": {
+				"kind": "callExpr",
+				"args": ["nextIdx", "countVar"],
+				"fn": "recVar"
+			}
+		},
+
+		{
+			"id": "foldableRecurse", "expr": {
+				"kind": "if",
+				"type": { "kind": "int" },
+				"cond": "bothLit",
+				"then": "recurseIncr",
+				"else": "recurseSame"
+			}
+		},
+
+		{
+			"id": "callBranch", "expr": {
+				"kind": "if",
+				"type": { "kind": "int" },
+				"cond": "isCall",
+				"then": "foldableRecurse",
+				"else": "recurseSame"
+			}
+		},
+
+		{
+			"id": "walkBody", "expr": {
+				"kind": "if",
+				"type": { "kind": "int" },
+				"cond": "isDone",
+				"then": "countVar",
+				"else": "callBranch"
+			}
+		},
+
+		{
+			"id": "innerLambda", "expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [{ "kind": "int" }, { "kind": "int" }],
+					"returns": { "kind": "int" }
+				},
+				"params": ["idx", "count"],
+				"body": "walkBody"
+			}
+		},
+
+		{
+			"id": "outerLambda", "expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [{ "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "int" } }],
+					"returns": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "int" } }
+				},
+				"params": ["rec"],
+				"body": "innerLambda"
+			}
+		},
+
+		{
+			"id": "walker", "expr": {
+				"kind": "fix",
+				"type": {
+					"kind": "fn",
+					"params": [{ "kind": "int" }, { "kind": "int" }],
+					"returns": { "kind": "int" }
+				},
+				"fn": "outerLambda"
+			}
+		},
+
+		{
+			"id": "result", "expr": {
+				"kind": "callExpr",
+				"args": ["zero", "zero"],
+				"fn": "walker"
+			}
+		}
+	],
+	"result": "result",
+	"expected_result": 1
+}
