@@ -482,7 +482,15 @@ async function runExample(path: string, options: Options): Promise<boolean> {
 			evalResult = evaluateProgram(doc as AIRDocument | CIRDocument, registry, defs);
 		}
 
+		const expected = getExpectedResult(doc);
 		if (evalResult.kind === "error") {
+			// If the example expects an error result, this is a success
+			if (expected && typeof expected === "object" && "kind" in expected && (expected as { kind: string }).kind === "error") {
+				print(`${colors.green}✓ Result:${colors.reset} Error (expected)`, "green");
+				print(`  ${evalResult.code}: ${evalResult.message ?? ""}`, "reset");
+				print("");
+				return true;
+			}
 			print(`${colors.red}Evaluation error:${colors.reset} ${evalResult.code}`, "red");
 			if (evalResult.message) {
 				print(`  ${evalResult.message}`, "red");
@@ -496,7 +504,6 @@ async function runExample(path: string, options: Options): Promise<boolean> {
 		print("");
 
 		// Show expected result if available
-		const expected = getExpectedResult(doc);
 		if (expected !== undefined && options.verbose) {
 			print(`${colors.dim}Expected: ${expected}${colors.reset}`, "dim");
 			if (evalResult.kind === "int" && evalResult.value === expected) {
