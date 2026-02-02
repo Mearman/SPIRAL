@@ -1,0 +1,27 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Full self-hosting pipeline: parses a SPIRAL AIR program from JSON, validates it with validate:validate, and if valid evaluates with meta:eval. Demonstrates string → parse → validate → eval → result.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "programJson", "expr": {
+			"kind": "lit", "type": {"kind": "string"},
+			"value": "{\"nodes\":[{\"id\":\"a\",\"expr\":{\"kind\":\"lit\",\"value\":10}},{\"id\":\"b\",\"expr\":{\"kind\":\"lit\",\"value\":20}},{\"id\":\"sum\",\"expr\":{\"kind\":\"call\",\"ns\":\"core\",\"name\":\"add\",\"args\":[\"a\",\"b\"]}}],\"result\":\"sum\"}"
+		}},
+		{"id": "parsed", "expr": {"kind": "call", "ns": "json", "name": "parse", "args": ["programJson"]}},
+		{"id": "validationResult", "expr": {"kind": "call", "ns": "validate", "name": "validate", "args": ["parsed"]}},
+		{"id": "validKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "valid"}},
+		{"id": "isValid", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["validationResult", "validKey"]}},
+		{"id": "evalResult", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["parsed"]}},
+		{"id": "errorsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "errors"}},
+		{"id": "errors", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["validationResult", "errorsKey"]}},
+		{"id": "result", "expr": {
+			"kind": "if",
+			"cond": "isValid",
+			"then": "evalResult",
+			"else": "errors"
+		}}
+	],
+	"result": "result",
+	"expected_result": 30
+}
