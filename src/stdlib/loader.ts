@@ -10,6 +10,11 @@ import {
 	type Value,
 	isError,
 	intType,
+	boolType,
+	floatType,
+	stringType,
+	listType,
+	mapType,
 	errorVal,
 	ErrorCodes,
 } from "../types.js";
@@ -140,8 +145,30 @@ interface StdlibCtx {
 function parseAndWrapOperator(qualifiedName: string, value: Value, ctx: StdlibCtx & { path?: string }): Operator {
 	const colonIdx = qualifiedName.indexOf(":");
 	if (colonIdx === -1) throw new Error(`Invalid operator key "${qualifiedName}" — expected "ns:name" (${ctx.path})`);
-	if (value.kind !== "closure") throw new Error(`Stdlib operator ${qualifiedName} must be a closure, got: ${value.kind} (${ctx.path})`);
+	// For literals (constants), wrap in a nullary operator that returns the literal
+	if (value.kind !== "closure") {
+		return wrapLiteralAsOperator({ ns: qualifiedName.slice(0, colonIdx), name: qualifiedName.slice(colonIdx + 1) }, value);
+	}
 	return wrapClosureAsOperator({ ns: qualifiedName.slice(0, colonIdx), name: qualifiedName.slice(colonIdx + 1) }, value, ctx);
+}
+
+function wrapLiteralAsOperator(_id: { ns: string; name: string }, literal: Value): Operator {
+	// Map value kinds to their corresponding types
+	const returns = literal.kind === "int" ? intType
+		: literal.kind === "bool" ? boolType
+			: literal.kind === "float" ? floatType
+				: literal.kind === "string" ? stringType
+					: literal.kind === "list" ? listType(intType)
+						: literal.kind === "map" ? mapType(stringType, intType)
+							: intType; // Fallback
+
+	return {
+		ns: _id.ns, name: _id.name,
+		params: [],
+		returns,
+		pure: true,
+		fn: () => literal,
+	};
 }
 
 function wrapClosureAsOperator(id: { ns: string; name: string }, closure: ClosureVal, ctx: StdlibCtx): Operator {
