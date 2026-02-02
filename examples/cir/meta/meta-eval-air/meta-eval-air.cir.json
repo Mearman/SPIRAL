@@ -1,0 +1,48 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Constructs a 3-node AIR program (10+20=30) as native CIR records and calls meta:eval on it. Proves meta:eval can evaluate programs built as CIR data structures.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "litStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lit"}},
+		{"id": "callStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call"}},
+		{"id": "intStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "int"}},
+		{"id": "coreStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core"}},
+		{"id": "addStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "add"}},
+		{"id": "verStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "1.0.0"}},
+		{"id": "aStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "a"}},
+		{"id": "bStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "b"}},
+		{"id": "sumStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "sum"}},
+		{"id": "ten", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 10}},
+		{"id": "twenty", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 20}},
+
+		{"id": "intType", "expr": {"kind": "record", "fields": [{"key": "kind", "value": "intStr"}]}},
+
+		{"id": "exprA", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "litStr"}, {"key": "type", "value": "intType"}, {"key": "value", "value": "ten"}
+		]}},
+		{"id": "nodeA", "expr": {"kind": "record", "fields": [{"key": "id", "value": "aStr"}, {"key": "expr", "value": "exprA"}]}},
+
+		{"id": "exprB", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "litStr"}, {"key": "type", "value": "intType"}, {"key": "value", "value": "twenty"}
+		]}},
+		{"id": "nodeB", "expr": {"kind": "record", "fields": [{"key": "id", "value": "bStr"}, {"key": "expr", "value": "exprB"}]}},
+
+		{"id": "sumArgs", "expr": {"kind": "listOf", "elements": ["aStr", "bStr"]}},
+		{"id": "exprSum", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "callStr"}, {"key": "ns", "value": "coreStr"}, {"key": "name", "value": "addStr"}, {"key": "args", "value": "sumArgs"}
+		]}},
+		{"id": "nodeSum", "expr": {"kind": "record", "fields": [{"key": "id", "value": "sumStr"}, {"key": "expr", "value": "exprSum"}]}},
+
+		{"id": "nodesList", "expr": {"kind": "listOf", "elements": ["nodeA", "nodeB", "nodeSum"]}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+		{"id": "doc", "expr": {"kind": "record", "fields": [
+			{"key": "version", "value": "verStr"}, {"key": "airDefs", "value": "emptyList"},
+			{"key": "nodes", "value": "nodesList"}, {"key": "result", "value": "sumStr"}
+		]}},
+
+		{"id": "result", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["doc"]}}
+	],
+	"result": "result",
+	"expected_result": 30
+}

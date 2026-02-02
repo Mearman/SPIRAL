@@ -1,0 +1,212 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Meta-evaluation of a CIR factorial program: constructs a complete CIR factorial(5) program as data using records and listOf, then passes the document to meta:eval. Expected result: 120.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "s_lit",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lit"}},
+		{"id": "s_var",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "var"}},
+		{"id": "s_call",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call"}},
+		{"id": "s_callExpr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "callExpr"}},
+		{"id": "s_if",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "if"}},
+		{"id": "s_lambda",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lambda"}},
+		{"id": "s_fix",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fix"}},
+		{"id": "s_int",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "int"}},
+		{"id": "s_core",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core"}},
+		{"id": "s_lte",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lte"}},
+		{"id": "s_sub",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "sub"}},
+		{"id": "s_mul",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "mul"}},
+		{"id": "s_n",        "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "n"}},
+		{"id": "s_rec",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "rec"}},
+		{"id": "s_1_0_0",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "1.0.0"}},
+
+		{"id": "s_zero",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "zero"}},
+		{"id": "s_one",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "one"}},
+		{"id": "s_nVar",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nVar"}},
+		{"id": "s_recVar",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "recVar"}},
+		{"id": "s_isBase",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "isBase"}},
+		{"id": "s_nSub1",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nSub1"}},
+		{"id": "s_recCall",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "recCall"}},
+		{"id": "s_mulResult", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "mulResult"}},
+		{"id": "s_factBody",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "factBody"}},
+		{"id": "s_factInner", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "factInner"}},
+		{"id": "s_factOuter", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "factOuter"}},
+		{"id": "s_factFn",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "factFn"}},
+		{"id": "s_five",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "five"}},
+		{"id": "s_result",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "result"}},
+
+		{"id": "v_zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "v_one",  "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+		{"id": "v_five", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 5}},
+
+		{"id": "typeInt", "expr": {"kind": "record", "fields": [{"key": "kind", "value": "s_int"}]}},
+
+		{"id": "e_zero", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lit"},
+			{"key": "type", "value": "typeInt"},
+			{"key": "value", "value": "v_zero"}
+		]}},
+		{"id": "n_zero", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_zero"},
+			{"key": "expr", "value": "e_zero"}
+		]}},
+
+		{"id": "e_one", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lit"},
+			{"key": "type", "value": "typeInt"},
+			{"key": "value", "value": "v_one"}
+		]}},
+		{"id": "n_one", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_one"},
+			{"key": "expr", "value": "e_one"}
+		]}},
+
+		{"id": "e_nVar", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_var"},
+			{"key": "name", "value": "s_n"}
+		]}},
+		{"id": "n_nVar", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_nVar"},
+			{"key": "expr", "value": "e_nVar"}
+		]}},
+
+		{"id": "e_recVar", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_var"},
+			{"key": "name", "value": "s_rec"}
+		]}},
+		{"id": "n_recVar", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_recVar"},
+			{"key": "expr", "value": "e_recVar"}
+		]}},
+
+		{"id": "isBaseArgs", "expr": {"kind": "listOf", "elements": ["s_nVar", "s_one"]}},
+		{"id": "e_isBase", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_call"},
+			{"key": "ns", "value": "s_core"},
+			{"key": "name", "value": "s_lte"},
+			{"key": "args", "value": "isBaseArgs"}
+		]}},
+		{"id": "n_isBase", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_isBase"},
+			{"key": "expr", "value": "e_isBase"}
+		]}},
+
+		{"id": "nSub1Args", "expr": {"kind": "listOf", "elements": ["s_nVar", "s_one"]}},
+		{"id": "e_nSub1", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_call"},
+			{"key": "ns", "value": "s_core"},
+			{"key": "name", "value": "s_sub"},
+			{"key": "args", "value": "nSub1Args"}
+		]}},
+		{"id": "n_nSub1", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_nSub1"},
+			{"key": "expr", "value": "e_nSub1"}
+		]}},
+
+		{"id": "recCallArgs", "expr": {"kind": "listOf", "elements": ["s_nSub1"]}},
+		{"id": "e_recCall", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_callExpr"},
+			{"key": "fn", "value": "s_recVar"},
+			{"key": "args", "value": "recCallArgs"}
+		]}},
+		{"id": "n_recCall", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_recCall"},
+			{"key": "expr", "value": "e_recCall"}
+		]}},
+
+		{"id": "mulResultArgs", "expr": {"kind": "listOf", "elements": ["s_nVar", "s_recCall"]}},
+		{"id": "e_mulResult", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_call"},
+			{"key": "ns", "value": "s_core"},
+			{"key": "name", "value": "s_mul"},
+			{"key": "args", "value": "mulResultArgs"}
+		]}},
+		{"id": "n_mulResult", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_mulResult"},
+			{"key": "expr", "value": "e_mulResult"}
+		]}},
+
+		{"id": "e_factBody", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_if"},
+			{"key": "cond", "value": "s_isBase"},
+			{"key": "then", "value": "s_one"},
+			{"key": "else", "value": "s_mulResult"}
+		]}},
+		{"id": "n_factBody", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_factBody"},
+			{"key": "expr", "value": "e_factBody"}
+		]}},
+
+		{"id": "factInnerParams", "expr": {"kind": "listOf", "elements": ["s_n"]}},
+		{"id": "e_factInner", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lambda"},
+			{"key": "params", "value": "factInnerParams"},
+			{"key": "body", "value": "s_factBody"}
+		]}},
+		{"id": "n_factInner", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_factInner"},
+			{"key": "expr", "value": "e_factInner"}
+		]}},
+
+		{"id": "factOuterParams", "expr": {"kind": "listOf", "elements": ["s_rec"]}},
+		{"id": "e_factOuter", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lambda"},
+			{"key": "params", "value": "factOuterParams"},
+			{"key": "body", "value": "s_factInner"}
+		]}},
+		{"id": "n_factOuter", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_factOuter"},
+			{"key": "expr", "value": "e_factOuter"}
+		]}},
+
+		{"id": "e_factFn", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_fix"},
+			{"key": "fn", "value": "s_factOuter"}
+		]}},
+		{"id": "n_factFn", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_factFn"},
+			{"key": "expr", "value": "e_factFn"}
+		]}},
+
+		{"id": "e_five", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lit"},
+			{"key": "type", "value": "typeInt"},
+			{"key": "value", "value": "v_five"}
+		]}},
+		{"id": "n_five", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_five"},
+			{"key": "expr", "value": "e_five"}
+		]}},
+
+		{"id": "resultArgs", "expr": {"kind": "listOf", "elements": ["s_five"]}},
+		{"id": "e_result", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_callExpr"},
+			{"key": "fn", "value": "s_factFn"},
+			{"key": "args", "value": "resultArgs"}
+		]}},
+		{"id": "n_result", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_result"},
+			{"key": "expr", "value": "e_result"}
+		]}},
+
+		{"id": "innerNodes", "expr": {"kind": "listOf", "elements": [
+			"n_zero", "n_one", "n_nVar", "n_recVar",
+			"n_isBase", "n_nSub1", "n_recCall", "n_mulResult",
+			"n_factBody", "n_factInner", "n_factOuter", "n_factFn",
+			"n_five", "n_result"
+		]}},
+
+		{"id": "emptyAirDefs", "expr": {"kind": "listOf", "elements": []}},
+
+		{"id": "document", "expr": {"kind": "record", "fields": [
+			{"key": "version", "value": "s_1_0_0"},
+			{"key": "airDefs", "value": "emptyAirDefs"},
+			{"key": "nodes", "value": "innerNodes"},
+			{"key": "result", "value": "s_result"}
+		]}},
+
+		{"id": "result", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["document"]}}
+	],
+	"result": "result",
+	"expected_result": 120
+}
