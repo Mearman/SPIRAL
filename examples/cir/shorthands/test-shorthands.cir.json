@@ -1,0 +1,15 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Test all 4 syntax shorthands: inline literals (numbers, booleans), lambda type inference, record object shorthand, and call op shorthand",
+	"airDefs": [],
+	"nodes": [
+		{"id": "x", "expr": 42},
+		{"id": "y", "expr": true},
+		{"id": "ten", "expr": 10},
+		{"id": "sum", "expr": {"kind": "call", "op": "core:add", "args": ["x", "ten"]}},
+		{"id": "double", "expr": {"kind": "lambda", "params": ["n"], "body": "sum"}},
+		{"id": "result", "expr": {"kind": "record", "fields": { "count": 5, "flag": "y","value": "sum"}}}
+	],
+	"result": "result"
+}
