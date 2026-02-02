@@ -35,7 +35,7 @@ export function bootstrapRegistry(): OperatorRegistry {
 		"desugar.cir.json",
 		"optimize-dce.cir.json",
 		"optimize-fold.cir.json",
-		// "synth.cir.json",  // Temporarily disabled due to CIR validation issues
+		"synth.cir.json",
 	];
 
 	const paths: string[] = [];
