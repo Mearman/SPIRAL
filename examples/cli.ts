@@ -25,7 +25,6 @@ import {
 	evaluateEIR,
 	evaluateLIR,
 	typeCheckProgram,
-	registerDef,
 	createQueuedEffectRegistry,
 	createDefaultEffectRegistry,
 	synthesizePython,
@@ -358,30 +357,7 @@ async function runExample(path: string, options: Options): Promise<boolean> {
 		// Bootstrap provides kernel + all stdlib operators
 		const registry = bootstrapRegistry();
 
-		// Build defs from airDefs (if applicable)
-		let defs: Defs = new Map();
-		if (ir === "AIR") {
-			const airDoc = doc as AIRDocument;
-			if (airDoc.airDefs) {
-				for (const airDef of airDoc.airDefs) {
-					defs = registerDef(defs, airDef);
-				}
-			}
-		} else if (ir === "CIR") {
-			const cirDoc = doc as CIRDocument;
-			if (cirDoc.airDefs) {
-				for (const airDef of cirDoc.airDefs) {
-					defs = registerDef(defs, airDef);
-				}
-			}
-		} else if (ir === "EIR") {
-			const eirDoc = doc as EIRDocument;
-			if (eirDoc.airDefs) {
-				for (const airDef of eirDoc.airDefs) {
-					defs = registerDef(defs, airDef);
-				}
-			}
-		}
+		const defs: Defs = new Map();
 
 		// Type check (AIR/CIR only) — non-fatal, some examples have known type issues
 		if (ir === "AIR" || ir === "CIR") {

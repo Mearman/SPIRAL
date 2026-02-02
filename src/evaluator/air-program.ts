@@ -18,6 +18,7 @@ import { errorVal, isError } from "../types.js";
 import type { AirEvalCtx, EvalOptions } from "./types.js";
 import { Evaluator } from "./helpers.js";
 import { evalNode } from "./air-node.js";
+import { desugarAirDefs } from "../desugar-airdefs.js";
 
 export { Evaluator };
 
@@ -41,7 +42,8 @@ interface ProgramArgs {
 export function evaluateProgram(
 	...params: [AIRDocument, AirEvalCtx["registry"], Defs, Map<string, Value>?, EvalOptions?]
 ): Value {
-	const args: ProgramArgs = { doc: params[0], registry: params[1], defs: params[2], inputs: params[3], options: params[4] };
+	const desugared = desugarAirDefs(params[0]);
+	const args: ProgramArgs = { doc: desugared, registry: params[1], defs: params[2], inputs: params[3], options: params[4] };
 	const ctx = buildProgramCtx(args);
 	const boundNodes = computeBoundNodes(args.doc, ctx.nodeMap);
 	return runProgram({ doc: args.doc, ctx, boundNodes, inputs: args.inputs });
@@ -153,7 +155,7 @@ function checkRefParams(expr: Expr, params: Set<string>): boolean {
 function isTrivalNode(node: AirHybridNode | undefined): boolean {
 	if (!node) return true;
 	if (isBlockNode(node)) return false;
-	return node.expr.kind === "lit" || node.expr.kind === "airRef";
+	return node.expr.kind === "lit";
 }
 
 function markInitialBound(bc: BoundCtx, lambdaParams: Set<string>): void {

@@ -12,7 +12,7 @@ import { evaluateProgram, evaluateEIR } from "../src/evaluator.js";
 import { evaluateLIR } from "../src/lir/evaluator.js";
 import { evaluateLIRAsync } from "../src/lir/async-evaluator.js";
 import { AsyncEvaluator } from "../src/async-evaluator/index.js";
-import { emptyDefs, emptyValueEnv, registerDef } from "../src/env.js";
+import { emptyDefs, emptyValueEnv } from "../src/env.js";
 import {
 	createDefaultEffectRegistry,
 	createQueuedEffectRegistry,
@@ -119,20 +119,13 @@ function buildEffectRegistry(example: ExampleInfo) {
 	return createDefaultEffectRegistry();
 }
 
-function buildDefs(doc: Record<string, unknown>) {
-	let defs = emptyDefs();
-	const airDefs = doc.airDefs as Array<{ ns: string; name: string; params: string[]; result: unknown; body: unknown }> | undefined;
-	if (airDefs) {
-		for (const def of airDefs) {
-			defs = registerDef(defs, def as never);
-		}
-	}
-	return defs;
+function buildDefs() {
+	return emptyDefs();
 }
 
 async function executeExample(example: ExampleInfo): Promise<Value> {
 	const registry = buildRegistry();
-	const defs = buildDefs(example.doc);
+	const defs = buildDefs();
 	const doc = example.doc;
 
 	switch (example.layer) {

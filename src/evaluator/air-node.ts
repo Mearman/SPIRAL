@@ -30,7 +30,6 @@ import { evalExprWithNodeMap } from "./air-expr.js";
 import {
 	evalNodeCallExpr,
 	evalNodeFix,
-	evalNodeAirRef,
 } from "./air-node-fn.js";
 
 //==============================================================================
@@ -88,8 +87,6 @@ function dispatchBasicExpr(ctx: ProgramCtx, expr: Expr, env: ValueEnv): NodeEval
 
 function dispatchComplexExpr(ctx: ProgramCtx, expr: Expr, env: ValueEnv): NodeEvalResult {
 	switch (expr.kind) {
-	case "airRef":
-		return evalNodeAirRef(ctx, expr, env);
 	case "predicate":
 		return evalNodePredicate(ctx, expr);
 	case "lambda":
