@@ -208,6 +208,18 @@ export default [
 		},
 	},
 	{
+		files: ["src/desugar-shorthands.ts"],
+		rules: {
+			"@typescript-eslint/consistent-type-assertions": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
+			"@typescript-eslint/no-unsafe-return": "off",
+			"max-lines-per-function": "off",
+			complexity: "off",
+		},
+	},
+	{
 		files: ["src/synth/python.ts"],
 		rules: {
 			"@typescript-eslint/no-unnecessary-condition": "off",
