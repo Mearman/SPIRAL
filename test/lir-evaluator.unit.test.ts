@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
 import { evaluateLIR } from "../src/lir/evaluator.js";
-import { createCoreRegistry } from "../src/domains/core.js";
+import { createKernelRegistry } from "../src/stdlib/kernel.js";
 import {
 	createDefaultEffectRegistry,
 } from "../src/effects.js";
@@ -41,7 +41,7 @@ function makeExprDoc(id: string, expr: any): LIRDocument {
 	};
 }
 
-const registry = createCoreRegistry();
+const registry = createKernelRegistry();
 const effectRegistry = createDefaultEffectRegistry();
 
 // =============================================================================

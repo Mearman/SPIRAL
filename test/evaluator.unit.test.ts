@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
 import { Evaluator, evaluateProgram } from "../src/evaluator.js";
-import { createCoreRegistry } from "../src/domains/core.js";
+import { createKernelRegistry } from "../src/stdlib/kernel.js";
 import { emptyValueEnv, extendValueEnv, emptyDefs } from "../src/env.js";
 import type { ValueEnv } from "../src/env.js";
 import type { Expr, AIRDocument, Value } from "../src/types.js";
@@ -22,7 +22,7 @@ import {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const registry = createCoreRegistry();
+const registry = createKernelRegistry();
 const defs = emptyDefs();
 
 function ev(expr: Expr, env: ValueEnv = emptyValueEnv()): Value {

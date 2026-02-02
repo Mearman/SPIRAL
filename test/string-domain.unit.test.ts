@@ -4,7 +4,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import { createStringRegistry } from "../src/domains/string.js";
+import { bootstrapRegistry } from "../src/stdlib/bootstrap.js";
 import { lookupOperator } from "../src/domains/registry.js";
 import {
 	stringVal,
@@ -18,7 +18,7 @@ import type { Value } from "../src/types.js";
 // Helpers
 // ---------------------------------------------------------------------------
 
-const registry = createStringRegistry();
+const registry = bootstrapRegistry();
 
 function op(name: string) {
 	const operator = lookupOperator(registry, "string", name);

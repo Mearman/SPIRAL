@@ -21,12 +21,9 @@ import { ingestTypeScript } from "../../src/ingest/typescript.js";
 import { synthesizePython } from "../../src/synth/python.js";
 import { synthesizeTypeScript } from "../../src/synth/typescript.js";
 import { evaluateProgram } from "../../src/evaluator.js";
-import { createCoreRegistry } from "../../src/domains/core.js";
-import { createBoolRegistry } from "../../src/domains/bool.js";
-import { createStringRegistry } from "../../src/domains/string.js";
+import { bootstrapRegistry } from "../../src/stdlib/bootstrap.js";
 import { emptyDefs } from "../../src/env.js";
 import type { AIRDocument, Value, Node } from "../../src/types.js";
-import type { OperatorRegistry } from "../../src/domains/registry.js";
 
 //==============================================================================
 // Python availability check
@@ -44,21 +41,7 @@ try {
 // Helpers
 //==============================================================================
 
-function mergeRegistries(...registries: OperatorRegistry[]): OperatorRegistry {
-	const merged: OperatorRegistry = new Map();
-	for (const r of registries) {
-		for (const [k, v] of r) {
-			merged.set(k, v);
-		}
-	}
-	return merged;
-}
-
-const registry = mergeRegistries(
-	createCoreRegistry(),
-	createBoolRegistry(),
-	createStringRegistry(),
-);
+const registry = bootstrapRegistry();
 const defs = emptyDefs();
 
 /**

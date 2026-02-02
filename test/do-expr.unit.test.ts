@@ -10,7 +10,7 @@ import {
 	validateEIR,
 } from "../src/validator.js";
 import { evaluateProgram } from "../src/evaluator.js";
-import { createCoreRegistry } from "../src/domains/core.js";
+import { createKernelRegistry } from "../src/stdlib/kernel.js";
 import { typeCheckProgram } from "../src/typechecker.js";
 import { emptyDefs } from "../src/env.js";
 import { synthesizePython } from "../src/synth/python.js";
@@ -32,7 +32,7 @@ import type {
 // Helpers
 //==============================================================================
 
-const registry = createCoreRegistry();
+const registry = createKernelRegistry();
 const defs = emptyDefs();
 
 function lit(type: { kind: string; [k: string]: unknown }, value: unknown): Expr {
@@ -211,7 +211,7 @@ describe("do expression - type checker", () => {
 			],
 			result: "result",
 		};
-		const registry = createCoreRegistry();
+		const registry = createKernelRegistry();
 		const defs = emptyDefs();
 		const { resultType } = typeCheckProgram(doc, registry, defs);
 		assert.deepStrictEqual(resultType, stringType);
@@ -227,7 +227,7 @@ describe("do expression - type checker", () => {
 			],
 			result: "result",
 		};
-		const registry = createCoreRegistry();
+		const registry = createKernelRegistry();
 		const defs = emptyDefs();
 		const { resultType } = typeCheckProgram(doc, registry, defs);
 		assert.deepStrictEqual(resultType, intType);
@@ -242,7 +242,7 @@ describe("do expression - type checker", () => {
 			],
 			result: "result",
 		};
-		const registry = createCoreRegistry();
+		const registry = createKernelRegistry();
 		const defs = emptyDefs();
 		const { resultType } = typeCheckProgram(doc, registry, defs);
 		assert.deepStrictEqual(resultType, voidType);

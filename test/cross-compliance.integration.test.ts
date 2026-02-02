@@ -8,10 +8,7 @@ import { evaluateLIR as evaluateLIRSync } from "../src/lir/evaluator.js";
 import { evaluateLIRAsync } from "../src/lir/async-evaluator.js";
 import { emptyDefs } from "../src/env.js";
 import { emptyEffectRegistry } from "../src/effects.js";
-import { createCoreRegistry } from "../src/domains/core.js";
-import { createBoolRegistry } from "../src/domains/bool.js";
-import { createListRegistry } from "../src/domains/list.js";
-import { createSetRegistry } from "../src/domains/set.js";
+import { bootstrapRegistry } from "../src/stdlib/bootstrap.js";
 import type { Value } from "../src/types.js";
 import {
 	COMPLIANCE_FIXTURES,
@@ -197,23 +194,7 @@ async function executeFixture(fixture: ComplianceFixture): Promise<Value> {
 
 	const layer = fixture.metadata.layer;
 	// Build a complete registry with all domain operators
-	const registry = new Map();
-	// Merge core registry
-	for (const [key, op] of createCoreRegistry()) {
-		registry.set(key, op);
-	}
-	// Merge bool registry
-	for (const [key, op] of createBoolRegistry()) {
-		registry.set(key, op);
-	}
-	// Merge list registry
-	for (const [key, op] of createListRegistry()) {
-		registry.set(key, op);
-	}
-	// Merge set registry
-	for (const [key, op] of createSetRegistry()) {
-		registry.set(key, op);
-	}
+	const registry = bootstrapRegistry();
 	const defs = emptyDefs();
 	const effects = emptyEffectRegistry();
 

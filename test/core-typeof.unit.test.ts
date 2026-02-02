@@ -3,7 +3,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import { createCoreRegistry } from "../src/domains/core.js";
+import { createKernelRegistry } from "../src/stdlib/kernel.js";
 import { lookupOperator } from "../src/domains/registry.js";
 import {
 	intVal,
@@ -20,7 +20,7 @@ import {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const registry = createCoreRegistry();
+const registry = createKernelRegistry();
 
 function op(name: string) {
 	const operator = lookupOperator(registry, "core", name);

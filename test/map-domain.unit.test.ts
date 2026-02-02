@@ -3,7 +3,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import { createMapRegistry } from "../src/domains/map.js";
+import { bootstrapRegistry } from "../src/stdlib/bootstrap.js";
 import { lookupOperator } from "../src/domains/registry.js";
 import {
 	mapVal,
@@ -19,7 +19,7 @@ import type { Value } from "../src/types.js";
 // Helpers
 // ---------------------------------------------------------------------------
 
-const registry = createMapRegistry();
+const registry = bootstrapRegistry();
 
 function op(name: string) {
 	const operator = lookupOperator(registry, "map", name);

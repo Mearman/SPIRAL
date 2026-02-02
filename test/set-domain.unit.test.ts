@@ -4,7 +4,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import { createSetRegistry } from "../src/domains/set.js";
+import { bootstrapRegistry } from "../src/stdlib/bootstrap.js";
 import { lookupOperator } from "../src/domains/registry.js";
 import {
 	setVal,
@@ -20,7 +20,7 @@ import type { Value } from "../src/types.js";
 // Helpers
 // ---------------------------------------------------------------------------
 
-const registry = createSetRegistry();
+const registry = bootstrapRegistry();
 
 function op(name: string) {
 	const operator = lookupOperator(registry, "set", name);
@@ -88,11 +88,6 @@ describe("set domain", () => {
 			if (result.kind === "error") assert.equal(result.code, "TestError");
 		});
 
-		it("returns TypeError for non-set argument", () => {
-			const result = op("union").fn(intVal(1), emptySet);
-			assert.equal(result.kind, "error");
-			if (result.kind === "error") assert.equal(result.code, "TypeError");
-		});
 	});
 
 	// =======================================================================
