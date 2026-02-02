@@ -1,0 +1,942 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Validate stdlib — semantic validation for AIR/CIR documents: duplicate ID detection, result reference check, dependency collection, acyclic check, and full validate.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero",      "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one",       "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+		{"id": "trueVal",   "expr": {"kind": "lit", "type": {"kind": "bool"}, "value": true}},
+		{"id": "falseVal",  "expr": {"kind": "lit", "type": {"kind": "bool"}, "value": false}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+		{"id": "emptyMap",  "expr": {"kind": "record", "fields": []}},
+
+		{"id": "idKey",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "id"}},
+		{"id": "exprKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+		{"id": "kindKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "argsKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "args"}},
+		{"id": "condKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "cond"}},
+		{"id": "thenKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "then"}},
+		{"id": "elseKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "else"}},
+		{"id": "nameKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "name"}},
+		{"id": "valueKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+		{"id": "bodyKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "body"}},
+		{"id": "fnKey",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fn"}},
+		{"id": "exprsKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "exprs"}},
+		{"id": "nodesKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodes"}},
+		{"id": "resultKey",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "result"}},
+		{"id": "validKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "valid"}},
+		{"id": "errorsKey",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "errors"}},
+
+		{"id": "stringTypeStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
+
+		{"id": "litStr",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lit"}},
+		{"id": "varStr",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "var"}},
+		{"id": "refStr",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ref"}},
+		{"id": "callStr",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call"}},
+		{"id": "ifStr",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "if"}},
+		{"id": "letStr",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "let"}},
+		{"id": "lambdaStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lambda"}},
+		{"id": "callExprStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "callExpr"}},
+		{"id": "fixStr",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fix"}},
+		{"id": "doStr",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "do"}},
+
+		{"id": "dupPrefix",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Duplicate node id: "}},
+		{"id": "missingResPrefix","expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Result references undefined node: "}},
+		{"id": "cyclePrefix",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Cycle detected involving nodes with non-zero in-degree"}},
+
+
+		{"id": "cdRecBody", "expr": {
+			"kind": "let", "name": "cdLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "cdNodes"}]},
+			"body": {"kind": "let", "name": "cdDone",
+				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "cdIdx"}, {"kind": "var", "name": "cdLen"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "cdDone"},
+					"then": {"kind": "var", "name": "cdErrs"},
+					"else": {"kind": "let", "name": "cdNode",
+						"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "cdNodes"}, {"kind": "var", "name": "cdIdx"}]},
+						"body": {"kind": "let", "name": "cdNid",
+							"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "cdNode"}, "idKey"]},
+							"body": {"kind": "let", "name": "cdHas",
+								"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "cdSeen"}, {"kind": "var", "name": "cdNid"}]},
+								"body": {"kind": "if",
+									"cond": {"kind": "var", "name": "cdHas"},
+									"then": {"kind": "let", "name": "cdMsg",
+										"value": {"kind": "call", "ns": "string", "name": "concat", "args": ["dupPrefix", {"kind": "var", "name": "cdNid"}]},
+										"body": {"kind": "let", "name": "cdNewErrs",
+											"value": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "cdMsg"}, {"kind": "var", "name": "cdErrs"}]},
+											"body": {"kind": "let", "name": "cdNextIdx",
+												"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "cdIdx"}, "one"]},
+												"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "cdNodes"}, {"kind": "var", "name": "cdNextIdx"}, {"kind": "var", "name": "cdSeen"}, {"kind": "var", "name": "cdNewErrs"}], "fn": "cdRec"}
+											}
+										}
+									},
+									"else": {"kind": "let", "name": "cdNewSeen",
+										"value": {"kind": "call", "ns": "map", "name": "set", "args": [{"kind": "var", "name": "cdSeen"}, {"kind": "var", "name": "cdNid"}, "trueVal"]},
+										"body": {"kind": "let", "name": "cdNextIdx2",
+											"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "cdIdx"}, "one"]},
+											"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "cdNodes"}, {"kind": "var", "name": "cdNextIdx2"}, {"kind": "var", "name": "cdNewSeen"}, {"kind": "var", "name": "cdErrs"}], "fn": "cdRec"}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "cdRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["cdNodes", "cdIdx", "cdSeen", "cdErrs"],
+			"body": "cdRecBody"
+		}},
+		{"id": "cdRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["cdRec"],
+			"body": "cdRecInner"
+		}},
+		{"id": "cdFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "cdRecOuter"
+		}},
+		{"id": "checkDupIdsBody", "expr": {
+			"kind": "callExpr", "args": [{"kind": "var", "name": "nodes"}, "zero", "emptyMap", "emptyList"], "fn": "cdFixFn"
+		}},
+		{"id": "checkDuplicateIds", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["nodes"],
+			"body": "checkDupIdsBody"
+		}},
+
+
+		{"id": "crRecBody", "expr": {
+			"kind": "let", "name": "crLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "crNodes"}]},
+			"body": {"kind": "let", "name": "crDone",
+				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "crIdx"}, {"kind": "var", "name": "crLen"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "crDone"},
+					"then": {"kind": "var", "name": "crIdMap"},
+					"else": {"kind": "let", "name": "crNode",
+						"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "crNodes"}, {"kind": "var", "name": "crIdx"}]},
+						"body": {"kind": "let", "name": "crNid",
+							"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "crNode"}, "idKey"]},
+							"body": {"kind": "let", "name": "crNewMap",
+								"value": {"kind": "call", "ns": "map", "name": "set", "args": [{"kind": "var", "name": "crIdMap"}, {"kind": "var", "name": "crNid"}, "trueVal"]},
+								"body": {"kind": "let", "name": "crNextIdx",
+									"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "crIdx"}, "one"]},
+									"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "crNodes"}, {"kind": "var", "name": "crNextIdx"}, {"kind": "var", "name": "crNewMap"}], "fn": "crBuildRec"}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "crRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["crNodes", "crIdx", "crIdMap"],
+			"body": "crRecBody"
+		}},
+		{"id": "crRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["crBuildRec"],
+			"body": "crRecInner"
+		}},
+		{"id": "crBuildFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "crRecOuter"
+		}},
+		{"id": "checkResultBody", "expr": {
+			"kind": "let", "name": "crIdSet",
+			"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "crNodesIn"}, "zero", "emptyMap"], "fn": "crBuildFixFn"},
+			"body": {"kind": "let", "name": "crFound",
+				"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "crIdSet"}, {"kind": "var", "name": "crResultId"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "crFound"},
+					"then": "emptyList",
+					"else": {"kind": "let", "name": "crErrMsg",
+						"value": {"kind": "call", "ns": "string", "name": "concat", "args": ["missingResPrefix", {"kind": "var", "name": "crResultId"}]},
+						"body": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "crErrMsg"}, "emptyList"]}
+					}
+				}
+			}
+		}},
+		{"id": "checkResult", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["crNodesIn", "crResultId"],
+			"body": "checkResultBody"
+		}},
+
+
+		{"id": "caRecBody", "expr": {
+			"kind": "let", "name": "caLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "caArgs"}]},
+			"body": {"kind": "let", "name": "caDone",
+				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "caIdx"}, {"kind": "var", "name": "caLen"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "caDone"},
+					"then": {"kind": "var", "name": "caAcc"},
+					"else": {"kind": "let", "name": "caArg",
+						"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "caArgs"}, {"kind": "var", "name": "caIdx"}]},
+						"body": {"kind": "let", "name": "caArgType",
+							"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "caArg"}]},
+							"body": {"kind": "let", "name": "caIsStr",
+								"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "caArgType"}, "stringTypeStr"]},
+								"body": {"kind": "if",
+									"cond": {"kind": "var", "name": "caIsStr"},
+									"then": {"kind": "let", "name": "caNewAcc",
+										"value": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "caArg"}, {"kind": "var", "name": "caAcc"}]},
+										"body": {"kind": "let", "name": "caNextIdx",
+											"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "caIdx"}, "one"]},
+											"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "caArgs"}, {"kind": "var", "name": "caNextIdx"}, {"kind": "var", "name": "caNewAcc"}, {"kind": "var", "name": "caCollect"}], "fn": "caArgsRec"}
+										}
+									},
+									"else": {"kind": "let", "name": "caSubDeps",
+										"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "caArg"}], "fn": "caCollect"},
+										"body": {"kind": "let", "name": "caMerged",
+											"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "caSubDeps"}, {"kind": "var", "name": "caAcc"}]},
+											"body": {"kind": "let", "name": "caNextIdx2",
+												"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "caIdx"}, "one"]},
+												"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "caArgs"}, {"kind": "var", "name": "caNextIdx2"}, {"kind": "var", "name": "caMerged"}, {"kind": "var", "name": "caCollect"}], "fn": "caArgsRec"}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "caRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["caArgs", "caIdx", "caAcc", "caCollect"],
+			"body": "caRecBody"
+		}},
+		{"id": "caRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["caArgsRec"],
+			"body": "caRecInner"
+		}},
+		{"id": "collectArgsFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "caRecOuter"
+		}},
+
+		{"id": "cdpRecBody", "expr": {
+			"kind": "let", "name": "cdpKind",
+			"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "cdpExpr"}, "kindKey"]},
+			"body": {"kind": "let", "name": "cdpIsLit",
+				"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpKind"}, "litStr"]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "cdpIsLit"},
+					"then": "emptyList",
+					"else": {"kind": "let", "name": "cdpIsVar",
+						"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpKind"}, "varStr"]},
+						"body": {"kind": "if",
+							"cond": {"kind": "var", "name": "cdpIsVar"},
+							"then": "emptyList",
+							"else": {"kind": "let", "name": "cdpIsRef",
+								"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpKind"}, "refStr"]},
+								"body": {"kind": "if",
+									"cond": {"kind": "var", "name": "cdpIsRef"},
+									"then": {"kind": "let", "name": "cdpRefId",
+										"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "cdpExpr"}, "idKey"]},
+										"body": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "cdpRefId"}, "emptyList"]}
+									},
+									"else": {"kind": "let", "name": "cdpIsCall",
+										"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpKind"}, "callStr"]},
+										"body": {"kind": "if",
+											"cond": {"kind": "var", "name": "cdpIsCall"},
+											"then": {"kind": "let", "name": "cdpCallArgs",
+												"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "cdpExpr"}, "argsKey"]},
+												"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "cdpCallArgs"}, "zero", "emptyList", {"kind": "var", "name": "cdpSelf"}], "fn": "collectArgsFixFn"}
+											},
+											"else": {"kind": "let", "name": "cdpIsIf",
+												"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpKind"}, "ifStr"]},
+												"body": {"kind": "if",
+													"cond": {"kind": "var", "name": "cdpIsIf"},
+													"then": {"kind": "let", "name": "cdpIfCond",
+														"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "cdpExpr"}, "condKey"]},
+														"body": {"kind": "let", "name": "cdpIfThen",
+															"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "cdpExpr"}, "thenKey"]},
+															"body": {"kind": "let", "name": "cdpIfElse",
+																"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "cdpExpr"}, "elseKey"]},
+																"body": {"kind": "let", "name": "cdpCondType",
+																	"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "cdpIfCond"}]},
+																	"body": {"kind": "let", "name": "cdpCondIsStr",
+																		"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpCondType"}, "stringTypeStr"]},
+																		"body": {"kind": "let", "name": "cdpCondDeps",
+																			"value": {"kind": "if",
+																				"cond": {"kind": "var", "name": "cdpCondIsStr"},
+																				"then": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "cdpIfCond"}, "emptyList"]},
+																				"else": {"kind": "callExpr", "args": [{"kind": "var", "name": "cdpIfCond"}], "fn": "cdpSelf"}
+																			},
+																			"body": {"kind": "let", "name": "cdpThenType",
+																				"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "cdpIfThen"}]},
+																				"body": {"kind": "let", "name": "cdpThenIsStr",
+																					"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpThenType"}, "stringTypeStr"]},
+																					"body": {"kind": "let", "name": "cdpThenDeps",
+																						"value": {"kind": "if",
+																							"cond": {"kind": "var", "name": "cdpThenIsStr"},
+																							"then": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "cdpIfThen"}, "emptyList"]},
+																							"else": {"kind": "callExpr", "args": [{"kind": "var", "name": "cdpIfThen"}], "fn": "cdpSelf"}
+																						},
+																						"body": {"kind": "let", "name": "cdpElseType",
+																							"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "cdpIfElse"}]},
+																							"body": {"kind": "let", "name": "cdpElseIsStr",
+																								"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpElseType"}, "stringTypeStr"]},
+																								"body": {"kind": "let", "name": "cdpElseDeps",
+																									"value": {"kind": "if",
+																										"cond": {"kind": "var", "name": "cdpElseIsStr"},
+																										"then": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "cdpIfElse"}, "emptyList"]},
+																										"else": {"kind": "callExpr", "args": [{"kind": "var", "name": "cdpIfElse"}], "fn": "cdpSelf"}
+																									},
+																									"body": {"kind": "let", "name": "cdpIfMerge1",
+																										"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "cdpCondDeps"}, {"kind": "var", "name": "cdpThenDeps"}]},
+																										"body": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "cdpIfMerge1"}, {"kind": "var", "name": "cdpElseDeps"}]}
+																									}
+																								}
+																							}
+																						}
+																					}
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													},
+													"else": {"kind": "let", "name": "cdpIsLet",
+														"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpKind"}, "letStr"]},
+														"body": {"kind": "if",
+															"cond": {"kind": "var", "name": "cdpIsLet"},
+															"then": {"kind": "let", "name": "cdpLetVal",
+																"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "cdpExpr"}, "valueKey"]},
+																"body": {"kind": "let", "name": "cdpLetBody",
+																	"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "cdpExpr"}, "bodyKey"]},
+																	"body": {"kind": "let", "name": "cdpLetValType",
+																		"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "cdpLetVal"}]},
+																		"body": {"kind": "let", "name": "cdpLetValIsStr",
+																			"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpLetValType"}, "stringTypeStr"]},
+																			"body": {"kind": "let", "name": "cdpLetValDeps",
+																				"value": {"kind": "if",
+																					"cond": {"kind": "var", "name": "cdpLetValIsStr"},
+																					"then": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "cdpLetVal"}, "emptyList"]},
+																					"else": {"kind": "callExpr", "args": [{"kind": "var", "name": "cdpLetVal"}], "fn": "cdpSelf"}
+																				},
+																				"body": {"kind": "let", "name": "cdpLetBodyType",
+																					"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "cdpLetBody"}]},
+																					"body": {"kind": "let", "name": "cdpLetBodyIsStr",
+																						"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpLetBodyType"}, "stringTypeStr"]},
+																						"body": {"kind": "let", "name": "cdpLetBodyDeps",
+																							"value": {"kind": "if",
+																								"cond": {"kind": "var", "name": "cdpLetBodyIsStr"},
+																								"then": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "cdpLetBody"}, "emptyList"]},
+																								"else": {"kind": "callExpr", "args": [{"kind": "var", "name": "cdpLetBody"}], "fn": "cdpSelf"}
+																							},
+																							"body": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "cdpLetValDeps"}, {"kind": "var", "name": "cdpLetBodyDeps"}]}
+																						}
+																					}
+																				}
+																			}
+																		}
+																	}
+																}
+															},
+															"else": {"kind": "let", "name": "cdpIsLambda",
+																"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpKind"}, "lambdaStr"]},
+																"body": {"kind": "if",
+																	"cond": {"kind": "var", "name": "cdpIsLambda"},
+																	"then": {"kind": "let", "name": "cdpLamBody",
+																		"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "cdpExpr"}, "bodyKey"]},
+																		"body": {"kind": "let", "name": "cdpLamBodyType",
+																			"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "cdpLamBody"}]},
+																			"body": {"kind": "let", "name": "cdpLamBodyIsStr",
+																				"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpLamBodyType"}, "stringTypeStr"]},
+																				"body": {"kind": "if",
+																					"cond": {"kind": "var", "name": "cdpLamBodyIsStr"},
+																					"then": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "cdpLamBody"}, "emptyList"]},
+																					"else": {"kind": "callExpr", "args": [{"kind": "var", "name": "cdpLamBody"}], "fn": "cdpSelf"}
+																				}
+																			}
+																		}
+																	},
+																	"else": {"kind": "let", "name": "cdpIsCE",
+																		"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpKind"}, "callExprStr"]},
+																		"body": {"kind": "if",
+																			"cond": {"kind": "var", "name": "cdpIsCE"},
+																			"then": {"kind": "let", "name": "cdpCEFn",
+																				"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "cdpExpr"}, "fnKey"]},
+																				"body": {"kind": "let", "name": "cdpCEArgs",
+																					"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "cdpExpr"}, "argsKey"]},
+																					"body": {"kind": "let", "name": "cdpCEFnType",
+																						"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "cdpCEFn"}]},
+																						"body": {"kind": "let", "name": "cdpCEFnIsStr",
+																							"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpCEFnType"}, "stringTypeStr"]},
+																							"body": {"kind": "let", "name": "cdpCEFnDeps",
+																								"value": {"kind": "if",
+																									"cond": {"kind": "var", "name": "cdpCEFnIsStr"},
+																									"then": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "cdpCEFn"}, "emptyList"]},
+																									"else": {"kind": "callExpr", "args": [{"kind": "var", "name": "cdpCEFn"}], "fn": "cdpSelf"}
+																								},
+																								"body": {"kind": "let", "name": "cdpCEArgDeps",
+																									"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "cdpCEArgs"}, "zero", "emptyList", {"kind": "var", "name": "cdpSelf"}], "fn": "collectArgsFixFn"},
+																									"body": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "cdpCEFnDeps"}, {"kind": "var", "name": "cdpCEArgDeps"}]}
+																								}
+																							}
+																						}
+																					}
+																				}
+																			},
+																			"else": {"kind": "let", "name": "cdpIsFix",
+																				"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpKind"}, "fixStr"]},
+																				"body": {"kind": "if",
+																					"cond": {"kind": "var", "name": "cdpIsFix"},
+																					"then": {"kind": "let", "name": "cdpFixFn",
+																						"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "cdpExpr"}, "fnKey"]},
+																						"body": {"kind": "let", "name": "cdpFixFnType",
+																							"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "cdpFixFn"}]},
+																							"body": {"kind": "let", "name": "cdpFixFnIsStr",
+																								"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpFixFnType"}, "stringTypeStr"]},
+																								"body": {"kind": "if",
+																									"cond": {"kind": "var", "name": "cdpFixFnIsStr"},
+																									"then": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "cdpFixFn"}, "emptyList"]},
+																									"else": {"kind": "callExpr", "args": [{"kind": "var", "name": "cdpFixFn"}], "fn": "cdpSelf"}
+																								}
+																							}
+																						}
+																					},
+																					"else": {"kind": "let", "name": "cdpIsDo",
+																						"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "cdpKind"}, "doStr"]},
+																						"body": {"kind": "if",
+																							"cond": {"kind": "var", "name": "cdpIsDo"},
+																							"then": {"kind": "let", "name": "cdpDoExprs",
+																								"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "cdpExpr"}, "exprsKey"]},
+																								"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "cdpDoExprs"}, "zero", "emptyList", {"kind": "var", "name": "cdpSelf"}], "fn": "collectArgsFixFn"}
+																							},
+																							"else": "emptyList"
+																						}
+																					}
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "cdpRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["cdpExpr"],
+			"body": "cdpRecBody"
+		}},
+		{"id": "cdpRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["cdpSelf"],
+			"body": "cdpRecInner"
+		}},
+		{"id": "collectDepsFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "cdpRecOuter"
+		}},
+		{"id": "collectDepsBody", "expr": {
+			"kind": "callExpr", "args": [{"kind": "var", "name": "expr"}], "fn": "collectDepsFixFn"
+		}},
+		{"id": "collectDeps", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["expr"],
+			"body": "collectDepsBody"
+		}},
+
+
+		{"id": "bgRecBody", "expr": {
+			"kind": "let", "name": "bgLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "bgNodes"}]},
+			"body": {"kind": "let", "name": "bgDone",
+				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "bgIdx"}, {"kind": "var", "name": "bgLen"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "bgDone"},
+					"then": {"kind": "var", "name": "bgGraph"},
+					"else": {"kind": "let", "name": "bgNode",
+						"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "bgNodes"}, {"kind": "var", "name": "bgIdx"}]},
+						"body": {"kind": "let", "name": "bgNid",
+							"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "bgNode"}, "idKey"]},
+							"body": {"kind": "let", "name": "bgExpr",
+								"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "bgNode"}, "exprKey"]},
+								"body": {"kind": "let", "name": "bgDeps",
+									"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "bgExpr"}], "fn": "collectDepsFixFn"},
+									"body": {"kind": "let", "name": "bgNewGraph",
+										"value": {"kind": "call", "ns": "map", "name": "set", "args": [{"kind": "var", "name": "bgGraph"}, {"kind": "var", "name": "bgNid"}, {"kind": "var", "name": "bgDeps"}]},
+										"body": {"kind": "let", "name": "bgNextIdx",
+											"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "bgIdx"}, "one"]},
+											"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "bgNodes"}, {"kind": "var", "name": "bgNextIdx"}, {"kind": "var", "name": "bgNewGraph"}], "fn": "bgRec"}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "bgRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["bgNodes", "bgIdx", "bgGraph"],
+			"body": "bgRecBody"
+		}},
+		{"id": "bgRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["bgRec"],
+			"body": "bgRecInner"
+		}},
+		{"id": "buildGraphFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "bgRecOuter"
+		}},
+
+		{"id": "idRecBody", "expr": {
+			"kind": "let", "name": "idLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "idDeps"}]},
+			"body": {"kind": "let", "name": "idDone",
+				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "idIdx"}, {"kind": "var", "name": "idLen"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "idDone"},
+					"then": {"kind": "var", "name": "idDeg"},
+					"else": {"kind": "let", "name": "idDep",
+						"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "idDeps"}, {"kind": "var", "name": "idIdx"}]},
+						"body": {"kind": "let", "name": "idHasDep",
+							"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "idNodeSet"}, {"kind": "var", "name": "idDep"}]},
+							"body": {"kind": "if",
+								"cond": {"kind": "var", "name": "idHasDep"},
+								"then": {"kind": "let", "name": "idHasCur",
+									"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "idDeg"}, {"kind": "var", "name": "idDep"}]},
+									"body": {"kind": "let", "name": "idCurVal",
+										"value": {"kind": "if",
+											"cond": {"kind": "var", "name": "idHasCur"},
+											"then": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "idDeg"}, {"kind": "var", "name": "idDep"}]},
+											"else": "zero"
+										},
+										"body": {"kind": "let", "name": "idNewVal",
+											"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "idCurVal"}, "one"]},
+											"body": {"kind": "let", "name": "idNewDeg",
+												"value": {"kind": "call", "ns": "map", "name": "set", "args": [{"kind": "var", "name": "idDeg"}, {"kind": "var", "name": "idDep"}, {"kind": "var", "name": "idNewVal"}]},
+												"body": {"kind": "let", "name": "idNextIdx",
+													"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "idIdx"}, "one"]},
+													"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "idDeps"}, {"kind": "var", "name": "idNextIdx"}, {"kind": "var", "name": "idNewDeg"}, {"kind": "var", "name": "idNodeSet"}], "fn": "idRec"}
+												}
+											}
+										}
+									}
+								},
+								"else": {"kind": "let", "name": "idNextIdx2",
+									"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "idIdx"}, "one"]},
+									"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "idDeps"}, {"kind": "var", "name": "idNextIdx2"}, {"kind": "var", "name": "idDeg"}, {"kind": "var", "name": "idNodeSet"}], "fn": "idRec"}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "idRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["idDeps", "idIdx", "idDeg", "idNodeSet"],
+			"body": "idRecBody"
+		}},
+		{"id": "idRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["idRec"],
+			"body": "idRecInner"
+		}},
+		{"id": "incrDegFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "idRecOuter"
+		}},
+
+		{"id": "bdRecBody", "expr": {
+			"kind": "let", "name": "bdLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "bdAllIds"}]},
+			"body": {"kind": "let", "name": "bdDone",
+				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "bdI"}, {"kind": "var", "name": "bdLen"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "bdDone"},
+					"then": {"kind": "var", "name": "bdDeg"},
+					"else": {"kind": "let", "name": "bdNid",
+						"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "bdAllIds"}, {"kind": "var", "name": "bdI"}]},
+						"body": {"kind": "let", "name": "bdDeps",
+							"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "bdGraph"}, {"kind": "var", "name": "bdNid"}]},
+							"body": {"kind": "let", "name": "bdNewDeg",
+								"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "bdDeps"}, "zero", {"kind": "var", "name": "bdDeg"}, {"kind": "var", "name": "bdNodeSet"}], "fn": "incrDegFixFn"},
+								"body": {"kind": "let", "name": "bdNextI",
+									"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "bdI"}, "one"]},
+									"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "bdAllIds"}, {"kind": "var", "name": "bdNextI"}, {"kind": "var", "name": "bdNewDeg"}, {"kind": "var", "name": "bdGraph"}, {"kind": "var", "name": "bdNodeSet"}], "fn": "bdRec"}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "bdRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["bdAllIds", "bdI", "bdDeg", "bdGraph", "bdNodeSet"],
+			"body": "bdRecBody"
+		}},
+		{"id": "bdRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["bdRec"],
+			"body": "bdRecInner"
+		}},
+		{"id": "buildDegFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "bdRecOuter"
+		}},
+
+		{"id": "iqRecBody", "expr": {
+			"kind": "let", "name": "iqLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "iqAllIds"}]},
+			"body": {"kind": "let", "name": "iqDone",
+				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "iqI"}, {"kind": "var", "name": "iqLen"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "iqDone"},
+					"then": {"kind": "var", "name": "iqQueue"},
+					"else": {"kind": "let", "name": "iqNid",
+						"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "iqAllIds"}, {"kind": "var", "name": "iqI"}]},
+						"body": {"kind": "let", "name": "iqHas",
+							"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "iqDeg"}, {"kind": "var", "name": "iqNid"}]},
+							"body": {"kind": "let", "name": "iqVal",
+								"value": {"kind": "if",
+									"cond": {"kind": "var", "name": "iqHas"},
+									"then": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "iqDeg"}, {"kind": "var", "name": "iqNid"}]},
+									"else": "zero"
+								},
+								"body": {"kind": "let", "name": "iqIsZero",
+									"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "iqVal"}, "zero"]},
+									"body": {"kind": "let", "name": "iqNewQueue",
+										"value": {"kind": "if",
+											"cond": {"kind": "var", "name": "iqIsZero"},
+											"then": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "iqNid"}, {"kind": "var", "name": "iqQueue"}]},
+											"else": {"kind": "var", "name": "iqQueue"}
+										},
+										"body": {"kind": "let", "name": "iqNextI",
+											"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "iqI"}, "one"]},
+											"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "iqAllIds"}, {"kind": "var", "name": "iqNextI"}, {"kind": "var", "name": "iqDeg"}, {"kind": "var", "name": "iqNewQueue"}], "fn": "iqRec"}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "iqRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["iqAllIds", "iqI", "iqDeg", "iqQueue"],
+			"body": "iqRecBody"
+		}},
+		{"id": "iqRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["iqRec"],
+			"body": "iqRecInner"
+		}},
+		{"id": "initQueueFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "iqRecOuter"
+		}},
+
+		{"id": "ddRecBody", "expr": {
+			"kind": "let", "name": "ddLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "ddDeps"}]},
+			"body": {"kind": "let", "name": "ddDone",
+				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "ddI"}, {"kind": "var", "name": "ddLen"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "ddDone"},
+					"then": {"kind": "var", "name": "ddDeg"},
+					"else": {"kind": "let", "name": "ddDep",
+						"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "ddDeps"}, {"kind": "var", "name": "ddI"}]},
+						"body": {"kind": "let", "name": "ddHas",
+							"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "ddDeg"}, {"kind": "var", "name": "ddDep"}]},
+							"body": {"kind": "if",
+								"cond": {"kind": "var", "name": "ddHas"},
+								"then": {"kind": "let", "name": "ddCur",
+									"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "ddDeg"}, {"kind": "var", "name": "ddDep"}]},
+									"body": {"kind": "let", "name": "ddNew",
+										"value": {"kind": "call", "ns": "core", "name": "sub", "args": [{"kind": "var", "name": "ddCur"}, "one"]},
+										"body": {"kind": "let", "name": "ddNewDeg",
+											"value": {"kind": "call", "ns": "map", "name": "set", "args": [{"kind": "var", "name": "ddDeg"}, {"kind": "var", "name": "ddDep"}, {"kind": "var", "name": "ddNew"}]},
+											"body": {"kind": "let", "name": "ddNextI",
+												"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "ddI"}, "one"]},
+												"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "ddDeps"}, {"kind": "var", "name": "ddNextI"}, {"kind": "var", "name": "ddNewDeg"}], "fn": "ddRec"}
+											}
+										}
+									}
+								},
+								"else": {"kind": "let", "name": "ddNextI2",
+									"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "ddI"}, "one"]},
+									"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "ddDeps"}, {"kind": "var", "name": "ddNextI2"}, {"kind": "var", "name": "ddDeg"}], "fn": "ddRec"}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "ddRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["ddDeps", "ddI", "ddDeg"],
+			"body": "ddRecBody"
+		}},
+		{"id": "ddRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["ddRec"],
+			"body": "ddRecInner"
+		}},
+		{"id": "decrDegFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "ddRecOuter"
+		}},
+
+		{"id": "kqRecBody", "expr": {
+			"kind": "let", "name": "kqLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "kqQueue"}]},
+			"body": {"kind": "let", "name": "kqDone",
+				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "kqI"}, {"kind": "var", "name": "kqLen"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "kqDone"},
+					"then": {"kind": "var", "name": "kqDeg"},
+					"else": {"kind": "let", "name": "kqNid",
+						"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "kqQueue"}, {"kind": "var", "name": "kqI"}]},
+						"body": {"kind": "let", "name": "kqHasGraph",
+							"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "kqGraph"}, {"kind": "var", "name": "kqNid"}]},
+							"body": {"kind": "if",
+								"cond": {"kind": "var", "name": "kqHasGraph"},
+								"then": {"kind": "let", "name": "kqDeps",
+									"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "kqGraph"}, {"kind": "var", "name": "kqNid"}]},
+									"body": {"kind": "let", "name": "kqNewDeg",
+										"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "kqDeps"}, "zero", {"kind": "var", "name": "kqDeg"}], "fn": "decrDegFixFn"},
+										"body": {"kind": "let", "name": "kqNextI",
+											"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "kqI"}, "one"]},
+											"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "kqQueue"}, {"kind": "var", "name": "kqNextI"}, {"kind": "var", "name": "kqNewDeg"}, {"kind": "var", "name": "kqGraph"}], "fn": "kqRec"}
+										}
+									}
+								},
+								"else": {"kind": "let", "name": "kqNextI2",
+									"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "kqI"}, "one"]},
+									"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "kqQueue"}, {"kind": "var", "name": "kqNextI2"}, {"kind": "var", "name": "kqDeg"}, {"kind": "var", "name": "kqGraph"}], "fn": "kqRec"}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "kqRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["kqQueue", "kqI", "kqDeg", "kqGraph"],
+			"body": "kqRecBody"
+		}},
+		{"id": "kqRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["kqRec"],
+			"body": "kqRecInner"
+		}},
+		{"id": "kahnFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "kqRecOuter"
+		}},
+
+		{"id": "ccRecBody", "expr": {
+			"kind": "let", "name": "ccLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "ccIds"}]},
+			"body": {"kind": "let", "name": "ccDone",
+				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "ccI"}, {"kind": "var", "name": "ccLen"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "ccDone"},
+					"then": {"kind": "var", "name": "ccCount"},
+					"else": {"kind": "let", "name": "ccNid",
+						"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "ccIds"}, {"kind": "var", "name": "ccI"}]},
+						"body": {"kind": "let", "name": "ccHas",
+							"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "ccDeg"}, {"kind": "var", "name": "ccNid"}]},
+							"body": {"kind": "let", "name": "ccVal",
+								"value": {"kind": "if",
+									"cond": {"kind": "var", "name": "ccHas"},
+									"then": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "ccDeg"}, {"kind": "var", "name": "ccNid"}]},
+									"else": "zero"
+								},
+								"body": {"kind": "let", "name": "ccGtZero",
+									"value": {"kind": "call", "ns": "core", "name": "gt", "args": [{"kind": "var", "name": "ccVal"}, "zero"]},
+									"body": {"kind": "let", "name": "ccNewCount",
+										"value": {"kind": "if",
+											"cond": {"kind": "var", "name": "ccGtZero"},
+											"then": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "ccCount"}, "one"]},
+											"else": {"kind": "var", "name": "ccCount"}
+										},
+										"body": {"kind": "let", "name": "ccNextI",
+											"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "ccI"}, "one"]},
+											"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "ccIds"}, {"kind": "var", "name": "ccNextI"}, {"kind": "var", "name": "ccDeg"}, {"kind": "var", "name": "ccNewCount"}], "fn": "ccRec"}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "ccRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["ccIds", "ccI", "ccDeg", "ccCount"],
+			"body": "ccRecBody"
+		}},
+		{"id": "ccRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["ccRec"],
+			"body": "ccRecInner"
+		}},
+		{"id": "countCycleFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "ccRecOuter"
+		}},
+
+		{"id": "checkAcyclicBody", "expr": {
+			"kind": "let", "name": "acGraph",
+			"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "acNodes"}, "zero", "emptyMap"], "fn": "buildGraphFixFn"},
+			"body": {"kind": "let", "name": "acIdSet",
+				"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "acNodes"}, "zero", "emptyMap"], "fn": "crBuildFixFn"},
+				"body": {"kind": "let", "name": "acAllIds",
+					"value": {"kind": "call", "ns": "map", "name": "keys", "args": [{"kind": "var", "name": "acGraph"}]},
+					"body": {"kind": "let", "name": "acInitDeg",
+						"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "acAllIds"}, "zero", "emptyMap", {"kind": "var", "name": "acGraph"}, {"kind": "var", "name": "acIdSet"}], "fn": "buildDegFixFn"},
+						"body": {"kind": "let", "name": "acQueue",
+							"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "acAllIds"}, "zero", {"kind": "var", "name": "acInitDeg"}, "emptyList"], "fn": "initQueueFixFn"},
+							"body": {"kind": "let", "name": "acFinalDeg",
+								"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "acQueue"}, "zero", {"kind": "var", "name": "acInitDeg"}, {"kind": "var", "name": "acGraph"}], "fn": "kahnFixFn"},
+								"body": {"kind": "let", "name": "acCycleCount",
+									"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "acAllIds"}, "zero", {"kind": "var", "name": "acFinalDeg"}, "zero"], "fn": "countCycleFixFn"},
+									"body": {"kind": "let", "name": "acHasCycle",
+										"value": {"kind": "call", "ns": "core", "name": "gt", "args": [{"kind": "var", "name": "acCycleCount"}, "zero"]},
+										"body": {"kind": "if",
+											"cond": {"kind": "var", "name": "acHasCycle"},
+											"then": {"kind": "call", "ns": "list", "name": "cons", "args": ["cyclePrefix", "emptyList"]},
+											"else": "emptyList"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "checkAcyclic", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["acNodes"],
+			"body": "checkAcyclicBody"
+		}},
+
+
+		{"id": "validateBody", "expr": {
+			"kind": "let", "name": "vNodes",
+			"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vDoc"}, "nodesKey"]},
+			"body": {"kind": "let", "name": "vResultId",
+				"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vDoc"}, "resultKey"]},
+				"body": {"kind": "let", "name": "vDupErrs",
+					"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "vNodes"}], "fn": "checkDuplicateIds"},
+					"body": {"kind": "let", "name": "vResErrs",
+						"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "vNodes"}, {"kind": "var", "name": "vResultId"}], "fn": "checkResult"},
+						"body": {"kind": "let", "name": "vAcyclicErrs",
+							"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "vNodes"}], "fn": "checkAcyclic"},
+							"body": {"kind": "let", "name": "vAllErrs1",
+								"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vDupErrs"}, {"kind": "var", "name": "vResErrs"}]},
+								"body": {"kind": "let", "name": "vAllErrs",
+									"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vAllErrs1"}, {"kind": "var", "name": "vAcyclicErrs"}]},
+									"body": {"kind": "let", "name": "vErrCount",
+										"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "vAllErrs"}]},
+										"body": {"kind": "let", "name": "vIsValid",
+											"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vErrCount"}, "zero"]},
+											"body": {"kind": "record", "fields": [
+												{"key": "valid", "value": {"kind": "var", "name": "vIsValid"}},
+												{"key": "errors", "value": {"kind": "var", "name": "vAllErrs"}}
+											]}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "validateFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vDoc"],
+			"body": "validateBody"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "validate:checkDuplicateIds", "value": "checkDuplicateIds"},
+				{"key": "validate:checkResult", "value": "checkResult"},
+				{"key": "validate:collectDeps", "value": "collectDeps"},
+				{"key": "validate:checkAcyclic", "value": "checkAcyclic"},
+				{"key": "validate:validate", "value": "validateFn"}
+			]
+		}}
+	],
+	"result": "exports"
+}

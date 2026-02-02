@@ -858,6 +858,134 @@ describe("list-hof stdlib", () => {
 	});
 });
 
+describe("validate stdlib", () => {
+	const kernel = createKernelRegistry();
+	const registry = loadStdlib(kernel, [
+		resolve(stdlibDir, "bool.cir.json"),
+		resolve(stdlibDir, "list.cir.json"),
+		resolve(stdlibDir, "string.cir.json"),
+		resolve(stdlibDir, "core-derived.cir.json"),
+		resolve(stdlibDir, "map.cir.json"),
+		resolve(stdlibDir, "set.cir.json"),
+		resolve(stdlibDir, "conversion.cir.json"),
+		resolve(stdlibDir, "list-hof.cir.json"),
+		resolve(stdlibDir, "validate.cir.json"),
+	]);
+
+	// Helper: create a node map with s:-prefixed keys (matching kernel map conventions)
+	function makeNodeMap(id: string, exprMap: Map<string, import("../src/types.js").Value>): import("../src/types.js").Value {
+		return mapVal(new Map([
+			["s:id", stringVal(id)],
+			["s:expr", mapVal(exprMap)],
+		]));
+	}
+
+	// Helper: create a lit expression map
+	function litExprMap(value: number): Map<string, import("../src/types.js").Value> {
+		return new Map([
+			["s:kind", stringVal("lit")],
+			["s:value", intVal(value)],
+		]);
+	}
+
+	// Helper: create a call expression map (with string ref args)
+	function callExprMap(ns: string, name: string, args: string[]): Map<string, import("../src/types.js").Value> {
+		return new Map([
+			["s:kind", stringVal("call")],
+			["s:ns", stringVal(ns)],
+			["s:name", stringVal(name)],
+			["s:args", listVal(args.map(a => stringVal(a)))],
+		]);
+	}
+
+	it("validate:checkDuplicateIds returns empty for unique IDs", () => {
+		const check = lookupOperator(registry, "validate", "checkDuplicateIds")!;
+		const nodes = listVal([
+			makeNodeMap("a", litExprMap(1)),
+			makeNodeMap("b", litExprMap(2)),
+		]);
+		const result = check.fn(nodes);
+		assert.deepStrictEqual(result, listVal([]));
+	});
+
+	it("validate:checkDuplicateIds detects duplicates", () => {
+		const check = lookupOperator(registry, "validate", "checkDuplicateIds")!;
+		const nodes = listVal([
+			makeNodeMap("x", litExprMap(1)),
+			makeNodeMap("x", litExprMap(2)),
+		]);
+		const result = check.fn(nodes);
+		// Should return a non-empty list of error strings
+		assert.ok(result.kind === "list" && result.value.length > 0);
+	});
+
+	it("validate:checkResult returns empty when result exists", () => {
+		const check = lookupOperator(registry, "validate", "checkResult")!;
+		const nodes = listVal([
+			makeNodeMap("a", litExprMap(1)),
+			makeNodeMap("b", litExprMap(2)),
+		]);
+		const result = check.fn(nodes, stringVal("b"));
+		assert.deepStrictEqual(result, listVal([]));
+	});
+
+	it("validate:checkResult reports missing result", () => {
+		const check = lookupOperator(registry, "validate", "checkResult")!;
+		const nodes = listVal([
+			makeNodeMap("a", litExprMap(1)),
+		]);
+		const result = check.fn(nodes, stringVal("missing"));
+		assert.ok(result.kind === "list" && result.value.length > 0);
+	});
+
+	it("validate:collectDeps returns refs from call expression", () => {
+		const collect = lookupOperator(registry, "validate", "collectDeps")!;
+		const expr = mapVal(callExprMap("core", "add", ["x", "y"]));
+		const result = collect.fn(expr);
+		assert.ok(result.kind === "list");
+		const deps = result.value.map(v => v.kind === "string" ? v.value : "");
+		assert.ok(deps.includes("x"));
+		assert.ok(deps.includes("y"));
+	});
+
+	it("validate:collectDeps returns empty for lit expression", () => {
+		const collect = lookupOperator(registry, "validate", "collectDeps")!;
+		const expr = mapVal(new Map([["s:kind", stringVal("lit")], ["s:value", intVal(42)]]));
+		const result = collect.fn(expr);
+		assert.deepStrictEqual(result, listVal([]));
+	});
+
+	it("validate:validate returns valid for correct document", () => {
+		const validate = lookupOperator(registry, "validate", "validate")!;
+		const doc = mapVal(new Map([
+			["s:nodes", listVal([
+				makeNodeMap("a", litExprMap(10)),
+				makeNodeMap("b", litExprMap(20)),
+				makeNodeMap("sum", callExprMap("core", "add", ["a", "b"])),
+			])],
+			["s:result", stringVal("sum")],
+		]));
+		const result = validate.fn(doc);
+		assert.ok(result.kind === "map");
+		const valid = result.value.get("s:valid");
+		assert.ok(valid?.kind === "bool" && valid.value === true);
+	});
+
+	it("validate:validate detects missing result node", () => {
+		const validate = lookupOperator(registry, "validate", "validate")!;
+		const doc = mapVal(new Map([
+			["s:nodes", listVal([
+				makeNodeMap("a", litExprMap(10)),
+			])],
+			["s:result", stringVal("missing")],
+		]));
+		const result = validate.fn(doc);
+		assert.ok(result.kind === "map");
+		const valid = result.value.get("s:valid");
+		assert.ok(valid?.kind === "bool" && valid.value === false);
+	});
+});
+
 describe("meta stdlib", () => {
 	const kernel = createKernelRegistry();
 	const registry = loadStdlib(kernel, [
