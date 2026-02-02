@@ -28,6 +28,7 @@ export function bootstrapRegistry(): OperatorRegistry {
 		"conversion.cir.json",
 		"list-hof.cir.json",
 		"validate.cir.json",
+		"schema.cir.json",
 		"meta.cir.json",
 	];
 

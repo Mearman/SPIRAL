@@ -986,6 +986,252 @@ describe("validate stdlib", () => {
 	});
 });
 
+describe("schema stdlib", () => {
+	const kernel = createKernelRegistry();
+	const registry = loadStdlib(kernel, [
+		resolve(stdlibDir, "bool.cir.json"),
+		resolve(stdlibDir, "list.cir.json"),
+		resolve(stdlibDir, "string.cir.json"),
+		resolve(stdlibDir, "core-derived.cir.json"),
+		resolve(stdlibDir, "map.cir.json"),
+		resolve(stdlibDir, "set.cir.json"),
+		resolve(stdlibDir, "conversion.cir.json"),
+		resolve(stdlibDir, "list-hof.cir.json"),
+		resolve(stdlibDir, "validate.cir.json"),
+		resolve(stdlibDir, "schema.cir.json"),
+	]);
+
+	// Helper: build a valid CIR document as a SPIRAL map value
+	function makeDoc(nodes: Value[], result: string): Value {
+		return mapVal(new Map([
+			["s:version", stringVal("1.0.0")],
+			["s:airDefs", listVal([])],
+			["s:nodes", listVal(nodes)],
+			["s:result", stringVal(result)],
+		]));
+	}
+
+	function makeNode(id: string, exprFields: [string, Value][]): Value {
+		const exprMap = new Map<string, Value>(exprFields.map(([k, v]) => [`s:${k}`, v]));
+		return mapVal(new Map([
+			["s:id", stringVal(id)],
+			["s:expr", mapVal(exprMap)],
+		]));
+	}
+
+	function litNode(id: string, value: number): Value {
+		return makeNode(id, [
+			["kind", stringVal("lit")],
+			["type", mapVal(new Map([["s:kind", stringVal("int")]]))],
+			["value", intVal(value)],
+		]);
+	}
+
+	function callNode(id: string, ns: string, name: string, args: string[]): Value {
+		return makeNode(id, [
+			["kind", stringVal("call")],
+			["ns", stringVal(ns)],
+			["name", stringVal(name)],
+			["args", listVal(args.map(a => stringVal(a)))],
+		]);
+	}
+
+	// --- schema:validate tests ---
+
+	it("schema:validate accepts a valid CIR document", () => {
+		const validate = lookupOperator(registry, "schema", "validate")!;
+		const doc = makeDoc([litNode("a", 10), litNode("b", 20), callNode("sum", "core", "add", ["a", "b"])], "sum");
+		const result = validate.fn(doc);
+		assert.ok(result.kind === "map");
+		const valid = result.value.get("s:valid");
+		assert.ok(valid?.kind === "bool" && valid.value === true, `Expected valid=true, got ${JSON.stringify(valid)}`);
+	});
+
+	it("schema:validate rejects document missing version", () => {
+		const validate = lookupOperator(registry, "schema", "validate")!;
+		const doc = mapVal(new Map([
+			["s:airDefs", listVal([])],
+			["s:nodes", listVal([litNode("a", 1)])],
+			["s:result", stringVal("a")],
+		]));
+		const result = validate.fn(doc);
+		assert.ok(result.kind === "map");
+		const valid = result.value.get("s:valid");
+		assert.ok(valid?.kind === "bool" && valid.value === false);
+	});
+
+	it("schema:validate rejects document missing nodes", () => {
+		const validate = lookupOperator(registry, "schema", "validate")!;
+		const doc = mapVal(new Map([
+			["s:version", stringVal("1.0.0")],
+			["s:airDefs", listVal([])],
+			["s:result", stringVal("a")],
+		]));
+		const result = validate.fn(doc);
+		assert.ok(result.kind === "map");
+		const valid = result.value.get("s:valid");
+		assert.ok(valid?.kind === "bool" && valid.value === false);
+	});
+
+	it("schema:validate rejects document with empty nodes", () => {
+		const validate = lookupOperator(registry, "schema", "validate")!;
+		const doc = makeDoc([], "a");
+		const result = validate.fn(doc);
+		assert.ok(result.kind === "map");
+		const valid = result.value.get("s:valid");
+		assert.ok(valid?.kind === "bool" && valid.value === false);
+	});
+
+	it("schema:validate rejects document missing result", () => {
+		const validate = lookupOperator(registry, "schema", "validate")!;
+		const doc = mapVal(new Map([
+			["s:version", stringVal("1.0.0")],
+			["s:airDefs", listVal([])],
+			["s:nodes", listVal([litNode("a", 1)])],
+		]));
+		const result = validate.fn(doc);
+		assert.ok(result.kind === "map");
+		const valid = result.value.get("s:valid");
+		assert.ok(valid?.kind === "bool" && valid.value === false);
+	});
+
+	// --- schema:validateNode tests ---
+
+	it("schema:validateNode accepts valid lit node", () => {
+		const validateNode = lookupOperator(registry, "schema", "validateNode")!;
+		const result = validateNode.fn(litNode("a", 42));
+		assert.deepStrictEqual(result, listVal([]));
+	});
+
+	it("schema:validateNode rejects node missing id", () => {
+		const validateNode = lookupOperator(registry, "schema", "validateNode")!;
+		const node = mapVal(new Map([
+			["s:expr", mapVal(new Map([["s:kind", stringVal("lit")], ["s:type", mapVal(new Map([["s:kind", stringVal("int")]]))], ["s:value", intVal(1)]]))],
+		]));
+		const result = validateNode.fn(node);
+		assert.ok(result.kind === "list" && result.value.length > 0);
+	});
+
+	it("schema:validateNode rejects node missing expr", () => {
+		const validateNode = lookupOperator(registry, "schema", "validateNode")!;
+		const node = mapVal(new Map([["s:id", stringVal("a")]]));
+		const result = validateNode.fn(node);
+		assert.ok(result.kind === "list" && result.value.length > 0);
+	});
+
+	// --- schema:validateExpr tests ---
+
+	it("schema:validateExpr accepts valid call expression", () => {
+		const validateExpr = lookupOperator(registry, "schema", "validateExpr")!;
+		const expr = mapVal(new Map([
+			["s:kind", stringVal("call")],
+			["s:ns", stringVal("core")],
+			["s:name", stringVal("add")],
+			["s:args", listVal([stringVal("a"), stringVal("b")])],
+		]));
+		const result = validateExpr.fn(expr);
+		assert.deepStrictEqual(result, listVal([]));
+	});
+
+	it("schema:validateExpr rejects EIR kind", () => {
+		const validateExpr = lookupOperator(registry, "schema", "validateExpr")!;
+		const expr = mapVal(new Map([["s:kind", stringVal("spawn")]]));
+		const result = validateExpr.fn(expr);
+		assert.ok(result.kind === "list" && result.value.length > 0);
+		// Error message should mention EIR
+		const errMsg = result.value[0];
+		assert.ok(errMsg.kind === "string" && errMsg.value.includes("EIR"));
+	});
+
+	it("schema:validateExpr rejects unknown kind", () => {
+		const validateExpr = lookupOperator(registry, "schema", "validateExpr")!;
+		const expr = mapVal(new Map([["s:kind", stringVal("banana")]]));
+		const result = validateExpr.fn(expr);
+		assert.ok(result.kind === "list" && result.value.length > 0);
+	});
+
+	it("schema:validateExpr validates lambda requires string body", () => {
+		const validateExpr = lookupOperator(registry, "schema", "validateExpr")!;
+		// Lambda with map body (invalid — body must be string)
+		const expr = mapVal(new Map([
+			["s:kind", stringVal("lambda")],
+			["s:params", listVal([stringVal("x")])],
+			["s:body", mapVal(new Map([["s:kind", stringVal("lit")]]))],
+			["s:type", mapVal(new Map([["s:kind", stringVal("fn")]]))],
+		]));
+		const result = validateExpr.fn(expr);
+		assert.ok(result.kind === "list" && result.value.length > 0);
+	});
+
+	it("schema:validateExpr accepts valid lambda with string body", () => {
+		const validateExpr = lookupOperator(registry, "schema", "validateExpr")!;
+		const expr = mapVal(new Map([
+			["s:kind", stringVal("lambda")],
+			["s:params", listVal([stringVal("x")])],
+			["s:body", stringVal("bodyNode")],
+			["s:type", mapVal(new Map([["s:kind", stringVal("fn")]]))],
+		]));
+		const result = validateExpr.fn(expr);
+		assert.deepStrictEqual(result, listVal([]));
+	});
+
+	it("schema:validateExpr validates ref requires id string", () => {
+		const validateExpr = lookupOperator(registry, "schema", "validateExpr")!;
+		const expr = mapVal(new Map([
+			["s:kind", stringVal("ref")],
+			["s:id", stringVal("someNode")],
+		]));
+		const result = validateExpr.fn(expr);
+		assert.deepStrictEqual(result, listVal([]));
+	});
+
+	it("schema:validateExpr validates var requires name string", () => {
+		const validateExpr = lookupOperator(registry, "schema", "validateExpr")!;
+		const expr = mapVal(new Map([
+			["s:kind", stringVal("var")],
+			["s:name", stringVal("x")],
+		]));
+		const result = validateExpr.fn(expr);
+		assert.deepStrictEqual(result, listVal([]));
+	});
+
+	it("schema:validateExpr validates if requires cond/then/else", () => {
+		const validateExpr = lookupOperator(registry, "schema", "validateExpr")!;
+		const expr = mapVal(new Map([
+			["s:kind", stringVal("if")],
+			["s:cond", stringVal("c")],
+			["s:then", stringVal("t")],
+			["s:else", stringVal("e")],
+		]));
+		const result = validateExpr.fn(expr);
+		assert.deepStrictEqual(result, listVal([]));
+	});
+
+	it("schema:validateExpr validates fix requires fn and type", () => {
+		const validateExpr = lookupOperator(registry, "schema", "validateExpr")!;
+		const expr = mapVal(new Map([
+			["s:kind", stringVal("fix")],
+			["s:fn", stringVal("recFn")],
+			["s:type", mapVal(new Map([["s:kind", stringVal("fn")]]))],
+		]));
+		const result = validateExpr.fn(expr);
+		assert.deepStrictEqual(result, listVal([]));
+	});
+
+	it("schema:validate accumulates multiple errors", () => {
+		const validate = lookupOperator(registry, "schema", "validate")!;
+		// Doc missing version AND result
+		const doc = mapVal(new Map([
+			["s:airDefs", listVal([])],
+			["s:nodes", listVal([litNode("a", 1)])],
+		]));
+		const result = validate.fn(doc);
+		assert.ok(result.kind === "map");
+		const errors = result.value.get("s:errors");
+		assert.ok(errors?.kind === "list" && errors.value.length >= 2);
+	});
+});
+
 describe("meta stdlib", () => {
 	const kernel = createKernelRegistry();
 	const registry = loadStdlib(kernel, [

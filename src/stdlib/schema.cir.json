@@ -1,0 +1,1427 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Schema validation stdlib — structural schema validation for CIR documents: top-level structure, node structure, expression kind dispatch with field/type checks, and EIR-kind rejection.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero",      "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one",       "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+		{"id": "trueVal",   "expr": {"kind": "lit", "type": {"kind": "bool"}, "value": true}},
+		{"id": "falseVal",  "expr": {"kind": "lit", "type": {"kind": "bool"}, "value": false}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+
+		{"id": "versionKey",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "version"}},
+		{"id": "nodesKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodes"}},
+		{"id": "resultKey",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "result"}},
+		{"id": "airDefsKey",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "airDefs"}},
+		{"id": "idKey",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "id"}},
+		{"id": "exprKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+		{"id": "kindKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "typeKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "type"}},
+		{"id": "valueKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+		{"id": "nameKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "name"}},
+		{"id": "nsKey",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ns"}},
+		{"id": "argsKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "args"}},
+		{"id": "condKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "cond"}},
+		{"id": "thenKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "then"}},
+		{"id": "elseKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "else"}},
+		{"id": "bodyKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "body"}},
+		{"id": "paramsKey",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "params"}},
+		{"id": "fnKey",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fn"}},
+		{"id": "exprsKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "exprs"}},
+		{"id": "fieldsKey",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fields"}},
+		{"id": "elementsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "elements"}},
+		{"id": "casesKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "cases"}},
+		{"id": "validKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "valid"}},
+		{"id": "errorsKey",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "errors"}},
+
+		{"id": "stringTypeStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
+		{"id": "mapTypeStr",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "map"}},
+		{"id": "listTypeStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "list"}},
+
+		{"id": "litStr",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lit"}},
+		{"id": "refStr",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ref"}},
+		{"id": "varStr",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "var"}},
+		{"id": "callStr",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call"}},
+		{"id": "ifStr",        "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "if"}},
+		{"id": "letStr",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "let"}},
+		{"id": "lambdaStr",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lambda"}},
+		{"id": "callExprStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "callExpr"}},
+		{"id": "fixStr",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fix"}},
+		{"id": "doStr",        "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "do"}},
+		{"id": "recordStr",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "record"}},
+		{"id": "listOfStr",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "listOf"}},
+		{"id": "matchStr",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "match"}},
+		{"id": "airRefStr",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "airRef"}},
+		{"id": "predicateStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "predicate"}},
+
+		{"id": "seqStr",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "seq"}},
+		{"id": "assignStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "assign"}},
+		{"id": "whileStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "while"}},
+		{"id": "forStr",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "for"}},
+		{"id": "iterStr",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "iter"}},
+		{"id": "effectStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "effect"}},
+		{"id": "refCellStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "refCell"}},
+		{"id": "derefStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "deref"}},
+		{"id": "tryStr",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "try"}},
+		{"id": "spawnStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "spawn"}},
+		{"id": "awaitStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "await"}},
+		{"id": "parStr",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "par"}},
+		{"id": "channelStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "channel"}},
+		{"id": "sendStr",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "send"}},
+		{"id": "recvStr",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "recv"}},
+		{"id": "selectStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "select"}},
+		{"id": "raceStr",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "race"}},
+
+		{"id": "errMissingVersion",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Document missing 'version' string field"}},
+		{"id": "errMissingNodes",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Document missing 'nodes' list field"}},
+		{"id": "errEmptyNodes",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Document 'nodes' list is empty"}},
+		{"id": "errMissingResult",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Document missing 'result' string field"}},
+		{"id": "errMissingAirDefs",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Document missing 'airDefs' list field"}},
+		{"id": "errNodeMissingId",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Node missing 'id' string field"}},
+		{"id": "errNodeMissingExpr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Node missing 'expr' map field with 'kind'"}},
+
+		{"id": "errLitMissingType",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lit: missing 'type' map with 'kind'"}},
+		{"id": "errLitMissingValue", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lit: missing 'value' field"}},
+		{"id": "errRefMissingId",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ref: missing 'id' string field"}},
+		{"id": "errVarMissingName",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "var: missing 'name' string field"}},
+		{"id": "errCallMissingNs",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call: missing 'ns' string field"}},
+		{"id": "errCallMissingName", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call: missing 'name' string field"}},
+		{"id": "errCallMissingArgs", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call: missing 'args' list field"}},
+		{"id": "errIfMissingCond",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "if: missing 'cond' field (string or map)"}},
+		{"id": "errIfMissingThen",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "if: missing 'then' field (string or map)"}},
+		{"id": "errIfMissingElse",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "if: missing 'else' field (string or map)"}},
+		{"id": "errLetMissingName",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "let: missing 'name' string field"}},
+		{"id": "errLetMissingValue", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "let: missing 'value' field (string or map)"}},
+		{"id": "errLetMissingBody",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "let: missing 'body' field (string or map)"}},
+		{"id": "errLambdaMissingParams", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lambda: missing 'params' list field"}},
+		{"id": "errLambdaBodyNotString", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lambda: 'body' must be a string (node ID reference)"}},
+		{"id": "errLambdaMissingType",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lambda: missing 'type' map field"}},
+		{"id": "errCallExprMissingFn",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "callExpr: missing 'fn' string field"}},
+		{"id": "errCallExprMissingArgs", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "callExpr: missing 'args' list field"}},
+		{"id": "errFixMissingFn",        "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fix: missing 'fn' string field"}},
+		{"id": "errFixMissingType",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fix: missing 'type' map field"}},
+		{"id": "errDoMissingExprs",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "do: missing 'exprs' list field"}},
+		{"id": "errDoEmptyExprs",        "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "do: 'exprs' list must be non-empty"}},
+		{"id": "errRecordMissingFields", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "record: missing 'fields' list field"}},
+		{"id": "errListOfMissingElems",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "listOf: missing 'elements' list field"}},
+		{"id": "errMatchMissingValue",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "match: missing 'value' field (string or map)"}},
+		{"id": "errMatchMissingCases",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "match: missing 'cases' list field"}},
+		{"id": "errAirRefMissingNs",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "airRef: missing 'ns' string field"}},
+		{"id": "errAirRefMissingName",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "airRef: missing 'name' string field"}},
+		{"id": "errAirRefMissingArgs",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "airRef: missing 'args' list field"}},
+		{"id": "errPredMissingName",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "predicate: missing 'name' string field"}},
+		{"id": "errPredMissingValue",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "predicate: missing 'value' string field"}},
+		{"id": "eirPrefixStr",           "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "EIR kind not allowed in CIR: "}},
+		{"id": "unknownPrefixStr",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Unknown expression kind: "}},
+
+
+		{"id": "isEirKindBody", "expr": {
+			"kind": "let", "name": "ek",
+			"value": {"kind": "var", "name": "iekKind"},
+			"body": {"kind": "let", "name": "ek1",
+				"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "seqStr"]},
+				"body": {"kind": "let", "name": "ek2",
+					"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "assignStr"]},
+					"body": {"kind": "let", "name": "ek3",
+						"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "whileStr"]},
+						"body": {"kind": "let", "name": "ek4",
+							"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "forStr"]},
+							"body": {"kind": "let", "name": "ek5",
+								"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "iterStr"]},
+								"body": {"kind": "let", "name": "ek6",
+									"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "effectStr"]},
+									"body": {"kind": "let", "name": "ek7",
+										"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "refCellStr"]},
+										"body": {"kind": "let", "name": "ek8",
+											"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "derefStr"]},
+											"body": {"kind": "let", "name": "ek9",
+												"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "tryStr"]},
+												"body": {"kind": "let", "name": "ek10",
+													"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "spawnStr"]},
+													"body": {"kind": "let", "name": "ek11",
+														"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "awaitStr"]},
+														"body": {"kind": "let", "name": "ek12",
+															"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "parStr"]},
+															"body": {"kind": "let", "name": "ek13",
+																"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "channelStr"]},
+																"body": {"kind": "let", "name": "ek14",
+																	"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "sendStr"]},
+																	"body": {"kind": "let", "name": "ek15",
+																		"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "recvStr"]},
+																		"body": {"kind": "let", "name": "ek16",
+																			"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "selectStr"]},
+																			"body": {"kind": "let", "name": "ek17",
+																				"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "ek"}, "raceStr"]},
+																				"body": {"kind": "let", "name": "or1",
+																					"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "ek1"}, {"kind": "var", "name": "ek2"}]},
+																					"body": {"kind": "let", "name": "or2",
+																						"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or1"}, {"kind": "var", "name": "ek3"}]},
+																						"body": {"kind": "let", "name": "or3",
+																							"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or2"}, {"kind": "var", "name": "ek4"}]},
+																							"body": {"kind": "let", "name": "or4",
+																								"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or3"}, {"kind": "var", "name": "ek5"}]},
+																								"body": {"kind": "let", "name": "or5",
+																									"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or4"}, {"kind": "var", "name": "ek6"}]},
+																									"body": {"kind": "let", "name": "or6",
+																										"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or5"}, {"kind": "var", "name": "ek7"}]},
+																										"body": {"kind": "let", "name": "or7",
+																											"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or6"}, {"kind": "var", "name": "ek8"}]},
+																											"body": {"kind": "let", "name": "or8",
+																												"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or7"}, {"kind": "var", "name": "ek9"}]},
+																												"body": {"kind": "let", "name": "or9",
+																													"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or8"}, {"kind": "var", "name": "ek10"}]},
+																													"body": {"kind": "let", "name": "or10",
+																														"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or9"}, {"kind": "var", "name": "ek11"}]},
+																														"body": {"kind": "let", "name": "or11",
+																															"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or10"}, {"kind": "var", "name": "ek12"}]},
+																															"body": {"kind": "let", "name": "or12",
+																																"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or11"}, {"kind": "var", "name": "ek13"}]},
+																																"body": {"kind": "let", "name": "or13",
+																																	"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or12"}, {"kind": "var", "name": "ek14"}]},
+																																	"body": {"kind": "let", "name": "or14",
+																																		"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or13"}, {"kind": "var", "name": "ek15"}]},
+																																		"body": {"kind": "let", "name": "or15",
+																																			"value": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or14"}, {"kind": "var", "name": "ek16"}]},
+																																			"body": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "or15"}, {"kind": "var", "name": "ek17"}]}
+																																		}
+																																	}
+																																}
+																															}
+																														}
+																													}
+																												}
+																											}
+																										}
+																									}
+																								}
+																							}
+																						}
+																					}
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "isEirKindFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "string"}], "returns": {"kind": "bool"}},
+			"params": ["iekKind"],
+			"body": "isEirKindBody"
+		}},
+
+
+		{"id": "vlLitBody", "expr": {
+			"kind": "let", "name": "vlHasType",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vlExpr"}, "typeKey"]},
+			"body": {"kind": "let", "name": "vlHasValue",
+				"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vlExpr"}, "valueKey"]},
+				"body": {"kind": "let", "name": "vlTypeOk",
+					"value": {"kind": "if",
+						"cond": {"kind": "var", "name": "vlHasType"},
+						"then": {"kind": "let", "name": "vlTypeVal",
+							"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vlExpr"}, "typeKey"]},
+							"body": {"kind": "let", "name": "vlTypeT",
+								"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "vlTypeVal"}]},
+								"body": {"kind": "let", "name": "vlTypeIsMap",
+									"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vlTypeT"}, "mapTypeStr"]},
+									"body": {"kind": "if",
+										"cond": {"kind": "var", "name": "vlTypeIsMap"},
+										"then": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vlTypeVal"}, "kindKey"]},
+										"else": "falseVal"
+									}
+								}
+							}
+						},
+						"else": "falseVal"
+					},
+					"body": {"kind": "let", "name": "vlErrs1",
+						"value": {"kind": "if",
+							"cond": {"kind": "var", "name": "vlTypeOk"},
+							"then": "emptyList",
+							"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errLitMissingType", "emptyList"]}
+						},
+						"body": {"kind": "let", "name": "vlErrs2",
+							"value": {"kind": "if",
+								"cond": {"kind": "var", "name": "vlHasValue"},
+								"then": "emptyList",
+								"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errLitMissingValue", "emptyList"]}
+							},
+							"body": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vlErrs1"}, {"kind": "var", "name": "vlErrs2"}]}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "validateLitFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vlExpr"],
+			"body": "vlLitBody"
+		}},
+
+
+		{"id": "vrRefBody", "expr": {
+			"kind": "let", "name": "vrHasId",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vrExpr"}, "idKey"]},
+			"body": {"kind": "if",
+				"cond": {"kind": "var", "name": "vrHasId"},
+				"then": {"kind": "let", "name": "vrIdVal",
+					"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vrExpr"}, "idKey"]},
+					"body": {"kind": "let", "name": "vrIdT",
+						"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "vrIdVal"}]},
+						"body": {"kind": "let", "name": "vrIdIsStr",
+							"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vrIdT"}, "stringTypeStr"]},
+							"body": {"kind": "if",
+								"cond": {"kind": "var", "name": "vrIdIsStr"},
+								"then": "emptyList",
+								"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errRefMissingId", "emptyList"]}
+							}
+						}
+					}
+				},
+				"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errRefMissingId", "emptyList"]}
+			}
+		}},
+		{"id": "validateRefFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vrExpr"],
+			"body": "vrRefBody"
+		}},
+
+
+		{"id": "vvVarBody", "expr": {
+			"kind": "let", "name": "vvHasName",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vvExpr"}, "nameKey"]},
+			"body": {"kind": "if",
+				"cond": {"kind": "var", "name": "vvHasName"},
+				"then": {"kind": "let", "name": "vvNameVal",
+					"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vvExpr"}, "nameKey"]},
+					"body": {"kind": "let", "name": "vvNameT",
+						"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "vvNameVal"}]},
+						"body": {"kind": "let", "name": "vvNameIsStr",
+							"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vvNameT"}, "stringTypeStr"]},
+							"body": {"kind": "if",
+								"cond": {"kind": "var", "name": "vvNameIsStr"},
+								"then": "emptyList",
+								"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errVarMissingName", "emptyList"]}
+							}
+						}
+					}
+				},
+				"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errVarMissingName", "emptyList"]}
+			}
+		}},
+		{"id": "validateVarFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vvExpr"],
+			"body": "vvVarBody"
+		}},
+
+
+		{"id": "vcCallBody", "expr": {
+			"kind": "let", "name": "vcHasNs",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vcExpr"}, "nsKey"]},
+			"body": {"kind": "let", "name": "vcHasName",
+				"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vcExpr"}, "nameKey"]},
+				"body": {"kind": "let", "name": "vcHasArgs",
+					"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vcExpr"}, "argsKey"]},
+					"body": {"kind": "let", "name": "vcNsOk",
+						"value": {"kind": "if",
+							"cond": {"kind": "var", "name": "vcHasNs"},
+							"then": {"kind": "let", "name": "vcNsT",
+								"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vcExpr"}, "nsKey"]}]},
+								"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vcNsT"}, "stringTypeStr"]}
+							},
+							"else": "falseVal"
+						},
+						"body": {"kind": "let", "name": "vcNameOk",
+							"value": {"kind": "if",
+								"cond": {"kind": "var", "name": "vcHasName"},
+								"then": {"kind": "let", "name": "vcNameT",
+									"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vcExpr"}, "nameKey"]}]},
+									"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vcNameT"}, "stringTypeStr"]}
+								},
+								"else": "falseVal"
+							},
+							"body": {"kind": "let", "name": "vcArgsOk",
+								"value": {"kind": "if",
+									"cond": {"kind": "var", "name": "vcHasArgs"},
+									"then": {"kind": "let", "name": "vcArgsT",
+										"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vcExpr"}, "argsKey"]}]},
+										"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vcArgsT"}, "listTypeStr"]}
+									},
+									"else": "falseVal"
+								},
+								"body": {"kind": "let", "name": "vcE1",
+									"value": {"kind": "if",
+										"cond": {"kind": "var", "name": "vcNsOk"},
+										"then": "emptyList",
+										"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errCallMissingNs", "emptyList"]}
+									},
+									"body": {"kind": "let", "name": "vcE2",
+										"value": {"kind": "if",
+											"cond": {"kind": "var", "name": "vcNameOk"},
+											"then": "emptyList",
+											"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errCallMissingName", "emptyList"]}
+										},
+										"body": {"kind": "let", "name": "vcE3",
+											"value": {"kind": "if",
+												"cond": {"kind": "var", "name": "vcArgsOk"},
+												"then": "emptyList",
+												"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errCallMissingArgs", "emptyList"]}
+											},
+											"body": {"kind": "let", "name": "vcM1",
+												"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vcE1"}, {"kind": "var", "name": "vcE2"}]},
+												"body": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vcM1"}, {"kind": "var", "name": "vcE3"}]}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "validateCallFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vcExpr"],
+			"body": "vcCallBody"
+		}},
+
+
+		{"id": "viIfBody", "expr": {
+			"kind": "let", "name": "viHasCond",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "viExpr"}, "condKey"]},
+			"body": {"kind": "let", "name": "viHasThen",
+				"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "viExpr"}, "thenKey"]},
+				"body": {"kind": "let", "name": "viHasElse",
+					"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "viExpr"}, "elseKey"]},
+					"body": {"kind": "let", "name": "viCondOk",
+						"value": {"kind": "if",
+							"cond": {"kind": "var", "name": "viHasCond"},
+							"then": {"kind": "let", "name": "viCondT",
+								"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "viExpr"}, "condKey"]}]},
+								"body": {"kind": "let", "name": "viCondIsStr",
+									"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "viCondT"}, "stringTypeStr"]},
+									"body": {"kind": "let", "name": "viCondIsMap",
+										"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "viCondT"}, "mapTypeStr"]},
+										"body": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "viCondIsStr"}, {"kind": "var", "name": "viCondIsMap"}]}
+									}
+								}
+							},
+							"else": "falseVal"
+						},
+						"body": {"kind": "let", "name": "viThenOk",
+							"value": {"kind": "if",
+								"cond": {"kind": "var", "name": "viHasThen"},
+								"then": {"kind": "let", "name": "viThenT",
+									"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "viExpr"}, "thenKey"]}]},
+									"body": {"kind": "let", "name": "viThenIsStr",
+										"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "viThenT"}, "stringTypeStr"]},
+										"body": {"kind": "let", "name": "viThenIsMap",
+											"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "viThenT"}, "mapTypeStr"]},
+											"body": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "viThenIsStr"}, {"kind": "var", "name": "viThenIsMap"}]}
+										}
+									}
+								},
+								"else": "falseVal"
+							},
+							"body": {"kind": "let", "name": "viElseOk",
+								"value": {"kind": "if",
+									"cond": {"kind": "var", "name": "viHasElse"},
+									"then": {"kind": "let", "name": "viElseT",
+										"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "viExpr"}, "elseKey"]}]},
+										"body": {"kind": "let", "name": "viElseIsStr",
+											"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "viElseT"}, "stringTypeStr"]},
+											"body": {"kind": "let", "name": "viElseIsMap",
+												"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "viElseT"}, "mapTypeStr"]},
+												"body": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "viElseIsStr"}, {"kind": "var", "name": "viElseIsMap"}]}
+											}
+										}
+									},
+									"else": "falseVal"
+								},
+								"body": {"kind": "let", "name": "viE1",
+									"value": {"kind": "if",
+										"cond": {"kind": "var", "name": "viCondOk"},
+										"then": "emptyList",
+										"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errIfMissingCond", "emptyList"]}
+									},
+									"body": {"kind": "let", "name": "viE2",
+										"value": {"kind": "if",
+											"cond": {"kind": "var", "name": "viThenOk"},
+											"then": "emptyList",
+											"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errIfMissingThen", "emptyList"]}
+										},
+										"body": {"kind": "let", "name": "viE3",
+											"value": {"kind": "if",
+												"cond": {"kind": "var", "name": "viElseOk"},
+												"then": "emptyList",
+												"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errIfMissingElse", "emptyList"]}
+											},
+											"body": {"kind": "let", "name": "viM1",
+												"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "viE1"}, {"kind": "var", "name": "viE2"}]},
+												"body": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "viM1"}, {"kind": "var", "name": "viE3"}]}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "validateIfFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["viExpr"],
+			"body": "viIfBody"
+		}},
+
+
+		{"id": "vltLetBody", "expr": {
+			"kind": "let", "name": "vltHasName",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vltExpr"}, "nameKey"]},
+			"body": {"kind": "let", "name": "vltHasValue",
+				"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vltExpr"}, "valueKey"]},
+				"body": {"kind": "let", "name": "vltHasBody",
+					"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vltExpr"}, "bodyKey"]},
+					"body": {"kind": "let", "name": "vltNameOk",
+						"value": {"kind": "if",
+							"cond": {"kind": "var", "name": "vltHasName"},
+							"then": {"kind": "let", "name": "vltNameT",
+								"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vltExpr"}, "nameKey"]}]},
+								"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vltNameT"}, "stringTypeStr"]}
+							},
+							"else": "falseVal"
+						},
+						"body": {"kind": "let", "name": "vltValueOk",
+							"value": {"kind": "if",
+								"cond": {"kind": "var", "name": "vltHasValue"},
+								"then": {"kind": "let", "name": "vltValT",
+									"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vltExpr"}, "valueKey"]}]},
+									"body": {"kind": "let", "name": "vltValIsStr",
+										"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vltValT"}, "stringTypeStr"]},
+										"body": {"kind": "let", "name": "vltValIsMap",
+											"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vltValT"}, "mapTypeStr"]},
+											"body": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "vltValIsStr"}, {"kind": "var", "name": "vltValIsMap"}]}
+										}
+									}
+								},
+								"else": "falseVal"
+							},
+							"body": {"kind": "let", "name": "vltBodyOk",
+								"value": {"kind": "if",
+									"cond": {"kind": "var", "name": "vltHasBody"},
+									"then": {"kind": "let", "name": "vltBodyT",
+										"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vltExpr"}, "bodyKey"]}]},
+										"body": {"kind": "let", "name": "vltBodyIsStr",
+											"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vltBodyT"}, "stringTypeStr"]},
+											"body": {"kind": "let", "name": "vltBodyIsMap",
+												"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vltBodyT"}, "mapTypeStr"]},
+												"body": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "vltBodyIsStr"}, {"kind": "var", "name": "vltBodyIsMap"}]}
+											}
+										}
+									},
+									"else": "falseVal"
+								},
+								"body": {"kind": "let", "name": "vltE1",
+									"value": {"kind": "if",
+										"cond": {"kind": "var", "name": "vltNameOk"},
+										"then": "emptyList",
+										"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errLetMissingName", "emptyList"]}
+									},
+									"body": {"kind": "let", "name": "vltE2",
+										"value": {"kind": "if",
+											"cond": {"kind": "var", "name": "vltValueOk"},
+											"then": "emptyList",
+											"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errLetMissingValue", "emptyList"]}
+										},
+										"body": {"kind": "let", "name": "vltE3",
+											"value": {"kind": "if",
+												"cond": {"kind": "var", "name": "vltBodyOk"},
+												"then": "emptyList",
+												"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errLetMissingBody", "emptyList"]}
+											},
+											"body": {"kind": "let", "name": "vltM1",
+												"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vltE1"}, {"kind": "var", "name": "vltE2"}]},
+												"body": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vltM1"}, {"kind": "var", "name": "vltE3"}]}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "validateLetFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vltExpr"],
+			"body": "vltLetBody"
+		}},
+
+
+		{"id": "vlamBody", "expr": {
+			"kind": "let", "name": "vlamHasParams",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vlamExpr"}, "paramsKey"]},
+			"body": {"kind": "let", "name": "vlamHasBody",
+				"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vlamExpr"}, "bodyKey"]},
+				"body": {"kind": "let", "name": "vlamHasType",
+					"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vlamExpr"}, "typeKey"]},
+					"body": {"kind": "let", "name": "vlamParamsOk",
+						"value": {"kind": "if",
+							"cond": {"kind": "var", "name": "vlamHasParams"},
+							"then": {"kind": "let", "name": "vlamParamsT",
+								"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vlamExpr"}, "paramsKey"]}]},
+								"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vlamParamsT"}, "listTypeStr"]}
+							},
+							"else": "falseVal"
+						},
+						"body": {"kind": "let", "name": "vlamBodyOk",
+							"value": {"kind": "if",
+								"cond": {"kind": "var", "name": "vlamHasBody"},
+								"then": {"kind": "let", "name": "vlamBodyT",
+									"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vlamExpr"}, "bodyKey"]}]},
+									"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vlamBodyT"}, "stringTypeStr"]}
+								},
+								"else": "falseVal"
+							},
+							"body": {"kind": "let", "name": "vlamTypeOk",
+								"value": {"kind": "if",
+									"cond": {"kind": "var", "name": "vlamHasType"},
+									"then": {"kind": "let", "name": "vlamTypeT",
+										"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vlamExpr"}, "typeKey"]}]},
+										"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vlamTypeT"}, "mapTypeStr"]}
+									},
+									"else": "falseVal"
+								},
+								"body": {"kind": "let", "name": "vlamE1",
+									"value": {"kind": "if",
+										"cond": {"kind": "var", "name": "vlamParamsOk"},
+										"then": "emptyList",
+										"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errLambdaMissingParams", "emptyList"]}
+									},
+									"body": {"kind": "let", "name": "vlamE2",
+										"value": {"kind": "if",
+											"cond": {"kind": "var", "name": "vlamBodyOk"},
+											"then": "emptyList",
+											"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errLambdaBodyNotString", "emptyList"]}
+										},
+										"body": {"kind": "let", "name": "vlamE3",
+											"value": {"kind": "if",
+												"cond": {"kind": "var", "name": "vlamTypeOk"},
+												"then": "emptyList",
+												"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errLambdaMissingType", "emptyList"]}
+											},
+											"body": {"kind": "let", "name": "vlamM1",
+												"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vlamE1"}, {"kind": "var", "name": "vlamE2"}]},
+												"body": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vlamM1"}, {"kind": "var", "name": "vlamE3"}]}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "validateLambdaFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vlamExpr"],
+			"body": "vlamBody"
+		}},
+
+
+		{"id": "vceBody", "expr": {
+			"kind": "let", "name": "vceHasFn",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vceExpr"}, "fnKey"]},
+			"body": {"kind": "let", "name": "vceHasArgs",
+				"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vceExpr"}, "argsKey"]},
+				"body": {"kind": "let", "name": "vceFnOk",
+					"value": {"kind": "if",
+						"cond": {"kind": "var", "name": "vceHasFn"},
+						"then": {"kind": "let", "name": "vceFnT",
+							"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vceExpr"}, "fnKey"]}]},
+							"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vceFnT"}, "stringTypeStr"]}
+						},
+						"else": "falseVal"
+					},
+					"body": {"kind": "let", "name": "vceArgsOk",
+						"value": {"kind": "if",
+							"cond": {"kind": "var", "name": "vceHasArgs"},
+							"then": {"kind": "let", "name": "vceArgsT",
+								"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vceExpr"}, "argsKey"]}]},
+								"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vceArgsT"}, "listTypeStr"]}
+							},
+							"else": "falseVal"
+						},
+						"body": {"kind": "let", "name": "vceE1",
+							"value": {"kind": "if",
+								"cond": {"kind": "var", "name": "vceFnOk"},
+								"then": "emptyList",
+								"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errCallExprMissingFn", "emptyList"]}
+							},
+							"body": {"kind": "let", "name": "vceE2",
+								"value": {"kind": "if",
+									"cond": {"kind": "var", "name": "vceArgsOk"},
+									"then": "emptyList",
+									"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errCallExprMissingArgs", "emptyList"]}
+								},
+								"body": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vceE1"}, {"kind": "var", "name": "vceE2"}]}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "validateCallExprFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vceExpr"],
+			"body": "vceBody"
+		}},
+
+
+		{"id": "vfxBody", "expr": {
+			"kind": "let", "name": "vfxHasFn",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vfxExpr"}, "fnKey"]},
+			"body": {"kind": "let", "name": "vfxHasType",
+				"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vfxExpr"}, "typeKey"]},
+				"body": {"kind": "let", "name": "vfxFnOk",
+					"value": {"kind": "if",
+						"cond": {"kind": "var", "name": "vfxHasFn"},
+						"then": {"kind": "let", "name": "vfxFnT",
+							"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vfxExpr"}, "fnKey"]}]},
+							"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vfxFnT"}, "stringTypeStr"]}
+						},
+						"else": "falseVal"
+					},
+					"body": {"kind": "let", "name": "vfxTypeOk",
+						"value": {"kind": "if",
+							"cond": {"kind": "var", "name": "vfxHasType"},
+							"then": {"kind": "let", "name": "vfxTypeT",
+								"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vfxExpr"}, "typeKey"]}]},
+								"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vfxTypeT"}, "mapTypeStr"]}
+							},
+							"else": "falseVal"
+						},
+						"body": {"kind": "let", "name": "vfxE1",
+							"value": {"kind": "if",
+								"cond": {"kind": "var", "name": "vfxFnOk"},
+								"then": "emptyList",
+								"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errFixMissingFn", "emptyList"]}
+							},
+							"body": {"kind": "let", "name": "vfxE2",
+								"value": {"kind": "if",
+									"cond": {"kind": "var", "name": "vfxTypeOk"},
+									"then": "emptyList",
+									"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errFixMissingType", "emptyList"]}
+								},
+								"body": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vfxE1"}, {"kind": "var", "name": "vfxE2"}]}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "validateFixFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vfxExpr"],
+			"body": "vfxBody"
+		}},
+
+
+		{"id": "vdoBody", "expr": {
+			"kind": "let", "name": "vdoHasExprs",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vdoExpr"}, "exprsKey"]},
+			"body": {"kind": "if",
+				"cond": {"kind": "var", "name": "vdoHasExprs"},
+				"then": {"kind": "let", "name": "vdoExprsVal",
+					"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vdoExpr"}, "exprsKey"]},
+					"body": {"kind": "let", "name": "vdoExprsT",
+						"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "vdoExprsVal"}]},
+						"body": {"kind": "let", "name": "vdoIsList",
+							"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vdoExprsT"}, "listTypeStr"]},
+							"body": {"kind": "if",
+								"cond": {"kind": "var", "name": "vdoIsList"},
+								"then": {"kind": "let", "name": "vdoLen",
+									"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "vdoExprsVal"}]},
+									"body": {"kind": "let", "name": "vdoEmpty",
+										"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vdoLen"}, "zero"]},
+										"body": {"kind": "if",
+											"cond": {"kind": "var", "name": "vdoEmpty"},
+											"then": {"kind": "call", "ns": "list", "name": "cons", "args": ["errDoEmptyExprs", "emptyList"]},
+											"else": "emptyList"
+										}
+									}
+								},
+								"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errDoMissingExprs", "emptyList"]}
+							}
+						}
+					}
+				},
+				"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errDoMissingExprs", "emptyList"]}
+			}
+		}},
+		{"id": "validateDoFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vdoExpr"],
+			"body": "vdoBody"
+		}},
+
+
+		{"id": "vrecBody", "expr": {
+			"kind": "let", "name": "vrecHasFields",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vrecExpr"}, "fieldsKey"]},
+			"body": {"kind": "if",
+				"cond": {"kind": "var", "name": "vrecHasFields"},
+				"then": {"kind": "let", "name": "vrecFieldsT",
+					"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vrecExpr"}, "fieldsKey"]}]},
+					"body": {"kind": "let", "name": "vrecIsList",
+						"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vrecFieldsT"}, "listTypeStr"]},
+						"body": {"kind": "if",
+							"cond": {"kind": "var", "name": "vrecIsList"},
+							"then": "emptyList",
+							"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errRecordMissingFields", "emptyList"]}
+						}
+					}
+				},
+				"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errRecordMissingFields", "emptyList"]}
+			}
+		}},
+		{"id": "validateRecordFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vrecExpr"],
+			"body": "vrecBody"
+		}},
+
+
+		{"id": "vloBody", "expr": {
+			"kind": "let", "name": "vloHasElems",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vloExpr"}, "elementsKey"]},
+			"body": {"kind": "if",
+				"cond": {"kind": "var", "name": "vloHasElems"},
+				"then": {"kind": "let", "name": "vloElemsT",
+					"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vloExpr"}, "elementsKey"]}]},
+					"body": {"kind": "let", "name": "vloIsList",
+						"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vloElemsT"}, "listTypeStr"]},
+						"body": {"kind": "if",
+							"cond": {"kind": "var", "name": "vloIsList"},
+							"then": "emptyList",
+							"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errListOfMissingElems", "emptyList"]}
+						}
+					}
+				},
+				"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errListOfMissingElems", "emptyList"]}
+			}
+		}},
+		{"id": "validateListOfFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vloExpr"],
+			"body": "vloBody"
+		}},
+
+
+		{"id": "vmaBody", "expr": {
+			"kind": "let", "name": "vmaHasValue",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vmaExpr"}, "valueKey"]},
+			"body": {"kind": "let", "name": "vmaHasCases",
+				"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vmaExpr"}, "casesKey"]},
+				"body": {"kind": "let", "name": "vmaValueOk",
+					"value": {"kind": "if",
+						"cond": {"kind": "var", "name": "vmaHasValue"},
+						"then": {"kind": "let", "name": "vmaValT",
+							"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vmaExpr"}, "valueKey"]}]},
+							"body": {"kind": "let", "name": "vmaValIsStr",
+								"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vmaValT"}, "stringTypeStr"]},
+								"body": {"kind": "let", "name": "vmaValIsMap",
+									"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vmaValT"}, "mapTypeStr"]},
+									"body": {"kind": "call", "ns": "bool", "name": "or", "args": [{"kind": "var", "name": "vmaValIsStr"}, {"kind": "var", "name": "vmaValIsMap"}]}
+								}
+							}
+						},
+						"else": "falseVal"
+					},
+					"body": {"kind": "let", "name": "vmaCasesOk",
+						"value": {"kind": "if",
+							"cond": {"kind": "var", "name": "vmaHasCases"},
+							"then": {"kind": "let", "name": "vmaCasesT",
+								"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vmaExpr"}, "casesKey"]}]},
+								"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vmaCasesT"}, "listTypeStr"]}
+							},
+							"else": "falseVal"
+						},
+						"body": {"kind": "let", "name": "vmaE1",
+							"value": {"kind": "if",
+								"cond": {"kind": "var", "name": "vmaValueOk"},
+								"then": "emptyList",
+								"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errMatchMissingValue", "emptyList"]}
+							},
+							"body": {"kind": "let", "name": "vmaE2",
+								"value": {"kind": "if",
+									"cond": {"kind": "var", "name": "vmaCasesOk"},
+									"then": "emptyList",
+									"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errMatchMissingCases", "emptyList"]}
+								},
+								"body": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vmaE1"}, {"kind": "var", "name": "vmaE2"}]}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "validateMatchFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vmaExpr"],
+			"body": "vmaBody"
+		}},
+
+
+		{"id": "varBody", "expr": {
+			"kind": "let", "name": "varHasNs",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "varExpr"}, "nsKey"]},
+			"body": {"kind": "let", "name": "varHasName",
+				"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "varExpr"}, "nameKey"]},
+				"body": {"kind": "let", "name": "varHasArgs",
+					"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "varExpr"}, "argsKey"]},
+					"body": {"kind": "let", "name": "varNsOk",
+						"value": {"kind": "if",
+							"cond": {"kind": "var", "name": "varHasNs"},
+							"then": {"kind": "let", "name": "varNsT",
+								"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "varExpr"}, "nsKey"]}]},
+								"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "varNsT"}, "stringTypeStr"]}
+							},
+							"else": "falseVal"
+						},
+						"body": {"kind": "let", "name": "varNameOk",
+							"value": {"kind": "if",
+								"cond": {"kind": "var", "name": "varHasName"},
+								"then": {"kind": "let", "name": "varNameT",
+									"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "varExpr"}, "nameKey"]}]},
+									"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "varNameT"}, "stringTypeStr"]}
+								},
+								"else": "falseVal"
+							},
+							"body": {"kind": "let", "name": "varArgsOk",
+								"value": {"kind": "if",
+									"cond": {"kind": "var", "name": "varHasArgs"},
+									"then": {"kind": "let", "name": "varArgsT",
+										"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "varExpr"}, "argsKey"]}]},
+										"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "varArgsT"}, "listTypeStr"]}
+									},
+									"else": "falseVal"
+								},
+								"body": {"kind": "let", "name": "varE1",
+									"value": {"kind": "if",
+										"cond": {"kind": "var", "name": "varNsOk"},
+										"then": "emptyList",
+										"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errAirRefMissingNs", "emptyList"]}
+									},
+									"body": {"kind": "let", "name": "varE2",
+										"value": {"kind": "if",
+											"cond": {"kind": "var", "name": "varNameOk"},
+											"then": "emptyList",
+											"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errAirRefMissingName", "emptyList"]}
+										},
+										"body": {"kind": "let", "name": "varE3",
+											"value": {"kind": "if",
+												"cond": {"kind": "var", "name": "varArgsOk"},
+												"then": "emptyList",
+												"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errAirRefMissingArgs", "emptyList"]}
+											},
+											"body": {"kind": "let", "name": "varM1",
+												"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "varE1"}, {"kind": "var", "name": "varE2"}]},
+												"body": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "varM1"}, {"kind": "var", "name": "varE3"}]}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "validateAirRefFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["varExpr"],
+			"body": "varBody"
+		}},
+
+
+		{"id": "vpBody", "expr": {
+			"kind": "let", "name": "vpHasName",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vpExpr"}, "nameKey"]},
+			"body": {"kind": "let", "name": "vpHasValue",
+				"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vpExpr"}, "valueKey"]},
+				"body": {"kind": "let", "name": "vpNameOk",
+					"value": {"kind": "if",
+						"cond": {"kind": "var", "name": "vpHasName"},
+						"then": {"kind": "let", "name": "vpNameT",
+							"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vpExpr"}, "nameKey"]}]},
+							"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vpNameT"}, "stringTypeStr"]}
+						},
+						"else": "falseVal"
+					},
+					"body": {"kind": "let", "name": "vpValueOk",
+						"value": {"kind": "if",
+							"cond": {"kind": "var", "name": "vpHasValue"},
+							"then": {"kind": "let", "name": "vpValT",
+								"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vpExpr"}, "valueKey"]}]},
+								"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vpValT"}, "stringTypeStr"]}
+							},
+							"else": "falseVal"
+						},
+						"body": {"kind": "let", "name": "vpE1",
+							"value": {"kind": "if",
+								"cond": {"kind": "var", "name": "vpNameOk"},
+								"then": "emptyList",
+								"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errPredMissingName", "emptyList"]}
+							},
+							"body": {"kind": "let", "name": "vpE2",
+								"value": {"kind": "if",
+									"cond": {"kind": "var", "name": "vpValueOk"},
+									"then": "emptyList",
+									"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errPredMissingValue", "emptyList"]}
+								},
+								"body": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vpE1"}, {"kind": "var", "name": "vpE2"}]}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "validatePredicateFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vpExpr"],
+			"body": "vpBody"
+		}},
+
+
+		{"id": "veDispatchBody", "expr": {
+			"kind": "let", "name": "veKind",
+			"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "veExpr"}, "kindKey"]},
+			"body": {"kind": "let", "name": "veIsLit",
+				"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "litStr"]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "veIsLit"},
+					"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validateLitFn"},
+					"else": {"kind": "let", "name": "veIsRef",
+						"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "refStr"]},
+						"body": {"kind": "if",
+							"cond": {"kind": "var", "name": "veIsRef"},
+							"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validateRefFn"},
+							"else": {"kind": "let", "name": "veIsVar",
+								"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "varStr"]},
+								"body": {"kind": "if",
+									"cond": {"kind": "var", "name": "veIsVar"},
+									"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validateVarFn"},
+									"else": {"kind": "let", "name": "veIsCall",
+										"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "callStr"]},
+										"body": {"kind": "if",
+											"cond": {"kind": "var", "name": "veIsCall"},
+											"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validateCallFn"},
+											"else": {"kind": "let", "name": "veIsIf",
+												"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "ifStr"]},
+												"body": {"kind": "if",
+													"cond": {"kind": "var", "name": "veIsIf"},
+													"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validateIfFn"},
+													"else": {"kind": "let", "name": "veIsLet",
+														"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "letStr"]},
+														"body": {"kind": "if",
+															"cond": {"kind": "var", "name": "veIsLet"},
+															"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validateLetFn"},
+															"else": {"kind": "let", "name": "veIsLambda",
+																"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "lambdaStr"]},
+																"body": {"kind": "if",
+																	"cond": {"kind": "var", "name": "veIsLambda"},
+																	"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validateLambdaFn"},
+																	"else": {"kind": "let", "name": "veIsCE",
+																		"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "callExprStr"]},
+																		"body": {"kind": "if",
+																			"cond": {"kind": "var", "name": "veIsCE"},
+																			"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validateCallExprFn"},
+																			"else": {"kind": "let", "name": "veIsFix",
+																				"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "fixStr"]},
+																				"body": {"kind": "if",
+																					"cond": {"kind": "var", "name": "veIsFix"},
+																					"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validateFixFn"},
+																					"else": {"kind": "let", "name": "veIsDo",
+																						"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "doStr"]},
+																						"body": {"kind": "if",
+																							"cond": {"kind": "var", "name": "veIsDo"},
+																							"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validateDoFn"},
+																							"else": {"kind": "let", "name": "veIsRecord",
+																								"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "recordStr"]},
+																								"body": {"kind": "if",
+																									"cond": {"kind": "var", "name": "veIsRecord"},
+																									"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validateRecordFn"},
+																									"else": {"kind": "let", "name": "veIsListOf",
+																										"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "listOfStr"]},
+																										"body": {"kind": "if",
+																											"cond": {"kind": "var", "name": "veIsListOf"},
+																											"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validateListOfFn"},
+																											"else": {"kind": "let", "name": "veIsMatch",
+																												"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "matchStr"]},
+																												"body": {"kind": "if",
+																													"cond": {"kind": "var", "name": "veIsMatch"},
+																													"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validateMatchFn"},
+																													"else": {"kind": "let", "name": "veIsAirRef",
+																														"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "airRefStr"]},
+																														"body": {"kind": "if",
+																															"cond": {"kind": "var", "name": "veIsAirRef"},
+																															"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validateAirRefFn"},
+																															"else": {"kind": "let", "name": "veIsPred",
+																																"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "veKind"}, "predicateStr"]},
+																																"body": {"kind": "if",
+																																	"cond": {"kind": "var", "name": "veIsPred"},
+																																	"then": {"kind": "callExpr", "args": [{"kind": "var", "name": "veExpr"}], "fn": "validatePredicateFn"},
+																																	"else": {"kind": "let", "name": "veIsEir",
+																																		"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "veKind"}], "fn": "isEirKindFn"},
+																																		"body": {"kind": "if",
+																																			"cond": {"kind": "var", "name": "veIsEir"},
+																																			"then": {"kind": "let", "name": "veEirMsg",
+																																				"value": {"kind": "call", "ns": "string", "name": "concat", "args": ["eirPrefixStr", {"kind": "var", "name": "veKind"}]},
+																																				"body": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "veEirMsg"}, "emptyList"]}
+																																			},
+																																			"else": {"kind": "let", "name": "veUnkMsg",
+																																				"value": {"kind": "call", "ns": "string", "name": "concat", "args": ["unknownPrefixStr", {"kind": "var", "name": "veKind"}]},
+																																				"body": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "veUnkMsg"}, "emptyList"]}
+																																			}
+																																		}
+																																	}
+																																}
+																															}
+																														}
+																													}
+																												}
+																											}
+																										}
+																									}
+																								}
+																							}
+																						}
+																					}
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "validateExprFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["veExpr"],
+			"body": "veDispatchBody"
+		}},
+
+
+		{"id": "vnNodeBody", "expr": {
+			"kind": "let", "name": "vnHasId",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vnNode"}, "idKey"]},
+			"body": {"kind": "let", "name": "vnIdOk",
+				"value": {"kind": "if",
+					"cond": {"kind": "var", "name": "vnHasId"},
+					"then": {"kind": "let", "name": "vnIdT",
+						"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vnNode"}, "idKey"]}]},
+						"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vnIdT"}, "stringTypeStr"]}
+					},
+					"else": "falseVal"
+				},
+				"body": {"kind": "let", "name": "vnHasExpr",
+					"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vnNode"}, "exprKey"]},
+					"body": {"kind": "let", "name": "vnExprOk",
+						"value": {"kind": "if",
+							"cond": {"kind": "var", "name": "vnHasExpr"},
+							"then": {"kind": "let", "name": "vnExprVal",
+								"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vnNode"}, "exprKey"]},
+								"body": {"kind": "let", "name": "vnExprT",
+									"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "vnExprVal"}]},
+									"body": {"kind": "let", "name": "vnExprIsMap",
+										"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vnExprT"}, "mapTypeStr"]},
+										"body": {"kind": "if",
+											"cond": {"kind": "var", "name": "vnExprIsMap"},
+											"then": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vnExprVal"}, "kindKey"]},
+											"else": "falseVal"
+										}
+									}
+								}
+							},
+							"else": "falseVal"
+						},
+						"body": {"kind": "let", "name": "vnE1",
+							"value": {"kind": "if",
+								"cond": {"kind": "var", "name": "vnIdOk"},
+								"then": "emptyList",
+								"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errNodeMissingId", "emptyList"]}
+							},
+							"body": {"kind": "let", "name": "vnE2",
+								"value": {"kind": "if",
+									"cond": {"kind": "var", "name": "vnExprOk"},
+									"then": "emptyList",
+									"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errNodeMissingExpr", "emptyList"]}
+								},
+								"body": {"kind": "let", "name": "vnStructErrs",
+									"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vnE1"}, {"kind": "var", "name": "vnE2"}]},
+									"body": {"kind": "let", "name": "vnExprErrs",
+										"value": {"kind": "if",
+											"cond": {"kind": "var", "name": "vnExprOk"},
+											"then": {"kind": "callExpr", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vnNode"}, "exprKey"]}], "fn": "validateExprFn"},
+											"else": "emptyList"
+										},
+										"body": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vnStructErrs"}, {"kind": "var", "name": "vnExprErrs"}]}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "validateNodeFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vnNode"],
+			"body": "vnNodeBody"
+		}},
+
+
+		{"id": "vnlRecBody", "expr": {
+			"kind": "let", "name": "vnlLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "vnlNodes"}]},
+			"body": {"kind": "let", "name": "vnlDone",
+				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "vnlIdx"}, {"kind": "var", "name": "vnlLen"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "vnlDone"},
+					"then": {"kind": "var", "name": "vnlAcc"},
+					"else": {"kind": "let", "name": "vnlCur",
+						"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "vnlNodes"}, {"kind": "var", "name": "vnlIdx"}]},
+						"body": {"kind": "let", "name": "vnlNodeErrs",
+							"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "vnlCur"}], "fn": "validateNodeFn"},
+							"body": {"kind": "let", "name": "vnlNewAcc",
+								"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vnlAcc"}, {"kind": "var", "name": "vnlNodeErrs"}]},
+								"body": {"kind": "let", "name": "vnlNextIdx",
+									"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "vnlIdx"}, "one"]},
+									"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "vnlNodes"}, {"kind": "var", "name": "vnlNextIdx"}, {"kind": "var", "name": "vnlNewAcc"}], "fn": "vnlRec"}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "vnlRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vnlNodes", "vnlIdx", "vnlAcc"],
+			"body": "vnlRecBody"
+		}},
+		{"id": "vnlRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["vnlRec"],
+			"body": "vnlRecInner"
+		}},
+		{"id": "vnlFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "vnlRecOuter"
+		}},
+
+
+		{"id": "vdDocBody", "expr": {
+			"kind": "let", "name": "vdHasVersion",
+			"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vdDoc"}, "versionKey"]},
+			"body": {"kind": "let", "name": "vdHasNodes",
+				"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vdDoc"}, "nodesKey"]},
+				"body": {"kind": "let", "name": "vdHasResult",
+					"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vdDoc"}, "resultKey"]},
+					"body": {"kind": "let", "name": "vdHasAirDefs",
+						"value": {"kind": "call", "ns": "map", "name": "has", "args": [{"kind": "var", "name": "vdDoc"}, "airDefsKey"]},
+						"body": {"kind": "let", "name": "vdVersionOk",
+							"value": {"kind": "if",
+								"cond": {"kind": "var", "name": "vdHasVersion"},
+								"then": {"kind": "let", "name": "vdVerT",
+									"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vdDoc"}, "versionKey"]}]},
+									"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vdVerT"}, "stringTypeStr"]}
+								},
+								"else": "falseVal"
+							},
+							"body": {"kind": "let", "name": "vdNodesOk",
+								"value": {"kind": "if",
+									"cond": {"kind": "var", "name": "vdHasNodes"},
+									"then": {"kind": "let", "name": "vdNodesT",
+										"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vdDoc"}, "nodesKey"]}]},
+										"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vdNodesT"}, "listTypeStr"]}
+									},
+									"else": "falseVal"
+								},
+								"body": {"kind": "let", "name": "vdResultOk",
+									"value": {"kind": "if",
+										"cond": {"kind": "var", "name": "vdHasResult"},
+										"then": {"kind": "let", "name": "vdResT",
+											"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vdDoc"}, "resultKey"]}]},
+											"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vdResT"}, "stringTypeStr"]}
+										},
+										"else": "falseVal"
+									},
+									"body": {"kind": "let", "name": "vdAirDefsOk",
+										"value": {"kind": "if",
+											"cond": {"kind": "var", "name": "vdHasAirDefs"},
+											"then": {"kind": "let", "name": "vdAdT",
+												"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vdDoc"}, "airDefsKey"]}]},
+												"body": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vdAdT"}, "listTypeStr"]}
+											},
+											"else": "falseVal"
+										},
+										"body": {"kind": "let", "name": "vdE1",
+											"value": {"kind": "if",
+												"cond": {"kind": "var", "name": "vdVersionOk"},
+												"then": "emptyList",
+												"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errMissingVersion", "emptyList"]}
+											},
+											"body": {"kind": "let", "name": "vdE2",
+												"value": {"kind": "if",
+													"cond": {"kind": "var", "name": "vdNodesOk"},
+													"then": "emptyList",
+													"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errMissingNodes", "emptyList"]}
+												},
+												"body": {"kind": "let", "name": "vdE3",
+													"value": {"kind": "if",
+														"cond": {"kind": "var", "name": "vdResultOk"},
+														"then": "emptyList",
+														"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errMissingResult", "emptyList"]}
+													},
+													"body": {"kind": "let", "name": "vdE4",
+														"value": {"kind": "if",
+															"cond": {"kind": "var", "name": "vdAirDefsOk"},
+															"then": "emptyList",
+															"else": {"kind": "call", "ns": "list", "name": "cons", "args": ["errMissingAirDefs", "emptyList"]}
+														},
+														"body": {"kind": "let", "name": "vdNodesNonEmpty",
+															"value": {"kind": "if",
+																"cond": {"kind": "var", "name": "vdNodesOk"},
+																"then": {"kind": "let", "name": "vdNodesVal",
+																	"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vdDoc"}, "nodesKey"]},
+																	"body": {"kind": "let", "name": "vdNodesLen",
+																		"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "vdNodesVal"}]},
+																		"body": {"kind": "let", "name": "vdNodesEmpty",
+																			"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vdNodesLen"}, "zero"]},
+																			"body": {"kind": "if",
+																				"cond": {"kind": "var", "name": "vdNodesEmpty"},
+																				"then": {"kind": "call", "ns": "list", "name": "cons", "args": ["errEmptyNodes", "emptyList"]},
+																				"else": "emptyList"
+																			}
+																		}
+																	}
+																},
+																"else": "emptyList"
+															},
+															"body": {"kind": "let", "name": "vdNodeErrs",
+																"value": {"kind": "if",
+																	"cond": {"kind": "var", "name": "vdNodesOk"},
+																	"then": {"kind": "callExpr", "args": [{"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "vdDoc"}, "nodesKey"]}, "zero", "emptyList"], "fn": "vnlFixFn"},
+																	"else": "emptyList"
+																},
+																"body": {"kind": "let", "name": "vdM1",
+																	"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vdE1"}, {"kind": "var", "name": "vdE2"}]},
+																	"body": {"kind": "let", "name": "vdM2",
+																		"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vdM1"}, {"kind": "var", "name": "vdE3"}]},
+																		"body": {"kind": "let", "name": "vdM3",
+																			"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vdM2"}, {"kind": "var", "name": "vdE4"}]},
+																			"body": {"kind": "let", "name": "vdM4",
+																				"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vdM3"}, {"kind": "var", "name": "vdNodesNonEmpty"}]},
+																				"body": {"kind": "let", "name": "vdAllErrs",
+																					"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "vdM4"}, {"kind": "var", "name": "vdNodeErrs"}]},
+																					"body": {"kind": "let", "name": "vdErrCount",
+																						"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "vdAllErrs"}]},
+																						"body": {"kind": "let", "name": "vdIsValid",
+																							"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "vdErrCount"}, "zero"]},
+																							"body": {"kind": "record", "fields": [
+																								{"key": "valid", "value": {"kind": "var", "name": "vdIsValid"}},
+																								{"key": "errors", "value": {"kind": "var", "name": "vdAllErrs"}}
+																							]}
+																						}
+																					}
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "validateFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["vdDoc"],
+			"body": "vdDocBody"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "schema:validateExpr", "value": "validateExprFn"},
+				{"key": "schema:validateNode", "value": "validateNodeFn"},
+				{"key": "schema:validate", "value": "validateFn"}
+			]
+		}}
+	],
+	"result": "exports"
+}
