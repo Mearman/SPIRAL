@@ -1,0 +1,228 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Constant-folding optimizer stdlib — optimize:fold takes a SPIRAL document map and returns a transformed document where call nodes with all-literal arguments are replaced by the evaluated literal result via meta:eval.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one",  "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+		{"id": "trueVal",  "expr": {"kind": "lit", "type": {"kind": "bool"}, "value": true}},
+		{"id": "falseVal", "expr": {"kind": "lit", "type": {"kind": "bool"}, "value": false}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+		{"id": "emptyMap",  "expr": {"kind": "record", "fields": []}},
+
+		{"id": "kindKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "valueKey",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+		{"id": "typeKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "type"}},
+		{"id": "idKey",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "id"}},
+		{"id": "exprKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+		{"id": "argsKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "args"}},
+		{"id": "nodesKey",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodes"}},
+		{"id": "resultKey",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "result"}},
+		{"id": "versionKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "version"}},
+		{"id": "airDefsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "airDefs"}},
+
+		{"id": "litStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lit"}},
+		{"id": "callStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call"}},
+		{"id": "intStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "int"}},
+
+		{"id": "versionVal", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "1.0.0"}},
+
+		{"id": "intTypeRec", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "intStr"}
+		]}},
+
+		{"id": "bmRecVar",   "expr": {"kind": "var", "name": "bmRec"}},
+		{"id": "bmNodesVar", "expr": {"kind": "var", "name": "bmNodes"}},
+		{"id": "bmIdxVar",   "expr": {"kind": "var", "name": "bmIdx"}},
+		{"id": "bmAccVar",   "expr": {"kind": "var", "name": "bmAcc"}},
+		{"id": "bmCountVar", "expr": {"kind": "var", "name": "bmCount"}},
+		{"id": "bmCurNode",  "expr": {"kind": "call", "ns": "list", "name": "nth",  "args": ["bmNodesVar", "bmIdxVar"]}},
+		{"id": "bmCurId",    "expr": {"kind": "call", "ns": "map",  "name": "get",  "args": ["bmCurNode", "idKey"]}},
+		{"id": "bmNextAcc",  "expr": {"kind": "call", "ns": "map",  "name": "set",  "args": ["bmAccVar", "bmCurId", "bmCurNode"]}},
+		{"id": "bmNextIdx",  "expr": {"kind": "call", "ns": "core", "name": "add",  "args": ["bmIdxVar", "one"]}},
+		{"id": "bmRecurse",  "expr": {"kind": "callExpr", "args": ["bmNextIdx", "bmNextAcc", "bmNodesVar", "bmCountVar"], "fn": "bmRecVar"}},
+		{"id": "bmIsDone",   "expr": {"kind": "call", "ns": "core", "name": "gte",  "args": ["bmIdxVar", "bmCountVar"]}},
+		{"id": "bmBody",     "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "bmIsDone", "then": "bmAccVar", "else": "bmRecurse"}},
+		{"id": "bmInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["bmIdx", "bmAcc", "bmNodes", "bmCount"],
+			"body": "bmBody"
+		}},
+		{"id": "bmOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["bmRec"],
+			"body": "bmInner"
+		}},
+		{"id": "buildNodeMapFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "bmOuter"
+		}},
+
+		{"id": "aalRecVar",    "expr": {"kind": "var", "name": "aalRec"}},
+		{"id": "aalArgsVar",   "expr": {"kind": "var", "name": "aalArgs"}},
+		{"id": "aalIdxVar",    "expr": {"kind": "var", "name": "aalIdx"}},
+		{"id": "aalCountVar",  "expr": {"kind": "var", "name": "aalCount"}},
+		{"id": "aalNodeMapVar","expr": {"kind": "var", "name": "aalNodeMap"}},
+		{"id": "aalIsDone",    "expr": {"kind": "call", "ns": "core", "name": "gte", "args": ["aalIdxVar", "aalCountVar"]}},
+		{"id": "aalCurArgId",  "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["aalArgsVar", "aalIdxVar"]}},
+		{"id": "aalArgNode",   "expr": {"kind": "call", "ns": "map",  "name": "get", "args": ["aalNodeMapVar", "aalCurArgId"]}},
+		{"id": "aalArgExpr",   "expr": {"kind": "call", "ns": "map",  "name": "get", "args": ["aalArgNode", "exprKey"]}},
+		{"id": "aalArgKind",   "expr": {"kind": "call", "ns": "map",  "name": "get", "args": ["aalArgExpr", "kindKey"]}},
+		{"id": "aalIsLit",     "expr": {"kind": "call", "ns": "core", "name": "eq",  "args": ["aalArgKind", "litStr"]}},
+		{"id": "aalNextIdx",   "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["aalIdxVar", "one"]}},
+		{"id": "aalRecurse",   "expr": {"kind": "callExpr", "args": ["aalArgsVar", "aalNextIdx", "aalCountVar", "aalNodeMapVar"], "fn": "aalRecVar"}},
+		{"id": "aalBody", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "aalIsDone", "then": "trueVal",
+			"else": {"kind": "if", "type": {"kind": "int"}, "cond": "aalIsLit", "then": "aalRecurse", "else": "falseVal"}
+		}},
+		{"id": "aalInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["aalArgs", "aalIdx", "aalCount", "aalNodeMap"],
+			"body": "aalBody"
+		}},
+		{"id": "aalOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["aalRec"],
+			"body": "aalInner"
+		}},
+		{"id": "allArgsLitFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "aalOuter"
+		}},
+
+		{"id": "caRecVar",     "expr": {"kind": "var", "name": "caRec"}},
+		{"id": "caArgsVar",    "expr": {"kind": "var", "name": "caArgs"}},
+		{"id": "caIdxVar",     "expr": {"kind": "var", "name": "caIdx"}},
+		{"id": "caCountVar",   "expr": {"kind": "var", "name": "caCount"}},
+		{"id": "caAccVar",     "expr": {"kind": "var", "name": "caAcc"}},
+		{"id": "caNodeMapVar", "expr": {"kind": "var", "name": "caNodeMap"}},
+		{"id": "caIsDone",     "expr": {"kind": "call", "ns": "core", "name": "gte", "args": ["caIdxVar", "caCountVar"]}},
+		{"id": "caCurArgId",   "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["caArgsVar", "caIdxVar"]}},
+		{"id": "caArgNode",    "expr": {"kind": "call", "ns": "map",  "name": "get", "args": ["caNodeMapVar", "caCurArgId"]}},
+		{"id": "caNextAcc",    "expr": {"kind": "call", "ns": "list", "name": "cons", "args": ["caArgNode", "caAccVar"]}},
+		{"id": "caNextIdx",    "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["caIdxVar", "one"]}},
+		{"id": "caRecurse",    "expr": {"kind": "callExpr", "args": ["caArgsVar", "caNextIdx", "caCountVar", "caNextAcc", "caNodeMapVar"], "fn": "caRecVar"}},
+		{"id": "caBody",       "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "caIsDone", "then": "caAccVar", "else": "caRecurse"}},
+		{"id": "caInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["caArgs", "caIdx", "caCount", "caAcc", "caNodeMap"],
+			"body": "caBody"
+		}},
+		{"id": "caOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["caRec"],
+			"body": "caInner"
+		}},
+		{"id": "collectArgNodesFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "caOuter"
+		}},
+
+		{"id": "fnNodeMapVar", "expr": {"kind": "var", "name": "fnNodeMap"}},
+		{"id": "fnNodeVar",    "expr": {"kind": "var", "name": "fnNode"}},
+		{"id": "fnExpr",       "expr": {"kind": "call", "ns": "map",  "name": "get", "args": ["fnNodeVar", "exprKey"]}},
+		{"id": "fnExprKind",   "expr": {"kind": "call", "ns": "map",  "name": "get", "args": ["fnExpr", "kindKey"]}},
+		{"id": "fnIsCall",     "expr": {"kind": "call", "ns": "core", "name": "eq",  "args": ["fnExprKind", "callStr"]}},
+
+		{"id": "fnCallArgs",    "expr": {"kind": "call", "ns": "map",  "name": "get",    "args": ["fnExpr", "argsKey"]}},
+		{"id": "fnCallArgsLen", "expr": {"kind": "call", "ns": "list", "name": "length", "args": ["fnCallArgs"]}},
+		{"id": "fnAllLit",      "expr": {"kind": "callExpr", "args": ["fnCallArgs", "zero", "fnCallArgsLen", "fnNodeMapVar"], "fn": "allArgsLitFn"}},
+
+		{"id": "fnNodeId",       "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["fnNodeVar", "idKey"]}},
+		{"id": "fnArgNodesRev",  "expr": {"kind": "callExpr", "args": ["fnCallArgs", "zero", "fnCallArgsLen", "emptyList", "fnNodeMapVar"], "fn": "collectArgNodesFn"}},
+		{"id": "fnArgNodes",     "expr": {"kind": "call", "ns": "list", "name": "reverse", "args": ["fnArgNodesRev"]}},
+		{"id": "fnMiniNodes",    "expr": {"kind": "call", "ns": "list", "name": "concat", "args": ["fnArgNodes", {"kind": "listOf", "elements": ["fnNodeVar"]}]}},
+
+		{"id": "fnMiniDoc0",  "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["emptyMap", "versionKey", "versionVal"]}},
+		{"id": "fnMiniDoc1",  "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["fnMiniDoc0", "airDefsKey", "emptyList"]}},
+		{"id": "fnMiniDoc2",  "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["fnMiniDoc1", "nodesKey", "fnMiniNodes"]}},
+		{"id": "fnMiniDoc",   "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["fnMiniDoc2", "resultKey", "fnNodeId"]}},
+
+		{"id": "fnFoldedVal", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["fnMiniDoc"]}},
+
+		{"id": "fnNewExpr0",  "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["emptyMap", "kindKey", "litStr"]}},
+		{"id": "fnNewExpr1",  "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["fnNewExpr0", "typeKey", "intTypeRec"]}},
+		{"id": "fnNewExpr",   "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["fnNewExpr1", "valueKey", "fnFoldedVal"]}},
+
+		{"id": "fnFoldedNode", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["fnNodeVar", "exprKey", "fnNewExpr"]}},
+
+		{"id": "fnShouldFold", "expr": {"kind": "call", "ns": "bool", "name": "and", "args": ["fnIsCall", "fnAllLit"]}},
+		{"id": "fnResult",     "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "fnShouldFold", "then": "fnFoldedNode", "else": "fnNodeVar"}},
+		{"id": "foldNodeFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["fnNodeMap", "fnNode"],
+			"body": "fnResult"
+		}},
+
+		{"id": "faRecVar",     "expr": {"kind": "var", "name": "faRec"}},
+		{"id": "faNodesVar",   "expr": {"kind": "var", "name": "faNodes"}},
+		{"id": "faIdxVar",     "expr": {"kind": "var", "name": "faIdx"}},
+		{"id": "faCountVar",   "expr": {"kind": "var", "name": "faCount"}},
+		{"id": "faAccVar",     "expr": {"kind": "var", "name": "faAcc"}},
+		{"id": "faNodeMapVar", "expr": {"kind": "var", "name": "faNodeMap"}},
+		{"id": "faIsDone",     "expr": {"kind": "call", "ns": "core", "name": "gte", "args": ["faIdxVar", "faCountVar"]}},
+		{"id": "faCurNode",    "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["faNodesVar", "faIdxVar"]}},
+		{"id": "faFolded",     "expr": {"kind": "callExpr", "args": ["faNodeMapVar", "faCurNode"], "fn": "foldNodeFn"}},
+		{"id": "faNextAcc",    "expr": {"kind": "call", "ns": "list", "name": "cons", "args": ["faFolded", "faAccVar"]}},
+		{"id": "faNextIdx",    "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["faIdxVar", "one"]}},
+		{"id": "faRecurse",    "expr": {"kind": "callExpr", "args": ["faNodesVar", "faNextIdx", "faCountVar", "faNextAcc", "faNodeMapVar"], "fn": "faRecVar"}},
+		{"id": "faBody",       "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "faIsDone", "then": "faAccVar", "else": "faRecurse"}},
+		{"id": "faInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["faNodes", "faIdx", "faCount", "faAcc", "faNodeMap"],
+			"body": "faBody"
+		}},
+		{"id": "faOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["faRec"],
+			"body": "faInner"
+		}},
+		{"id": "foldAllNodesFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "faOuter"
+		}},
+
+		{"id": "docVar",      "expr": {"kind": "var", "name": "doc"}},
+		{"id": "docNodes",    "expr": {"kind": "call", "ns": "map",  "name": "get",    "args": ["docVar", "nodesKey"]}},
+		{"id": "docResult",   "expr": {"kind": "call", "ns": "map",  "name": "get",    "args": ["docVar", "resultKey"]}},
+		{"id": "docVersion",  "expr": {"kind": "call", "ns": "map",  "name": "get",    "args": ["docVar", "versionKey"]}},
+		{"id": "docAirDefs",  "expr": {"kind": "call", "ns": "map",  "name": "get",    "args": ["docVar", "airDefsKey"]}},
+		{"id": "nodeCount",   "expr": {"kind": "call", "ns": "list", "name": "length", "args": ["docNodes"]}},
+		{"id": "nodeMap",     "expr": {"kind": "callExpr", "args": ["zero", "emptyMap", "docNodes", "nodeCount"], "fn": "buildNodeMapFn"}},
+		{"id": "foldedRev",   "expr": {"kind": "callExpr", "args": ["docNodes", "zero", "nodeCount", "emptyList", "nodeMap"], "fn": "foldAllNodesFn"}},
+		{"id": "foldedNodes", "expr": {"kind": "call", "ns": "list", "name": "reverse", "args": ["foldedRev"]}},
+
+		{"id": "newDoc0", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["emptyMap", "versionKey", "docVersion"]}},
+		{"id": "newDoc1", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["newDoc0", "airDefsKey", "docAirDefs"]}},
+		{"id": "newDoc2", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["newDoc1", "nodesKey", "foldedNodes"]}},
+		{"id": "newDoc",  "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["newDoc2", "resultKey", "docResult"]}},
+
+		{"id": "fold", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["doc"],
+			"body": "newDoc"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "optimize:fold", "value": "fold"}
+			]
+		}}
+	],
+	"result": "exports"
+}

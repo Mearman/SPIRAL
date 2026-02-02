@@ -33,6 +33,7 @@ export function bootstrapRegistry(): OperatorRegistry {
 		"typecheck.cir.json",
 		"meta.cir.json",
 		"optimize-dce.cir.json",
+		"optimize-fold.cir.json",
 	];
 
 	const paths: string[] = [];

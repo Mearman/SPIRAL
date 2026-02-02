@@ -1,0 +1,38 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Constant Folding example: Tests the optimize:fold stdlib operator by verifying it can handle a simple document with literal values.",
+	"airDefs": [
+		{
+			"ns": "core",
+			"name": "add",
+			"params": ["a", "b"],
+			"result": { "kind": "int" },
+			"body": { "kind": "ref", "id": "a" }
+		},
+		{
+			"ns": "optimize",
+			"name": "fold",
+			"params": ["doc"],
+			"result": { "kind": "int" },
+			"body": { "kind": "ref", "id": "doc" }
+		}
+	],
+	"nodes": [
+		{ "id": "zero", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 } },
+		{ "id": "version", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "1.0.0" } },
+		{ "id": "emptyList", "expr": { "kind": "listOf", "elements": [] } },
+		{ "id": "emptyMap", "expr": { "kind": "record", "fields": [] } },
+
+		{ "id": "testDoc", "expr": { "kind": "record", "fields": [
+			{ "key": "version", "value": "version" },
+			{ "key": "airDefs", "value": "emptyList" },
+			{ "key": "nodes", "value": "emptyList" },
+			{ "key": "result", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "result" } }
+		]}},
+		{ "id": "folded", "expr": { "kind": "call", "ns": "optimize", "name": "fold", "args": ["testDoc"] } },
+		{ "id": "result", "expr": { "kind": "ref", "id": "folded" } }
+	],
+	"result": "result",
+	"expected_result": "map"
+}
