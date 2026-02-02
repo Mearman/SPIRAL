@@ -1,0 +1,159 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Common constants stdlib — exports frequently-used literal values to eliminate repetition.",
+	"airDefs": [],
+	"nodes": [
+		{
+			"id": "zero",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "int" },
+				"value": 0
+			}
+		},
+		{
+			"id": "one",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "int" },
+				"value": 1
+			}
+		},
+		{
+			"id": "two",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "int" },
+				"value": 2
+			}
+		},
+		{
+			"id": "ten",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "int" },
+				"value": 10
+			}
+		},
+		{
+			"id": "oneK",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "int" },
+				"value": 1024
+			}
+		},
+		{
+			"id": "oneM",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "int" },
+				"value": 1048576
+			}
+		},
+		{
+			"id": "true",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "bool" },
+				"value": true
+			}
+		},
+		{
+			"id": "false",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "bool" },
+				"value": false
+			}
+		},
+		{
+			"id": "emptyStr",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": ""
+			}
+		},
+		{
+			"id": "defaultStr",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "default"
+			}
+		},
+		{
+			"id": "nullStr",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "null"
+			}
+		},
+		{
+			"id": "errorStr",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "error"
+			}
+		},
+		{
+			"id": "pi",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "float" },
+				"value": 3.14159265359
+			}
+		},
+		{
+			"id": "e",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "float" },
+				"value": 2.71828182846
+			}
+		},
+		{
+			"id": "emptyList",
+			"expr": {
+				"kind": "listOf",
+				"elements": []
+			}
+		},
+		{
+			"id": "emptyMap",
+			"expr": {
+				"kind": "record",
+				"fields": []
+			}
+		},
+		{
+			"id": "exports",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{ "key": "const:zero", "value": "zero" },
+					{ "key": "const:one", "value": "one" },
+					{ "key": "const:two", "value": "two" },
+					{ "key": "const:ten", "value": "ten" },
+					{ "key": "const:oneK", "value": "oneK" },
+					{ "key": "const:oneM", "value": "oneM" },
+					{ "key": "const:true", "value": "true" },
+					{ "key": "const:false", "value": "false" },
+					{ "key": "const:emptyStr", "value": "emptyStr" },
+					{ "key": "const:defaultStr", "value": "defaultStr" },
+					{ "key": "const:nullStr", "value": "nullStr" },
+					{ "key": "const:errorStr", "value": "errorStr" },
+					{ "key": "const:pi", "value": "pi" },
+					{ "key": "const:e", "value": "e" },
+					{ "key": "const:emptyList", "value": "emptyList" },
+					{ "key": "const:emptyMap", "value": "emptyMap" }
+				]
+			}
+		}
+	],
+	"result": "exports"
+}
