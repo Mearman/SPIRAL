@@ -19,6 +19,7 @@ export function bootstrapRegistry(): OperatorRegistry {
 
 	// Collect stdlib paths in dependency order
 	const stdlibFiles = [
+		"constants.cir.json",
 		"bool.cir.json",
 		"list.cir.json",
 		"string.cir.json",
