@@ -1,0 +1,85 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Document parser — parses a JSON string into a validated SPIRAL document. Combines json:parse with schema:validate.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "trueVal",   "expr": {"kind": "lit", "type": {"kind": "bool"}, "value": true}},
+		{"id": "falseVal",  "expr": {"kind": "lit", "type": {"kind": "bool"}, "value": false}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+		{"id": "validKey",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "valid"}},
+		{"id": "errorsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "errors"}},
+		{"id": "mapStr",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "map"}},
+		{"id": "parseErrMsg", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "json:parse failed — invalid JSON input"}},
+		{"id": "notMapMsg",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Parsed value is not a map/object"}},
+
+		{"id": "parseBody", "expr": {
+			"kind": "let", "name": "isParseErr",
+			"value": {"kind": "call", "ns": "core", "name": "isError", "args": [
+				{"kind": "call", "ns": "json", "name": "parse", "args": [{"kind": "var", "name": "jsonStr"}]}
+			]},
+			"body": {"kind": "if",
+				"cond": {"kind": "var", "name": "isParseErr"},
+				"then": {"kind": "record", "fields": [
+					{"key": "valid", "value": "falseVal"},
+					{"key": "doc", "value": "emptyList"},
+					{"key": "errors", "value": {"kind": "listOf", "elements": ["parseErrMsg"]}}
+				]},
+				"else": {"kind": "let", "name": "parsed",
+					"value": {"kind": "call", "ns": "json", "name": "parse", "args": [{"kind": "var", "name": "jsonStr"}]},
+					"body": {"kind": "let", "name": "parsedType",
+						"value": {"kind": "call", "ns": "core", "name": "typeof", "args": [{"kind": "var", "name": "parsed"}]},
+						"body": {"kind": "let", "name": "isMap",
+							"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "parsedType"}, "mapStr"]},
+							"body": {"kind": "if",
+								"cond": {"kind": "var", "name": "isMap"},
+								"then": {"kind": "let", "name": "schemaResult",
+									"value": {"kind": "call", "ns": "schema", "name": "validate", "args": [{"kind": "var", "name": "parsed"}]},
+									"body": {"kind": "let", "name": "schemaValid",
+										"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "schemaResult"}, "validKey"]},
+										"body": {"kind": "if",
+											"cond": {"kind": "var", "name": "schemaValid"},
+											"then": {"kind": "record", "fields": [
+												{"key": "valid", "value": "trueVal"},
+												{"key": "doc", "value": {"kind": "var", "name": "parsed"}},
+												{"key": "errors", "value": "emptyList"}
+											]},
+											"else": {"kind": "let", "name": "schemaErrors",
+												"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "schemaResult"}, "errorsKey"]},
+												"body": {"kind": "record", "fields": [
+													{"key": "valid", "value": "falseVal"},
+													{"key": "doc", "value": "emptyList"},
+													{"key": "errors", "value": {"kind": "var", "name": "schemaErrors"}}
+												]}
+											}
+										}
+									}
+								},
+								"else": {"kind": "record", "fields": [
+									{"key": "valid", "value": "falseVal"},
+									{"key": "doc", "value": "emptyList"},
+									{"key": "errors", "value": {"kind": "listOf", "elements": ["notMapMsg"]}}
+								]}
+							}
+						}
+					}
+				}
+			}
+		}},
+
+		{"id": "parseFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "string"}], "returns": {"kind": "int"}},
+			"params": ["jsonStr"],
+			"body": "parseBody"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "parse:parse", "value": "parseFn"}
+			]
+		}}
+	],
+	"result": "exports"
+}

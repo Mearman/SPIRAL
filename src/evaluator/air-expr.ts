@@ -233,6 +233,11 @@ interface CallCtx {
 }
 
 function evalCall(ctx: AirEvalCtx, expr: Expr & { kind: "call" }, env: ValueEnv): Value {
+	// core:isError must receive error values without propagation
+	if (expr.ns === "core" && expr.name === "isError") {
+		const args = expr.args.map(arg => resolveCallArg(ctx, arg, env));
+		return tryApplyOp({ airCtx: ctx, expr, env }, args);
+	}
 	const argValues = resolveCallArgs(ctx, expr, env);
 	if (!Array.isArray(argValues)) return argValues;
 	return tryApplyOp({ airCtx: ctx, expr, env }, argValues);

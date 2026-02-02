@@ -1232,6 +1232,70 @@ describe("schema stdlib", () => {
 	});
 });
 
+describe("parse stdlib", () => {
+	const kernel = createKernelRegistry();
+	const registry = loadStdlib(kernel, [
+		resolve(stdlibDir, "bool.cir.json"),
+		resolve(stdlibDir, "list.cir.json"),
+		resolve(stdlibDir, "string.cir.json"),
+		resolve(stdlibDir, "core-derived.cir.json"),
+		resolve(stdlibDir, "map.cir.json"),
+		resolve(stdlibDir, "set.cir.json"),
+		resolve(stdlibDir, "conversion.cir.json"),
+		resolve(stdlibDir, "list-hof.cir.json"),
+		resolve(stdlibDir, "validate.cir.json"),
+		resolve(stdlibDir, "schema.cir.json"),
+		resolve(stdlibDir, "parse.cir.json"),
+	]);
+
+	it("parse:parse returns valid for correct CIR JSON", () => {
+		const parse = lookupOperator(registry, "parse", "parse")!;
+		const json = JSON.stringify({
+			version: "1.0.0",
+			airDefs: [],
+			nodes: [
+				{id: "a", expr: {kind: "lit", type: {kind: "int"}, value: 10}},
+			],
+			result: "a",
+		});
+		const result = parse.fn(stringVal(json));
+		assert.ok(result.kind === "map");
+		const valid = result.value.get("s:valid");
+		assert.ok(valid?.kind === "bool" && valid.value === true);
+		const doc = result.value.get("s:doc");
+		assert.ok(doc?.kind === "map");
+	});
+
+	it("parse:parse returns errors for invalid JSON", () => {
+		const parse = lookupOperator(registry, "parse", "parse")!;
+		const result = parse.fn(stringVal("{not valid json"));
+		assert.ok(result.kind === "map");
+		const valid = result.value.get("s:valid");
+		assert.ok(valid?.kind === "bool" && valid.value === false);
+		const errors = result.value.get("s:errors");
+		assert.ok(errors?.kind === "list" && errors.value.length > 0);
+	});
+
+	it("parse:parse returns errors for non-object JSON", () => {
+		const parse = lookupOperator(registry, "parse", "parse")!;
+		const result = parse.fn(stringVal("[1,2,3]"));
+		assert.ok(result.kind === "map");
+		const valid = result.value.get("s:valid");
+		assert.ok(valid?.kind === "bool" && valid.value === false);
+	});
+
+	it("parse:parse returns schema errors for invalid document", () => {
+		const parse = lookupOperator(registry, "parse", "parse")!;
+		const json = JSON.stringify({nodes: [], result: "a"});
+		const result = parse.fn(stringVal(json));
+		assert.ok(result.kind === "map");
+		const valid = result.value.get("s:valid");
+		assert.ok(valid?.kind === "bool" && valid.value === false);
+		const errors = result.value.get("s:errors");
+		assert.ok(errors?.kind === "list" && errors.value.length > 0);
+	});
+});
+
 describe("meta stdlib", () => {
 	const kernel = createKernelRegistry();
 	const registry = loadStdlib(kernel, [
