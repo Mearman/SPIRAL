@@ -6,12 +6,12 @@
 // before schema validation to maintain JSON Schema compatibility.
 //
 // Supported shorthands:
-// 1. Inline literals: 42 → {kind: "lit", type: {kind: "int"}, value: 42}
-// 2. Lambda type inference: omit type → infer all params as int, returns as int
-// 3. Record field shorthand: {x: "y"} → [{key: "x", value: "y"}]
-// 4. Call syntax shorthand: op: "core:add" → ns: "core", name: "add"
+// 1. Inline literals: 42 -> {kind: "lit", type: {kind: "int"}, value: 42}
+// 2. Lambda type inference: omit type -> infer all params as int, returns as int
+// 3. Record field shorthand: {x: "y"} -> [{key: "x", value: "y"}]
+// 4. Call syntax shorthand: op: "core:add" -> ns: "core", name: "add"
 
-import type { DocLike, Expr, Node, Type } from "./types.js";
+import type { Expr, Type } from "./types.js";
 
 //==============================================================================
 // Options
@@ -42,38 +42,47 @@ function isPrimitive(val: unknown): val is number | boolean | string {
 	return typeof val === "number" || typeof val === "boolean" || typeof val === "string";
 }
 
-/** Check if an object has a specific kind property */
-function hasKind(val: unknown, kind: string): val is { kind: string } {
-	if (typeof val !== "object" || val === null) return false;
-	return "kind" in val && (val as { kind: string }).kind === kind;
+/** Type guard to check if value is an Expr (has kind property with valid expression kind) */
+function isExpr(val: unknown): val is Expr {
+	return typeof val === "object" && val !== null &&
+		"kind" in val && typeof val.kind === "string";
+}
+
+/** Type guard to check if value is an expression node (has id and expr properties) */
+function isExprNode(val: unknown): val is { id: string; expr: unknown } {
+	return typeof val === "object" && val !== null &&
+		"id" in val && typeof val.id === "string" &&
+		"expr" in val;
 }
 
 /** Check if value is a record expression with object-format fields */
-function isRecordWithObjectFields(val: unknown): val is { kind: "record"; fields: Record<string, unknown>; type?: Type } {
-	if (!hasKind(val, "record")) return false;
-	const record = val as { kind: "record"; fields: unknown };
-	return "fields" in record &&
-		typeof record.fields === "object" &&
-		record.fields !== null &&
-		!Array.isArray(record.fields);
+function isRecordWithObjectFields(
+	val: unknown
+): val is { kind: "record"; fields: Record<string, unknown>; type?: Type } {
+	if (!isExpr(val) || val.kind !== "record") return false;
+	return "fields" in val &&
+		typeof val.fields === "object" &&
+		!Array.isArray(val.fields);
 }
 
 /** Check if value is a lambda without type field */
 function isLambdaWithoutType(val: unknown): val is { kind: "lambda"; params: unknown[]; body: string } {
-	if (!hasKind(val, "lambda")) return false;
-	return !("type" in (val as Record<string, unknown>));
+	if (!isExpr(val) || val.kind !== "lambda") return false;
+	return "params" in val &&
+		Array.isArray(val.params) &&
+		"body" in val &&
+		typeof val.body === "string" &&
+		!("type" in val);
 }
 
 /** Check if value is a call with op field instead of ns/name */
 function isCallWithOp(val: unknown): val is { kind: "call"; op: string; args: unknown[] } {
-	if (!hasKind(val, "call")) return false;
-	const call = val as Record<string, unknown>;
-	return "op" in call && !("ns" in call) && !("name" in call);
+	if (!isExpr(val) || val.kind !== "call") return false;
+	return "op" in val &&
+		typeof val.op === "string" &&
+		!("ns" in val) &&
+		!("name" in val);
 }
-
-//==============================================================================
-// Transform Functions
-//==============================================================================
 
 /** Transform inline literals (42, true) into LitExpr */
 function transformInlineLiteral(val: number | boolean | string): Expr {
@@ -85,221 +94,201 @@ function transformInlineLiteral(val: number | boolean | string): Expr {
 }
 
 /** Transform lambda without type into lambda with inferred type */
-function transformLambdaType(expr: { kind: "lambda"; params: unknown[]; body: string }): Expr {
-	const paramTypes = expr.params.map(() => ({ kind: "int" as const }));
+function transformLambdaType(lambda: { kind: "lambda"; params: unknown[]; body: string }): Expr {
+	const paramTypes = lambda.params.map(() => ({ kind: "int" as const }));
+	// Convert params to proper type - filter to strings only, then map to LambdaParam format
+	const stringParams = lambda.params.filter((p): p is string => typeof p === "string");
 	return {
-		...expr,
+		kind: "lambda",
+		params: stringParams,
+		body: lambda.body,
 		type: { kind: "fn" as const, params: paramTypes, returns: { kind: "int" as const } }
 	};
 }
 
 /** Transform record with object fields into record with array fields */
-function transformRecordFields(expr: { kind: "record"; fields: Record<string, unknown>; type?: Type }): Expr {
-	const fields = Object.entries(expr.fields).map(([key, value]) => ({ key, value }));
-	return {
-		...expr,
-		fields,
-	};
+function transformRecordFields(
+	record: { kind: "record"; fields: Record<string, unknown> }
+): { kind: "record"; fields: { key: string; value: unknown }[] } {
+	const fields = Object.entries(record.fields).map(([key, value]) => ({ key, value }));
+	return { kind: "record", fields };
 }
 
 /** Transform call with op into call with ns/name */
-function transformCallOp(call: { kind: "call"; op: string; args: unknown[] }): Expr {
-	const [ns, name] = call.op.split(":");
-	return {
-		kind: "call",
-		ns,
-		name,
-		args: call.args,
-	};
-}
-
-//==============================================================================
-// Expression Desugaring by Kind
-//==============================================================================
-
-/** Desugar a call expression */
-function desugarCall(obj: Record<string, unknown>, options: ShorthandDesugarOptions): Expr {
-	if (options.callOpShorthand && isCallWithOp(obj)) {
-		const transformed = transformCallOp(obj as { kind: "call"; op: string; args: unknown[] });
-		return {
-			...transformed,
-			args: transformed.args.map((arg) => desugarExpr(arg, options))
-		};
+function transformCallOp(call: { kind: "call"; op: string; args: unknown[] }): { kind: "call"; ns: string; name: string; args: unknown[] } {
+	const colonIndex = call.op.indexOf(":");
+	if (colonIndex === -1) {
+		// Invalid op format, return minimal call (will fail validation later)
+		return { kind: "call", ns: "", name: "", args: [] };
 	}
-	// Recursively transform args
-	if ("args" in obj && Array.isArray(obj.args)) {
-		obj.args = obj.args.map((arg) => desugarExpr(arg, options));
-	}
-	return obj as Expr;
-}
-
-/** Desugar an if expression */
-function desugarIf(obj: Record<string, unknown>, options: ShorthandDesugarOptions): Expr {
-	if ("cond" in obj) obj.cond = desugarExpr(obj.cond, options);
-	if ("then" in obj) obj.then = desugarExpr(obj.then, options);
-	if ("else" in obj) obj.else = desugarExpr(obj.else, options);
-	return obj as Expr;
-}
-
-/** Desugar a let expression */
-function desugarLet(obj: Record<string, unknown>, options: ShorthandDesugarOptions): Expr {
-	if ("value" in obj) obj.value = desugarExpr(obj.value, options);
-	if ("body" in obj) obj.body = desugarExpr(obj.body, options);
-	return obj as Expr;
-}
-
-/** Desugar a record expression */
-function desugarRecord(obj: Record<string, unknown>, options: ShorthandDesugarOptions): Expr {
-	if (options.recordObjectShorthand && isRecordWithObjectFields(obj)) {
-		const transformed = transformRecordFields(obj as { kind: "record"; fields: Record<string, unknown>; type?: Type });
-		// Recursively transform field values
-		const fields = transformed.fields.map((f) => ({
-			key: f.key,
-			value: desugarExpr(f.value, options)
-		}));
-		return { ...transformed, fields };
-	}
-	// Recursively transform field values
-	if ("fields" in obj && Array.isArray(obj.fields)) {
-		obj.fields = obj.fields.map((f: { key: string; value: unknown }) => ({
-			key: f.key,
-			value: desugarExpr(f.value, options)
-		}));
-	}
-	return obj as Expr;
-}
-
-/** Desugar a listOf expression */
-function desugarListOf(obj: Record<string, unknown>, options: ShorthandDesugarOptions): Expr {
-	if ("elements" in obj && Array.isArray(obj.elements)) {
-		obj.elements = obj.elements.map((el) => desugarExpr(el, options));
-	}
-	return obj as Expr;
-}
-
-/** Desugar a match expression */
-function desugarMatch(obj: Record<string, unknown>, options: ShorthandDesugarOptions): Expr {
-	if ("value" in obj) obj.value = desugarExpr(obj.value, options);
-	if ("cases" in obj && Array.isArray(obj.cases)) {
-		obj.cases = obj.cases.map((c: { pattern: string; body: unknown }) => ({
-			pattern: c.pattern,
-			body: desugarExpr(c.body, options)
-		}));
-	}
-	if ("default" in obj && obj.default !== undefined) {
-		obj.default = desugarExpr(obj.default, options);
-	}
-	return obj as Expr;
-}
-
-/** Desugar a callExpr expression */
-function desugarCallExpr(obj: Record<string, unknown>, options: ShorthandDesugarOptions): Expr {
-	if ("fn" in obj && "args" in obj && Array.isArray(obj.args)) {
-		obj.args = obj.args.map((arg) => desugarExpr(arg, options));
-	}
-	return obj as Expr;
-}
-
-/** Desugar generic expression with nested properties */
-function desugarGeneric(obj: Record<string, unknown>, options: ShorthandDesugarOptions): Expr {
-	for (const key of Object.keys(obj)) {
-		if (key === "type") continue; // Skip type annotations
-		const value = obj[key];
-		if (Array.isArray(value)) {
-			obj[key] = value.map((item) => desugarExpr(item, options));
-		} else if (typeof value === "object" && value !== null) {
-			obj[key] = desugarExpr(value, options);
-		}
-	}
-	return obj as Expr;
+	const ns = call.op.slice(0, colonIndex);
+	const name = call.op.slice(colonIndex + 1);
+	return { kind: "call", ns, name, args: call.args };
 }
 
 //==============================================================================
 // Main Expression Desugaring
 //==============================================================================
 
+/** Convert unknown input to Expr, handling shorthands */
+function toExpr(val: unknown, options: Required<ShorthandDesugarOptions>): Expr {
+	// Handle null/undefined - return empty ref
+	if (val === null || val === undefined) {
+		return { kind: "ref", id: "" };
+	}
+
+	// DO NOT convert strings here - string refs are valid in CIR and should be preserved
+	// This function is only called on top-level node expr values, which should be objects
+	if (typeof val === "string") {
+		// String at top level is invalid for CIR, but we preserve it for validation
+		// (will be caught as invalid since it's not a proper Expr)
+		return { kind: "ref", id: val };
+	}
+
+	// Check for inline literal shorthand (primitives at top level)
+	if (options.inlineLiterals && isPrimitive(val)) {
+		return transformInlineLiteral(val);
+	}
+
+	// At this point, should be an Expr object - use type guard
+	if (isExpr(val)) {
+		return val;
+	}
+
+	// Check if this is an object that looks like it's trying to be an expression
+	// (has expression-like properties) but is missing the required 'kind' property.
+	// In that case, preserve it as-is so validation can reject it.
+	if (typeof val === "object" && val !== null && !Array.isArray(val)) {
+		// Check for expression-like properties
+		const hasExprProps = "type" in val || "value" in val || "params" in val ||
+			"args" in val || "body" in val || "ns" in val || "name" in val;
+		if (hasExprProps && !("kind" in val)) {
+			// This looks like a malformed expression - preserve it for validation
+			return val as Expr;
+		}
+	}
+
+	// For other unknown values, create a lit with void type
+	return { kind: "lit", type: { kind: "void" }, value: val };
+}
+
 /** Recursively transform an expression, applying all shorthand desugars */
-function desugarExpr(expr: unknown, options: ShorthandDesugarOptions): Expr {
-	// Handle null/undefined/string refs (pass through)
-	if (expr === null || expr === undefined || typeof expr === "string") {
-		return expr as Expr;
-	}
+function desugarExpr(val: unknown, options: Required<ShorthandDesugarOptions>): Expr {
+	// Convert unknown to Expr first
+	const expr = toExpr(val, options);
 
-	// Check for inline literal shorthand
-	if (options.inlineLiterals && isPrimitive(expr)) {
-		return transformInlineLiteral(expr);
-	}
-
-	// Must be an object with kind property
-	if (typeof expr !== "object" || !("kind" in expr)) {
-		return expr as Expr;
-	}
-
-	const obj = { ...expr } as Record<string, unknown>;
-
-	// Transform based on expression kind
-	switch (obj.kind) {
+	// Transform based on expression kind - type narrowing happens here via the kind property
+	switch (expr.kind) {
 	case "lit":
 	case "ref":
 	case "var":
 	case "airRef":
 	case "predicate":
-		return obj as Expr;
-
-	case "call":
-		return desugarCall(obj, options);
-
-	case "if":
-		return desugarIf(obj, options);
-
-	case "let":
-		return desugarLet(obj, options);
-
-	case "record":
-		return desugarRecord(obj, options);
-
-	case "listOf":
-		return desugarListOf(obj, options);
-
-	case "match":
-		return desugarMatch(obj, options);
-
-	case "lambda":
-		if (options.inferLambdaTypes && isLambdaWithoutType(obj)) {
-			return transformLambdaType(obj as { kind: "lambda"; params: unknown[]; body: string });
-		}
-		return obj as Expr;
-
-	case "callExpr":
-		return desugarCallExpr(obj, options);
-
 	case "fix":
 	case "do":
-		return obj as Expr;
+		// These kinds don't need recursive desugaring - return as-is
+		return expr;
 
-		// EIR expressions - use generic desugaring
-	case "seq":
-	case "assign":
-	case "while":
-	case "for":
-	case "iter":
-	case "effect":
-	case "refCell":
-	case "deref":
-	case "try":
-	case "par":
-	case "spawn":
-	case "await":
-	case "channel":
-	case "send":
-	case "recv":
-	case "select":
-	case "race":
-		return desugarGeneric(obj, options);
+	case "call": {
+		// For invalid inputs (missing args), preserve as-is for validation to reject
+		if (!("args" in expr) || !Array.isArray(expr.args)) {
+			// Access ns/name safely using bracket notation for invalid inputs
+			// Type assertion: intentionally preserving invalid structure for validation
+			return {
+				kind: "call",
+				ns: ("ns" in expr && typeof expr.ns === "string") ? expr.ns : "",
+				name: ("name" in expr && typeof expr.name === "string") ? expr.name : "",
+			} as Expr;
+		}
+		// Check for call op shorthand and transform
+		if (options.callOpShorthand && isCallWithOp(expr)) {
+			const transformed = transformCallOp(expr);
+			// Recursively desugar args - only desugar objects, preserve string refs
+			return {
+				...transformed,
+				args: transformed.args.map(arg => typeof arg === "string" ? arg : desugarExpr(arg, options)),
+			};
+		}
+		// Regular call - recursively desugar args (only objects, not strings)
+		return {
+			...expr,
+			args: expr.args.map(arg => typeof arg === "string" ? arg : desugarExpr(arg, options)),
+		};
+	}
+
+	case "if":
+		return {
+			...expr,
+			// Only desugar if the value is an object - strings are valid node references
+			cond: typeof expr.cond === "string" ? expr.cond : desugarExpr(expr.cond, options),
+			then: typeof expr.then === "string" ? expr.then : desugarExpr(expr.then, options),
+			else: typeof expr.else === "string" ? expr.else : desugarExpr(expr.else, options),
+		};
+
+	case "let":
+		return {
+			...expr,
+			// value and body can be string refs (valid) or inline expressions (desugar them)
+			value: typeof expr.value === "string" ? expr.value : desugarExpr(expr.value, options),
+			body: typeof expr.body === "string" ? expr.body : desugarExpr(expr.body, options),
+		};
+
+	case "record": {
+		// Check for record object shorthand
+		if (options.recordObjectShorthand && isRecordWithObjectFields(expr)) {
+			const transformed = transformRecordFields(expr);
+			return {
+				kind: "record",
+				fields: transformed.fields.map(f => ({
+					key: f.key,
+					value: typeof f.value === "string" ? f.value : desugarExpr(f.value, options)
+				})),
+			};
+		}
+		// Regular record - recursively transform field values (only objects, not strings)
+		return {
+			...expr,
+			fields: expr.fields.map(f => ({
+				key: f.key,
+				value: typeof f.value === "string" ? f.value : desugarExpr(f.value, options)
+			})),
+		};
+	}
+
+	case "listOf":
+		return {
+			...expr,
+			elements: expr.elements.map(el => typeof el === "string" ? el : desugarExpr(el, options)),
+		};
+
+	case "match":
+		return {
+			...expr,
+			value: typeof expr.value === "string" ? expr.value : desugarExpr(expr.value, options),
+			cases: expr.cases.map(c => ({
+				...c,
+				body: typeof c.body === "string" ? c.body : desugarExpr(c.body, options)
+			})),
+			...(expr.default !== undefined ? { default: typeof expr.default === "string" ? expr.default : desugarExpr(expr.default, options) } : {}),
+		};
+
+	case "lambda":
+		if (options.inferLambdaTypes && isLambdaWithoutType(expr)) {
+			return transformLambdaType(expr);
+		}
+		// Lambda body is a string ref, not an expr - no recursion needed
+		return expr;
+
+	case "callExpr":
+		return {
+			...expr,
+			args: expr.args.map(arg => typeof arg === "string" ? arg : desugarExpr(arg, options)),
+		};
 
 	default:
-		// Unknown kind - return as-is
-		return obj as Expr;
+		// Unknown kind - this might be an EIR expression which doesn't need desugaring
+		// EIR expressions use string references, not nested expressions
+		return expr;
 	}
 }
 
@@ -313,11 +302,11 @@ function desugarExpr(expr: unknown, options: ShorthandDesugarOptions): Expr {
  * This function transforms shorthand forms into their verbose equivalents,
  * maintaining backward compatibility while enabling more concise documents.
  *
- * @param doc - The document to desugar
+ * @param doc - The document to desugar (any SPIRAL document type)
  * @param options - Options to control which shorthands are enabled
- * @returns The desugared document
+ * @returns The desugared document (same type as input)
  */
-export function desugarShorthands<T extends DocLike>(
+export function desugarShorthands<T extends object>(
 	doc: T,
 	options: ShorthandDesugarOptions = {}
 ): T {
@@ -329,24 +318,23 @@ export function desugarShorthands<T extends DocLike>(
 		...options
 	};
 
-	// Handle null, undefined, or non-object inputs
-	if (doc === null || doc === undefined || typeof doc !== "object") {
-		return doc;
-	}
-
 	// If document has no nodes, return as-is
-	const docRecord = doc as Record<string, unknown>;
-	if (!("nodes" in docRecord) || !Array.isArray(docRecord.nodes)) {
+	if (doc === null || typeof doc !== "object" || !("nodes" in doc) || !Array.isArray(doc.nodes)) {
 		return doc;
 	}
 
-	// Clone document to avoid mutation
-	const result = { ...doc };
-	const nodes = docRecord.nodes as Node[];
-	(result as Record<string, unknown>).nodes = nodes.map((node) => ({
-		...node,
-		expr: desugarExpr(node.expr, opts),
-	}));
+	// Clone document to avoid mutation and transform nodes
+	const transformedNodes = doc.nodes.map((node: unknown) => {
+		// Check if this is an expression node (has id and expr properties)
+		if (isExprNode(node)) {
+			return {
+				id: node.id,
+				expr: desugarExpr(node.expr, opts),
+			};
+		}
+		// Block nodes or other node types - pass through as-is
+		return node;
+	});
 
-	return result as T;
+	return { ...doc, nodes: transformedNodes };
 }

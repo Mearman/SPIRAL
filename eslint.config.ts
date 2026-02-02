@@ -224,6 +224,8 @@ export default [
       "max-lines-per-function": "off",
       "max-statements": "off",
       "complexity": "off",
+      "@typescript-eslint/consistent-type-assertions": "off",
+      "@typescript-eslint/no-unnecessary-condition": "off",
     },
   },
   {
