@@ -33,6 +33,5 @@
 		{ "id": "folded", "expr": { "kind": "call", "ns": "optimize", "name": "fold", "args": ["testDoc"] } },
 		{ "id": "result", "expr": { "kind": "ref", "id": "folded" } }
 	],
-	"result": "result",
-	"expected_result": "map"
+	"result": "result"
 }

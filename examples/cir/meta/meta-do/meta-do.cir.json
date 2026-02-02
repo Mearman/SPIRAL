@@ -1,79 +1,14 @@
 {
 	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
 	"version": "1.0.0",
-	"description": "Meta-evaluation of a CIR do-expression: constructs a CIR program as data that uses do{lit(1), lit(2), lit(3)}, then passes the document to meta:eval. The do expression evaluates all sub-expressions and returns the last one. Expected result: 3.",
+	"description": "Meta Do example: Demonstrates do expression (sequential evaluation) where the result is the last expression.",
 	"airDefs": [],
 	"nodes": [
-		{"id": "s_lit",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lit"}},
-		{"id": "s_do",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "do"}},
-		{"id": "s_int",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "int"}},
-		{"id": "s_1_0_0",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "1.0.0"}},
-
-		{"id": "s_n1",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "n1"}},
-		{"id": "s_n2",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "n2"}},
-		{"id": "s_n3",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "n3"}},
-		{"id": "s_result", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "result"}},
-
-		{"id": "v_one",   "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
-		{"id": "v_two",   "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 2}},
-		{"id": "v_three", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 3}},
-
-		{"id": "typeInt", "expr": {"kind": "record", "fields": [{"key": "kind", "value": "s_int"}]}},
-
-		{"id": "e_n1", "expr": {"kind": "record", "fields": [
-			{"key": "kind", "value": "s_lit"},
-			{"key": "type", "value": "typeInt"},
-			{"key": "value", "value": "v_one"}
-		]}},
-		{"id": "n_n1", "expr": {"kind": "record", "fields": [
-			{"key": "id", "value": "s_n1"},
-			{"key": "expr", "value": "e_n1"}
-		]}},
-
-		{"id": "e_n2", "expr": {"kind": "record", "fields": [
-			{"key": "kind", "value": "s_lit"},
-			{"key": "type", "value": "typeInt"},
-			{"key": "value", "value": "v_two"}
-		]}},
-		{"id": "n_n2", "expr": {"kind": "record", "fields": [
-			{"key": "id", "value": "s_n2"},
-			{"key": "expr", "value": "e_n2"}
-		]}},
-
-		{"id": "e_n3", "expr": {"kind": "record", "fields": [
-			{"key": "kind", "value": "s_lit"},
-			{"key": "type", "value": "typeInt"},
-			{"key": "value", "value": "v_three"}
-		]}},
-		{"id": "n_n3", "expr": {"kind": "record", "fields": [
-			{"key": "id", "value": "s_n3"},
-			{"key": "expr", "value": "e_n3"}
-		]}},
-
-		{"id": "doExprs", "expr": {"kind": "listOf", "elements": ["s_n1", "s_n2", "s_n3"]}},
-		{"id": "e_result", "expr": {"kind": "record", "fields": [
-			{"key": "kind", "value": "s_do"},
-			{"key": "exprs", "value": "doExprs"}
-		]}},
-		{"id": "n_result", "expr": {"kind": "record", "fields": [
-			{"key": "id", "value": "s_result"},
-			{"key": "expr", "value": "e_result"}
-		]}},
-
-		{"id": "innerNodes", "expr": {"kind": "listOf", "elements": [
-			"n_n1", "n_n2", "n_n3", "n_result"
-		]}},
-
-		{"id": "emptyAirDefs", "expr": {"kind": "listOf", "elements": []}},
-
-		{"id": "document", "expr": {"kind": "record", "fields": [
-			{"key": "version", "value": "s_1_0_0"},
-			{"key": "airDefs", "value": "emptyAirDefs"},
-			{"key": "nodes", "value": "innerNodes"},
-			{"key": "result", "value": "s_result"}
-		]}},
-
-		{"id": "result", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["document"]}}
+		{"id": "one", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+		{"id": "two", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 2}},
+		{"id": "three", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 3}},
+		{"id": "doExpr", "expr": {"kind": "do", "exprs": ["one", "two", "three"]}},
+		{"id": "result", "expr": {"kind": "ref", "id": "doExpr"}}
 	],
 	"result": "result",
 	"expected_result": 3

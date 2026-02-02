@@ -1,0 +1,119 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Python code synthesis stdlib — synth:python takes a parsed SPIRAL CIR document map and generates equivalent Python code. Minimal version supporting lit, ref, and call expressions.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+
+		{"id": "kindKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+		{"id": "idKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "id"}},
+		{"id": "exprKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+		{"id": "nsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ns"}},
+		{"id": "nameKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "name"}},
+		{"id": "argsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "args"}},
+		{"id": "typeKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "type"}},
+		{"id": "nodesKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodes"}},
+		{"id": "resultKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "result"}},
+
+		{"id": "stringTypeStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
+		{"id": "intTypeStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "int"}},
+
+		{"id": "litStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lit"}},
+		{"id": "refStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ref"}},
+		{"id": "callStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call"}},
+
+		{"id": "coreStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core"}},
+		{"id": "addStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "add"}},
+
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+		{"id": "newlineStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "\n"}},
+		{"id": "spaceStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": " "}},
+		{"id": "equalStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": " = "}},
+		{"id": "parenOpenStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "("}},
+		{"id": "parenCloseStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": ")"}},
+		{"id": "plusStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": " + "}},
+		{"id": "printStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "print("}},
+		{"id": "printCloseStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": ")"}},
+
+		{"id": "formatLitInt", "expr": {"kind": "lambda", "type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "string"}}, "params": ["x"], "body": "formatLitIntBody"}},
+		{"id": "formatLitIntBody", "expr": {"kind": "call", "ns": "json", "name": "stringify", "args": ["x"]}},
+		{"id": "formatLitStr", "expr": {"kind": "lambda", "type": {"kind": "fn", "params": [{"kind": "string"}], "returns": {"kind": "string"}}, "params": ["x"], "body": "formatLitStrBody"}},
+		{"id": "formatLitStrBody", "expr": {"kind": "call", "ns": "string", "name": "concat", "args": [{"kind": "lit", "type": {"kind": "string"}, "value": "\""}, "x", {"kind": "lit", "type": {"kind": "string"}, "value": "\""}]}},
+
+		{"id": "genLitExpr", "expr": {"kind": "lambda", "type": {"kind": "fn", "params": [{"kind": "map"}, {"kind": "map"}], "returns": {"kind": "string"}}, "params": ["expr", "nodeMap"], "body": "genLitBody"}},
+		{"id": "genLitType", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["expr", "typeKey"]}},
+		{"id": "genLitTypeKind", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["genLitType", "kindKey"]}},
+		{"id": "genLitValue", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["expr", "valueKey"]}},
+		{"id": "genLitDispatch", "expr": {"kind": "let", "name": "handler", "value": {"kind": "call", "ns": "map", "name": "get", "args": ["genLitTypeMap", "genLitTypeKind"]}, "body": "genLitCall"}},
+		{"id": "genLitTypeMap", "expr": {"kind": "record", "fields": [
+			{"key": "int", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "formatLitInt"}},
+			{"key": "string", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "formatLitStr"}}
+		]}},
+		{"id": "genLitCall", "expr": {"kind": "callExpr", "args": ["genLitValue"], "fn": "handler"}},
+		{"id": "genLitBody", "expr": {"kind": "call", "ns": "string", "name": "concat", "args": ["genLitValue", "newlineStr"]}},
+
+		{"id": "genRefExpr", "expr": {"kind": "lambda", "type": {"kind": "fn", "params": [{"kind": "map"}, {"kind": "map"}], "returns": {"kind": "string"}}, "params": ["expr", "nodeMap"], "body": "genRefBody"}},
+		{"id": "genRefId", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["expr", {"kind": "lit", "type": {"kind": "string"}, "value": "id"}]}},
+		{"id": "genRefBody", "expr": {"kind": "call", "ns": "string", "name": "concat", "args": ["genRefId", "newlineStr"]}},
+
+		{"id": "genCallExpr", "expr": {"kind": "lambda", "type": {"kind": "fn", "params": [{"kind": "map"}, {"kind": "map"}], "returns": {"kind": "string"}}, "params": ["expr", "nodeMap"], "body": "genCallBody"}},
+		{"id": "genCallNs", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["expr", "nsKey"]}},
+		{"id": "genCallName", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["expr", "nameKey"]}},
+		{"id": "genCallArgs", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["expr", "argsKey"]}},
+		{"id": "genCallLen", "expr": {"kind": "call", "ns": "list", "name": "length", "args": ["genCallArgs"]}},
+		{"id": "genCallIsAdd", "expr": {"kind": "call", "ns": "core", "name": "and", "args": [{"kind": "call", "ns": "core", "name": "eq", "args": ["genCallNs", "coreStr"]}, {"kind": "call", "ns": "core", "name": "eq", "args": ["genCallName", "addStr"]}]}},
+		{"id": "genCallIsBinary", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["genCallLen", {"kind": "lit", "type": {"kind": "int"}, "value": 2}]}},
+		{"id": "genCallFirst", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["genCallArgs", "zero"]}},
+		{"id": "genCallSecond", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["genCallArgs", "one"]}},
+		{"id": "genCallLeft", "expr": {"kind": "call", "ns": "string", "name": "concat", "args": ["genCallFirst", "newlineStr"]}},
+		{"id": "genCallRight", "expr": {"kind": "call", "ns": "string", "name": "concat", "args": ["genCallSecond", "newlineStr"]}},
+		{"id": "genCallAddResult", "expr": {"kind": "call", "ns": "string", "name": "concat", "args": ["genCallLeft", "plusStr", "genCallRight"]}},
+		{"id": "genCallDefault", "expr": {"kind": "call", "ns": "string", "name": "concat", "args": ["genCallNs", ":", "genCallName", "parenOpenStr", "genCallArgs", " parenCloseStr"]}},
+		{"id": "genCallBinaryResult", "expr": {"kind": "if", "cond": "genCallIsAdd", "then": "genCallAddResult", "else": "genCallDefault"}},
+		{"id": "genCallResult", "expr": {"kind": "if", "cond": "genCallIsBinary", "then": "genCallBinaryResult", "else": "genCallDefault"}},
+		{"id": "genCallBody", "expr": {"kind": "call", "ns": "string", "name": "concat", "args": ["genCallResult", "newlineStr"]}},
+
+		{"id": "genExpr", "expr": {"kind": "lambda", "type": {"kind": "fn", "params": [{"kind": "map"}, {"kind": "map"}], "returns": {"kind": "string"}}, "params": ["expr", "nodeMap"], "body": "genExprDispatch"}},
+		{"id": "genExprKind", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["expr", "kindKey"]}},
+		{"id": "genExprDispatch", "expr": {"kind": "let", "name": "handler", "value": {"kind": "call", "ns": "map", "name": "get", "args": ["genExprKindMap", "genExprKind"]}, "body": "genExprCall"}},
+		{"id": "genExprKindMap", "expr": {"kind": "record", "fields": [
+			{"key": "lit", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "genLitExpr"}},
+			{"key": "ref", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "genRefExpr"}},
+			{"key": "call", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "genCallExpr"}}
+		]}},
+		{"id": "genExprCall", "expr": {"kind": "callExpr", "args": ["expr", "nodeMap"], "fn": "handler"}},
+
+		{"id": "genNode", "expr": {"kind": "lambda", "type": {"kind": "fn", "params": [{"kind": "map"}, {"kind": "string"}, {"kind": "map"}], "returns": {"kind": "string"}}, "params": ["node", "nodeId", "nodeMap"], "body": "genNodeBody"}},
+		{"id": "genNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["node", "exprKey"]}},
+		{"id": "genNodeCode", "expr": {"kind": "callExpr", "args": ["genNodeExpr", "nodeMap"], "fn": "genExpr"}},
+		{"id": "genNodeBody", "expr": {"kind": "call", "ns": "string", "name": "concat", "args": ["nodeId", "equalStr", "genNodeCode", "newlineStr"]}},
+
+		{"id": "genNodes", "expr": {"kind": "lambda", "type": {"kind": "fn", "params": [{"kind": "list"}, {"kind": "map"}], "returns": {"kind": "string"}}, "params": ["nodes", "nodeMap"], "body": "genNodesLoop"}},
+		{"id": "genNodesLoop", "expr": {"kind": "lambda", "type": {"kind": "fn", "params": [{"kind": "list"}, {"kind": "map"}, {"kind": "string"}], "returns": {"kind": "string"}}, "params": ["nodes", "nodeMap", "acc"], "body": "genNodesLoopBody"}},
+		{"id": "genNodesLoopBody", "expr": {"kind": "let", "name": "len", "value": {"kind": "call", "ns": "list", "name": "length", "args": ["nodes"]}, "body": "genNodesCheck"}},
+		{"id": "genNodesCheck", "expr": {"kind": "if", "cond": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "call", "ns": "list", "name": "length", "args": ["nodes"]}, "zero"]}, "then": "acc", "else": "genNodesStep"}},
+		{"id": "genNodesFirst", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["nodes", "zero"]}},
+		{"id": "genNodesRest", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["nodes", "one"]}},
+		{"id": "genNodesFirstId", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["genNodesFirst", "idKey"]}},
+		{"id": "genNodesFirstCode", "expr": {"kind": "callExpr", "args": ["genNodesFirst", "genNodesFirstId", "nodeMap"], "fn": "genNode"}},
+		{"id": "genNodesNewAcc", "expr": {"kind": "call", "ns": "string", "name": "concat", "args": ["acc", "genNodesFirstCode"]}},
+		{"id": "genNodesStep", "expr": {"kind": "callExpr", "args": ["genNodesRest", "nodeMap", "genNodesNewAcc"], "fn": "genNodesLoop"}},
+
+		{"id": "python", "expr": {"kind": "lambda", "type": {"kind": "fn", "params": [{"kind": "map"}], "returns": {"kind": "string"}}, "params": ["doc"], "body": "pythonBody"}},
+		{"id": "pythonNodes", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["doc", "nodesKey"]}},
+		{"id": "pythonResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["doc", "resultKey"]}},
+		{"id": "pythonNodeMap", "expr": {"kind": "record", "fields": []}},
+		{"id": "pythonNodesCode", "expr": {"kind": "callExpr", "args": ["pythonNodes", "pythonNodeMap"], "fn": "genNodes"}},
+		{"id": "pythonPrint", "expr": {"kind": "call", "ns": "string", "name": "concat", "args": ["printStr", "pythonResult", "printCloseStr"]}},
+		{"id": "pythonBody", "expr": {"kind": "call", "ns": "string", "name": "concat", "args": ["pythonNodesCode", "pythonPrint", "newlineStr"]}},
+
+		{"id": "synthExports", "expr": {"kind": "record", "fields": [
+			{"key": "python", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "python"}}
+		]}}
+	],
+	"result": "synthExports",
+	"exports": {"ns": "synth", "ops": ["python"]}
+}

@@ -1,0 +1,27 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Python Code Synthesis example: Tests the synth:python stdlib operator by verifying it can generate Python code from a simple CIR document.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "ten", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 10}},
+		{"id": "twenty", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 20}},
+		{"id": "version", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "1.0.0"}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+
+		{"id": "a", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 10}},
+		{"id": "b", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 20}},
+		{"id": "sum", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["a", "b"]}},
+
+		{"id": "doc", "expr": {"kind": "record", "fields": [
+			{"key": "version", "value": "version"},
+			{"key": "airDefs", "value": "emptyList"},
+			{"key": "nodes", "value": {"kind": "listOf", "elements": ["a", "b", "sum"]}},
+			{"key": "result", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "sum"}}
+		]}},
+
+		{"id": "pyCode", "expr": {"kind": "call", "ns": "synth", "name": "python", "args": ["doc"]}},
+		{"id": "result", "expr": {"kind": "ref", "id": "pyCode"}}
+	],
+	"result": "result"
+}

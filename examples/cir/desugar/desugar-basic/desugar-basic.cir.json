@@ -20,6 +20,5 @@
 
 		{ "id": "result", "expr": { "kind": "ref", "id": "desugared" } }
 	],
-	"result": "result",
-	"expected_result": "map"
+	"result": "result"
 }

@@ -23,13 +23,6 @@
 			"params": ["m", "k"],
 			"result": { "kind": "int" },
 			"body": { "kind": "ref", "id": "m" }
-		},
-		{
-			"ns": "optimize",
-			"name": "dce",
-			"params": ["doc"],
-			"result": { "kind": "int" },
-			"body": { "kind": "ref", "id": "doc" }
 		}
 	],
 	"nodes": [
