@@ -1,0 +1,220 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Two-level meta-circular evaluation tower. The outer document constructs a middle-layer CIR program entirely as data and calls meta:eval on it. The middle-layer program itself constructs an inner AIR document as records, then manually interprets it by extracting the lit node value via map:get. Result: meta:eval evaluates a program that builds-and-interprets another program. Expected: 30.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "s_lit",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lit"}},
+		{"id": "s_call",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call"}},
+		{"id": "s_record",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "record"}},
+		{"id": "s_listOf",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "listOf"}},
+		{"id": "s_int",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "int"}},
+		{"id": "s_string",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
+		{"id": "s_list",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "list"}},
+		{"id": "s_map",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "map"}},
+		{"id": "s_nth",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nth"}},
+		{"id": "s_get",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "get"}},
+		{"id": "s_1_0_0",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "1.0.0"}},
+		{"id": "s_kind",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "s_type",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "type"}},
+		{"id": "s_value",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+		{"id": "s_id",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "id"}},
+		{"id": "s_expr",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+		{"id": "s_fields",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fields"}},
+		{"id": "s_key",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "key"}},
+		{"id": "s_elements", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "elements"}},
+		{"id": "s_ns",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ns"}},
+		{"id": "s_name",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "name"}},
+		{"id": "s_args",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "args"}},
+		{"id": "s_version",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "version"}},
+		{"id": "s_airDefs",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "airDefs"}},
+		{"id": "s_nodes",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodes"}},
+		{"id": "s_result",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "result"}},
+
+		{"id": "s_litStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "litStr"}},
+		{"id": "s_kindStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kindStr"}},
+		{"id": "s_typeStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "typeStr"}},
+		{"id": "s_valueStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "valueStr"}},
+		{"id": "s_intStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "intStr"}},
+		{"id": "s_idStr",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "idStr"}},
+		{"id": "s_exprStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "exprStr"}},
+		{"id": "s_xStr",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "xStr"}},
+		{"id": "s_thirty",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "thirty"}},
+		{"id": "s_zero",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "zero"}},
+		{"id": "s_intType",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "intType"}},
+		{"id": "s_exprX",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "exprX"}},
+		{"id": "s_nodeX",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodeX"}},
+		{"id": "s_innerNodes","expr": {"kind": "lit", "type": {"kind": "string"}, "value": "innerNodes"}},
+		{"id": "s_node0",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "node0"}},
+		{"id": "s_n0Expr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "n0Expr"}},
+		{"id": "s_x",        "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "x"}},
+
+		{"id": "v_30", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 30}},
+		{"id": "v_0",  "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+
+		{"id": "typeInt",    "expr": {"kind": "record", "fields": [{"key": "kind", "value": "s_int"}]}},
+		{"id": "typeString", "expr": {"kind": "record", "fields": [{"key": "kind", "value": "s_string"}]}},
+
+		{"id": "e_litStr", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lit"}, {"key": "type", "value": "typeString"}, {"key": "value", "value": "s_lit"}
+		]}},
+		{"id": "n_litStr", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_litStr"}, {"key": "expr", "value": "e_litStr"}
+		]}},
+
+		{"id": "e_kindStr", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lit"}, {"key": "type", "value": "typeString"}, {"key": "value", "value": "s_kind"}
+		]}},
+		{"id": "n_kindStr", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_kindStr"}, {"key": "expr", "value": "e_kindStr"}
+		]}},
+
+		{"id": "e_typeStr", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lit"}, {"key": "type", "value": "typeString"}, {"key": "value", "value": "s_type"}
+		]}},
+		{"id": "n_typeStr", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_typeStr"}, {"key": "expr", "value": "e_typeStr"}
+		]}},
+
+		{"id": "e_valueStr", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lit"}, {"key": "type", "value": "typeString"}, {"key": "value", "value": "s_value"}
+		]}},
+		{"id": "n_valueStr", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_valueStr"}, {"key": "expr", "value": "e_valueStr"}
+		]}},
+
+		{"id": "e_intStr", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lit"}, {"key": "type", "value": "typeString"}, {"key": "value", "value": "s_int"}
+		]}},
+		{"id": "n_intStr", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_intStr"}, {"key": "expr", "value": "e_intStr"}
+		]}},
+
+		{"id": "e_idStr", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lit"}, {"key": "type", "value": "typeString"}, {"key": "value", "value": "s_id"}
+		]}},
+		{"id": "n_idStr", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_idStr"}, {"key": "expr", "value": "e_idStr"}
+		]}},
+
+		{"id": "e_exprStr", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lit"}, {"key": "type", "value": "typeString"}, {"key": "value", "value": "s_expr"}
+		]}},
+		{"id": "n_exprStr", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_exprStr"}, {"key": "expr", "value": "e_exprStr"}
+		]}},
+
+		{"id": "e_xStr", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lit"}, {"key": "type", "value": "typeString"}, {"key": "value", "value": "s_x"}
+		]}},
+		{"id": "n_xStr", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_xStr"}, {"key": "expr", "value": "e_xStr"}
+		]}},
+
+		{"id": "e_thirty", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lit"}, {"key": "type", "value": "typeInt"}, {"key": "value", "value": "v_30"}
+		]}},
+		{"id": "n_thirty", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_thirty"}, {"key": "expr", "value": "e_thirty"}
+		]}},
+
+		{"id": "e_zero", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_lit"}, {"key": "type", "value": "typeInt"}, {"key": "value", "value": "v_0"}
+		]}},
+		{"id": "n_zero", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_zero"}, {"key": "expr", "value": "e_zero"}
+		]}},
+
+		{"id": "f_intType_kind", "expr": {"kind": "record", "fields": [
+			{"key": "key", "value": "s_kind"}, {"key": "value", "value": "s_intStr"}
+		]}},
+		{"id": "f_intType_list", "expr": {"kind": "listOf", "elements": ["f_intType_kind"]}},
+		{"id": "e_intType", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_record"}, {"key": "fields", "value": "f_intType_list"}
+		]}},
+		{"id": "n_intType", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_intType"}, {"key": "expr", "value": "e_intType"}
+		]}},
+
+		{"id": "f_exprX_kind", "expr": {"kind": "record", "fields": [
+			{"key": "key", "value": "s_kind"}, {"key": "value", "value": "s_litStr"}
+		]}},
+		{"id": "f_exprX_type", "expr": {"kind": "record", "fields": [
+			{"key": "key", "value": "s_type"}, {"key": "value", "value": "s_intType"}
+		]}},
+		{"id": "f_exprX_value", "expr": {"kind": "record", "fields": [
+			{"key": "key", "value": "s_value"}, {"key": "value", "value": "s_thirty"}
+		]}},
+		{"id": "f_exprX_list", "expr": {"kind": "listOf", "elements": ["f_exprX_kind", "f_exprX_type", "f_exprX_value"]}},
+		{"id": "e_exprX", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_record"}, {"key": "fields", "value": "f_exprX_list"}
+		]}},
+		{"id": "n_exprX", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_exprX"}, {"key": "expr", "value": "e_exprX"}
+		]}},
+
+		{"id": "f_nodeX_id", "expr": {"kind": "record", "fields": [
+			{"key": "key", "value": "s_id"}, {"key": "value", "value": "s_xStr"}
+		]}},
+		{"id": "f_nodeX_expr", "expr": {"kind": "record", "fields": [
+			{"key": "key", "value": "s_expr"}, {"key": "value", "value": "s_exprX"}
+		]}},
+		{"id": "f_nodeX_list", "expr": {"kind": "listOf", "elements": ["f_nodeX_id", "f_nodeX_expr"]}},
+		{"id": "e_nodeX", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_record"}, {"key": "fields", "value": "f_nodeX_list"}
+		]}},
+		{"id": "n_nodeX", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_nodeX"}, {"key": "expr", "value": "e_nodeX"}
+		]}},
+
+		{"id": "el_innerNodes", "expr": {"kind": "listOf", "elements": ["s_nodeX"]}},
+		{"id": "e_innerNodes", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_listOf"}, {"key": "elements", "value": "el_innerNodes"}
+		]}},
+		{"id": "n_innerNodes", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_innerNodes"}, {"key": "expr", "value": "e_innerNodes"}
+		]}},
+
+		{"id": "a_node0", "expr": {"kind": "listOf", "elements": ["s_innerNodes", "s_zero"]}},
+		{"id": "e_node0", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_call"}, {"key": "ns", "value": "s_list"}, {"key": "name", "value": "s_nth"}, {"key": "args", "value": "a_node0"}
+		]}},
+		{"id": "n_node0", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_node0"}, {"key": "expr", "value": "e_node0"}
+		]}},
+
+		{"id": "a_n0Expr", "expr": {"kind": "listOf", "elements": ["s_node0", "s_exprStr"]}},
+		{"id": "e_n0Expr", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_call"}, {"key": "ns", "value": "s_map"}, {"key": "name", "value": "s_get"}, {"key": "args", "value": "a_n0Expr"}
+		]}},
+		{"id": "n_n0Expr", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_n0Expr"}, {"key": "expr", "value": "e_n0Expr"}
+		]}},
+
+		{"id": "a_result", "expr": {"kind": "listOf", "elements": ["s_n0Expr", "s_valueStr"]}},
+		{"id": "e_midResult", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "s_call"}, {"key": "ns", "value": "s_map"}, {"key": "name", "value": "s_get"}, {"key": "args", "value": "a_result"}
+		]}},
+		{"id": "n_midResult", "expr": {"kind": "record", "fields": [
+			{"key": "id", "value": "s_result"}, {"key": "expr", "value": "e_midResult"}
+		]}},
+
+		{"id": "midNodes", "expr": {"kind": "listOf", "elements": [
+			"n_litStr", "n_kindStr", "n_typeStr", "n_valueStr", "n_intStr",
+			"n_idStr", "n_exprStr", "n_xStr", "n_thirty", "n_zero",
+			"n_intType", "n_exprX", "n_nodeX", "n_innerNodes",
+			"n_node0", "n_n0Expr", "n_midResult"
+		]}},
+		{"id": "midEmptyDefs", "expr": {"kind": "listOf", "elements": []}},
+		{"id": "midDoc", "expr": {"kind": "record", "fields": [
+			{"key": "version", "value": "s_1_0_0"},
+			{"key": "airDefs", "value": "midEmptyDefs"},
+			{"key": "nodes", "value": "midNodes"},
+			{"key": "result", "value": "s_result"}
+		]}},
+
+		{"id": "result", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["midDoc"]}}
+	],
+	"result": "result",
+	"expected_result": 30
+}
