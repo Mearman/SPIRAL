@@ -1,0 +1,133 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Dead Code Elimination (DCE) example: A CIR document with 5 nodes where only 3 are reachable from the result. The optimize:dce stdlib operator removes the 2 dead nodes (unusedLit and unusedAdd).",
+	"airDefs": [
+		{
+			"ns": "core",
+			"name": "add",
+			"params": ["a", "b"],
+			"result": { "kind": "int" },
+			"body": { "kind": "ref", "id": "a" }
+		},
+		{
+			"ns": "list",
+			"name": "length",
+			"params": ["l"],
+			"result": { "kind": "int" },
+			"body": { "kind": "ref", "id": "l" }
+		},
+		{
+			"ns": "map",
+			"name": "get",
+			"params": ["m", "k"],
+			"result": { "kind": "int" },
+			"body": { "kind": "ref", "id": "m" }
+		},
+		{
+			"ns": "optimize",
+			"name": "dce",
+			"params": ["doc"],
+			"result": { "kind": "int" },
+			"body": { "kind": "ref", "id": "doc" }
+		}
+	],
+	"nodes": [
+		{ "id": "zero", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 } },
+		{ "id": "one", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 } },
+		{ "id": "ten", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 10 } },
+		{ "id": "twenty", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 20 } },
+
+		{ "id": "litStr", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "lit" } },
+		{ "id": "intStr", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "int" } },
+		{ "id": "valueStr", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "value" } },
+		{ "id": "idStr", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "id" } },
+		{ "id": "exprStr", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "expr" } },
+		{ "id": "nodesStr", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "nodes" } },
+		{ "id": "resultStr", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "result" } },
+		{ "id": "versionStr", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "version" } },
+		{ "id": "airDefsStr", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "airDefs" } },
+		{ "id": "version", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "1.0.0" } },
+
+		{ "id": "emptyList", "expr": { "kind": "listOf", "elements": [] } },
+
+		{ "id": "litANode", "expr": { "kind": "record", "fields": [
+			{ "key": "id", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "litA" } },
+			{ "key": "expr", "value": { "kind": "record", "fields": [
+				{ "key": "kind", "value": "litStr" },
+				{ "key": "type", "value": { "kind": "record", "fields": [
+					{ "key": "kind", "value": "intStr" }
+				]}},
+				{ "key": "value", "value": "ten" }
+			]}}
+		]}},
+		{ "id": "litBNode", "expr": { "kind": "record", "fields": [
+			{ "key": "id", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "litB" } },
+			{ "key": "expr", "value": { "kind": "record", "fields": [
+				{ "key": "kind", "value": "litStr" },
+				{ "key": "type", "value": { "kind": "record", "fields": [
+					{ "key": "kind", "value": "intStr" }
+				]}},
+				{ "key": "value", "value": "twenty" }
+			]}}
+		]}},
+		{ "id": "callSumNode", "expr": { "kind": "record", "fields": [
+			{ "key": "id", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "callSum" } },
+			{ "key": "expr", "value": { "kind": "record", "fields": [
+				{ "key": "kind", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "call" } },
+				{ "key": "ns", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "core" } },
+				{ "key": "name", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "add" } },
+				{ "key": "args", "value": { "kind": "listOf", "elements": [
+					{ "kind": "lit", "type": { "kind": "string" }, "value": "litA" },
+					{ "kind": "lit", "type": { "kind": "string" }, "value": "litB" }
+				]}}
+			]}}
+		]}},
+		{ "id": "litCNode", "expr": { "kind": "record", "fields": [
+			{ "key": "id", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "litC" } },
+			{ "key": "expr", "value": { "kind": "record", "fields": [
+				{ "key": "kind", "value": "litStr" },
+				{ "key": "type", "value": { "kind": "record", "fields": [
+					{ "key": "kind", "value": "intStr" }
+				]}},
+				{ "key": "value", "value": "one" }
+			]}}
+		]}},
+		{ "id": "litDNode", "expr": { "kind": "record", "fields": [
+			{ "key": "id", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "litD" } },
+			{ "key": "expr", "value": { "kind": "record", "fields": [
+				{ "key": "kind", "value": "litStr" },
+				{ "key": "type", "value": { "kind": "record", "fields": [
+					{ "key": "kind", "value": "intStr" }
+				]}},
+				{ "key": "value", "value": "one" }
+			]}}
+		]}},
+		{ "id": "callUnusedNode", "expr": { "kind": "record", "fields": [
+			{ "key": "id", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "callUnused" } },
+			{ "key": "expr", "value": { "kind": "record", "fields": [
+				{ "key": "kind", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "call" } },
+				{ "key": "ns", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "core" } },
+				{ "key": "name", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "add" } },
+				{ "key": "args", "value": { "kind": "listOf", "elements": [
+					{ "kind": "lit", "type": { "kind": "string" }, "value": "litC" },
+					{ "kind": "lit", "type": { "kind": "string" }, "value": "litD" }
+				]}}
+			]}}
+		]}},
+
+		{ "id": "inputNodes", "expr": { "kind": "listOf", "elements": ["litANode", "litBNode", "callSumNode", "litCNode", "litDNode", "callUnusedNode"] } },
+		{ "id": "inputDoc", "expr": { "kind": "record", "fields": [
+			{ "key": "version", "value": "version" },
+			{ "key": "airDefs", "value": "emptyList" },
+			{ "key": "nodes", "value": "inputNodes" },
+			{ "key": "result", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "callSum" } }
+		]}},
+		{ "id": "optimizedDoc", "expr": { "kind": "call", "ns": "optimize", "name": "dce", "args": ["inputDoc"] } },
+		{ "id": "outputNodes", "expr": { "kind": "call", "ns": "map", "name": "get", "args": ["optimizedDoc", "nodesStr"] } },
+		{ "id": "nodeCount", "expr": { "kind": "call", "ns": "list", "name": "length", "args": ["outputNodes"] } },
+		{ "id": "result", "expr": { "kind": "ref", "id": "nodeCount" } }
+	],
+	"result": "result",
+	"expected_result": 3
+}
