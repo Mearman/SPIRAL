@@ -46,8 +46,9 @@ export function evaluateProgram(
 	// Desugar shorthands first (inline literals, lambda type inference, etc.)
 	const desugared1 = desugarShorthands(params[0]);
 	// Desugar airDefs (convert airDefs to lambdas/callExprs)
-	const desugared2 = desugarAirDefs(desugared1);
-	const args: ProgramArgs = { doc: desugared2, registry: params[1], defs: params[2], inputs: params[3], options: params[4] };
+	// Type assertion: desugared1 is structurally compatible with desugarAirDefs DocLike
+	const desugared2 = desugarAirDefs(desugared1 as unknown as Parameters<typeof desugarAirDefs>[0]);
+	const args: ProgramArgs = { doc: desugared2 as unknown as AIRDocument, registry: params[1], defs: params[2], inputs: params[3], options: params[4] };
 	const ctx = buildProgramCtx(args);
 	const boundNodes = computeBoundNodes(args.doc, ctx.nodeMap);
 	return runProgram({ doc: args.doc, ctx, boundNodes, inputs: args.inputs });
