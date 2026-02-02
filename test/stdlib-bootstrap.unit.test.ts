@@ -1296,6 +1296,86 @@ describe("parse stdlib", () => {
 	});
 });
 
+describe("typecheck stdlib — type utilities", () => {
+	const kernel = createKernelRegistry();
+	const registry = loadStdlib(kernel, [
+		resolve(stdlibDir, "bool.cir.json"),
+		resolve(stdlibDir, "list.cir.json"),
+		resolve(stdlibDir, "string.cir.json"),
+		resolve(stdlibDir, "core-derived.cir.json"),
+		resolve(stdlibDir, "map.cir.json"),
+		resolve(stdlibDir, "set.cir.json"),
+		resolve(stdlibDir, "conversion.cir.json"),
+		resolve(stdlibDir, "list-hof.cir.json"),
+		resolve(stdlibDir, "validate.cir.json"),
+		resolve(stdlibDir, "schema.cir.json"),
+		resolve(stdlibDir, "parse.cir.json"),
+		resolve(stdlibDir, "typecheck.cir.json"),
+	]);
+
+	function makeType(kind: string): Value {
+		return mapVal(new Map([["s:kind", stringVal(kind)]]));
+	}
+
+	function makeFnType(params: Value[], returns: Value): Value {
+		return mapVal(new Map([
+			["s:kind", stringVal("fn")],
+			["s:params", listVal(params)],
+			["s:returns", returns],
+		]));
+	}
+
+	it("typecheck:typeEqual returns true for same primitive types", () => {
+		const typeEqual = lookupOperator(registry, "typecheck", "typeEqual")!;
+		assert.deepStrictEqual(typeEqual.fn(makeType("int"), makeType("int")), boolVal(true));
+		assert.deepStrictEqual(typeEqual.fn(makeType("bool"), makeType("bool")), boolVal(true));
+		assert.deepStrictEqual(typeEqual.fn(makeType("string"), makeType("string")), boolVal(true));
+	});
+
+	it("typecheck:typeEqual returns false for different primitive types", () => {
+		const typeEqual = lookupOperator(registry, "typecheck", "typeEqual")!;
+		assert.deepStrictEqual(typeEqual.fn(makeType("int"), makeType("bool")), boolVal(false));
+		assert.deepStrictEqual(typeEqual.fn(makeType("string"), makeType("int")), boolVal(false));
+	});
+
+	it("typecheck:typeEqual returns true for same fn types", () => {
+		const typeEqual = lookupOperator(registry, "typecheck", "typeEqual")!;
+		const fn1 = makeFnType([makeType("int"), makeType("int")], makeType("bool"));
+		const fn2 = makeFnType([makeType("int"), makeType("int")], makeType("bool"));
+		assert.deepStrictEqual(typeEqual.fn(fn1, fn2), boolVal(true));
+	});
+
+	it("typecheck:typeEqual returns false for fn types with different returns", () => {
+		const typeEqual = lookupOperator(registry, "typecheck", "typeEqual")!;
+		const fn1 = makeFnType([makeType("int")], makeType("int"));
+		const fn2 = makeFnType([makeType("int")], makeType("bool"));
+		assert.deepStrictEqual(typeEqual.fn(fn1, fn2), boolVal(false));
+	});
+
+	it("typecheck:typeEqual returns false for fn types with different param count", () => {
+		const typeEqual = lookupOperator(registry, "typecheck", "typeEqual")!;
+		const fn1 = makeFnType([makeType("int")], makeType("int"));
+		const fn2 = makeFnType([makeType("int"), makeType("int")], makeType("int"));
+		assert.deepStrictEqual(typeEqual.fn(fn1, fn2), boolVal(false));
+	});
+
+	it("typecheck:typeEqual returns false for fn vs primitive", () => {
+		const typeEqual = lookupOperator(registry, "typecheck", "typeEqual")!;
+		const fn1 = makeFnType([makeType("int")], makeType("int"));
+		assert.deepStrictEqual(typeEqual.fn(fn1, makeType("int")), boolVal(false));
+	});
+
+	it("typecheck:typeEqual handles nested fn types", () => {
+		const typeEqual = lookupOperator(registry, "typecheck", "typeEqual")!;
+		// fn(fn(int→bool)→string) vs fn(fn(int→bool)→string) — should be equal
+		const inner1 = makeFnType([makeType("int")], makeType("bool"));
+		const inner2 = makeFnType([makeType("int")], makeType("bool"));
+		const outer1 = makeFnType([inner1], makeType("string"));
+		const outer2 = makeFnType([inner2], makeType("string"));
+		assert.deepStrictEqual(typeEqual.fn(outer1, outer2), boolVal(true));
+	});
+});
+
 describe("meta stdlib", () => {
 	const kernel = createKernelRegistry();
 	const registry = loadStdlib(kernel, [
