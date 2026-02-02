@@ -100,18 +100,6 @@ export { evaluateEIR, type EIROptions } from "./evaluator.js";
 
 export { bootstrapRegistry, createKernelRegistry } from "./stdlib/bootstrap.js";
 
-export { createCoreRegistry } from "./domains/core.js";
-
-export { createBoolRegistry } from "./domains/bool.js";
-
-export { createListRegistry } from "./domains/list.js";
-
-export { createSetRegistry } from "./domains/set.js";
-
-export { createStringRegistry } from "./domains/string.js";
-
-export { createMapRegistry } from "./domains/map.js";
-
 export {
 	defineOperator, lookupOperator, registerOperator, type OperatorBuilder
 } from "./domains/registry.js";

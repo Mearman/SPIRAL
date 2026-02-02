@@ -76,8 +76,8 @@ describe("Main Index Exports - Unit Tests", () => {
 		});
 
 		it("should export Operator, OperatorRegistry types", () => {
-			assert.ok("Operator" in spiral || spiral.createCoreRegistry, "Operator should be available");
-			assert.ok("OperatorRegistry" in spiral || spiral.createCoreRegistry, "OperatorRegistry should be available");
+			assert.ok("Operator" in spiral || spiral.bootstrapRegistry, "Operator should be available");
+			assert.ok("OperatorRegistry" in spiral || spiral.bootstrapRegistry, "OperatorRegistry should be available");
 		});
 
 		it("should export EffectOp, EffectRegistry types", () => {
@@ -553,27 +553,16 @@ describe("Main Index Exports - Unit Tests", () => {
 	//==========================================================================
 
 	describe("Domain Registry Functions", () => {
-		it("should export createCoreRegistry", () => {
-			assert.strictEqual(typeof spiral.createCoreRegistry, "function");
-			const registry = spiral.createCoreRegistry();
+		it("should export bootstrapRegistry", () => {
+			assert.strictEqual(typeof spiral.bootstrapRegistry, "function");
+			const registry = spiral.bootstrapRegistry();
 			assert.ok(registry instanceof Map);
+			assert.ok(registry.size > 30);
 		});
 
-		it("should export createBoolRegistry", () => {
-			assert.strictEqual(typeof spiral.createBoolRegistry, "function");
-			const registry = spiral.createBoolRegistry();
-			assert.ok(registry instanceof Map);
-		});
-
-		it("should export createListRegistry", () => {
-			assert.strictEqual(typeof spiral.createListRegistry, "function");
-			const registry = spiral.createListRegistry();
-			assert.ok(registry instanceof Map);
-		});
-
-		it("should export createSetRegistry", () => {
-			assert.strictEqual(typeof spiral.createSetRegistry, "function");
-			const registry = spiral.createSetRegistry();
+		it("should export createKernelRegistry", () => {
+			assert.strictEqual(typeof spiral.createKernelRegistry, "function");
+			const registry = spiral.createKernelRegistry();
 			assert.ok(registry instanceof Map);
 		});
 
@@ -899,8 +888,8 @@ describe("Main Index Exports - Unit Tests", () => {
 			assert.ok(valueResult);
 		});
 
-		it("should successfully create core registry", () => {
-			const registry = spiral.createCoreRegistry();
+		it("should successfully create kernel registry", () => {
+			const registry = spiral.createKernelRegistry();
 			assert.ok(registry instanceof Map);
 			assert.ok(registry.size > 0);
 		});
