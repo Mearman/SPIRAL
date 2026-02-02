@@ -1,0 +1,191 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Higher-order list operations — map, filter, fold, reduce implemented in SPIRAL CIR. Requires closure arguments.",
+	"airDefs": [],
+	"nodes": [
+		{ "id": "zero", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 } },
+		{ "id": "one",  "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 } },
+		{ "id": "emptyList", "expr": { "kind": "listOf", "elements": [] } },
+
+		{ "id": "mapRecBody", "expr": {
+			"kind": "let", "name": "done",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "len" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "done" },
+				"then": "emptyList",
+				"else": { "kind": "let", "name": "elem",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "lst" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "mapped",
+						"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "elem" }], "fn": "fn" },
+						"body": { "kind": "let", "name": "nextI",
+							"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+							"body": { "kind": "let", "name": "rest",
+								"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }], "fn": "rec" },
+								"body": { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "mapped" }, { "kind": "var", "name": "rest" }] }
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "mapRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "params": ["i"], "body": "mapRecBody"
+		}},
+		{ "id": "mapRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } } }, "params": ["rec"], "body": "mapRecInner"
+		}},
+		{ "id": "mapBody", "expr": {
+			"kind": "let", "name": "len",
+			"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "lst" }] },
+			"body": { "kind": "let", "name": "iter",
+				"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "fn": "mapRecOuter" },
+				"body": { "kind": "callExpr", "args": ["zero"], "fn": "iter" }
+			}
+		}},
+		{ "id": "mapFn", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "list", "of": { "kind": "int" } }, { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "int" } }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "params": ["lst", "fn"], "body": "mapBody"
+		}},
+
+		{ "id": "filterRecBody", "expr": {
+			"kind": "let", "name": "done",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "len" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "done" },
+				"then": "emptyList",
+				"else": { "kind": "let", "name": "elem",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "lst" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "keep",
+						"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "elem" }], "fn": "fn" },
+						"body": { "kind": "let", "name": "nextI",
+							"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+							"body": { "kind": "let", "name": "rest",
+								"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }], "fn": "rec" },
+								"body": { "kind": "if",
+									"cond": { "kind": "var", "name": "keep" },
+									"then": { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "elem" }, { "kind": "var", "name": "rest" }] },
+									"else": { "kind": "var", "name": "rest" }
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "filterRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "params": ["i"], "body": "filterRecBody"
+		}},
+		{ "id": "filterRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } } }, "params": ["rec"], "body": "filterRecInner"
+		}},
+		{ "id": "filterBody", "expr": {
+			"kind": "let", "name": "len",
+			"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "lst" }] },
+			"body": { "kind": "let", "name": "iter",
+				"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "fn": "filterRecOuter" },
+				"body": { "kind": "callExpr", "args": ["zero"], "fn": "iter" }
+			}
+		}},
+		{ "id": "filterFn", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "list", "of": { "kind": "int" } }, { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "bool" } }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "params": ["lst", "fn"], "body": "filterBody"
+		}},
+
+		{ "id": "foldRecBody", "expr": {
+			"kind": "let", "name": "done",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "len" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "done" },
+				"then": { "kind": "var", "name": "acc" },
+				"else": { "kind": "let", "name": "elem",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "lst" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "newAcc",
+						"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "acc" }, { "kind": "var", "name": "elem" }], "fn": "fn" },
+						"body": { "kind": "let", "name": "nextI",
+							"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+							"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }, { "kind": "var", "name": "newAcc" }], "fn": "rec" }
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "foldRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "int" } }, "params": ["i", "acc"], "body": "foldRecBody"
+		}},
+		{ "id": "foldRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "int" } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "int" } } }, "params": ["rec"], "body": "foldRecInner"
+		}},
+		{ "id": "foldBody", "expr": {
+			"kind": "let", "name": "len",
+			"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "lst" }] },
+			"body": { "kind": "let", "name": "iter",
+				"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "int" } }, "fn": "foldRecOuter" },
+				"body": { "kind": "callExpr", "args": ["zero", { "kind": "var", "name": "init" }], "fn": "iter" }
+			}
+		}},
+		{ "id": "foldFn", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "list", "of": { "kind": "int" } }, { "kind": "int" }, { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "int" } }], "returns": { "kind": "int" } }, "params": ["lst", "init", "fn"], "body": "foldBody"
+		}},
+
+		{ "id": "reduceRecBody", "expr": {
+			"kind": "let", "name": "done",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "len" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "done" },
+				"then": { "kind": "var", "name": "acc" },
+				"else": { "kind": "let", "name": "elem",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "lst" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "newAcc",
+						"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "acc" }, { "kind": "var", "name": "elem" }], "fn": "fn" },
+						"body": { "kind": "let", "name": "nextI",
+							"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+							"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }, { "kind": "var", "name": "newAcc" }], "fn": "rec" }
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "reduceRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "int" } }, "params": ["i", "acc"], "body": "reduceRecBody"
+		}},
+		{ "id": "reduceRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "int" } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "int" } } }, "params": ["rec"], "body": "reduceRecInner"
+		}},
+		{ "id": "reduceBody", "expr": {
+			"kind": "let", "name": "len",
+			"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "lst" }] },
+			"body": { "kind": "let", "name": "first",
+				"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "lst" }, "zero"] },
+				"body": { "kind": "let", "name": "iter",
+					"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "int" } }, "fn": "reduceRecOuter" },
+					"body": { "kind": "callExpr", "args": ["one", { "kind": "var", "name": "first" }], "fn": "iter" }
+				}
+			}
+		}},
+		{ "id": "reduceFn", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "list", "of": { "kind": "int" } }, { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "int" } }], "returns": { "kind": "int" } }, "params": ["lst", "fn"], "body": "reduceBody"
+		}},
+
+		{ "id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{ "key": "list:map", "value": "mapFn" },
+				{ "key": "list:filter", "value": "filterFn" },
+				{ "key": "list:fold", "value": "foldFn" },
+				{ "key": "list:reduce", "value": "reduceFn" }
+			]
+		}}
+	],
+	"result": "exports"
+}

@@ -7,7 +7,8 @@ import { fileURLToPath } from "node:url";
 import { createKernelRegistry } from "../src/stdlib/kernel.js";
 import { loadStdlib } from "../src/stdlib/loader.js";
 import { lookupOperator } from "../src/domains/registry.js";
-import { boolVal, floatVal, intVal, listVal, mapVal, setVal, stringVal, hashValue, voidVal } from "../src/types.js";
+import { boolVal, floatVal, intVal, listVal, mapVal, setVal, stringVal, hashValue, voidVal, closureVal } from "../src/types.js";
+import type { Expr, LambdaParam } from "../src/types.js";
 import type { Value } from "../src/types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -774,6 +775,86 @@ describe("conversion stdlib", () => {
 		]);
 		const result = fromEntries.fn(entries);
 		assert.deepStrictEqual(result, mapVal(new Map([["s:x", intVal(2)]])));
+	});
+});
+
+describe("list-hof stdlib", () => {
+	const kernel = createKernelRegistry();
+	const registry = loadStdlib(kernel, [
+		resolve(stdlibDir, "bool.cir.json"),
+		resolve(stdlibDir, "list.cir.json"),
+		resolve(stdlibDir, "list-hof.cir.json"),
+	]);
+
+	// Helper: create a closure that doubles its argument
+	const doubleClosure = closureVal(
+		[{ name: "x", type: { kind: "int" } }] as LambdaParam[],
+		{ kind: "call", ns: "core", name: "mul", args: [{ kind: "var", name: "x" }, { kind: "lit", type: { kind: "int" }, value: 2 }] } as Expr,
+		null as never,
+	);
+
+	// Helper: closure that tests if x > 2
+	const gtTwoClosure = closureVal(
+		[{ name: "x", type: { kind: "int" } }] as LambdaParam[],
+		{ kind: "call", ns: "core", name: "gt", args: [{ kind: "var", name: "x" }, { kind: "lit", type: { kind: "int" }, value: 2 }] } as Expr,
+		null as never,
+	);
+
+	// Helper: closure that adds two numbers
+	const addClosure = closureVal(
+		[{ name: "a", type: { kind: "int" } }, { name: "b", type: { kind: "int" } }] as LambdaParam[],
+		{ kind: "call", ns: "core", name: "add", args: [{ kind: "var", name: "a" }, { kind: "var", name: "b" }] } as Expr,
+		null as never,
+	);
+
+	it("list:map applies function to each element", () => {
+		const map = lookupOperator(registry, "list", "map")!;
+		const lst = listVal([intVal(1), intVal(2), intVal(3)]);
+		assert.deepStrictEqual(map.fn(lst, doubleClosure), listVal([intVal(2), intVal(4), intVal(6)]));
+	});
+
+	it("list:map on empty list returns empty", () => {
+		const map = lookupOperator(registry, "list", "map")!;
+		assert.deepStrictEqual(map.fn(listVal([]), doubleClosure), listVal([]));
+	});
+
+	it("list:filter keeps matching elements", () => {
+		const filter = lookupOperator(registry, "list", "filter")!;
+		const lst = listVal([intVal(1), intVal(2), intVal(3), intVal(4)]);
+		assert.deepStrictEqual(filter.fn(lst, gtTwoClosure), listVal([intVal(3), intVal(4)]));
+	});
+
+	it("list:filter on empty list returns empty", () => {
+		const filter = lookupOperator(registry, "list", "filter")!;
+		assert.deepStrictEqual(filter.fn(listVal([]), gtTwoClosure), listVal([]));
+	});
+
+	it("list:filter with no matches returns empty", () => {
+		const filter = lookupOperator(registry, "list", "filter")!;
+		const lst = listVal([intVal(1), intVal(2)]);
+		assert.deepStrictEqual(filter.fn(lst, gtTwoClosure), listVal([]));
+	});
+
+	it("list:fold accumulates over list", () => {
+		const fold = lookupOperator(registry, "list", "fold")!;
+		const lst = listVal([intVal(1), intVal(2), intVal(3)]);
+		assert.deepStrictEqual(fold.fn(lst, intVal(0), addClosure), intVal(6));
+	});
+
+	it("list:fold on empty list returns init", () => {
+		const fold = lookupOperator(registry, "list", "fold")!;
+		assert.deepStrictEqual(fold.fn(listVal([]), intVal(42), addClosure), intVal(42));
+	});
+
+	it("list:reduce accumulates without init", () => {
+		const reduce = lookupOperator(registry, "list", "reduce")!;
+		const lst = listVal([intVal(1), intVal(2), intVal(3)]);
+		assert.deepStrictEqual(reduce.fn(lst, addClosure), intVal(6));
+	});
+
+	it("list:reduce single element returns that element", () => {
+		const reduce = lookupOperator(registry, "list", "reduce")!;
+		assert.deepStrictEqual(reduce.fn(listVal([intVal(7)]), addClosure), intVal(7));
 	});
 });
 
