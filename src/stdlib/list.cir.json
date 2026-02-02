@@ -1,7 +1,7 @@
 {
 	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
 	"version": "1.0.0",
-	"description": "List stdlib — concat, reverse, slice implemented in SPIRAL CIR using fix combinator. Kernel provides list:length, list:nth, list:cons.",
+	"description": "List stdlib — concat, reverse, slice, take, drop, range implemented in SPIRAL CIR using fix combinator. Kernel provides list:length, list:nth, list:cons.",
 	"airDefs": [],
 	"nodes": [
 		{ "id": "zero", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 } },
@@ -143,12 +143,144 @@
 			"body": "sliceBody"
 		}},
 
+		{ "id": "takeRecBody", "expr": {
+			"kind": "let", "name": "check",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "effectiveN" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "check" },
+				"then": "emptyList",
+				"else": { "kind": "let", "name": "elem",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "lst" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "nextI",
+						"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+						"body": { "kind": "let", "name": "rest",
+							"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }], "fn": "rec" },
+							"body": { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "elem" }, { "kind": "var", "name": "rest" }] }
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "takeRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "params": ["i"], "body": "takeRecBody"
+		}},
+		{ "id": "takeRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } } }, "params": ["rec"], "body": "takeRecInner"
+		}},
+		{ "id": "takeBody", "expr": {
+			"kind": "let", "name": "la",
+			"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "lst" }] },
+			"body": { "kind": "let", "name": "effectiveN",
+				"value": { "kind": "if",
+					"cond": { "kind": "call", "ns": "core", "name": "lte", "args": [{ "kind": "var", "name": "n" }, { "kind": "var", "name": "la" }] },
+					"then": { "kind": "var", "name": "n" },
+					"else": { "kind": "var", "name": "la" }
+				},
+				"body": { "kind": "let", "name": "iter",
+					"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "fn": "takeRecOuter" },
+					"body": { "kind": "callExpr", "args": ["zero"], "fn": "iter" }
+				}
+			}
+		}},
+		{ "id": "take", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "list", "of": { "kind": "int" } }, { "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "params": ["lst", "n"], "body": "takeBody"
+		}},
+
+		{ "id": "dropRecBody", "expr": {
+			"kind": "let", "name": "check",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "la" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "check" },
+				"then": "emptyList",
+				"else": { "kind": "let", "name": "elem",
+					"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "lst" }, { "kind": "var", "name": "i" }] },
+					"body": { "kind": "let", "name": "nextI",
+						"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+						"body": { "kind": "let", "name": "rest",
+							"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }], "fn": "rec" },
+							"body": { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "elem" }, { "kind": "var", "name": "rest" }] }
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "dropRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "params": ["i"], "body": "dropRecBody"
+		}},
+		{ "id": "dropRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } } }, "params": ["rec"], "body": "dropRecInner"
+		}},
+		{ "id": "dropBody", "expr": {
+			"kind": "let", "name": "la",
+			"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "lst" }] },
+			"body": { "kind": "let", "name": "effectiveStart",
+				"value": { "kind": "if",
+					"cond": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "n" }, { "kind": "var", "name": "la" }] },
+					"then": { "kind": "var", "name": "la" },
+					"else": { "kind": "if",
+						"cond": { "kind": "call", "ns": "core", "name": "lt", "args": [{ "kind": "var", "name": "n" }, "zero"] },
+						"then": "zero",
+						"else": { "kind": "var", "name": "n" }
+					}
+				},
+				"body": { "kind": "let", "name": "iter",
+					"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "fn": "dropRecOuter" },
+					"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "effectiveStart" }], "fn": "iter" }
+				}
+			}
+		}},
+		{ "id": "drop", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "list", "of": { "kind": "int" } }, { "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "params": ["lst", "n"], "body": "dropBody"
+		}},
+
+		{ "id": "rangeRecBody", "expr": {
+			"kind": "let", "name": "check",
+			"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "end" }] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "check" },
+				"then": "emptyList",
+				"else": { "kind": "let", "name": "nextI",
+					"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+					"body": { "kind": "let", "name": "rest",
+						"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }], "fn": "rec" },
+						"body": { "kind": "call", "ns": "list", "name": "cons", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "rest" }] }
+					}
+				}
+			}
+		}},
+		{ "id": "rangeRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "params": ["i"], "body": "rangeRecBody"
+		}},
+		{ "id": "rangeRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } } }, "params": ["rec"], "body": "rangeRecInner"
+		}},
+		{ "id": "rangeBody", "expr": {
+			"kind": "let", "name": "iter",
+			"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "fn": "rangeRecOuter" },
+			"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "start" }], "fn": "iter" }
+		}},
+		{ "id": "range", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "list", "of": { "kind": "int" } } }, "params": ["start", "end"], "body": "rangeBody"
+		}},
+
 		{ "id": "exports", "expr": {
 			"kind": "record",
 			"fields": [
 				{ "key": "list:concat", "value": "concat" },
 				{ "key": "list:reverse", "value": "reverse" },
-				{ "key": "list:slice", "value": "slice" }
+				{ "key": "list:slice", "value": "slice" },
+				{ "key": "list:take", "value": "take" },
+				{ "key": "list:drop", "value": "drop" },
+				{ "key": "list:range", "value": "range" }
 			]
 		}}
 	],

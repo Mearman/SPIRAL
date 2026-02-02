@@ -208,6 +208,57 @@ describe("list stdlib", () => {
 		const a = listVal([intVal(1), intVal(2)]);
 		assert.deepStrictEqual(slice.fn(a, intVal(5)), listVal([]));
 	});
+
+	it("list:take returns first n elements", () => {
+		const take = lookupOperator(registry, "list", "take")!;
+		const a = listVal([intVal(10), intVal(20), intVal(30), intVal(40)]);
+		assert.deepStrictEqual(take.fn(a, intVal(2)), listVal([intVal(10), intVal(20)]));
+	});
+
+	it("list:take with n > length returns full list", () => {
+		const take = lookupOperator(registry, "list", "take")!;
+		const a = listVal([intVal(1), intVal(2)]);
+		assert.deepStrictEqual(take.fn(a, intVal(10)), listVal([intVal(1), intVal(2)]));
+	});
+
+	it("list:take with n=0 returns empty", () => {
+		const take = lookupOperator(registry, "list", "take")!;
+		const a = listVal([intVal(1), intVal(2), intVal(3)]);
+		assert.deepStrictEqual(take.fn(a, intVal(0)), listVal([]));
+	});
+
+	it("list:drop skips first n elements", () => {
+		const drop = lookupOperator(registry, "list", "drop")!;
+		const a = listVal([intVal(10), intVal(20), intVal(30), intVal(40)]);
+		assert.deepStrictEqual(drop.fn(a, intVal(2)), listVal([intVal(30), intVal(40)]));
+	});
+
+	it("list:drop with n > length returns empty", () => {
+		const drop = lookupOperator(registry, "list", "drop")!;
+		const a = listVal([intVal(1), intVal(2)]);
+		assert.deepStrictEqual(drop.fn(a, intVal(10)), listVal([]));
+	});
+
+	it("list:drop with n=0 returns full list", () => {
+		const drop = lookupOperator(registry, "list", "drop")!;
+		const a = listVal([intVal(1), intVal(2), intVal(3)]);
+		assert.deepStrictEqual(drop.fn(a, intVal(0)), a);
+	});
+
+	it("list:range produces integer range", () => {
+		const range = lookupOperator(registry, "list", "range")!;
+		assert.deepStrictEqual(range.fn(intVal(0), intVal(5)), listVal([intVal(0), intVal(1), intVal(2), intVal(3), intVal(4)]));
+	});
+
+	it("list:range with start=end returns empty", () => {
+		const range = lookupOperator(registry, "list", "range")!;
+		assert.deepStrictEqual(range.fn(intVal(3), intVal(3)), listVal([]));
+	});
+
+	it("list:range with start > end returns empty", () => {
+		const range = lookupOperator(registry, "list", "range")!;
+		assert.deepStrictEqual(range.fn(intVal(5), intVal(2)), listVal([]));
+	});
 });
 
 describe("string stdlib", () => {
