@@ -1427,6 +1427,239 @@ describe("typecheck stdlib — type utilities", () => {
 		assert.ok(result.kind === "set");
 		assert.strictEqual(result.value.size, 0);
 	});
+
+	// --- Expression type checker ---
+
+	function makeExpr(fields: [string, Value][]): Value {
+		return mapVal(new Map(fields.map(([k, val]) => [`s:${k}`, val])));
+	}
+
+	function makeSig(params: Value[], returns: Value): Value {
+		return mapVal(new Map([
+			["s:params", listVal(params)],
+			["s:returns", returns],
+		]));
+	}
+
+	const emptyEnv = mapVal(new Map());
+	const emptyNT = mapVal(new Map());
+
+	it("typecheck:typeCheckExpr handles lit expression", () => {
+		const typeCheckExpr = lookupOperator(registry, "typecheck", "typeCheckExpr")!;
+		const litExpr = makeExpr([
+			["kind", stringVal("lit")],
+			["type", makeType("int")],
+			["value", intVal(42)],
+		]);
+		const emptyReg = mapVal(new Map());
+		const result = typeCheckExpr.fn(litExpr, emptyEnv, emptyNT, emptyReg);
+		assert.ok(result.kind === "map");
+		const resType = result.value.get("s:type");
+		assert.ok(resType?.kind === "map");
+		assert.deepStrictEqual(resType.value.get("s:kind"), stringVal("int"));
+		const resErrors = result.value.get("s:errors");
+		assert.ok(resErrors?.kind === "list");
+		assert.strictEqual(resErrors.value.length, 0);
+	});
+
+	it("typecheck:typeCheckExpr handles var with env lookup", () => {
+		const typeCheckExpr = lookupOperator(registry, "typecheck", "typeCheckExpr")!;
+		const varExpr = makeExpr([
+			["kind", stringVal("var")],
+			["name", stringVal("x")],
+		]);
+		const env = mapVal(new Map([["s:x", makeType("bool")]]));
+		const result = typeCheckExpr.fn(varExpr, env, emptyNT, mapVal(new Map()));
+		assert.ok(result.kind === "map");
+		const resType = result.value.get("s:type");
+		assert.ok(resType?.kind === "map");
+		assert.deepStrictEqual(resType.value.get("s:kind"), stringVal("bool"));
+	});
+
+	it("typecheck:typeCheckExpr handles var not in env defaults to int", () => {
+		const typeCheckExpr = lookupOperator(registry, "typecheck", "typeCheckExpr")!;
+		const varExpr = makeExpr([
+			["kind", stringVal("var")],
+			["name", stringVal("y")],
+		]);
+		const result = typeCheckExpr.fn(varExpr, emptyEnv, emptyNT, mapVal(new Map()));
+		assert.ok(result.kind === "map");
+		const resType = result.value.get("s:type");
+		assert.ok(resType?.kind === "map");
+		assert.deepStrictEqual(resType.value.get("s:kind"), stringVal("int"));
+	});
+
+	it("typecheck:typeCheckExpr handles ref with nodeTypes lookup", () => {
+		const typeCheckExpr = lookupOperator(registry, "typecheck", "typeCheckExpr")!;
+		const refExpr = makeExpr([
+			["kind", stringVal("ref")],
+			["id", stringVal("ten")],
+		]);
+		const nodeTypes = mapVal(new Map([["s:ten", makeType("int")]]));
+		const result = typeCheckExpr.fn(refExpr, emptyEnv, nodeTypes, mapVal(new Map()));
+		assert.ok(result.kind === "map");
+		const resType = result.value.get("s:type");
+		assert.ok(resType?.kind === "map");
+		assert.deepStrictEqual(resType.value.get("s:kind"), stringVal("int"));
+	});
+
+	it("typecheck:typeCheckExpr handles call with opRegistry", () => {
+		const typeCheckExpr = lookupOperator(registry, "typecheck", "typeCheckExpr")!;
+		const callExpr = makeExpr([
+			["kind", stringVal("call")],
+			["ns", stringVal("core")],
+			["name", stringVal("add")],
+			["args", listVal([stringVal("a"), stringVal("b")])],
+		]);
+		const opReg = mapVal(new Map([
+			["s:core:add", makeSig([makeType("int"), makeType("int")], makeType("int"))],
+		]));
+		const result = typeCheckExpr.fn(callExpr, emptyEnv, emptyNT, opReg);
+		assert.ok(result.kind === "map");
+		const resType = result.value.get("s:type");
+		assert.ok(resType?.kind === "map");
+		assert.deepStrictEqual(resType.value.get("s:kind"), stringVal("int"));
+		const resErrors = result.value.get("s:errors");
+		assert.ok(resErrors?.kind === "list");
+		assert.strictEqual(resErrors.value.length, 0);
+	});
+
+	it("typecheck:typeCheckExpr detects call arity mismatch", () => {
+		const typeCheckExpr = lookupOperator(registry, "typecheck", "typeCheckExpr")!;
+		const callExpr = makeExpr([
+			["kind", stringVal("call")],
+			["ns", stringVal("core")],
+			["name", stringVal("add")],
+			["args", listVal([stringVal("a")])],  // only 1 arg, needs 2
+		]);
+		const opReg = mapVal(new Map([
+			["s:core:add", makeSig([makeType("int"), makeType("int")], makeType("int"))],
+		]));
+		const result = typeCheckExpr.fn(callExpr, emptyEnv, emptyNT, opReg);
+		assert.ok(result.kind === "map");
+		const resErrors = result.value.get("s:errors");
+		assert.ok(resErrors?.kind === "list");
+		assert.ok(resErrors.value.length > 0, "Should have arity error");
+	});
+
+	it("typecheck:typeCheckExpr handles let with nested type checking", () => {
+		const typeCheckExpr = lookupOperator(registry, "typecheck", "typeCheckExpr")!;
+		// let x = lit(42:int) in var(x) — should return int
+		const letExpr = makeExpr([
+			["kind", stringVal("let")],
+			["name", stringVal("x")],
+			["value", makeExpr([
+				["kind", stringVal("lit")],
+				["type", makeType("int")],
+				["value", intVal(42)],
+			])],
+			["body", makeExpr([
+				["kind", stringVal("var")],
+				["name", stringVal("x")],
+			])],
+		]);
+		const result = typeCheckExpr.fn(letExpr, emptyEnv, emptyNT, mapVal(new Map()));
+		assert.ok(result.kind === "map");
+		const resType = result.value.get("s:type");
+		assert.ok(resType?.kind === "map");
+		assert.deepStrictEqual(resType.value.get("s:kind"), stringVal("int"));
+	});
+
+	it("typecheck:typeCheckExpr handles lambda with fn type", () => {
+		const typeCheckExpr = lookupOperator(registry, "typecheck", "typeCheckExpr")!;
+		const lamExpr = makeExpr([
+			["kind", stringVal("lambda")],
+			["params", listVal([stringVal("x")])],
+			["body", stringVal("addBody")],
+			["type", makeFnType([makeType("int")], makeType("int"))],
+		]);
+		const result = typeCheckExpr.fn(lamExpr, emptyEnv, emptyNT, mapVal(new Map()));
+		assert.ok(result.kind === "map");
+		const resType = result.value.get("s:type");
+		assert.ok(resType?.kind === "map");
+		assert.deepStrictEqual(resType.value.get("s:kind"), stringVal("fn"));
+		const resErrors = result.value.get("s:errors");
+		assert.ok(resErrors?.kind === "list");
+		assert.strictEqual(resErrors.value.length, 0);
+	});
+
+	it("typecheck:typeCheckExpr handles string ref via nodeTypes", () => {
+		const typeCheckExpr = lookupOperator(registry, "typecheck", "typeCheckExpr")!;
+		// When expr is a string (node ref), look up in nodeTypes
+		const nodeTypes = mapVal(new Map([["s:myNode", makeType("bool")]]));
+		const result = typeCheckExpr.fn(stringVal("myNode"), emptyEnv, nodeTypes, mapVal(new Map()));
+		assert.ok(result.kind === "map");
+		const resType = result.value.get("s:type");
+		assert.ok(resType?.kind === "map");
+		assert.deepStrictEqual(resType.value.get("s:kind"), stringVal("bool"));
+	});
+
+	it("typecheck:typeCheckExpr handles record returns map type", () => {
+		const typeCheckExpr = lookupOperator(registry, "typecheck", "typeCheckExpr")!;
+		const recExpr = makeExpr([
+			["kind", stringVal("record")],
+			["fields", listVal([])],
+		]);
+		const result = typeCheckExpr.fn(recExpr, emptyEnv, emptyNT, mapVal(new Map()));
+		assert.ok(result.kind === "map");
+		const resType = result.value.get("s:type");
+		assert.ok(resType?.kind === "map");
+		assert.deepStrictEqual(resType.value.get("s:kind"), stringVal("map"));
+	});
+
+	it("typecheck:typeCheckExpr handles predicate returns bool type", () => {
+		const typeCheckExpr = lookupOperator(registry, "typecheck", "typeCheckExpr")!;
+		const predExpr = makeExpr([
+			["kind", stringVal("predicate")],
+			["name", stringVal("isInt")],
+			["value", stringVal("x")],
+		]);
+		const result = typeCheckExpr.fn(predExpr, emptyEnv, emptyNT, mapVal(new Map()));
+		assert.ok(result.kind === "map");
+		const resType = result.value.get("s:type");
+		assert.ok(resType?.kind === "map");
+		assert.deepStrictEqual(resType.value.get("s:kind"), stringVal("bool"));
+	});
+
+	// --- Document type checker ---
+
+	it("typecheck:typecheck validates a simple document", () => {
+		const typecheck = lookupOperator(registry, "typecheck", "typecheck")!;
+		// Document with two lit nodes and an add call
+		const doc = mapVal(new Map([
+			["s:nodes", listVal([
+				makeNodeVal("ten", [["kind", stringVal("lit")], ["type", makeType("int")], ["value", intVal(10)]]),
+				makeNodeVal("twenty", [["kind", stringVal("lit")], ["type", makeType("int")], ["value", intVal(20)]]),
+				makeNodeVal("sum", [["kind", stringVal("call")], ["ns", stringVal("core")], ["name", stringVal("add")], ["args", listVal([stringVal("ten"), stringVal("twenty")])]]),
+			])],
+			["s:result", stringVal("sum")],
+		]));
+		const result = typecheck.fn(doc);
+		assert.ok(result.kind === "map");
+		const valid = result.value.get("s:valid");
+		assert.deepStrictEqual(valid, boolVal(true));
+		const errors = result.value.get("s:errors");
+		assert.ok(errors?.kind === "list");
+		assert.strictEqual(errors.value.length, 0);
+		const nodeTypes = result.value.get("s:nodeTypes");
+		assert.ok(nodeTypes?.kind === "map");
+		// ten should be typed as int
+		const tenType = nodeTypes.value.get("s:ten");
+		assert.ok(tenType?.kind === "map");
+		assert.deepStrictEqual(tenType.value.get("s:kind"), stringVal("int"));
+	});
+
+	it("typecheck:typecheck handles empty document", () => {
+		const typecheck = lookupOperator(registry, "typecheck", "typecheck")!;
+		const doc = mapVal(new Map([
+			["s:nodes", listVal([])],
+			["s:result", stringVal("none")],
+		]));
+		const result = typecheck.fn(doc);
+		assert.ok(result.kind === "map");
+		const valid = result.value.get("s:valid");
+		assert.deepStrictEqual(valid, boolVal(true));
+	});
 });
 
 describe("meta stdlib", () => {

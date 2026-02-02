@@ -1,460 +1,5622 @@
 {
 	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
 	"version": "1.0.0",
-	"description": "Type checker stdlib — type utilities and operator type registry. Provides typeEqual for structural type comparison and opRegistry mapping all 37 kernel operators to their type signatures.",
+	"description": "Type checker stdlib — structural type comparison, operator registry, bound node analysis, expression type checker, and document type checker. Provides typecheck:typeEqual, typecheck:typeCheckExpr, and typecheck:typecheck.",
 	"airDefs": [],
 	"nodes": [
-		{"id": "zero",      "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
-		{"id": "one",       "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
-		{"id": "trueVal",   "expr": {"kind": "lit", "type": {"kind": "bool"}, "value": true}},
-		{"id": "falseVal",  "expr": {"kind": "lit", "type": {"kind": "bool"}, "value": false}},
-		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
-		{"id": "emptyMap",  "expr": {"kind": "record", "fields": []}},
-
-		{"id": "kindKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
-		{"id": "paramsKey",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "params"}},
-		{"id": "returnsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "returns"}},
-
-		{"id": "intStr",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "int"}},
-		{"id": "boolStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "bool"}},
-		{"id": "stringStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
-		{"id": "voidStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "void"}},
-		{"id": "fnStr",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fn"}},
-		{"id": "listStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "list"}},
-		{"id": "mapStr",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "map"}},
-		{"id": "setStr",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "set"}},
-
-		{"id": "typeInt",    "expr": {"kind": "record", "fields": [{"key": "kind", "value": "intStr"}]}},
-		{"id": "typeBool",   "expr": {"kind": "record", "fields": [{"key": "kind", "value": "boolStr"}]}},
-		{"id": "typeString", "expr": {"kind": "record", "fields": [{"key": "kind", "value": "stringStr"}]}},
-		{"id": "typeVoid",   "expr": {"kind": "record", "fields": [{"key": "kind", "value": "voidStr"}]}},
-		{"id": "typeList",   "expr": {"kind": "record", "fields": [{"key": "kind", "value": "listStr"}]}},
-		{"id": "typeMap",    "expr": {"kind": "record", "fields": [{"key": "kind", "value": "mapStr"}]}},
-		{"id": "typeSet",    "expr": {"kind": "record", "fields": [{"key": "kind", "value": "setStr"}]}},
-
-
-		{"id": "teParamsEqBody", "expr": {
-			"kind": "let", "name": "teLen1",
-			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "tePs1"}]},
-			"body": {"kind": "let", "name": "teDone",
-				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "teIdx"}, {"kind": "var", "name": "teLen1"}]},
-				"body": {"kind": "if",
-					"cond": {"kind": "var", "name": "teDone"},
-					"then": "trueVal",
-					"else": {"kind": "let", "name": "teP1",
-						"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "tePs1"}, {"kind": "var", "name": "teIdx"}]},
-						"body": {"kind": "let", "name": "teP2",
-							"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "tePs2"}, {"kind": "var", "name": "teIdx"}]},
-							"body": {"kind": "let", "name": "tePairEq",
-								"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "teP1"}, {"kind": "var", "name": "teP2"}], "fn": "teCompare"},
-								"body": {"kind": "if",
-									"cond": {"kind": "var", "name": "tePairEq"},
-									"then": {"kind": "let", "name": "teNextIdx",
-										"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "teIdx"}, "one"]},
-										"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "tePs1"}, {"kind": "var", "name": "tePs2"}, {"kind": "var", "name": "teNextIdx"}, {"kind": "var", "name": "teCompare"}], "fn": "teParamsRec"}
+		{
+			"id": "zero",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 0
+			}
+		},
+		{
+			"id": "one",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 1
+			}
+		},
+		{
+			"id": "trueVal",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "bool"
+				},
+				"value": true
+			}
+		},
+		{
+			"id": "falseVal",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "bool"
+				},
+				"value": false
+			}
+		},
+		{
+			"id": "emptyList",
+			"expr": {
+				"kind": "listOf",
+				"elements": []
+			}
+		},
+		{
+			"id": "emptyMap",
+			"expr": {
+				"kind": "record",
+				"fields": []
+			}
+		},
+		{
+			"id": "kindKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "kind"
+			}
+		},
+		{
+			"id": "paramsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "params"
+			}
+		},
+		{
+			"id": "returnsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "returns"
+			}
+		},
+		{
+			"id": "intStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "int"
+			}
+		},
+		{
+			"id": "boolStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "bool"
+			}
+		},
+		{
+			"id": "stringStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "string"
+			}
+		},
+		{
+			"id": "voidStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "void"
+			}
+		},
+		{
+			"id": "fnStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "fn"
+			}
+		},
+		{
+			"id": "listStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "list"
+			}
+		},
+		{
+			"id": "mapStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "map"
+			}
+		},
+		{
+			"id": "setStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "set"
+			}
+		},
+		{
+			"id": "typeInt",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "kind",
+						"value": "intStr"
+					}
+				]
+			}
+		},
+		{
+			"id": "typeBool",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "kind",
+						"value": "boolStr"
+					}
+				]
+			}
+		},
+		{
+			"id": "typeString",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "kind",
+						"value": "stringStr"
+					}
+				]
+			}
+		},
+		{
+			"id": "typeVoid",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "kind",
+						"value": "voidStr"
+					}
+				]
+			}
+		},
+		{
+			"id": "typeList",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "kind",
+						"value": "listStr"
+					}
+				]
+			}
+		},
+		{
+			"id": "typeMap",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "kind",
+						"value": "mapStr"
+					}
+				]
+			}
+		},
+		{
+			"id": "typeSet",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "kind",
+						"value": "setStr"
+					}
+				]
+			}
+		},
+		{
+			"id": "teParamsEqBody",
+			"expr": {
+				"kind": "let",
+				"name": "teLen1",
+				"value": {
+					"kind": "call",
+					"ns": "list",
+					"name": "length",
+					"args": [
+						{
+							"kind": "var",
+							"name": "tePs1"
+						}
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "teDone",
+					"value": {
+						"kind": "call",
+						"ns": "core",
+						"name": "gte",
+						"args": [
+							{
+								"kind": "var",
+								"name": "teIdx"
+							},
+							{
+								"kind": "var",
+								"name": "teLen1"
+							}
+						]
+					},
+					"body": {
+						"kind": "if",
+						"cond": {
+							"kind": "var",
+							"name": "teDone"
+						},
+						"then": "trueVal",
+						"else": {
+							"kind": "let",
+							"name": "teP1",
+							"value": {
+								"kind": "call",
+								"ns": "list",
+								"name": "nth",
+								"args": [
+									{
+										"kind": "var",
+										"name": "tePs1"
 									},
-									"else": "falseVal"
+									{
+										"kind": "var",
+										"name": "teIdx"
+									}
+								]
+							},
+							"body": {
+								"kind": "let",
+								"name": "teP2",
+								"value": {
+									"kind": "call",
+									"ns": "list",
+									"name": "nth",
+									"args": [
+										{
+											"kind": "var",
+											"name": "tePs2"
+										},
+										{
+											"kind": "var",
+											"name": "teIdx"
+										}
+									]
+								},
+								"body": {
+									"kind": "let",
+									"name": "tePairEq",
+									"value": {
+										"kind": "callExpr",
+										"args": [
+											{
+												"kind": "var",
+												"name": "teP1"
+											},
+											{
+												"kind": "var",
+												"name": "teP2"
+											}
+										],
+										"fn": "teCompare"
+									},
+									"body": {
+										"kind": "if",
+										"cond": {
+											"kind": "var",
+											"name": "tePairEq"
+										},
+										"then": {
+											"kind": "let",
+											"name": "teNextIdx",
+											"value": {
+												"kind": "call",
+												"ns": "core",
+												"name": "add",
+												"args": [
+													{
+														"kind": "var",
+														"name": "teIdx"
+													},
+													"one"
+												]
+											},
+											"body": {
+												"kind": "callExpr",
+												"args": [
+													{
+														"kind": "var",
+														"name": "tePs1"
+													},
+													{
+														"kind": "var",
+														"name": "tePs2"
+													},
+													{
+														"kind": "var",
+														"name": "teNextIdx"
+													},
+													{
+														"kind": "var",
+														"name": "teCompare"
+													}
+												],
+												"fn": "teParamsRec"
+											}
+										},
+										"else": "falseVal"
+									}
 								}
 							}
 						}
 					}
 				}
 			}
-		}},
-		{"id": "teParamsInner", "expr": {
-			"kind": "lambda",
-			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
-			"params": ["tePs1", "tePs2", "teIdx", "teCompare"],
-			"body": "teParamsEqBody"
-		}},
-		{"id": "teParamsOuter", "expr": {
-			"kind": "lambda",
-			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
-			"params": ["teParamsRec"],
-			"body": "teParamsInner"
-		}},
-		{"id": "teParamsFixFn", "expr": {
-			"kind": "fix",
-			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
-			"fn": "teParamsOuter"
-		}},
-
-		{"id": "teRecBody", "expr": {
-			"kind": "let", "name": "teK1",
-			"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "teT1"}, "kindKey"]},
-			"body": {"kind": "let", "name": "teK2",
-				"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "teT2"}, "kindKey"]},
-				"body": {"kind": "let", "name": "teKindsEq",
-					"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "teK1"}, {"kind": "var", "name": "teK2"}]},
-					"body": {"kind": "if",
-						"cond": {"kind": "var", "name": "teKindsEq"},
-						"then": {"kind": "let", "name": "teIsFn",
-							"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "teK1"}, "fnStr"]},
-							"body": {"kind": "if",
-								"cond": {"kind": "var", "name": "teIsFn"},
-								"then": {"kind": "let", "name": "teFnPs1",
-									"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "teT1"}, "paramsKey"]},
-									"body": {"kind": "let", "name": "teFnPs2",
-										"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "teT2"}, "paramsKey"]},
-										"body": {"kind": "let", "name": "teFnPsLen1",
-											"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "teFnPs1"}]},
-											"body": {"kind": "let", "name": "teFnPsLen2",
-												"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "teFnPs2"}]},
-												"body": {"kind": "let", "name": "teFnLenEq",
-													"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "teFnPsLen1"}, {"kind": "var", "name": "teFnPsLen2"}]},
-													"body": {"kind": "if",
-														"cond": {"kind": "var", "name": "teFnLenEq"},
-														"then": {"kind": "let", "name": "teSelfRef",
-															"value": {"kind": "var", "name": "teRec"},
-															"body": {"kind": "let", "name": "teFnParamsOk",
-																"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "teFnPs1"}, {"kind": "var", "name": "teFnPs2"}, "zero", {"kind": "var", "name": "teSelfRef"}], "fn": "teParamsFixFn"},
-																"body": {"kind": "if",
-																	"cond": {"kind": "var", "name": "teFnParamsOk"},
-																	"then": {"kind": "let", "name": "teFnRet1",
-																		"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "teT1"}, "returnsKey"]},
-																		"body": {"kind": "let", "name": "teFnRet2",
-																			"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "teT2"}, "returnsKey"]},
-																			"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "teFnRet1"}, {"kind": "var", "name": "teFnRet2"}], "fn": "teRec"}
+		},
+		{
+			"id": "teParamsInner",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"tePs1",
+					"tePs2",
+					"teIdx",
+					"teCompare"
+				],
+				"body": "teParamsEqBody"
+			}
+		},
+		{
+			"id": "teParamsOuter",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "fn",
+							"params": [
+								{
+									"kind": "int"
+								},
+								{
+									"kind": "int"
+								},
+								{
+									"kind": "int"
+								},
+								{
+									"kind": "int"
+								}
+							],
+							"returns": {
+								"kind": "int"
+							}
+						}
+					],
+					"returns": {
+						"kind": "fn",
+						"params": [
+							{
+								"kind": "int"
+							},
+							{
+								"kind": "int"
+							},
+							{
+								"kind": "int"
+							},
+							{
+								"kind": "int"
+							}
+						],
+						"returns": {
+							"kind": "int"
+						}
+					}
+				},
+				"params": [
+					"teParamsRec"
+				],
+				"body": "teParamsInner"
+			}
+		},
+		{
+			"id": "teParamsFixFn",
+			"expr": {
+				"kind": "fix",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"fn": "teParamsOuter"
+			}
+		},
+		{
+			"id": "teRecBody",
+			"expr": {
+				"kind": "let",
+				"name": "teK1",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "get",
+					"args": [
+						{
+							"kind": "var",
+							"name": "teT1"
+						},
+						"kindKey"
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "teK2",
+					"value": {
+						"kind": "call",
+						"ns": "map",
+						"name": "get",
+						"args": [
+							{
+								"kind": "var",
+								"name": "teT2"
+							},
+							"kindKey"
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "teKindsEq",
+						"value": {
+							"kind": "call",
+							"ns": "core",
+							"name": "eq",
+							"args": [
+								{
+									"kind": "var",
+									"name": "teK1"
+								},
+								{
+									"kind": "var",
+									"name": "teK2"
+								}
+							]
+						},
+						"body": {
+							"kind": "if",
+							"cond": {
+								"kind": "var",
+								"name": "teKindsEq"
+							},
+							"then": {
+								"kind": "let",
+								"name": "teIsFn",
+								"value": {
+									"kind": "call",
+									"ns": "core",
+									"name": "eq",
+									"args": [
+										{
+											"kind": "var",
+											"name": "teK1"
+										},
+										"fnStr"
+									]
+								},
+								"body": {
+									"kind": "if",
+									"cond": {
+										"kind": "var",
+										"name": "teIsFn"
+									},
+									"then": {
+										"kind": "let",
+										"name": "teFnPs1",
+										"value": {
+											"kind": "call",
+											"ns": "map",
+											"name": "get",
+											"args": [
+												{
+													"kind": "var",
+													"name": "teT1"
+												},
+												"paramsKey"
+											]
+										},
+										"body": {
+											"kind": "let",
+											"name": "teFnPs2",
+											"value": {
+												"kind": "call",
+												"ns": "map",
+												"name": "get",
+												"args": [
+													{
+														"kind": "var",
+														"name": "teT2"
+													},
+													"paramsKey"
+												]
+											},
+											"body": {
+												"kind": "let",
+												"name": "teFnPsLen1",
+												"value": {
+													"kind": "call",
+													"ns": "list",
+													"name": "length",
+													"args": [
+														{
+															"kind": "var",
+															"name": "teFnPs1"
+														}
+													]
+												},
+												"body": {
+													"kind": "let",
+													"name": "teFnPsLen2",
+													"value": {
+														"kind": "call",
+														"ns": "list",
+														"name": "length",
+														"args": [
+															{
+																"kind": "var",
+																"name": "teFnPs2"
+															}
+														]
+													},
+													"body": {
+														"kind": "let",
+														"name": "teFnLenEq",
+														"value": {
+															"kind": "call",
+															"ns": "core",
+															"name": "eq",
+															"args": [
+																{
+																	"kind": "var",
+																	"name": "teFnPsLen1"
+																},
+																{
+																	"kind": "var",
+																	"name": "teFnPsLen2"
+																}
+															]
+														},
+														"body": {
+															"kind": "if",
+															"cond": {
+																"kind": "var",
+																"name": "teFnLenEq"
+															},
+															"then": {
+																"kind": "let",
+																"name": "teSelfRef",
+																"value": {
+																	"kind": "var",
+																	"name": "teRec"
+																},
+																"body": {
+																	"kind": "let",
+																	"name": "teFnParamsOk",
+																	"value": {
+																		"kind": "callExpr",
+																		"args": [
+																			{
+																				"kind": "var",
+																				"name": "teFnPs1"
+																			},
+																			{
+																				"kind": "var",
+																				"name": "teFnPs2"
+																			},
+																			"zero",
+																			{
+																				"kind": "var",
+																				"name": "teSelfRef"
+																			}
+																		],
+																		"fn": "teParamsFixFn"
+																	},
+																	"body": {
+																		"kind": "if",
+																		"cond": {
+																			"kind": "var",
+																			"name": "teFnParamsOk"
+																		},
+																		"then": {
+																			"kind": "let",
+																			"name": "teFnRet1",
+																			"value": {
+																				"kind": "call",
+																				"ns": "map",
+																				"name": "get",
+																				"args": [
+																					{
+																						"kind": "var",
+																						"name": "teT1"
+																					},
+																					"returnsKey"
+																				]
+																			},
+																			"body": {
+																				"kind": "let",
+																				"name": "teFnRet2",
+																				"value": {
+																					"kind": "call",
+																					"ns": "map",
+																					"name": "get",
+																					"args": [
+																						{
+																							"kind": "var",
+																							"name": "teT2"
+																						},
+																						"returnsKey"
+																					]
+																				},
+																				"body": {
+																					"kind": "callExpr",
+																					"args": [
+																						{
+																							"kind": "var",
+																							"name": "teFnRet1"
+																						},
+																						{
+																							"kind": "var",
+																							"name": "teFnRet2"
+																						}
+																					],
+																					"fn": "teRec"
+																				}
+																			}
+																		},
+																		"else": "falseVal"
+																	}
+																}
+															},
+															"else": "falseVal"
+														}
+													}
+												}
+											}
+										}
+									},
+									"else": "trueVal"
+								}
+							},
+							"else": "falseVal"
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "teRecInner",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"teT1",
+					"teT2"
+				],
+				"body": "teRecBody"
+			}
+		},
+		{
+			"id": "teRecOuter",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "fn",
+							"params": [
+								{
+									"kind": "int"
+								},
+								{
+									"kind": "int"
+								}
+							],
+							"returns": {
+								"kind": "int"
+							}
+						}
+					],
+					"returns": {
+						"kind": "fn",
+						"params": [
+							{
+								"kind": "int"
+							},
+							{
+								"kind": "int"
+							}
+						],
+						"returns": {
+							"kind": "int"
+						}
+					}
+				},
+				"params": [
+					"teRec"
+				],
+				"body": "teRecInner"
+			}
+		},
+		{
+			"id": "typeEqualFixFn",
+			"expr": {
+				"kind": "fix",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"fn": "teRecOuter"
+			}
+		},
+		{
+			"id": "typeEqualBody",
+			"expr": {
+				"kind": "callExpr",
+				"args": [
+					{
+						"kind": "var",
+						"name": "t1"
+					},
+					{
+						"kind": "var",
+						"name": "t2"
+					}
+				],
+				"fn": "typeEqualFixFn"
+			}
+		},
+		{
+			"id": "typeEqual",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"t1",
+					"t2"
+				],
+				"body": "typeEqualBody"
+			}
+		},
+		{
+			"id": "sigParamsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "params"
+			}
+		},
+		{
+			"id": "sigReturnsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "returns"
+			}
+		},
+		{
+			"id": "sigIntIntToInt",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeInt",
+								"typeInt"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeInt"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigIntToInt",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeInt"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeInt"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigIntIntToBool",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeInt",
+								"typeInt"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeBool"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigIntToString",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeInt"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeString"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigIntToBool",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeInt"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeBool"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigBoolToBool",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeBool"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeBool"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigListToInt",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeList"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeInt"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigListIntToInt",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeList",
+								"typeInt"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeInt"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigIntListToList",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeInt",
+								"typeList"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeList"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigMapStringToInt",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeMap",
+								"typeString"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeInt"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigMapStringIntToMap",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeMap",
+								"typeString",
+								"typeInt"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeMap"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigMapStringToBool",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeMap",
+								"typeString"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeBool"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigMapToList",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeMap"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeList"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigStrStrToStr",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeString",
+								"typeString"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeString"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigStrToInt",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeString"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeInt"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigStrIntToStr",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeString",
+								"typeInt"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeString"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigStrToStr",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeString"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeString"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigStrToMap",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeString"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeMap"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigSetIntToSet",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeSet",
+								"typeInt"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeSet"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigSetIntToBool",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeSet",
+								"typeInt"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeBool"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigSetToInt",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeSet"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeInt"
+					}
+				]
+			}
+		},
+		{
+			"id": "sigSetToList",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "params",
+						"value": {
+							"kind": "listOf",
+							"elements": [
+								"typeSet"
+							]
+						}
+					},
+					{
+						"key": "returns",
+						"value": "typeList"
+					}
+				]
+			}
+		},
+		{
+			"id": "kCoreAdd",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:add"
+			}
+		},
+		{
+			"id": "kCoreSub",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:sub"
+			}
+		},
+		{
+			"id": "kCoreMul",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:mul"
+			}
+		},
+		{
+			"id": "kCoreDiv",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:div"
+			}
+		},
+		{
+			"id": "kCoreMod",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:mod"
+			}
+		},
+		{
+			"id": "kCorePow",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:pow"
+			}
+		},
+		{
+			"id": "kCoreMin",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:min"
+			}
+		},
+		{
+			"id": "kCoreMax",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:max"
+			}
+		},
+		{
+			"id": "kCoreNeg",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:neg"
+			}
+		},
+		{
+			"id": "kCoreEq",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:eq"
+			}
+		},
+		{
+			"id": "kCoreNeq",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:neq"
+			}
+		},
+		{
+			"id": "kCoreGt",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:gt"
+			}
+		},
+		{
+			"id": "kCoreLt",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:lt"
+			}
+		},
+		{
+			"id": "kCoreGte",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:gte"
+			}
+		},
+		{
+			"id": "kCoreLte",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:lte"
+			}
+		},
+		{
+			"id": "kCoreTypeof",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:typeof"
+			}
+		},
+		{
+			"id": "kCoreIsError",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "core:isError"
+			}
+		},
+		{
+			"id": "kBoolNot",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "bool:not"
+			}
+		},
+		{
+			"id": "kListLength",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "list:length"
+			}
+		},
+		{
+			"id": "kListNth",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "list:nth"
+			}
+		},
+		{
+			"id": "kListCons",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "list:cons"
+			}
+		},
+		{
+			"id": "kMapGet",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "map:get"
+			}
+		},
+		{
+			"id": "kMapSet",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "map:set"
+			}
+		},
+		{
+			"id": "kMapHas",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "map:has"
+			}
+		},
+		{
+			"id": "kMapKeys",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "map:keys"
+			}
+		},
+		{
+			"id": "kStrConcat",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "string:concat"
+			}
+		},
+		{
+			"id": "kStrLength",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "string:length"
+			}
+		},
+		{
+			"id": "kStrCharAt",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "string:charAt"
+			}
+		},
+		{
+			"id": "kStrToUpper",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "string:toUpper"
+			}
+		},
+		{
+			"id": "kStrToLower",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "string:toLower"
+			}
+		},
+		{
+			"id": "kStrTrim",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "string:trim"
+			}
+		},
+		{
+			"id": "kSetAdd",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "set:add"
+			}
+		},
+		{
+			"id": "kSetRemove",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "set:remove"
+			}
+		},
+		{
+			"id": "kSetContains",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "set:contains"
+			}
+		},
+		{
+			"id": "kSetSize",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "set:size"
+			}
+		},
+		{
+			"id": "kSetToList",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "set:toList"
+			}
+		},
+		{
+			"id": "kJsonParse",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "json:parse"
+			}
+		},
+		{
+			"id": "kStrToInt",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "string:toInt"
+			}
+		},
+		{
+			"id": "kStrToFloat",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "string:toFloat"
+			}
+		},
+		{
+			"id": "reg00",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"emptyMap",
+					"kCoreAdd",
+					"sigIntIntToInt"
+				]
+			}
+		},
+		{
+			"id": "reg01",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg00",
+					"kCoreSub",
+					"sigIntIntToInt"
+				]
+			}
+		},
+		{
+			"id": "reg02",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg01",
+					"kCoreMul",
+					"sigIntIntToInt"
+				]
+			}
+		},
+		{
+			"id": "reg03",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg02",
+					"kCoreDiv",
+					"sigIntIntToInt"
+				]
+			}
+		},
+		{
+			"id": "reg04",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg03",
+					"kCoreMod",
+					"sigIntIntToInt"
+				]
+			}
+		},
+		{
+			"id": "reg05",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg04",
+					"kCorePow",
+					"sigIntIntToInt"
+				]
+			}
+		},
+		{
+			"id": "reg06",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg05",
+					"kCoreMin",
+					"sigIntIntToInt"
+				]
+			}
+		},
+		{
+			"id": "reg07",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg06",
+					"kCoreMax",
+					"sigIntIntToInt"
+				]
+			}
+		},
+		{
+			"id": "reg08",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg07",
+					"kCoreNeg",
+					"sigIntToInt"
+				]
+			}
+		},
+		{
+			"id": "reg09",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg08",
+					"kCoreEq",
+					"sigIntIntToBool"
+				]
+			}
+		},
+		{
+			"id": "reg10",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg09",
+					"kCoreNeq",
+					"sigIntIntToBool"
+				]
+			}
+		},
+		{
+			"id": "reg11",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg10",
+					"kCoreGt",
+					"sigIntIntToBool"
+				]
+			}
+		},
+		{
+			"id": "reg12",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg11",
+					"kCoreLt",
+					"sigIntIntToBool"
+				]
+			}
+		},
+		{
+			"id": "reg13",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg12",
+					"kCoreGte",
+					"sigIntIntToBool"
+				]
+			}
+		},
+		{
+			"id": "reg14",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg13",
+					"kCoreLte",
+					"sigIntIntToBool"
+				]
+			}
+		},
+		{
+			"id": "reg15",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg14",
+					"kCoreTypeof",
+					"sigIntToString"
+				]
+			}
+		},
+		{
+			"id": "reg16",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg15",
+					"kCoreIsError",
+					"sigIntToBool"
+				]
+			}
+		},
+		{
+			"id": "reg17",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg16",
+					"kBoolNot",
+					"sigBoolToBool"
+				]
+			}
+		},
+		{
+			"id": "reg18",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg17",
+					"kListLength",
+					"sigListToInt"
+				]
+			}
+		},
+		{
+			"id": "reg19",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg18",
+					"kListNth",
+					"sigListIntToInt"
+				]
+			}
+		},
+		{
+			"id": "reg20",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg19",
+					"kListCons",
+					"sigIntListToList"
+				]
+			}
+		},
+		{
+			"id": "reg21",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg20",
+					"kMapGet",
+					"sigMapStringToInt"
+				]
+			}
+		},
+		{
+			"id": "reg22",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg21",
+					"kMapSet",
+					"sigMapStringIntToMap"
+				]
+			}
+		},
+		{
+			"id": "reg23",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg22",
+					"kMapHas",
+					"sigMapStringToBool"
+				]
+			}
+		},
+		{
+			"id": "reg24",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg23",
+					"kMapKeys",
+					"sigMapToList"
+				]
+			}
+		},
+		{
+			"id": "reg25",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg24",
+					"kStrConcat",
+					"sigStrStrToStr"
+				]
+			}
+		},
+		{
+			"id": "reg26",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg25",
+					"kStrLength",
+					"sigStrToInt"
+				]
+			}
+		},
+		{
+			"id": "reg27",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg26",
+					"kStrCharAt",
+					"sigStrIntToStr"
+				]
+			}
+		},
+		{
+			"id": "reg28",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg27",
+					"kStrToUpper",
+					"sigStrToStr"
+				]
+			}
+		},
+		{
+			"id": "reg29",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg28",
+					"kStrToLower",
+					"sigStrToStr"
+				]
+			}
+		},
+		{
+			"id": "reg30",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg29",
+					"kStrTrim",
+					"sigStrToStr"
+				]
+			}
+		},
+		{
+			"id": "reg31",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg30",
+					"kSetAdd",
+					"sigSetIntToSet"
+				]
+			}
+		},
+		{
+			"id": "reg32",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg31",
+					"kSetRemove",
+					"sigSetIntToSet"
+				]
+			}
+		},
+		{
+			"id": "reg33",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg32",
+					"kSetContains",
+					"sigSetIntToBool"
+				]
+			}
+		},
+		{
+			"id": "reg34",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg33",
+					"kSetSize",
+					"sigSetToInt"
+				]
+			}
+		},
+		{
+			"id": "reg35",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg34",
+					"kSetToList",
+					"sigSetToList"
+				]
+			}
+		},
+		{
+			"id": "reg36",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg35",
+					"kJsonParse",
+					"sigStrToMap"
+				]
+			}
+		},
+		{
+			"id": "reg37",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg36",
+					"kStrToInt",
+					"sigStrToInt"
+				]
+			}
+		},
+		{
+			"id": "opRegistry",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": [
+					"reg37",
+					"kStrToFloat",
+					"sigStrToInt"
+				]
+			}
+		},
+		{
+			"id": "idKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "id"
+			}
+		},
+		{
+			"id": "exprKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "expr"
+			}
+		},
+		{
+			"id": "bodyKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "body"
+			}
+		},
+		{
+			"id": "valueKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "value"
+			}
+		},
+		{
+			"id": "condKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "cond"
+			}
+		},
+		{
+			"id": "thenKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "then"
+			}
+		},
+		{
+			"id": "elseKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "else"
+			}
+		},
+		{
+			"id": "fnKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "fn"
+			}
+		},
+		{
+			"id": "argsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "args"
+			}
+		},
+		{
+			"id": "lambdaStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "lambda"
+			}
+		},
+		{
+			"id": "letStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "let"
+			}
+		},
+		{
+			"id": "ifStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "if"
+			}
+		},
+		{
+			"id": "callStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "call"
+			}
+		},
+		{
+			"id": "callExprStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "callExpr"
+			}
+		},
+		{
+			"id": "refStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "ref"
+			}
+		},
+		{
+			"id": "fixStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "fix"
+			}
+		},
+		{
+			"id": "emptySet",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "set",
+					"of": {
+						"kind": "int"
+					}
+				},
+				"value": []
+			}
+		},
+		{
+			"id": "bnmFoldBody",
+			"expr": {
+				"kind": "let",
+				"name": "bnmNode",
+				"value": {
+					"kind": "call",
+					"ns": "list",
+					"name": "nth",
+					"args": [
+						{
+							"kind": "var",
+							"name": "bnmNodes"
+						},
+						{
+							"kind": "var",
+							"name": "bnmI"
+						}
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "bnmNid",
+					"value": {
+						"kind": "call",
+						"ns": "map",
+						"name": "get",
+						"args": [
+							{
+								"kind": "var",
+								"name": "bnmNode"
+							},
+							"idKey"
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "bnmNewMap",
+						"value": {
+							"kind": "call",
+							"ns": "map",
+							"name": "set",
+							"args": [
+								{
+									"kind": "var",
+									"name": "bnmAcc"
+								},
+								{
+									"kind": "var",
+									"name": "bnmNid"
+								},
+								{
+									"kind": "var",
+									"name": "bnmNode"
+								}
+							]
+						},
+						"body": {
+							"kind": "let",
+							"name": "bnmNextI",
+							"value": {
+								"kind": "call",
+								"ns": "core",
+								"name": "add",
+								"args": [
+									{
+										"kind": "var",
+										"name": "bnmI"
+									},
+									"one"
+								]
+							},
+							"body": {
+								"kind": "let",
+								"name": "bnmDone",
+								"value": {
+									"kind": "call",
+									"ns": "core",
+									"name": "gte",
+									"args": [
+										{
+											"kind": "var",
+											"name": "bnmNextI"
+										},
+										{
+											"kind": "var",
+											"name": "bnmLen"
+										}
+									]
+								},
+								"body": {
+									"kind": "if",
+									"cond": {
+										"kind": "var",
+										"name": "bnmDone"
+									},
+									"then": {
+										"kind": "var",
+										"name": "bnmNewMap"
+									},
+									"else": {
+										"kind": "callExpr",
+										"args": [
+											{
+												"kind": "var",
+												"name": "bnmNextI"
+											},
+											{
+												"kind": "var",
+												"name": "bnmNewMap"
+											}
+										],
+										"fn": "bnmRec"
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "bnmFoldInner",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"bnmI",
+					"bnmAcc"
+				],
+				"body": "bnmFoldBody"
+			}
+		},
+		{
+			"id": "bnmFoldOuter",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "fn",
+							"params": [
+								{
+									"kind": "int"
+								},
+								{
+									"kind": "int"
+								}
+							],
+							"returns": {
+								"kind": "int"
+							}
+						}
+					],
+					"returns": {
+						"kind": "fn",
+						"params": [
+							{
+								"kind": "int"
+							},
+							{
+								"kind": "int"
+							}
+						],
+						"returns": {
+							"kind": "int"
+						}
+					}
+				},
+				"params": [
+					"bnmRec"
+				],
+				"body": "bnmFoldInner"
+			}
+		},
+		{
+			"id": "buildNodeMapBody",
+			"expr": {
+				"kind": "let",
+				"name": "bnmLen",
+				"value": {
+					"kind": "call",
+					"ns": "list",
+					"name": "length",
+					"args": [
+						{
+							"kind": "var",
+							"name": "bnmNodes"
+						}
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "bnmIsEmpty",
+					"value": {
+						"kind": "call",
+						"ns": "core",
+						"name": "eq",
+						"args": [
+							{
+								"kind": "var",
+								"name": "bnmLen"
+							},
+							"zero"
+						]
+					},
+					"body": {
+						"kind": "if",
+						"cond": {
+							"kind": "var",
+							"name": "bnmIsEmpty"
+						},
+						"then": "emptyMap",
+						"else": {
+							"kind": "let",
+							"name": "bnmIter",
+							"value": {
+								"kind": "fix",
+								"type": {
+									"kind": "fn",
+									"params": [
+										{
+											"kind": "int"
+										},
+										{
+											"kind": "int"
+										}
+									],
+									"returns": {
+										"kind": "int"
+									}
+								},
+								"fn": "bnmFoldOuter"
+							},
+							"body": {
+								"kind": "callExpr",
+								"args": [
+									"zero",
+									"emptyMap"
+								],
+								"fn": "bnmIter"
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "buildNodeMap",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"bnmNodes"
+				],
+				"body": "buildNodeMapBody"
+			}
+		},
+		{
+			"id": "clbFoldBody",
+			"expr": {
+				"kind": "let",
+				"name": "clbNode",
+				"value": {
+					"kind": "call",
+					"ns": "list",
+					"name": "nth",
+					"args": [
+						{
+							"kind": "var",
+							"name": "clbNodes"
+						},
+						{
+							"kind": "var",
+							"name": "clbI"
+						}
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "clbExpr",
+					"value": {
+						"kind": "call",
+						"ns": "map",
+						"name": "get",
+						"args": [
+							{
+								"kind": "var",
+								"name": "clbNode"
+							},
+							"exprKey"
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "clbKind",
+						"value": {
+							"kind": "call",
+							"ns": "map",
+							"name": "get",
+							"args": [
+								{
+									"kind": "var",
+									"name": "clbExpr"
+								},
+								"kindKey"
+							]
+						},
+						"body": {
+							"kind": "let",
+							"name": "clbIsLambda",
+							"value": {
+								"kind": "call",
+								"ns": "core",
+								"name": "eq",
+								"args": [
+									{
+										"kind": "var",
+										"name": "clbKind"
+									},
+									"lambdaStr"
+								]
+							},
+							"body": {
+								"kind": "let",
+								"name": "clbNewSet",
+								"value": {
+									"kind": "if",
+									"cond": {
+										"kind": "var",
+										"name": "clbIsLambda"
+									},
+									"then": {
+										"kind": "let",
+										"name": "clbBody",
+										"value": {
+											"kind": "call",
+											"ns": "map",
+											"name": "get",
+											"args": [
+												{
+													"kind": "var",
+													"name": "clbExpr"
+												},
+												"bodyKey"
+											]
+										},
+										"body": {
+											"kind": "call",
+											"ns": "set",
+											"name": "add",
+											"args": [
+												{
+													"kind": "var",
+													"name": "clbAcc"
+												},
+												{
+													"kind": "var",
+													"name": "clbBody"
+												}
+											]
+										}
+									},
+									"else": {
+										"kind": "var",
+										"name": "clbAcc"
+									}
+								},
+								"body": {
+									"kind": "let",
+									"name": "clbNextI",
+									"value": {
+										"kind": "call",
+										"ns": "core",
+										"name": "add",
+										"args": [
+											{
+												"kind": "var",
+												"name": "clbI"
+											},
+											"one"
+										]
+									},
+									"body": {
+										"kind": "let",
+										"name": "clbDone",
+										"value": {
+											"kind": "call",
+											"ns": "core",
+											"name": "gte",
+											"args": [
+												{
+													"kind": "var",
+													"name": "clbNextI"
+												},
+												{
+													"kind": "var",
+													"name": "clbLen"
+												}
+											]
+										},
+										"body": {
+											"kind": "if",
+											"cond": {
+												"kind": "var",
+												"name": "clbDone"
+											},
+											"then": {
+												"kind": "var",
+												"name": "clbNewSet"
+											},
+											"else": {
+												"kind": "callExpr",
+												"args": [
+													{
+														"kind": "var",
+														"name": "clbNextI"
+													},
+													{
+														"kind": "var",
+														"name": "clbNewSet"
+													}
+												],
+												"fn": "clbRec"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "clbFoldInner",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"clbI",
+					"clbAcc"
+				],
+				"body": "clbFoldBody"
+			}
+		},
+		{
+			"id": "clbFoldOuter",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "fn",
+							"params": [
+								{
+									"kind": "int"
+								},
+								{
+									"kind": "int"
+								}
+							],
+							"returns": {
+								"kind": "int"
+							}
+						}
+					],
+					"returns": {
+						"kind": "fn",
+						"params": [
+							{
+								"kind": "int"
+							},
+							{
+								"kind": "int"
+							}
+						],
+						"returns": {
+							"kind": "int"
+						}
+					}
+				},
+				"params": [
+					"clbRec"
+				],
+				"body": "clbFoldInner"
+			}
+		},
+		{
+			"id": "collectLambdaBodiesBody",
+			"expr": {
+				"kind": "let",
+				"name": "clbLen",
+				"value": {
+					"kind": "call",
+					"ns": "list",
+					"name": "length",
+					"args": [
+						{
+							"kind": "var",
+							"name": "clbNodes"
+						}
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "clbIsEmpty",
+					"value": {
+						"kind": "call",
+						"ns": "core",
+						"name": "eq",
+						"args": [
+							{
+								"kind": "var",
+								"name": "clbLen"
+							},
+							"zero"
+						]
+					},
+					"body": {
+						"kind": "if",
+						"cond": {
+							"kind": "var",
+							"name": "clbIsEmpty"
+						},
+						"then": "emptySet",
+						"else": {
+							"kind": "let",
+							"name": "clbIter",
+							"value": {
+								"kind": "fix",
+								"type": {
+									"kind": "fn",
+									"params": [
+										{
+											"kind": "int"
+										},
+										{
+											"kind": "int"
+										}
+									],
+									"returns": {
+										"kind": "int"
+									}
+								},
+								"fn": "clbFoldOuter"
+							},
+							"body": {
+								"kind": "callExpr",
+								"args": [
+									"zero",
+									"emptySet"
+								],
+								"fn": "clbIter"
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "collectLambdaBodies",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"clbNodes"
+				],
+				"body": "collectLambdaBodiesBody"
+			}
+		},
+		{
+			"id": "identifyBoundNodesBody",
+			"expr": {
+				"kind": "callExpr",
+				"args": [
+					{
+						"kind": "var",
+						"name": "ibnInputNodes"
+					}
+				],
+				"fn": "collectLambdaBodies"
+			}
+		},
+		{
+			"id": "identifyBoundNodes",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"ibnInputNodes"
+				],
+				"body": "identifyBoundNodesBody"
+			}
+		},
+		{
+			"id": "typeKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "type"
+			}
+		},
+		{
+			"id": "errorsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "errors"
+			}
+		},
+		{
+			"id": "nsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "ns"
+			}
+		},
+		{
+			"id": "nameKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "name"
+			}
+		},
+		{
+			"id": "exprsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "exprs"
+			}
+		},
+		{
+			"id": "fieldsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "fields"
+			}
+		},
+		{
+			"id": "litStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "lit"
+			}
+		},
+		{
+			"id": "varStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "var"
+			}
+		},
+		{
+			"id": "doStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "do"
+			}
+		},
+		{
+			"id": "recordStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "record"
+			}
+		},
+		{
+			"id": "listOfStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "listOf"
+			}
+		},
+		{
+			"id": "matchStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "match"
+			}
+		},
+		{
+			"id": "airRefStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "airRef"
+			}
+		},
+		{
+			"id": "predicateStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "predicate"
+			}
+		},
+		{
+			"id": "colonStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": ":"
+			}
+		},
+		{
+			"id": "validStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "valid"
+			}
+		},
+		{
+			"id": "nodesStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "nodes"
+			}
+		},
+		{
+			"id": "resultStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "result"
+			}
+		},
+		{
+			"id": "stringType",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "string"
+			}
+		},
+		{
+			"id": "mapType",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "map"
+			}
+		},
+		{
+			"id": "tceBody",
+			"expr": {
+				"kind": "let",
+				"name": "tceExprType",
+				"value": {
+					"kind": "call",
+					"ns": "core",
+					"name": "typeof",
+					"args": [
+						{
+							"kind": "var",
+							"name": "tceExpr"
+						}
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "tceIsString",
+					"value": {
+						"kind": "call",
+						"ns": "core",
+						"name": "eq",
+						"args": [
+							{
+								"kind": "var",
+								"name": "tceExprType"
+							},
+							"stringType"
+						]
+					},
+					"body": {
+						"kind": "if",
+						"cond": {
+							"kind": "var",
+							"name": "tceIsString"
+						},
+						"then": {
+							"kind": "let",
+							"name": "tceStrHas",
+							"value": {
+								"kind": "call",
+								"ns": "map",
+								"name": "has",
+								"args": [
+									{
+										"kind": "var",
+										"name": "tceNodeTypes"
+									},
+									{
+										"kind": "var",
+										"name": "tceExpr"
+									}
+								]
+							},
+							"body": {
+								"kind": "if",
+								"cond": {
+									"kind": "var",
+									"name": "tceStrHas"
+								},
+								"then": {
+									"kind": "let",
+									"name": "tceStrType",
+									"value": {
+										"kind": "call",
+										"ns": "map",
+										"name": "get",
+										"args": [
+											{
+												"kind": "var",
+												"name": "tceNodeTypes"
+											},
+											{
+												"kind": "var",
+												"name": "tceExpr"
+											}
+										]
+									},
+									"body": {
+										"kind": "record",
+										"fields": [
+											{
+												"key": "type",
+												"value": {
+													"kind": "var",
+													"name": "tceStrType"
+												}
+											},
+											{
+												"key": "errors",
+												"value": "emptyList"
+											}
+										]
+									}
+								},
+								"else": {
+									"kind": "record",
+									"fields": [
+										{
+											"key": "type",
+											"value": "typeInt"
+										},
+										{
+											"key": "errors",
+											"value": "emptyList"
+										}
+									]
+								}
+							}
+						},
+						"else": {
+							"kind": "let",
+							"name": "tceKind",
+							"value": {
+								"kind": "call",
+								"ns": "map",
+								"name": "get",
+								"args": [
+									{
+										"kind": "var",
+										"name": "tceExpr"
+									},
+									"kindKey"
+								]
+							},
+							"body": {
+								"kind": "let",
+								"name": "tceIsLit",
+								"value": {
+									"kind": "call",
+									"ns": "core",
+									"name": "eq",
+									"args": [
+										{
+											"kind": "var",
+											"name": "tceKind"
+										},
+										"litStr"
+									]
+								},
+								"body": {
+									"kind": "if",
+									"cond": {
+										"kind": "var",
+										"name": "tceIsLit"
+									},
+									"then": {
+										"kind": "let",
+										"name": "tceLitType",
+										"value": {
+											"kind": "call",
+											"ns": "map",
+											"name": "get",
+											"args": [
+												{
+													"kind": "var",
+													"name": "tceExpr"
+												},
+												"typeKey"
+											]
+										},
+										"body": {
+											"kind": "record",
+											"fields": [
+												{
+													"key": "type",
+													"value": {
+														"kind": "var",
+														"name": "tceLitType"
+													}
+												},
+												{
+													"key": "errors",
+													"value": "emptyList"
+												}
+											]
+										}
+									},
+									"else": {
+										"kind": "let",
+										"name": "tceIsVar",
+										"value": {
+											"kind": "call",
+											"ns": "core",
+											"name": "eq",
+											"args": [
+												{
+													"kind": "var",
+													"name": "tceKind"
+												},
+												"varStr"
+											]
+										},
+										"body": {
+											"kind": "if",
+											"cond": {
+												"kind": "var",
+												"name": "tceIsVar"
+											},
+											"then": {
+												"kind": "let",
+												"name": "tceVarName",
+												"value": {
+													"kind": "call",
+													"ns": "map",
+													"name": "get",
+													"args": [
+														{
+															"kind": "var",
+															"name": "tceExpr"
+														},
+														"nameKey"
+													]
+												},
+												"body": {
+													"kind": "let",
+													"name": "tceHasVar",
+													"value": {
+														"kind": "call",
+														"ns": "map",
+														"name": "has",
+														"args": [
+															{
+																"kind": "var",
+																"name": "tceEnv"
+															},
+															{
+																"kind": "var",
+																"name": "tceVarName"
+															}
+														]
+													},
+													"body": {
+														"kind": "if",
+														"cond": {
+															"kind": "var",
+															"name": "tceHasVar"
+														},
+														"then": {
+															"kind": "let",
+															"name": "tceVarType",
+															"value": {
+																"kind": "call",
+																"ns": "map",
+																"name": "get",
+																"args": [
+																	{
+																		"kind": "var",
+																		"name": "tceEnv"
+																	},
+																	{
+																		"kind": "var",
+																		"name": "tceVarName"
+																	}
+																]
+															},
+															"body": {
+																"kind": "record",
+																"fields": [
+																	{
+																		"key": "type",
+																		"value": {
+																			"kind": "var",
+																			"name": "tceVarType"
 																		}
 																	},
-																	"else": "falseVal"
-																}
+																	{
+																		"key": "errors",
+																		"value": "emptyList"
+																	}
+																]
 															}
 														},
-														"else": "falseVal"
+														"else": {
+															"kind": "record",
+															"fields": [
+																{
+																	"key": "type",
+																	"value": "typeInt"
+																},
+																{
+																	"key": "errors",
+																	"value": "emptyList"
+																}
+															]
+														}
+													}
+												}
+											},
+											"else": {
+												"kind": "let",
+												"name": "tceIsRef",
+												"value": {
+													"kind": "call",
+													"ns": "core",
+													"name": "eq",
+													"args": [
+														{
+															"kind": "var",
+															"name": "tceKind"
+														},
+														"refStr"
+													]
+												},
+												"body": {
+													"kind": "if",
+													"cond": {
+														"kind": "var",
+														"name": "tceIsRef"
+													},
+													"then": {
+														"kind": "let",
+														"name": "tceRefId",
+														"value": {
+															"kind": "call",
+															"ns": "map",
+															"name": "get",
+															"args": [
+																{
+																	"kind": "var",
+																	"name": "tceExpr"
+																},
+																"idKey"
+															]
+														},
+														"body": {
+															"kind": "let",
+															"name": "tceHasRef",
+															"value": {
+																"kind": "call",
+																"ns": "map",
+																"name": "has",
+																"args": [
+																	{
+																		"kind": "var",
+																		"name": "tceNodeTypes"
+																	},
+																	{
+																		"kind": "var",
+																		"name": "tceRefId"
+																	}
+																]
+															},
+															"body": {
+																"kind": "if",
+																"cond": {
+																	"kind": "var",
+																	"name": "tceHasRef"
+																},
+																"then": {
+																	"kind": "let",
+																	"name": "tceRefType",
+																	"value": {
+																		"kind": "call",
+																		"ns": "map",
+																		"name": "get",
+																		"args": [
+																			{
+																				"kind": "var",
+																				"name": "tceNodeTypes"
+																			},
+																			{
+																				"kind": "var",
+																				"name": "tceRefId"
+																			}
+																		]
+																	},
+																	"body": {
+																		"kind": "record",
+																		"fields": [
+																			{
+																				"key": "type",
+																				"value": {
+																					"kind": "var",
+																					"name": "tceRefType"
+																				}
+																			},
+																			{
+																				"key": "errors",
+																				"value": "emptyList"
+																			}
+																		]
+																	}
+																},
+																"else": {
+																	"kind": "record",
+																	"fields": [
+																		{
+																			"key": "type",
+																			"value": "typeInt"
+																		},
+																		{
+																			"key": "errors",
+																			"value": "emptyList"
+																		}
+																	]
+																}
+															}
+														}
+													},
+													"else": {
+														"kind": "let",
+														"name": "tceIsCall",
+														"value": {
+															"kind": "call",
+															"ns": "core",
+															"name": "eq",
+															"args": [
+																{
+																	"kind": "var",
+																	"name": "tceKind"
+																},
+																"callStr"
+															]
+														},
+														"body": {
+															"kind": "if",
+															"cond": {
+																"kind": "var",
+																"name": "tceIsCall"
+															},
+															"then": {
+																"kind": "let",
+																"name": "tceNs",
+																"value": {
+																	"kind": "call",
+																	"ns": "map",
+																	"name": "get",
+																	"args": [
+																		{
+																			"kind": "var",
+																			"name": "tceExpr"
+																		},
+																		"nsKey"
+																	]
+																},
+																"body": {
+																	"kind": "let",
+																	"name": "tceName",
+																	"value": {
+																		"kind": "call",
+																		"ns": "map",
+																		"name": "get",
+																		"args": [
+																			{
+																				"kind": "var",
+																				"name": "tceExpr"
+																			},
+																			"nameKey"
+																		]
+																	},
+																	"body": {
+																		"kind": "let",
+																		"name": "tceNsColon",
+																		"value": {
+																			"kind": "call",
+																			"ns": "string",
+																			"name": "concat",
+																			"args": [
+																				{
+																					"kind": "var",
+																					"name": "tceNs"
+																				},
+																				"colonStr"
+																			]
+																		},
+																		"body": {
+																			"kind": "let",
+																			"name": "tceOpKey",
+																			"value": {
+																				"kind": "call",
+																				"ns": "string",
+																				"name": "concat",
+																				"args": [
+																					{
+																						"kind": "var",
+																						"name": "tceNsColon"
+																					},
+																					{
+																						"kind": "var",
+																						"name": "tceName"
+																					}
+																				]
+																			},
+																			"body": {
+																				"kind": "let",
+																				"name": "tceHasOp",
+																				"value": {
+																					"kind": "call",
+																					"ns": "map",
+																					"name": "has",
+																					"args": [
+																						{
+																							"kind": "var",
+																							"name": "tceOpReg"
+																						},
+																						{
+																							"kind": "var",
+																							"name": "tceOpKey"
+																						}
+																					]
+																				},
+																				"body": {
+																					"kind": "if",
+																					"cond": {
+																						"kind": "var",
+																						"name": "tceHasOp"
+																					},
+																					"then": {
+																						"kind": "let",
+																						"name": "tceSig",
+																						"value": {
+																							"kind": "call",
+																							"ns": "map",
+																							"name": "get",
+																							"args": [
+																								{
+																									"kind": "var",
+																									"name": "tceOpReg"
+																								},
+																								{
+																									"kind": "var",
+																									"name": "tceOpKey"
+																								}
+																							]
+																						},
+																						"body": {
+																							"kind": "let",
+																							"name": "tceSigParams",
+																							"value": {
+																								"kind": "call",
+																								"ns": "map",
+																								"name": "get",
+																								"args": [
+																									{
+																										"kind": "var",
+																										"name": "tceSig"
+																									},
+																									"paramsKey"
+																								]
+																							},
+																							"body": {
+																								"kind": "let",
+																								"name": "tceArgs",
+																								"value": {
+																									"kind": "call",
+																									"ns": "map",
+																									"name": "get",
+																									"args": [
+																										{
+																											"kind": "var",
+																											"name": "tceExpr"
+																										},
+																										"argsKey"
+																									]
+																								},
+																								"body": {
+																									"kind": "let",
+																									"name": "tceExpArity",
+																									"value": {
+																										"kind": "call",
+																										"ns": "list",
+																										"name": "length",
+																										"args": [
+																											{
+																												"kind": "var",
+																												"name": "tceSigParams"
+																											}
+																										]
+																									},
+																									"body": {
+																										"kind": "let",
+																										"name": "tceActArity",
+																										"value": {
+																											"kind": "call",
+																											"ns": "list",
+																											"name": "length",
+																											"args": [
+																												{
+																													"kind": "var",
+																													"name": "tceArgs"
+																												}
+																											]
+																										},
+																										"body": {
+																											"kind": "let",
+																											"name": "tceArityOk",
+																											"value": {
+																												"kind": "call",
+																												"ns": "core",
+																												"name": "eq",
+																												"args": [
+																													{
+																														"kind": "var",
+																														"name": "tceExpArity"
+																													},
+																													{
+																														"kind": "var",
+																														"name": "tceActArity"
+																													}
+																												]
+																											},
+																											"body": {
+																												"kind": "if",
+																												"cond": {
+																													"kind": "var",
+																													"name": "tceArityOk"
+																												},
+																												"then": {
+																													"kind": "let",
+																													"name": "tceCallRetType",
+																													"value": {
+																														"kind": "call",
+																														"ns": "map",
+																														"name": "get",
+																														"args": [
+																															{
+																																"kind": "var",
+																																"name": "tceSig"
+																															},
+																															"returnsKey"
+																														]
+																													},
+																													"body": {
+																														"kind": "record",
+																														"fields": [
+																															{
+																																"key": "type",
+																																"value": {
+																																	"kind": "var",
+																																	"name": "tceCallRetType"
+																																}
+																															},
+																															{
+																																"key": "errors",
+																																"value": "emptyList"
+																															}
+																														]
+																													}
+																												},
+																												"else": {
+																													"kind": "let",
+																													"name": "tceCallRetType2",
+																													"value": {
+																														"kind": "call",
+																														"ns": "map",
+																														"name": "get",
+																														"args": [
+																															{
+																																"kind": "var",
+																																"name": "tceSig"
+																															},
+																															"returnsKey"
+																														]
+																													},
+																													"body": {
+																														"kind": "record",
+																														"fields": [
+																															{
+																																"key": "type",
+																																"value": {
+																																	"kind": "var",
+																																	"name": "tceCallRetType2"
+																																}
+																															},
+																															{
+																																"key": "errors",
+																																"value": {
+																																	"kind": "listOf",
+																																	"elements": [
+																																		{
+																																			"kind": "call",
+																																			"ns": "string",
+																																			"name": "concat",
+																																			"args": [
+																																				{
+																																					"kind": "lit",
+																																					"type": {
+																																						"kind": "string"
+																																					},
+																																					"value": "Arity mismatch for "
+																																				},
+																																				{
+																																					"kind": "var",
+																																					"name": "tceOpKey"
+																																				}
+																																			]
+																																		}
+																																	]
+																																}
+																															}
+																														]
+																													}
+																												}
+																											}
+																										}
+																									}
+																								}
+																							}
+																						}
+																					},
+																					"else": {
+																						"kind": "record",
+																						"fields": [
+																							{
+																								"key": "type",
+																								"value": "typeInt"
+																							},
+																							{
+																								"key": "errors",
+																								"value": "emptyList"
+																							}
+																						]
+																					}
+																				}
+																			}
+																		}
+																	}
+																}
+															},
+															"else": {
+																"kind": "let",
+																"name": "tceIsIf",
+																"value": {
+																	"kind": "call",
+																	"ns": "core",
+																	"name": "eq",
+																	"args": [
+																		{
+																			"kind": "var",
+																			"name": "tceKind"
+																		},
+																		"ifStr"
+																	]
+																},
+																"body": {
+																	"kind": "if",
+																	"cond": {
+																		"kind": "var",
+																		"name": "tceIsIf"
+																	},
+																	"then": {
+																		"kind": "let",
+																		"name": "tceHasIfType",
+																		"value": {
+																			"kind": "call",
+																			"ns": "map",
+																			"name": "has",
+																			"args": [
+																				{
+																					"kind": "var",
+																					"name": "tceExpr"
+																				},
+																				"typeKey"
+																			]
+																		},
+																		"body": {
+																			"kind": "if",
+																			"cond": {
+																				"kind": "var",
+																				"name": "tceHasIfType"
+																			},
+																			"then": {
+																				"kind": "let",
+																				"name": "tceIfType",
+																				"value": {
+																					"kind": "call",
+																					"ns": "map",
+																					"name": "get",
+																					"args": [
+																						{
+																							"kind": "var",
+																							"name": "tceExpr"
+																						},
+																						"typeKey"
+																					]
+																				},
+																				"body": {
+																					"kind": "record",
+																					"fields": [
+																						{
+																							"key": "type",
+																							"value": {
+																								"kind": "var",
+																								"name": "tceIfType"
+																							}
+																						},
+																						{
+																							"key": "errors",
+																							"value": "emptyList"
+																						}
+																					]
+																				}
+																			},
+																			"else": {
+																				"kind": "record",
+																				"fields": [
+																					{
+																						"key": "type",
+																						"value": "typeInt"
+																					},
+																					{
+																						"key": "errors",
+																						"value": "emptyList"
+																					}
+																				]
+																			}
+																		}
+																	},
+																	"else": {
+																		"kind": "let",
+																		"name": "tceIsLet",
+																		"value": {
+																			"kind": "call",
+																			"ns": "core",
+																			"name": "eq",
+																			"args": [
+																				{
+																					"kind": "var",
+																					"name": "tceKind"
+																				},
+																				"letStr"
+																			]
+																		},
+																		"body": {
+																			"kind": "if",
+																			"cond": {
+																				"kind": "var",
+																				"name": "tceIsLet"
+																			},
+																			"then": {
+																				"kind": "let",
+																				"name": "tceLetName",
+																				"value": {
+																					"kind": "call",
+																					"ns": "map",
+																					"name": "get",
+																					"args": [
+																						{
+																							"kind": "var",
+																							"name": "tceExpr"
+																						},
+																						"nameKey"
+																					]
+																				},
+																				"body": {
+																					"kind": "let",
+																					"name": "tceLetValue",
+																					"value": {
+																						"kind": "call",
+																						"ns": "map",
+																						"name": "get",
+																						"args": [
+																							{
+																								"kind": "var",
+																								"name": "tceExpr"
+																							},
+																							"valueKey"
+																						]
+																					},
+																					"body": {
+																						"kind": "let",
+																						"name": "tceValResult",
+																						"value": {
+																							"kind": "callExpr",
+																							"args": [
+																								{
+																									"kind": "var",
+																									"name": "tceLetValue"
+																								},
+																								{
+																									"kind": "var",
+																									"name": "tceEnv"
+																								},
+																								{
+																									"kind": "var",
+																									"name": "tceNodeTypes"
+																								},
+																								{
+																									"kind": "var",
+																									"name": "tceOpReg"
+																								}
+																							],
+																							"fn": "tceFixFn"
+																						},
+																						"body": {
+																							"kind": "let",
+																							"name": "tceValType",
+																							"value": {
+																								"kind": "call",
+																								"ns": "map",
+																								"name": "get",
+																								"args": [
+																									{
+																										"kind": "var",
+																										"name": "tceValResult"
+																									},
+																									"typeKey"
+																								]
+																							},
+																							"body": {
+																								"kind": "let",
+																								"name": "tceValErrors",
+																								"value": {
+																									"kind": "call",
+																									"ns": "map",
+																									"name": "get",
+																									"args": [
+																										{
+																											"kind": "var",
+																											"name": "tceValResult"
+																										},
+																										"errorsKey"
+																									]
+																								},
+																								"body": {
+																									"kind": "let",
+																									"name": "tceExtEnv",
+																									"value": {
+																										"kind": "call",
+																										"ns": "map",
+																										"name": "set",
+																										"args": [
+																											{
+																												"kind": "var",
+																												"name": "tceEnv"
+																											},
+																											{
+																												"kind": "var",
+																												"name": "tceLetName"
+																											},
+																											{
+																												"kind": "var",
+																												"name": "tceValType"
+																											}
+																										]
+																									},
+																									"body": {
+																										"kind": "let",
+																										"name": "tceLetBody",
+																										"value": {
+																											"kind": "call",
+																											"ns": "map",
+																											"name": "get",
+																											"args": [
+																												{
+																													"kind": "var",
+																													"name": "tceExpr"
+																												},
+																												"bodyKey"
+																											]
+																										},
+																										"body": {
+																											"kind": "let",
+																											"name": "tceBodyResult",
+																											"value": {
+																												"kind": "callExpr",
+																												"args": [
+																													{
+																														"kind": "var",
+																														"name": "tceLetBody"
+																													},
+																													{
+																														"kind": "var",
+																														"name": "tceExtEnv"
+																													},
+																													{
+																														"kind": "var",
+																														"name": "tceNodeTypes"
+																													},
+																													{
+																														"kind": "var",
+																														"name": "tceOpReg"
+																													}
+																												],
+																												"fn": "tceFixFn"
+																											},
+																											"body": {
+																												"kind": "let",
+																												"name": "tceBodyType",
+																												"value": {
+																													"kind": "call",
+																													"ns": "map",
+																													"name": "get",
+																													"args": [
+																														{
+																															"kind": "var",
+																															"name": "tceBodyResult"
+																														},
+																														"typeKey"
+																													]
+																												},
+																												"body": {
+																													"kind": "let",
+																													"name": "tceBodyErrors",
+																													"value": {
+																														"kind": "call",
+																														"ns": "map",
+																														"name": "get",
+																														"args": [
+																															{
+																																"kind": "var",
+																																"name": "tceBodyResult"
+																															},
+																															"errorsKey"
+																														]
+																													},
+																													"body": {
+																														"kind": "let",
+																														"name": "tceAllErrors",
+																														"value": {
+																															"kind": "call",
+																															"ns": "list",
+																															"name": "concat",
+																															"args": [
+																																{
+																																	"kind": "var",
+																																	"name": "tceValErrors"
+																																},
+																																{
+																																	"kind": "var",
+																																	"name": "tceBodyErrors"
+																																}
+																															]
+																														},
+																														"body": {
+																															"kind": "record",
+																															"fields": [
+																																{
+																																	"key": "type",
+																																	"value": {
+																																		"kind": "var",
+																																		"name": "tceBodyType"
+																																	}
+																																},
+																																{
+																																	"key": "errors",
+																																	"value": {
+																																		"kind": "var",
+																																		"name": "tceAllErrors"
+																																	}
+																																}
+																															]
+																														}
+																													}
+																												}
+																											}
+																										}
+																									}
+																								}
+																							}
+																						}
+																					}
+																				}
+																			},
+																			"else": {
+																				"kind": "let",
+																				"name": "tceIsLambda",
+																				"value": {
+																					"kind": "call",
+																					"ns": "core",
+																					"name": "eq",
+																					"args": [
+																						{
+																							"kind": "var",
+																							"name": "tceKind"
+																						},
+																						"lambdaStr"
+																					]
+																				},
+																				"body": {
+																					"kind": "if",
+																					"cond": {
+																						"kind": "var",
+																						"name": "tceIsLambda"
+																					},
+																					"then": {
+																						"kind": "let",
+																						"name": "tceLamType",
+																						"value": {
+																							"kind": "call",
+																							"ns": "map",
+																							"name": "get",
+																							"args": [
+																								{
+																									"kind": "var",
+																									"name": "tceExpr"
+																								},
+																								"typeKey"
+																							]
+																						},
+																						"body": {
+																							"kind": "let",
+																							"name": "tceLamKind",
+																							"value": {
+																								"kind": "call",
+																								"ns": "map",
+																								"name": "get",
+																								"args": [
+																									{
+																										"kind": "var",
+																										"name": "tceLamType"
+																									},
+																									"kindKey"
+																								]
+																							},
+																							"body": {
+																								"kind": "let",
+																								"name": "tceLamIsFn",
+																								"value": {
+																									"kind": "call",
+																									"ns": "core",
+																									"name": "eq",
+																									"args": [
+																										{
+																											"kind": "var",
+																											"name": "tceLamKind"
+																										},
+																										"fnStr"
+																									]
+																								},
+																								"body": {
+																									"kind": "if",
+																									"cond": {
+																										"kind": "var",
+																										"name": "tceLamIsFn"
+																									},
+																									"then": {
+																										"kind": "record",
+																										"fields": [
+																											{
+																												"key": "type",
+																												"value": {
+																													"kind": "var",
+																													"name": "tceLamType"
+																												}
+																											},
+																											{
+																												"key": "errors",
+																												"value": "emptyList"
+																											}
+																										]
+																									},
+																									"else": {
+																										"kind": "record",
+																										"fields": [
+																											{
+																												"key": "type",
+																												"value": {
+																													"kind": "var",
+																													"name": "tceLamType"
+																												}
+																											},
+																											{
+																												"key": "errors",
+																												"value": {
+																													"kind": "listOf",
+																													"elements": [
+																														{
+																															"kind": "lit",
+																															"type": {
+																																"kind": "string"
+																															},
+																															"value": "Lambda type must be fn"
+																														}
+																													]
+																												}
+																											}
+																										]
+																									}
+																								}
+																							}
+																						}
+																					},
+																					"else": {
+																						"kind": "let",
+																						"name": "tceIsCallExpr",
+																						"value": {
+																							"kind": "call",
+																							"ns": "core",
+																							"name": "eq",
+																							"args": [
+																								{
+																									"kind": "var",
+																									"name": "tceKind"
+																								},
+																								"callExprStr"
+																							]
+																						},
+																						"body": {
+																							"kind": "if",
+																							"cond": {
+																								"kind": "var",
+																								"name": "tceIsCallExpr"
+																							},
+																							"then": {
+																								"kind": "let",
+																								"name": "tceCeFn",
+																								"value": {
+																									"kind": "call",
+																									"ns": "map",
+																									"name": "get",
+																									"args": [
+																										{
+																											"kind": "var",
+																											"name": "tceExpr"
+																										},
+																										"fnKey"
+																									]
+																								},
+																								"body": {
+																									"kind": "let",
+																									"name": "tceHasCeFn",
+																									"value": {
+																										"kind": "call",
+																										"ns": "map",
+																										"name": "has",
+																										"args": [
+																											{
+																												"kind": "var",
+																												"name": "tceNodeTypes"
+																											},
+																											{
+																												"kind": "var",
+																												"name": "tceCeFn"
+																											}
+																										]
+																									},
+																									"body": {
+																										"kind": "if",
+																										"cond": {
+																											"kind": "var",
+																											"name": "tceHasCeFn"
+																										},
+																										"then": {
+																											"kind": "let",
+																											"name": "tceCeFnType",
+																											"value": {
+																												"kind": "call",
+																												"ns": "map",
+																												"name": "get",
+																												"args": [
+																													{
+																														"kind": "var",
+																														"name": "tceNodeTypes"
+																													},
+																													{
+																														"kind": "var",
+																														"name": "tceCeFn"
+																													}
+																												]
+																											},
+																											"body": {
+																												"kind": "let",
+																												"name": "tceCeFnKind",
+																												"value": {
+																													"kind": "call",
+																													"ns": "map",
+																													"name": "get",
+																													"args": [
+																														{
+																															"kind": "var",
+																															"name": "tceCeFnType"
+																														},
+																														"kindKey"
+																													]
+																												},
+																												"body": {
+																													"kind": "let",
+																													"name": "tceCeIsFn",
+																													"value": {
+																														"kind": "call",
+																														"ns": "core",
+																														"name": "eq",
+																														"args": [
+																															{
+																																"kind": "var",
+																																"name": "tceCeFnKind"
+																															},
+																															"fnStr"
+																														]
+																													},
+																													"body": {
+																														"kind": "if",
+																														"cond": {
+																															"kind": "var",
+																															"name": "tceCeIsFn"
+																														},
+																														"then": {
+																															"kind": "let",
+																															"name": "tceCeRetType",
+																															"value": {
+																																"kind": "call",
+																																"ns": "map",
+																																"name": "get",
+																																"args": [
+																																	{
+																																		"kind": "var",
+																																		"name": "tceCeFnType"
+																																	},
+																																	"returnsKey"
+																																]
+																															},
+																															"body": {
+																																"kind": "record",
+																																"fields": [
+																																	{
+																																		"key": "type",
+																																		"value": {
+																																			"kind": "var",
+																																			"name": "tceCeRetType"
+																																		}
+																																	},
+																																	{
+																																		"key": "errors",
+																																		"value": "emptyList"
+																																	}
+																																]
+																															}
+																														},
+																														"else": {
+																															"kind": "record",
+																															"fields": [
+																																{
+																																	"key": "type",
+																																	"value": "typeInt"
+																																},
+																																{
+																																	"key": "errors",
+																																	"value": {
+																																		"kind": "listOf",
+																																		"elements": [
+																																			{
+																																				"kind": "lit",
+																																				"type": {
+																																					"kind": "string"
+																																				},
+																																				"value": "callExpr fn is not a function type"
+																																			}
+																																		]
+																																	}
+																																}
+																															]
+																														}
+																													}
+																												}
+																											}
+																										},
+																										"else": {
+																											"kind": "record",
+																											"fields": [
+																												{
+																													"key": "type",
+																													"value": "typeInt"
+																												},
+																												{
+																													"key": "errors",
+																													"value": "emptyList"
+																												}
+																											]
+																										}
+																									}
+																								}
+																							},
+																							"else": {
+																								"kind": "let",
+																								"name": "tceIsFix",
+																								"value": {
+																									"kind": "call",
+																									"ns": "core",
+																									"name": "eq",
+																									"args": [
+																										{
+																											"kind": "var",
+																											"name": "tceKind"
+																										},
+																										"fixStr"
+																									]
+																								},
+																								"body": {
+																									"kind": "if",
+																									"cond": {
+																										"kind": "var",
+																										"name": "tceIsFix"
+																									},
+																									"then": {
+																										"kind": "let",
+																										"name": "tceFixType",
+																										"value": {
+																											"kind": "call",
+																											"ns": "map",
+																											"name": "get",
+																											"args": [
+																												{
+																													"kind": "var",
+																													"name": "tceExpr"
+																												},
+																												"typeKey"
+																											]
+																										},
+																										"body": {
+																											"kind": "record",
+																											"fields": [
+																												{
+																													"key": "type",
+																													"value": {
+																														"kind": "var",
+																														"name": "tceFixType"
+																													}
+																												},
+																												{
+																													"key": "errors",
+																													"value": "emptyList"
+																												}
+																											]
+																										}
+																									},
+																									"else": {
+																										"kind": "let",
+																										"name": "tceIsDo",
+																										"value": {
+																											"kind": "call",
+																											"ns": "core",
+																											"name": "eq",
+																											"args": [
+																												{
+																													"kind": "var",
+																													"name": "tceKind"
+																												},
+																												"doStr"
+																											]
+																										},
+																										"body": {
+																											"kind": "if",
+																											"cond": {
+																												"kind": "var",
+																												"name": "tceIsDo"
+																											},
+																											"then": {
+																												"kind": "let",
+																												"name": "tceDoExprs",
+																												"value": {
+																													"kind": "call",
+																													"ns": "map",
+																													"name": "get",
+																													"args": [
+																														{
+																															"kind": "var",
+																															"name": "tceExpr"
+																														},
+																														"exprsKey"
+																													]
+																												},
+																												"body": {
+																													"kind": "let",
+																													"name": "tceDoLen",
+																													"value": {
+																														"kind": "call",
+																														"ns": "list",
+																														"name": "length",
+																														"args": [
+																															{
+																																"kind": "var",
+																																"name": "tceDoExprs"
+																															}
+																														]
+																													},
+																													"body": {
+																														"kind": "let",
+																														"name": "tceDoEmpty",
+																														"value": {
+																															"kind": "call",
+																															"ns": "core",
+																															"name": "eq",
+																															"args": [
+																																{
+																																	"kind": "var",
+																																	"name": "tceDoLen"
+																																},
+																																"zero"
+																															]
+																														},
+																														"body": {
+																															"kind": "if",
+																															"cond": {
+																																"kind": "var",
+																																"name": "tceDoEmpty"
+																															},
+																															"then": {
+																																"kind": "record",
+																																"fields": [
+																																	{
+																																		"key": "type",
+																																		"value": "typeVoid"
+																																	},
+																																	{
+																																		"key": "errors",
+																																		"value": "emptyList"
+																																	}
+																																]
+																															},
+																															"else": {
+																																"kind": "let",
+																																"name": "tceDoLastIdx",
+																																"value": {
+																																	"kind": "call",
+																																	"ns": "core",
+																																	"name": "sub",
+																																	"args": [
+																																		{
+																																			"kind": "var",
+																																			"name": "tceDoLen"
+																																		},
+																																		"one"
+																																	]
+																																},
+																																"body": {
+																																	"kind": "let",
+																																	"name": "tceDoLast",
+																																	"value": {
+																																		"kind": "call",
+																																		"ns": "list",
+																																		"name": "nth",
+																																		"args": [
+																																			{
+																																				"kind": "var",
+																																				"name": "tceDoExprs"
+																																			},
+																																			{
+																																				"kind": "var",
+																																				"name": "tceDoLastIdx"
+																																			}
+																																		]
+																																	},
+																																	"body": {
+																																		"kind": "callExpr",
+																																		"args": [
+																																			{
+																																				"kind": "var",
+																																				"name": "tceDoLast"
+																																			},
+																																			{
+																																				"kind": "var",
+																																				"name": "tceEnv"
+																																			},
+																																			{
+																																				"kind": "var",
+																																				"name": "tceNodeTypes"
+																																			},
+																																			{
+																																				"kind": "var",
+																																				"name": "tceOpReg"
+																																			}
+																																		],
+																																		"fn": "tceFixFn"
+																																	}
+																																}
+																															}
+																														}
+																													}
+																												}
+																											},
+																											"else": {
+																												"kind": "let",
+																												"name": "tceIsRecord",
+																												"value": {
+																													"kind": "call",
+																													"ns": "core",
+																													"name": "eq",
+																													"args": [
+																														{
+																															"kind": "var",
+																															"name": "tceKind"
+																														},
+																														"recordStr"
+																													]
+																												},
+																												"body": {
+																													"kind": "if",
+																													"cond": {
+																														"kind": "var",
+																														"name": "tceIsRecord"
+																													},
+																													"then": {
+																														"kind": "record",
+																														"fields": [
+																															{
+																																"key": "type",
+																																"value": "typeMap"
+																															},
+																															{
+																																"key": "errors",
+																																"value": "emptyList"
+																															}
+																														]
+																													},
+																													"else": {
+																														"kind": "let",
+																														"name": "tceIsListOf",
+																														"value": {
+																															"kind": "call",
+																															"ns": "core",
+																															"name": "eq",
+																															"args": [
+																																{
+																																	"kind": "var",
+																																	"name": "tceKind"
+																																},
+																																"listOfStr"
+																															]
+																														},
+																														"body": {
+																															"kind": "if",
+																															"cond": {
+																																"kind": "var",
+																																"name": "tceIsListOf"
+																															},
+																															"then": {
+																																"kind": "record",
+																																"fields": [
+																																	{
+																																		"key": "type",
+																																		"value": "typeList"
+																																	},
+																																	{
+																																		"key": "errors",
+																																		"value": "emptyList"
+																																	}
+																																]
+																															},
+																															"else": {
+																																"kind": "let",
+																																"name": "tceIsMatch",
+																																"value": {
+																																	"kind": "call",
+																																	"ns": "core",
+																																	"name": "eq",
+																																	"args": [
+																																		{
+																																			"kind": "var",
+																																			"name": "tceKind"
+																																		},
+																																		"matchStr"
+																																	]
+																																},
+																																"body": {
+																																	"kind": "if",
+																																	"cond": {
+																																		"kind": "var",
+																																		"name": "tceIsMatch"
+																																	},
+																																	"then": {
+																																		"kind": "record",
+																																		"fields": [
+																																			{
+																																				"key": "type",
+																																				"value": "typeInt"
+																																			},
+																																			{
+																																				"key": "errors",
+																																				"value": "emptyList"
+																																			}
+																																		]
+																																	},
+																																	"else": {
+																																		"kind": "let",
+																																		"name": "tceIsAirRef",
+																																		"value": {
+																																			"kind": "call",
+																																			"ns": "core",
+																																			"name": "eq",
+																																			"args": [
+																																				{
+																																					"kind": "var",
+																																					"name": "tceKind"
+																																				},
+																																				"airRefStr"
+																																			]
+																																		},
+																																		"body": {
+																																			"kind": "if",
+																																			"cond": {
+																																				"kind": "var",
+																																				"name": "tceIsAirRef"
+																																			},
+																																			"then": {
+																																				"kind": "record",
+																																				"fields": [
+																																					{
+																																						"key": "type",
+																																						"value": "typeInt"
+																																					},
+																																					{
+																																						"key": "errors",
+																																						"value": "emptyList"
+																																					}
+																																				]
+																																			},
+																																			"else": {
+																																				"kind": "let",
+																																				"name": "tceIsPredicate",
+																																				"value": {
+																																					"kind": "call",
+																																					"ns": "core",
+																																					"name": "eq",
+																																					"args": [
+																																						{
+																																							"kind": "var",
+																																							"name": "tceKind"
+																																						},
+																																						"predicateStr"
+																																					]
+																																				},
+																																				"body": {
+																																					"kind": "if",
+																																					"cond": {
+																																						"kind": "var",
+																																						"name": "tceIsPredicate"
+																																					},
+																																					"then": {
+																																						"kind": "record",
+																																						"fields": [
+																																							{
+																																								"key": "type",
+																																								"value": "typeBool"
+																																							},
+																																							{
+																																								"key": "errors",
+																																								"value": "emptyList"
+																																							}
+																																						]
+																																					},
+																																					"else": {
+																																						"kind": "record",
+																																						"fields": [
+																																							{
+																																								"key": "type",
+																																								"value": "typeInt"
+																																							},
+																																							{
+																																								"key": "errors",
+																																								"value": "emptyList"
+																																							}
+																																						]
+																																					}
+																																				}
+																																			}
+																																		}
+																																	}
+																																}
+																															}
+																														}
+																													}
+																												}
+																											}
+																										}
+																									}
+																								}
+																							}
+																						}
+																					}
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
 													}
 												}
 											}
 										}
 									}
-								},
-								"else": "trueVal"
-							}
-						},
-						"else": "falseVal"
-					}
-				}
-			}
-		}},
-		{"id": "teRecInner", "expr": {
-			"kind": "lambda",
-			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
-			"params": ["teT1", "teT2"],
-			"body": "teRecBody"
-		}},
-		{"id": "teRecOuter", "expr": {
-			"kind": "lambda",
-			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
-			"params": ["teRec"],
-			"body": "teRecInner"
-		}},
-		{"id": "typeEqualFixFn", "expr": {
-			"kind": "fix",
-			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
-			"fn": "teRecOuter"
-		}},
-
-		{"id": "typeEqualBody", "expr": {
-			"kind": "callExpr", "args": [{"kind": "var", "name": "t1"}, {"kind": "var", "name": "t2"}], "fn": "typeEqualFixFn"
-		}},
-		{"id": "typeEqual", "expr": {
-			"kind": "lambda",
-			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
-			"params": ["t1", "t2"],
-			"body": "typeEqualBody"
-		}},
-
-
-		{"id": "sigParamsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "params"}},
-		{"id": "sigReturnsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "returns"}},
-
-		{"id": "sigIntIntToInt", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeInt", "typeInt"]}},
-			{"key": "returns", "value": "typeInt"}
-		]}},
-		{"id": "sigIntToInt", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeInt"]}},
-			{"key": "returns", "value": "typeInt"}
-		]}},
-		{"id": "sigIntIntToBool", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeInt", "typeInt"]}},
-			{"key": "returns", "value": "typeBool"}
-		]}},
-		{"id": "sigIntToString", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeInt"]}},
-			{"key": "returns", "value": "typeString"}
-		]}},
-		{"id": "sigIntToBool", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeInt"]}},
-			{"key": "returns", "value": "typeBool"}
-		]}},
-		{"id": "sigBoolToBool", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeBool"]}},
-			{"key": "returns", "value": "typeBool"}
-		]}},
-		{"id": "sigListToInt", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeList"]}},
-			{"key": "returns", "value": "typeInt"}
-		]}},
-		{"id": "sigListIntToInt", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeList", "typeInt"]}},
-			{"key": "returns", "value": "typeInt"}
-		]}},
-		{"id": "sigIntListToList", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeInt", "typeList"]}},
-			{"key": "returns", "value": "typeList"}
-		]}},
-		{"id": "sigMapStringToInt", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeMap", "typeString"]}},
-			{"key": "returns", "value": "typeInt"}
-		]}},
-		{"id": "sigMapStringIntToMap", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeMap", "typeString", "typeInt"]}},
-			{"key": "returns", "value": "typeMap"}
-		]}},
-		{"id": "sigMapStringToBool", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeMap", "typeString"]}},
-			{"key": "returns", "value": "typeBool"}
-		]}},
-		{"id": "sigMapToList", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeMap"]}},
-			{"key": "returns", "value": "typeList"}
-		]}},
-		{"id": "sigStrStrToStr", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeString", "typeString"]}},
-			{"key": "returns", "value": "typeString"}
-		]}},
-		{"id": "sigStrToInt", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeString"]}},
-			{"key": "returns", "value": "typeInt"}
-		]}},
-		{"id": "sigStrIntToStr", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeString", "typeInt"]}},
-			{"key": "returns", "value": "typeString"}
-		]}},
-		{"id": "sigStrToStr", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeString"]}},
-			{"key": "returns", "value": "typeString"}
-		]}},
-		{"id": "sigStrToMap", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeString"]}},
-			{"key": "returns", "value": "typeMap"}
-		]}},
-		{"id": "sigSetIntToSet", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeSet", "typeInt"]}},
-			{"key": "returns", "value": "typeSet"}
-		]}},
-		{"id": "sigSetIntToBool", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeSet", "typeInt"]}},
-			{"key": "returns", "value": "typeBool"}
-		]}},
-		{"id": "sigSetToInt", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeSet"]}},
-			{"key": "returns", "value": "typeInt"}
-		]}},
-		{"id": "sigSetToList", "expr": {"kind": "record", "fields": [
-			{"key": "params", "value": {"kind": "listOf", "elements": ["typeSet"]}},
-			{"key": "returns", "value": "typeList"}
-		]}},
-
-
-		{"id": "kCoreAdd",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:add"}},
-		{"id": "kCoreSub",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:sub"}},
-		{"id": "kCoreMul",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:mul"}},
-		{"id": "kCoreDiv",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:div"}},
-		{"id": "kCoreMod",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:mod"}},
-		{"id": "kCorePow",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:pow"}},
-		{"id": "kCoreMin",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:min"}},
-		{"id": "kCoreMax",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:max"}},
-		{"id": "kCoreNeg",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:neg"}},
-		{"id": "kCoreEq",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:eq"}},
-		{"id": "kCoreNeq",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:neq"}},
-		{"id": "kCoreGt",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:gt"}},
-		{"id": "kCoreLt",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:lt"}},
-		{"id": "kCoreGte",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:gte"}},
-		{"id": "kCoreLte",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:lte"}},
-		{"id": "kCoreTypeof", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:typeof"}},
-		{"id": "kCoreIsError","expr": {"kind": "lit", "type": {"kind": "string"}, "value": "core:isError"}},
-
-		{"id": "kBoolNot",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "bool:not"}},
-
-		{"id": "kListLength", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "list:length"}},
-		{"id": "kListNth",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "list:nth"}},
-		{"id": "kListCons",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "list:cons"}},
-
-		{"id": "kMapGet",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "map:get"}},
-		{"id": "kMapSet",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "map:set"}},
-		{"id": "kMapHas",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "map:has"}},
-		{"id": "kMapKeys",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "map:keys"}},
-
-		{"id": "kStrConcat",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string:concat"}},
-		{"id": "kStrLength",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string:length"}},
-		{"id": "kStrCharAt",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string:charAt"}},
-		{"id": "kStrToUpper", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string:toUpper"}},
-		{"id": "kStrToLower", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string:toLower"}},
-		{"id": "kStrTrim",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string:trim"}},
-
-		{"id": "kSetAdd",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "set:add"}},
-		{"id": "kSetRemove",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "set:remove"}},
-		{"id": "kSetContains", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "set:contains"}},
-		{"id": "kSetSize",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "set:size"}},
-		{"id": "kSetToList",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "set:toList"}},
-
-		{"id": "kJsonParse",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "json:parse"}},
-
-		{"id": "kStrToInt",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string:toInt"}},
-		{"id": "kStrToFloat",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string:toFloat"}},
-
-
-		{"id": "reg00", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["emptyMap",  "kCoreAdd",    "sigIntIntToInt"]}},
-		{"id": "reg01", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg00",     "kCoreSub",    "sigIntIntToInt"]}},
-		{"id": "reg02", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg01",     "kCoreMul",    "sigIntIntToInt"]}},
-		{"id": "reg03", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg02",     "kCoreDiv",    "sigIntIntToInt"]}},
-		{"id": "reg04", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg03",     "kCoreMod",    "sigIntIntToInt"]}},
-		{"id": "reg05", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg04",     "kCorePow",    "sigIntIntToInt"]}},
-		{"id": "reg06", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg05",     "kCoreMin",    "sigIntIntToInt"]}},
-		{"id": "reg07", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg06",     "kCoreMax",    "sigIntIntToInt"]}},
-		{"id": "reg08", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg07",     "kCoreNeg",    "sigIntToInt"]}},
-		{"id": "reg09", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg08",     "kCoreEq",     "sigIntIntToBool"]}},
-		{"id": "reg10", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg09",     "kCoreNeq",    "sigIntIntToBool"]}},
-		{"id": "reg11", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg10",     "kCoreGt",     "sigIntIntToBool"]}},
-		{"id": "reg12", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg11",     "kCoreLt",     "sigIntIntToBool"]}},
-		{"id": "reg13", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg12",     "kCoreGte",    "sigIntIntToBool"]}},
-		{"id": "reg14", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg13",     "kCoreLte",    "sigIntIntToBool"]}},
-		{"id": "reg15", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg14",     "kCoreTypeof", "sigIntToString"]}},
-		{"id": "reg16", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg15",     "kCoreIsError","sigIntToBool"]}},
-
-		{"id": "reg17", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg16",     "kBoolNot",    "sigBoolToBool"]}},
-
-		{"id": "reg18", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg17",     "kListLength", "sigListToInt"]}},
-		{"id": "reg19", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg18",     "kListNth",    "sigListIntToInt"]}},
-		{"id": "reg20", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg19",     "kListCons",   "sigIntListToList"]}},
-
-		{"id": "reg21", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg20",     "kMapGet",     "sigMapStringToInt"]}},
-		{"id": "reg22", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg21",     "kMapSet",     "sigMapStringIntToMap"]}},
-		{"id": "reg23", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg22",     "kMapHas",     "sigMapStringToBool"]}},
-		{"id": "reg24", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg23",     "kMapKeys",    "sigMapToList"]}},
-
-		{"id": "reg25", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg24",     "kStrConcat",  "sigStrStrToStr"]}},
-		{"id": "reg26", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg25",     "kStrLength",  "sigStrToInt"]}},
-		{"id": "reg27", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg26",     "kStrCharAt",  "sigStrIntToStr"]}},
-		{"id": "reg28", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg27",     "kStrToUpper", "sigStrToStr"]}},
-		{"id": "reg29", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg28",     "kStrToLower", "sigStrToStr"]}},
-		{"id": "reg30", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg29",     "kStrTrim",    "sigStrToStr"]}},
-
-		{"id": "reg31", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg30",     "kSetAdd",      "sigSetIntToSet"]}},
-		{"id": "reg32", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg31",     "kSetRemove",   "sigSetIntToSet"]}},
-		{"id": "reg33", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg32",     "kSetContains", "sigSetIntToBool"]}},
-		{"id": "reg34", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg33",     "kSetSize",     "sigSetToInt"]}},
-		{"id": "reg35", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg34",     "kSetToList",   "sigSetToList"]}},
-
-		{"id": "reg36", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg35",     "kJsonParse",   "sigStrToMap"]}},
-
-		{"id": "reg37", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg36",     "kStrToInt",    "sigStrToInt"]}},
-		{"id": "opRegistry", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg37", "kStrToFloat", "sigStrToInt"]}},
-
-
-		{"id": "idKey",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "id"}},
-		{"id": "exprKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
-		{"id": "bodyKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "body"}},
-		{"id": "valueKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
-		{"id": "condKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "cond"}},
-		{"id": "thenKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "then"}},
-		{"id": "elseKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "else"}},
-		{"id": "fnKey",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fn"}},
-		{"id": "argsKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "args"}},
-		{"id": "lambdaStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lambda"}},
-		{"id": "letStr",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "let"}},
-		{"id": "ifStr",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "if"}},
-		{"id": "callStr",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call"}},
-		{"id": "callExprStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "callExpr"}},
-		{"id": "refStr",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ref"}},
-		{"id": "fixStr",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fix"}},
-		{"id": "emptySet",    "expr": {"kind": "lit", "type": {"kind": "set", "of": {"kind": "int"}}, "value": []}},
-
-
-		{"id": "bnmFoldBody", "expr": {
-			"kind": "let", "name": "bnmNode",
-			"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "bnmNodes"}, {"kind": "var", "name": "bnmI"}]},
-			"body": {"kind": "let", "name": "bnmNid",
-				"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "bnmNode"}, "idKey"]},
-				"body": {"kind": "let", "name": "bnmNewMap",
-					"value": {"kind": "call", "ns": "map", "name": "set", "args": [{"kind": "var", "name": "bnmAcc"}, {"kind": "var", "name": "bnmNid"}, {"kind": "var", "name": "bnmNode"}]},
-					"body": {"kind": "let", "name": "bnmNextI",
-						"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "bnmI"}, "one"]},
-						"body": {"kind": "let", "name": "bnmDone",
-							"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "bnmNextI"}, {"kind": "var", "name": "bnmLen"}]},
-							"body": {"kind": "if",
-								"cond": {"kind": "var", "name": "bnmDone"},
-								"then": {"kind": "var", "name": "bnmNewMap"},
-								"else": {"kind": "callExpr", "args": [{"kind": "var", "name": "bnmNextI"}, {"kind": "var", "name": "bnmNewMap"}], "fn": "bnmRec"}
+								}
 							}
 						}
 					}
 				}
 			}
-		}},
-		{"id": "bnmFoldInner", "expr": {
-			"kind": "lambda",
-			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
-			"params": ["bnmI", "bnmAcc"],
-			"body": "bnmFoldBody"
-		}},
-		{"id": "bnmFoldOuter", "expr": {
-			"kind": "lambda",
-			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
-			"params": ["bnmRec"],
-			"body": "bnmFoldInner"
-		}},
-		{"id": "buildNodeMapBody", "expr": {
-			"kind": "let", "name": "bnmLen",
-			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "bnmNodes"}]},
-			"body": {"kind": "let", "name": "bnmIsEmpty",
-				"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "bnmLen"}, "zero"]},
-				"body": {"kind": "if",
-					"cond": {"kind": "var", "name": "bnmIsEmpty"},
-					"then": "emptyMap",
-					"else": {"kind": "let", "name": "bnmIter",
-						"value": {"kind": "fix", "type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}, "fn": "bnmFoldOuter"},
-						"body": {"kind": "callExpr", "args": ["zero", "emptyMap"], "fn": "bnmIter"}
+		},
+		{
+			"id": "tceInner",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
 					}
-				}
+				},
+				"params": [
+					"tceExpr",
+					"tceEnv",
+					"tceNodeTypes",
+					"tceOpReg"
+				],
+				"body": "tceBody"
 			}
-		}},
-		{"id": "buildNodeMap", "expr": {
-			"kind": "lambda",
-			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
-			"params": ["bnmNodes"],
-			"body": "buildNodeMapBody"
-		}},
-
-
-		{"id": "clbFoldBody", "expr": {
-			"kind": "let", "name": "clbNode",
-			"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "clbNodes"}, {"kind": "var", "name": "clbI"}]},
-			"body": {"kind": "let", "name": "clbExpr",
-				"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "clbNode"}, "exprKey"]},
-				"body": {"kind": "let", "name": "clbKind",
-					"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "clbExpr"}, "kindKey"]},
-					"body": {"kind": "let", "name": "clbIsLambda",
-						"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "clbKind"}, "lambdaStr"]},
-						"body": {"kind": "let", "name": "clbNewSet",
-							"value": {"kind": "if",
-								"cond": {"kind": "var", "name": "clbIsLambda"},
-								"then": {"kind": "let", "name": "clbBody",
-									"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "clbExpr"}, "bodyKey"]},
-									"body": {"kind": "call", "ns": "set", "name": "add", "args": [{"kind": "var", "name": "clbAcc"}, {"kind": "var", "name": "clbBody"}]}
+		},
+		{
+			"id": "tceOuter",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "fn",
+							"params": [
+								{
+									"kind": "int"
 								},
-								"else": {"kind": "var", "name": "clbAcc"}
+								{
+									"kind": "int"
+								},
+								{
+									"kind": "int"
+								},
+								{
+									"kind": "int"
+								}
+							],
+							"returns": {
+								"kind": "int"
+							}
+						}
+					],
+					"returns": {
+						"kind": "fn",
+						"params": [
+							{
+								"kind": "int"
 							},
-							"body": {"kind": "let", "name": "clbNextI",
-								"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "clbI"}, "one"]},
-								"body": {"kind": "let", "name": "clbDone",
-									"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "clbNextI"}, {"kind": "var", "name": "clbLen"}]},
-									"body": {"kind": "if",
-										"cond": {"kind": "var", "name": "clbDone"},
-										"then": {"kind": "var", "name": "clbNewSet"},
-										"else": {"kind": "callExpr", "args": [{"kind": "var", "name": "clbNextI"}, {"kind": "var", "name": "clbNewSet"}], "fn": "clbRec"}
+							{
+								"kind": "int"
+							},
+							{
+								"kind": "int"
+							},
+							{
+								"kind": "int"
+							}
+						],
+						"returns": {
+							"kind": "int"
+						}
+					}
+				},
+				"params": [
+					"tceRec"
+				],
+				"body": "tceInner"
+			}
+		},
+		{
+			"id": "tceFixFn",
+			"expr": {
+				"kind": "fix",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"fn": "tceOuter"
+			}
+		},
+		{
+			"id": "typeCheckExprBody",
+			"expr": {
+				"kind": "callExpr",
+				"args": [
+					{
+						"kind": "var",
+						"name": "tceArg1"
+					},
+					{
+						"kind": "var",
+						"name": "tceArg2"
+					},
+					{
+						"kind": "var",
+						"name": "tceArg3"
+					},
+					{
+						"kind": "var",
+						"name": "tceArg4"
+					}
+				],
+				"fn": "tceFixFn"
+			}
+		},
+		{
+			"id": "typeCheckExpr",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"tceArg1",
+					"tceArg2",
+					"tceArg3",
+					"tceArg4"
+				],
+				"body": "typeCheckExprBody"
+			}
+		},
+		{
+			"id": "tcIterBody",
+			"expr": {
+				"kind": "let",
+				"name": "tcNode",
+				"value": {
+					"kind": "call",
+					"ns": "list",
+					"name": "nth",
+					"args": [
+						{
+							"kind": "var",
+							"name": "tcNodes"
+						},
+						{
+							"kind": "var",
+							"name": "tcIdx"
+						}
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "tcNid",
+					"value": {
+						"kind": "call",
+						"ns": "map",
+						"name": "get",
+						"args": [
+							{
+								"kind": "var",
+								"name": "tcNode"
+							},
+							"idKey"
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "tcIsBound",
+						"value": {
+							"kind": "call",
+							"ns": "set",
+							"name": "contains",
+							"args": [
+								{
+									"kind": "var",
+									"name": "tcBoundSet"
+								},
+								{
+									"kind": "var",
+									"name": "tcNid"
+								}
+							]
+						},
+						"body": {
+							"kind": "if",
+							"cond": {
+								"kind": "var",
+								"name": "tcIsBound"
+							},
+							"then": {
+								"kind": "let",
+								"name": "tcNextIdx",
+								"value": {
+									"kind": "call",
+									"ns": "core",
+									"name": "add",
+									"args": [
+										{
+											"kind": "var",
+											"name": "tcIdx"
+										},
+										"one"
+									]
+								},
+								"body": {
+									"kind": "let",
+									"name": "tcDone",
+									"value": {
+										"kind": "call",
+										"ns": "core",
+										"name": "gte",
+										"args": [
+											{
+												"kind": "var",
+												"name": "tcNextIdx"
+											},
+											{
+												"kind": "var",
+												"name": "tcNodeCount"
+											}
+										]
+									},
+									"body": {
+										"kind": "if",
+										"cond": {
+											"kind": "var",
+											"name": "tcDone"
+										},
+										"then": {
+											"kind": "var",
+											"name": "tcAcc"
+										},
+										"else": {
+											"kind": "callExpr",
+											"args": [
+												{
+													"kind": "var",
+													"name": "tcNextIdx"
+												},
+												{
+													"kind": "var",
+													"name": "tcAcc"
+												}
+											],
+											"fn": "tcIterRec"
+										}
+									}
+								}
+							},
+							"else": {
+								"kind": "let",
+								"name": "tcNodeExpr",
+								"value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "get",
+									"args": [
+										{
+											"kind": "var",
+											"name": "tcNode"
+										},
+										"exprKey"
+									]
+								},
+								"body": {
+									"kind": "let",
+									"name": "tcCurNT",
+									"value": {
+										"kind": "call",
+										"ns": "map",
+										"name": "get",
+										"args": [
+											{
+												"kind": "var",
+												"name": "tcAcc"
+											},
+											"typeKey"
+										]
+									},
+									"body": {
+										"kind": "let",
+										"name": "tcCurErrors",
+										"value": {
+											"kind": "call",
+											"ns": "map",
+											"name": "get",
+											"args": [
+												{
+													"kind": "var",
+													"name": "tcAcc"
+												},
+												"errorsKey"
+											]
+										},
+										"body": {
+											"kind": "let",
+											"name": "tcResult",
+											"value": {
+												"kind": "callExpr",
+												"args": [
+													{
+														"kind": "var",
+														"name": "tcNodeExpr"
+													},
+													"emptyMap",
+													{
+														"kind": "var",
+														"name": "tcCurNT"
+													},
+													"opRegistry"
+												],
+												"fn": "tceFixFn"
+											},
+											"body": {
+												"kind": "let",
+												"name": "tcResType",
+												"value": {
+													"kind": "call",
+													"ns": "map",
+													"name": "get",
+													"args": [
+														{
+															"kind": "var",
+															"name": "tcResult"
+														},
+														"typeKey"
+													]
+												},
+												"body": {
+													"kind": "let",
+													"name": "tcResErrors",
+													"value": {
+														"kind": "call",
+														"ns": "map",
+														"name": "get",
+														"args": [
+															{
+																"kind": "var",
+																"name": "tcResult"
+															},
+															"errorsKey"
+														]
+													},
+													"body": {
+														"kind": "let",
+														"name": "tcNewNT",
+														"value": {
+															"kind": "call",
+															"ns": "map",
+															"name": "set",
+															"args": [
+																{
+																	"kind": "var",
+																	"name": "tcCurNT"
+																},
+																{
+																	"kind": "var",
+																	"name": "tcNid"
+																},
+																{
+																	"kind": "var",
+																	"name": "tcResType"
+																}
+															]
+														},
+														"body": {
+															"kind": "let",
+															"name": "tcNewErrors",
+															"value": {
+																"kind": "call",
+																"ns": "list",
+																"name": "concat",
+																"args": [
+																	{
+																		"kind": "var",
+																		"name": "tcCurErrors"
+																	},
+																	{
+																		"kind": "var",
+																		"name": "tcResErrors"
+																	}
+																]
+															},
+															"body": {
+																"kind": "let",
+																"name": "tcNewAcc",
+																"value": {
+																	"kind": "record",
+																	"fields": [
+																		{
+																			"key": "type",
+																			"value": {
+																				"kind": "var",
+																				"name": "tcNewNT"
+																			}
+																		},
+																		{
+																			"key": "errors",
+																			"value": {
+																				"kind": "var",
+																				"name": "tcNewErrors"
+																			}
+																		}
+																	]
+																},
+																"body": {
+																	"kind": "let",
+																	"name": "tcNextIdx2",
+																	"value": {
+																		"kind": "call",
+																		"ns": "core",
+																		"name": "add",
+																		"args": [
+																			{
+																				"kind": "var",
+																				"name": "tcIdx"
+																			},
+																			"one"
+																		]
+																	},
+																	"body": {
+																		"kind": "let",
+																		"name": "tcDone2",
+																		"value": {
+																			"kind": "call",
+																			"ns": "core",
+																			"name": "gte",
+																			"args": [
+																				{
+																					"kind": "var",
+																					"name": "tcNextIdx2"
+																				},
+																				{
+																					"kind": "var",
+																					"name": "tcNodeCount"
+																				}
+																			]
+																		},
+																		"body": {
+																			"kind": "if",
+																			"cond": {
+																				"kind": "var",
+																				"name": "tcDone2"
+																			},
+																			"then": {
+																				"kind": "var",
+																				"name": "tcNewAcc"
+																			},
+																			"else": {
+																				"kind": "callExpr",
+																				"args": [
+																					{
+																						"kind": "var",
+																						"name": "tcNextIdx2"
+																					},
+																					{
+																						"kind": "var",
+																						"name": "tcNewAcc"
+																					}
+																				],
+																				"fn": "tcIterRec"
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
 									}
 								}
 							}
@@ -462,61 +5624,347 @@
 					}
 				}
 			}
-		}},
-		{"id": "clbFoldInner", "expr": {
-			"kind": "lambda",
-			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
-			"params": ["clbI", "clbAcc"],
-			"body": "clbFoldBody"
-		}},
-		{"id": "clbFoldOuter", "expr": {
-			"kind": "lambda",
-			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
-			"params": ["clbRec"],
-			"body": "clbFoldInner"
-		}},
-		{"id": "collectLambdaBodiesBody", "expr": {
-			"kind": "let", "name": "clbLen",
-			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "clbNodes"}]},
-			"body": {"kind": "let", "name": "clbIsEmpty",
-				"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "clbLen"}, "zero"]},
-				"body": {"kind": "if",
-					"cond": {"kind": "var", "name": "clbIsEmpty"},
-					"then": "emptySet",
-					"else": {"kind": "let", "name": "clbIter",
-						"value": {"kind": "fix", "type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}, "fn": "clbFoldOuter"},
-						"body": {"kind": "callExpr", "args": ["zero", "emptySet"], "fn": "clbIter"}
+		},
+		{
+			"id": "tcIterInner",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						},
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"tcIdx",
+					"tcAcc"
+				],
+				"body": "tcIterBody"
+			}
+		},
+		{
+			"id": "tcIterOuter",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "fn",
+							"params": [
+								{
+									"kind": "int"
+								},
+								{
+									"kind": "int"
+								}
+							],
+							"returns": {
+								"kind": "int"
+							}
+						}
+					],
+					"returns": {
+						"kind": "fn",
+						"params": [
+							{
+								"kind": "int"
+							},
+							{
+								"kind": "int"
+							}
+						],
+						"returns": {
+							"kind": "int"
+						}
+					}
+				},
+				"params": [
+					"tcIterRec"
+				],
+				"body": "tcIterInner"
+			}
+		},
+		{
+			"id": "typeCheckDocBody",
+			"expr": {
+				"kind": "let",
+				"name": "tcNodes",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "get",
+					"args": [
+						{
+							"kind": "var",
+							"name": "tcDocInput"
+						},
+						"nodesStr"
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "tcNodeCount",
+					"value": {
+						"kind": "call",
+						"ns": "list",
+						"name": "length",
+						"args": [
+							{
+								"kind": "var",
+								"name": "tcNodes"
+							}
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "tcIsEmpty",
+						"value": {
+							"kind": "call",
+							"ns": "core",
+							"name": "eq",
+							"args": [
+								{
+									"kind": "var",
+									"name": "tcNodeCount"
+								},
+								"zero"
+							]
+						},
+						"body": {
+							"kind": "if",
+							"cond": {
+								"kind": "var",
+								"name": "tcIsEmpty"
+							},
+							"then": {
+								"kind": "record",
+								"fields": [
+									{
+										"key": "valid",
+										"value": "trueVal"
+									},
+									{
+										"key": "errors",
+										"value": "emptyList"
+									},
+									{
+										"key": "nodeTypes",
+										"value": "emptyMap"
+									}
+								]
+							},
+							"else": {
+								"kind": "let",
+								"name": "tcBoundSet",
+								"value": {
+									"kind": "callExpr",
+									"args": [
+										{
+											"kind": "var",
+											"name": "tcNodes"
+										}
+									],
+									"fn": "collectLambdaBodies"
+								},
+								"body": {
+									"kind": "let",
+									"name": "tcInitAcc",
+									"value": {
+										"kind": "record",
+										"fields": [
+											{
+												"key": "type",
+												"value": "emptyMap"
+											},
+											{
+												"key": "errors",
+												"value": "emptyList"
+											}
+										]
+									},
+									"body": {
+										"kind": "let",
+										"name": "tcIter",
+										"value": {
+											"kind": "fix",
+											"type": {
+												"kind": "fn",
+												"params": [
+													{
+														"kind": "int"
+													},
+													{
+														"kind": "int"
+													}
+												],
+												"returns": {
+													"kind": "int"
+												}
+											},
+											"fn": "tcIterOuter"
+										},
+										"body": {
+											"kind": "let",
+											"name": "tcFinalAcc",
+											"value": {
+												"kind": "callExpr",
+												"args": [
+													"zero",
+													{
+														"kind": "var",
+														"name": "tcInitAcc"
+													}
+												],
+												"fn": "tcIter"
+											},
+											"body": {
+												"kind": "let",
+												"name": "tcFinalErrors",
+												"value": {
+													"kind": "call",
+													"ns": "map",
+													"name": "get",
+													"args": [
+														{
+															"kind": "var",
+															"name": "tcFinalAcc"
+														},
+														"errorsKey"
+													]
+												},
+												"body": {
+													"kind": "let",
+													"name": "tcFinalNT",
+													"value": {
+														"kind": "call",
+														"ns": "map",
+														"name": "get",
+														"args": [
+															{
+																"kind": "var",
+																"name": "tcFinalAcc"
+															},
+															"typeKey"
+														]
+													},
+													"body": {
+														"kind": "let",
+														"name": "tcNoErrors",
+														"value": {
+															"kind": "call",
+															"ns": "core",
+															"name": "eq",
+															"args": [
+																{
+																	"kind": "call",
+																	"ns": "list",
+																	"name": "length",
+																	"args": [
+																		{
+																			"kind": "var",
+																			"name": "tcFinalErrors"
+																		}
+																	]
+																},
+																"zero"
+															]
+														},
+														"body": {
+															"kind": "record",
+															"fields": [
+																{
+																	"key": "valid",
+																	"value": {
+																		"kind": "var",
+																		"name": "tcNoErrors"
+																	}
+																},
+																{
+																	"key": "errors",
+																	"value": {
+																		"kind": "var",
+																		"name": "tcFinalErrors"
+																	}
+																},
+																{
+																	"key": "nodeTypes",
+																	"value": {
+																		"kind": "var",
+																		"name": "tcFinalNT"
+																	}
+																}
+															]
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
 					}
 				}
 			}
-		}},
-		{"id": "collectLambdaBodies", "expr": {
-			"kind": "lambda",
-			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
-			"params": ["clbNodes"],
-			"body": "collectLambdaBodiesBody"
-		}},
-
-
-		{"id": "identifyBoundNodesBody", "expr": {
-			"kind": "callExpr", "args": [{"kind": "var", "name": "ibnInputNodes"}], "fn": "collectLambdaBodies"
-		}},
-		{"id": "identifyBoundNodes", "expr": {
-			"kind": "lambda",
-			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
-			"params": ["ibnInputNodes"],
-			"body": "identifyBoundNodesBody"
-		}},
-
-
-		{"id": "exports", "expr": {
-			"kind": "record",
-			"fields": [
-				{"key": "typecheck:typeEqual", "value": "typeEqual"},
-				{"key": "typecheck:buildNodeMap", "value": "buildNodeMap"},
-				{"key": "typecheck:identifyBoundNodes", "value": "identifyBoundNodes"}
-			]
-		}}
+		},
+		{
+			"id": "typeCheckDoc",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"tcDocInput"
+				],
+				"body": "typeCheckDocBody"
+			}
+		},
+		{
+			"id": "exports",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "typecheck:typeEqual",
+						"value": "typeEqual"
+					},
+					{
+						"key": "typecheck:buildNodeMap",
+						"value": "buildNodeMap"
+					},
+					{
+						"key": "typecheck:identifyBoundNodes",
+						"value": "identifyBoundNodes"
+					},
+					{
+						"key": "typecheck:typeCheckExpr",
+						"value": "typeCheckExpr"
+					},
+					{
+						"key": "typecheck:typecheck",
+						"value": "typeCheckDoc"
+					}
+				]
+			}
+		}
 	],
 	"result": "exports"
 }
