@@ -19,6 +19,7 @@ import type { AirEvalCtx, EvalOptions } from "./types.js";
 import { Evaluator } from "./helpers.js";
 import { evalNode } from "./air-node.js";
 import { desugarAirDefs } from "../desugar-airdefs.js";
+import { desugarShorthands } from "../desugar-shorthands.js";
 
 export { Evaluator };
 
@@ -42,8 +43,11 @@ interface ProgramArgs {
 export function evaluateProgram(
 	...params: [AIRDocument, AirEvalCtx["registry"], Defs, Map<string, Value>?, EvalOptions?]
 ): Value {
-	const desugared = desugarAirDefs(params[0]);
-	const args: ProgramArgs = { doc: desugared, registry: params[1], defs: params[2], inputs: params[3], options: params[4] };
+	// Desugar shorthands first (inline literals, lambda type inference, etc.)
+	const desugared1 = desugarShorthands(params[0]);
+	// Desugar airDefs (convert airDefs to lambdas/callExprs)
+	const desugared2 = desugarAirDefs(desugared1);
+	const args: ProgramArgs = { doc: desugared2, registry: params[1], defs: params[2], inputs: params[3], options: params[4] };
 	const ctx = buildProgramCtx(args);
 	const boundNodes = computeBoundNodes(args.doc, ctx.nodeMap);
 	return runProgram({ doc: args.doc, ctx, boundNodes, inputs: args.inputs });
