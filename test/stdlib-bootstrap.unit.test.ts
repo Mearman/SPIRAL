@@ -449,6 +449,56 @@ describe("string stdlib", () => {
 		const join = lookupOperator(registry, "string", "join")!;
 		assert.deepStrictEqual(join.fn(listVal([stringVal("x")]), stringVal("-")), stringVal("x"));
 	});
+
+	it("string:startsWith returns true for matching prefix", () => {
+		const startsWith = lookupOperator(registry, "string", "startsWith")!;
+		assert.deepStrictEqual(startsWith.fn(stringVal("hello world"), stringVal("hello")), boolVal(true));
+	});
+
+	it("string:startsWith returns false for non-matching prefix", () => {
+		const startsWith = lookupOperator(registry, "string", "startsWith")!;
+		assert.deepStrictEqual(startsWith.fn(stringVal("hello"), stringVal("world")), boolVal(false));
+	});
+
+	it("string:startsWith returns true for empty prefix", () => {
+		const startsWith = lookupOperator(registry, "string", "startsWith")!;
+		assert.deepStrictEqual(startsWith.fn(stringVal("hello"), stringVal("")), boolVal(true));
+	});
+
+	it("string:startsWith returns false when prefix longer than string", () => {
+		const startsWith = lookupOperator(registry, "string", "startsWith")!;
+		assert.deepStrictEqual(startsWith.fn(stringVal("hi"), stringVal("hello")), boolVal(false));
+	});
+
+	it("string:endsWith returns true for matching suffix", () => {
+		const endsWith = lookupOperator(registry, "string", "endsWith")!;
+		assert.deepStrictEqual(endsWith.fn(stringVal("hello world"), stringVal("world")), boolVal(true));
+	});
+
+	it("string:endsWith returns false for non-matching suffix", () => {
+		const endsWith = lookupOperator(registry, "string", "endsWith")!;
+		assert.deepStrictEqual(endsWith.fn(stringVal("hello"), stringVal("world")), boolVal(false));
+	});
+
+	it("string:endsWith returns true for empty suffix", () => {
+		const endsWith = lookupOperator(registry, "string", "endsWith")!;
+		assert.deepStrictEqual(endsWith.fn(stringVal("hello"), stringVal("")), boolVal(true));
+	});
+
+	it("string:repeat repeats string n times", () => {
+		const repeat = lookupOperator(registry, "string", "repeat")!;
+		assert.deepStrictEqual(repeat.fn(stringVal("ab"), intVal(3)), stringVal("ababab"));
+	});
+
+	it("string:repeat with n=0 returns empty", () => {
+		const repeat = lookupOperator(registry, "string", "repeat")!;
+		assert.deepStrictEqual(repeat.fn(stringVal("hello"), intVal(0)), stringVal(""));
+	});
+
+	it("string:repeat with n=1 returns original", () => {
+		const repeat = lookupOperator(registry, "string", "repeat")!;
+		assert.deepStrictEqual(repeat.fn(stringVal("x"), intVal(1)), stringVal("x"));
+	});
 });
 
 describe("map stdlib", () => {

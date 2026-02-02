@@ -385,6 +385,82 @@
 			"body": "joinBody"
 		}},
 
+		{ "id": "startsWithBody", "expr": {
+			"kind": "let", "name": "prefixLen",
+			"value": { "kind": "call", "ns": "string", "name": "length", "args": [{ "kind": "var", "name": "prefix" }] },
+			"body": { "kind": "let", "name": "sLen",
+				"value": { "kind": "call", "ns": "string", "name": "length", "args": [{ "kind": "var", "name": "s" }] },
+				"body": { "kind": "if",
+					"cond": { "kind": "call", "ns": "core", "name": "gt", "args": [{ "kind": "var", "name": "prefixLen" }, { "kind": "var", "name": "sLen" }] },
+					"then": "falseLit",
+					"else": { "kind": "let", "name": "head",
+						"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "s" }, "zero", { "kind": "var", "name": "prefixLen" }], "fn": "slice" },
+						"body": { "kind": "call", "ns": "core", "name": "eq", "args": [{ "kind": "var", "name": "head" }, { "kind": "var", "name": "prefix" }] }
+					}
+				}
+			}
+		}},
+		{ "id": "startsWith", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "string" }, { "kind": "string" }], "returns": { "kind": "bool" } }, "params": ["s", "prefix"], "body": "startsWithBody"
+		}},
+
+		{ "id": "endsWithBody", "expr": {
+			"kind": "let", "name": "suffixLen",
+			"value": { "kind": "call", "ns": "string", "name": "length", "args": [{ "kind": "var", "name": "suffix" }] },
+			"body": { "kind": "let", "name": "sLen",
+				"value": { "kind": "call", "ns": "string", "name": "length", "args": [{ "kind": "var", "name": "s" }] },
+				"body": { "kind": "if",
+					"cond": { "kind": "call", "ns": "core", "name": "gt", "args": [{ "kind": "var", "name": "suffixLen" }, { "kind": "var", "name": "sLen" }] },
+					"then": "falseLit",
+					"else": { "kind": "let", "name": "tailStart",
+						"value": { "kind": "call", "ns": "core", "name": "sub", "args": [{ "kind": "var", "name": "sLen" }, { "kind": "var", "name": "suffixLen" }] },
+						"body": { "kind": "let", "name": "tail",
+							"value": { "kind": "callExpr", "args": [{ "kind": "var", "name": "s" }, { "kind": "var", "name": "tailStart" }, { "kind": "var", "name": "sLen" }], "fn": "slice" },
+							"body": { "kind": "call", "ns": "core", "name": "eq", "args": [{ "kind": "var", "name": "tail" }, { "kind": "var", "name": "suffix" }] }
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "endsWith", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "string" }, { "kind": "string" }], "returns": { "kind": "bool" } }, "params": ["s", "suffix"], "body": "endsWithBody"
+		}},
+
+		{ "id": "repeatRecBody", "expr": {
+			"kind": "let", "name": "done",
+			"value": { "kind": "call", "ns": "core", "name": "lte", "args": [{ "kind": "var", "name": "count" }, "zero"] },
+			"body": { "kind": "if",
+				"cond": { "kind": "var", "name": "done" },
+				"then": { "kind": "var", "name": "acc" },
+				"else": { "kind": "let", "name": "newAcc",
+					"value": { "kind": "call", "ns": "string", "name": "concat", "args": [{ "kind": "var", "name": "acc" }, { "kind": "var", "name": "s" }] },
+					"body": { "kind": "let", "name": "nextCount",
+						"value": { "kind": "call", "ns": "core", "name": "sub", "args": [{ "kind": "var", "name": "count" }, "one"] },
+						"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextCount" }, { "kind": "var", "name": "newAcc" }], "fn": "repeatRec" }
+					}
+				}
+			}
+		}},
+		{ "id": "repeatRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "string" }], "returns": { "kind": "string" } }, "params": ["count", "acc"], "body": "repeatRecBody"
+		}},
+		{ "id": "repeatRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }, { "kind": "string" }], "returns": { "kind": "string" } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "string" }], "returns": { "kind": "string" } } }, "params": ["repeatRec"], "body": "repeatRecInner"
+		}},
+		{ "id": "repeatBody", "expr": {
+			"kind": "let", "name": "iter",
+			"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "string" }], "returns": { "kind": "string" } }, "fn": "repeatRecOuter" },
+			"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "n" }, "emptyStr"], "fn": "iter" }
+		}},
+		{ "id": "repeat", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "string" }, { "kind": "int" }], "returns": { "kind": "string" } }, "params": ["s", "n"], "body": "repeatBody"
+		}},
+
 		{ "id": "exports", "expr": {
 			"kind": "record",
 			"fields": [
@@ -394,7 +470,10 @@
 				{ "key": "string:includes", "value": "includes" },
 				{ "key": "string:replace", "value": "replace" },
 				{ "key": "string:split", "value": "split" },
-				{ "key": "string:join", "value": "join" }
+				{ "key": "string:join", "value": "join" },
+				{ "key": "string:startsWith", "value": "startsWith" },
+				{ "key": "string:endsWith", "value": "endsWith" },
+				{ "key": "string:repeat", "value": "repeat" }
 			]
 		}}
 	],
