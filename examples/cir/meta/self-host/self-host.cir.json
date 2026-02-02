@@ -1,0 +1,57 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Full self-hosting pipeline: parses a SPIRAL AIR program from JSON string, structurally validates it (schema:validate), semantically validates it (validate:validate), type-checks it (typecheck:typecheck), and if all pass evaluates it (meta:eval). Demonstrates json:parse → schema → validate → typecheck → eval.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "programJson", "expr": {
+			"kind": "lit", "type": {"kind": "string"},
+			"value": "{\"version\":\"1.0.0\",\"airDefs\":[],\"nodes\":[{\"id\":\"a\",\"expr\":{\"kind\":\"lit\",\"type\":{\"kind\":\"int\"},\"value\":10}},{\"id\":\"b\",\"expr\":{\"kind\":\"lit\",\"type\":{\"kind\":\"int\"},\"value\":20}},{\"id\":\"sum\",\"expr\":{\"kind\":\"call\",\"ns\":\"core\",\"name\":\"add\",\"args\":[\"a\",\"b\"]}}],\"result\":\"sum\"}"
+		}},
+
+		{"id": "parsed", "expr": {"kind": "call", "ns": "json", "name": "parse", "args": ["programJson"]}},
+
+		{"id": "validKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "valid"}},
+		{"id": "errorsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "errors"}},
+
+		{"id": "schemaResult", "expr": {"kind": "call", "ns": "schema", "name": "validate", "args": ["parsed"]}},
+		{"id": "schemaValid", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["schemaResult", "validKey"]}},
+
+		{"id": "validateResult", "expr": {"kind": "call", "ns": "validate", "name": "validate", "args": ["parsed"]}},
+		{"id": "validateValid", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["validateResult", "validKey"]}},
+
+		{"id": "typecheckResult", "expr": {"kind": "call", "ns": "typecheck", "name": "typecheck", "args": ["parsed"]}},
+		{"id": "typecheckValid", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["typecheckResult", "validKey"]}},
+
+		{"id": "schemaAndValidate", "expr": {
+			"kind": "if",
+			"cond": "schemaValid",
+			"then": "validateValid",
+			"else": "schemaValid"
+		}},
+
+		{"id": "allValid", "expr": {
+			"kind": "if",
+			"cond": "schemaAndValidate",
+			"then": "typecheckValid",
+			"else": "schemaAndValidate"
+		}},
+
+		{"id": "evalResult", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["parsed"]}},
+
+		{"id": "schemaErrors", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["schemaResult", "errorsKey"]}},
+		{"id": "validateErrors", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["validateResult", "errorsKey"]}},
+		{"id": "typecheckErrors", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["typecheckResult", "errorsKey"]}},
+		{"id": "errors12", "expr": {"kind": "call", "ns": "list", "name": "concat", "args": ["schemaErrors", "validateErrors"]}},
+		{"id": "allErrors", "expr": {"kind": "call", "ns": "list", "name": "concat", "args": ["errors12", "typecheckErrors"]}},
+
+		{"id": "result", "expr": {
+			"kind": "if",
+			"cond": "allValid",
+			"then": "evalResult",
+			"else": "allErrors"
+		}}
+	],
+	"result": "result",
+	"expected_result": 30
+}
