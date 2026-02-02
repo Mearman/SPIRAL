@@ -1,0 +1,25 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "AIR Defs Desugaring example: Tests that the desugar:airDefs operator loads and can process documents.",
+	"airDefs": [],
+	"nodes": [
+		{ "id": "zero", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 } },
+		{ "id": "version", "expr": { "kind": "lit", "type": { "kind": "string" }, "value": "1.0.0" } },
+		{ "id": "emptyList", "expr": { "kind": "listOf", "elements": [] } },
+		{ "id": "emptyMap", "expr": { "kind": "record", "fields": [] } },
+
+		{ "id": "testDoc", "expr": { "kind": "record", "fields": [
+			{ "key": "version", "value": "version" },
+			{ "key": "airDefs", "value": "emptyList" },
+			{ "key": "nodes", "value": "emptyList" },
+			{ "key": "result", "value": { "kind": "lit", "type": { "kind": "string" }, "value": "result" } }
+		]}},
+
+		{ "id": "desugared", "expr": { "kind": "call", "ns": "desugar", "name": "airDefs", "args": ["testDoc"] } },
+
+		{ "id": "result", "expr": { "kind": "ref", "id": "desugared" } }
+	],
+	"result": "result",
+	"expected_result": "map"
+}

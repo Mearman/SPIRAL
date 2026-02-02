@@ -1,0 +1,399 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Desugar stdlib — desugar:airDefs takes a document map and converts airDefs into lambda nodes, replacing airRef expressions with callExpr.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one",  "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+		{"id": "trueVal",   "expr": {"kind": "lit", "type": {"kind": "bool"}, "value": true}},
+		{"id": "falseVal",  "expr": {"kind": "lit", "type": {"kind": "bool"}, "value": false}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+		{"id": "emptyMap",  "expr": {"kind": "record", "fields": []}},
+
+		{"id": "idKey",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "id"}},
+		{"id": "exprKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+		{"id": "kindKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "nsKey",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ns"}},
+		{"id": "nameKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "name"}},
+		{"id": "paramsKey",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "params"}},
+		{"id": "bodyKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "body"}},
+		{"id": "resultKey",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "result"}},
+		{"id": "typeKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "type"}},
+		{"id": "argsKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "args"}},
+		{"id": "fnKey",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fn"}},
+		{"id": "nodesKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodes"}},
+		{"id": "airDefsKey",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "airDefs"}},
+		{"id": "returnsKey",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "returns"}},
+
+		{"id": "airRefStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "airRef"}},
+		{"id": "callExprStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "callExpr"}},
+		{"id": "lambdaStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lambda"}},
+		{"id": "fnTypeStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fn"}},
+		{"id": "intTypeStr",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "int"}},
+
+		{"id": "airdefPrefix", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "__airdef_"}},
+		{"id": "underscoreStr","expr": {"kind": "lit", "type": {"kind": "string"}, "value": "_"}},
+		{"id": "bodyPostfix",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "_body"}},
+		{"id": "colonStr",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": ":"}},
+
+		{"id": "intTypeRec", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "intTypeStr"}
+		]}},
+
+
+		{"id": "buildParamTypesRecBody", "expr": {
+			"kind": "let", "name": "bptLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "bptParams"}]},
+			"body": {"kind": "let", "name": "bptDone",
+				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "bptIdx"}, {"kind": "var", "name": "bptLen"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "bptDone"},
+					"then": "emptyList",
+					"else": {"kind": "let", "name": "bptNext",
+						"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "bptIdx"}, "one"]},
+						"body": {"kind": "let", "name": "bptRest",
+							"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "bptParams"}, {"kind": "var", "name": "bptNext"}], "fn": "bptRec"},
+							"body": {"kind": "call", "ns": "list", "name": "cons", "args": ["intTypeRec", {"kind": "var", "name": "bptRest"}]}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "buildParamTypesRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["bptParams", "bptIdx"],
+			"body": "buildParamTypesRecBody"
+		}},
+		{"id": "buildParamTypesRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["bptRec"],
+			"body": "buildParamTypesRecInner"
+		}},
+		{"id": "buildParamTypesFix", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "buildParamTypesRecOuter"
+		}},
+		{"id": "buildParamTypesBody", "expr": {
+			"kind": "callExpr", "args": [{"kind": "var", "name": "params"}, "zero"], "fn": "buildParamTypesFix"
+		}},
+		{"id": "buildParamTypes", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["params"],
+			"body": "buildParamTypesBody"
+		}},
+
+
+		{"id": "processOneDefBody", "expr": {
+			"kind": "let", "name": "defNs",
+			"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "def"}, "nsKey"]},
+			"body": {"kind": "let", "name": "defName",
+				"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "def"}, "nameKey"]},
+				"body": {"kind": "let", "name": "defParams",
+					"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "def"}, "paramsKey"]},
+					"body": {"kind": "let", "name": "defBody",
+						"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "def"}, "bodyKey"]},
+						"body": {"kind": "let", "name": "defResult",
+							"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "def"}, "resultKey"]},
+							"body": {"kind": "let", "name": "nsUndName",
+								"value": {"kind": "call", "ns": "string", "name": "concat", "args": [{"kind": "var", "name": "defNs"}, {"kind": "call", "ns": "string", "name": "concat", "args": ["underscoreStr", {"kind": "var", "name": "defName"}]}]},
+								"body": {"kind": "let", "name": "lambdaId",
+									"value": {"kind": "call", "ns": "string", "name": "concat", "args": ["airdefPrefix", {"kind": "var", "name": "nsUndName"}]},
+									"body": {"kind": "let", "name": "bodyId",
+										"value": {"kind": "call", "ns": "string", "name": "concat", "args": [{"kind": "var", "name": "lambdaId"}, "bodyPostfix"]},
+										"body": {"kind": "let", "name": "paramTypes",
+											"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "defParams"}], "fn": "buildParamTypes"},
+											"body": {"kind": "let", "name": "fnType",
+												"value": {"kind": "call", "ns": "map", "name": "set", "args": [
+													{"kind": "call", "ns": "map", "name": "set", "args": [
+														{"kind": "call", "ns": "map", "name": "set", "args": ["emptyMap", "kindKey", "fnTypeStr"]},
+														"paramsKey", {"kind": "var", "name": "paramTypes"}
+													]},
+													"returnsKey", {"kind": "var", "name": "defResult"}
+												]},
+												"body": {"kind": "let", "name": "lambdaExpr",
+													"value": {"kind": "call", "ns": "map", "name": "set", "args": [
+														{"kind": "call", "ns": "map", "name": "set", "args": [
+															{"kind": "call", "ns": "map", "name": "set", "args": [
+																{"kind": "call", "ns": "map", "name": "set", "args": ["emptyMap", "kindKey", "lambdaStr"]},
+																"paramsKey", {"kind": "var", "name": "defParams"}
+															]},
+															"bodyKey", {"kind": "var", "name": "bodyId"}
+														]},
+														"typeKey", {"kind": "var", "name": "fnType"}
+													]},
+													"body": {"kind": "let", "name": "bodyNode",
+														"value": {"kind": "call", "ns": "map", "name": "set", "args": [
+															{"kind": "call", "ns": "map", "name": "set", "args": ["emptyMap", "idKey", {"kind": "var", "name": "bodyId"}]},
+															"exprKey", {"kind": "var", "name": "defBody"}
+														]},
+														"body": {"kind": "let", "name": "lambdaNode",
+															"value": {"kind": "call", "ns": "map", "name": "set", "args": [
+																{"kind": "call", "ns": "map", "name": "set", "args": ["emptyMap", "idKey", {"kind": "var", "name": "lambdaId"}]},
+																"exprKey", {"kind": "var", "name": "lambdaExpr"}
+															]},
+															"body": {"kind": "let", "name": "lookupKey",
+																"value": {"kind": "call", "ns": "string", "name": "concat", "args": [{"kind": "var", "name": "defNs"}, {"kind": "call", "ns": "string", "name": "concat", "args": ["colonStr", {"kind": "var", "name": "defName"}]}]},
+																"body": {"kind": "let", "name": "newNodes",
+																	"value": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "bodyNode"}, {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "lambdaNode"}, "emptyList"]}]},
+																	"body": {"kind": "call", "ns": "map", "name": "set", "args": [
+																		{"kind": "call", "ns": "map", "name": "set", "args": [
+																			{"kind": "call", "ns": "map", "name": "set", "args": ["emptyMap", "nodesKey", {"kind": "var", "name": "newNodes"}]},
+																			"lookupKey", {"kind": "var", "name": "lookupKey"}
+																		]},
+																		"lambdaId", {"kind": "var", "name": "lambdaId"}
+																	]}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "processOneDef", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["def"],
+			"body": "processOneDefBody"
+		}},
+
+
+		{"id": "processAirDefsRecBody", "expr": {
+			"kind": "let", "name": "padLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "padDefs"}]},
+			"body": {"kind": "let", "name": "padDone",
+				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "padIdx"}, {"kind": "var", "name": "padLen"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "padDone"},
+					"then": {"kind": "call", "ns": "map", "name": "set", "args": [
+						{"kind": "call", "ns": "map", "name": "set", "args": ["emptyMap", "nodesKey", {"kind": "var", "name": "padAccNodes"}]},
+						"lookupKey", {"kind": "var", "name": "padAccLookup"}
+					]},
+					"else": {"kind": "let", "name": "padDef",
+						"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "padDefs"}, {"kind": "var", "name": "padIdx"}]},
+						"body": {"kind": "let", "name": "padResult",
+							"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "padDef"}], "fn": "processOneDef"},
+							"body": {"kind": "let", "name": "padNewNodes",
+								"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "padResult"}, "nodesKey"]},
+								"body": {"kind": "let", "name": "padLookupKey",
+									"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "padResult"}, "lookupKey"]},
+									"body": {"kind": "let", "name": "padLambdaId",
+										"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "padResult"}, "lambdaId"]},
+										"body": {"kind": "let", "name": "padMergedNodes",
+											"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "padAccNodes"}, {"kind": "var", "name": "padNewNodes"}]},
+											"body": {"kind": "let", "name": "padMergedLookup",
+												"value": {"kind": "call", "ns": "map", "name": "set", "args": [{"kind": "var", "name": "padAccLookup"}, {"kind": "var", "name": "padLookupKey"}, {"kind": "var", "name": "padLambdaId"}]},
+												"body": {"kind": "let", "name": "padNextIdx",
+													"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "padIdx"}, "one"]},
+													"body": {"kind": "callExpr", "args": [{"kind": "var", "name": "padDefs"}, {"kind": "var", "name": "padNextIdx"}, {"kind": "var", "name": "padMergedNodes"}, {"kind": "var", "name": "padMergedLookup"}], "fn": "padRec"}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "processAirDefsRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["padDefs", "padIdx", "padAccNodes", "padAccLookup"],
+			"body": "processAirDefsRecBody"
+		}},
+		{"id": "processAirDefsRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["padRec"],
+			"body": "processAirDefsRecInner"
+		}},
+		{"id": "processAirDefsFix", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "processAirDefsRecOuter"
+		}},
+		{"id": "processAirDefsBody", "expr": {
+			"kind": "callExpr", "args": [{"kind": "var", "name": "defs"}, "zero", "emptyList", "emptyMap"], "fn": "processAirDefsFix"
+		}},
+		{"id": "processAirDefs", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["defs"],
+			"body": "processAirDefsBody"
+		}},
+
+
+		{"id": "lookupKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lookup"}},
+		{"id": "lambdaId",  "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lambdaId"}},
+
+		{"id": "rewriteExprBody", "expr": {
+			"kind": "let", "name": "reKind",
+			"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "reExpr"}, "kindKey"]},
+			"body": {"kind": "let", "name": "isAirRef",
+				"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "reKind"}, "airRefStr"]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "isAirRef"},
+					"then": {"kind": "let", "name": "reNs",
+						"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "reExpr"}, "nsKey"]},
+						"body": {"kind": "let", "name": "reName",
+							"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "reExpr"}, "nameKey"]},
+							"body": {"kind": "let", "name": "reLookupKey",
+								"value": {"kind": "call", "ns": "string", "name": "concat", "args": [{"kind": "var", "name": "reNs"}, {"kind": "call", "ns": "string", "name": "concat", "args": ["colonStr", {"kind": "var", "name": "reName"}]}]},
+								"body": {"kind": "let", "name": "reLambdaId",
+									"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "reLookup"}, {"kind": "var", "name": "reLookupKey"}]},
+									"body": {"kind": "let", "name": "reArgs",
+										"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "reExpr"}, "argsKey"]},
+										"body": {"kind": "call", "ns": "map", "name": "set", "args": [
+											{"kind": "call", "ns": "map", "name": "set", "args": [
+												{"kind": "call", "ns": "map", "name": "set", "args": ["emptyMap", "kindKey", "callExprStr"]},
+												"fnKey", {"kind": "var", "name": "reLambdaId"}
+											]},
+											"argsKey", {"kind": "var", "name": "reArgs"}
+										]}
+									}
+								}
+							}
+						}
+					},
+					"else": {"kind": "var", "name": "reExpr"}
+				}
+			}
+		}},
+		{"id": "rewriteExpr", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["reExpr", "reLookup"],
+			"body": "rewriteExprBody"
+		}},
+
+
+		{"id": "rewriteNodesRecBody", "expr": {
+			"kind": "let", "name": "rnLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "rnNodes"}]},
+			"body": {"kind": "let", "name": "rnDone",
+				"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "rnIdx"}, {"kind": "var", "name": "rnLen"}]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "rnDone"},
+					"then": "emptyList",
+					"else": {"kind": "let", "name": "rnNode",
+						"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "rnNodes"}, {"kind": "var", "name": "rnIdx"}]},
+						"body": {"kind": "let", "name": "rnNodeId",
+							"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "rnNode"}, "idKey"]},
+							"body": {"kind": "let", "name": "rnExpr",
+								"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "rnNode"}, "exprKey"]},
+								"body": {"kind": "let", "name": "rnNewExpr",
+									"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "rnExpr"}, {"kind": "var", "name": "rnLookup"}], "fn": "rewriteExpr"},
+									"body": {"kind": "let", "name": "rnNewNode",
+										"value": {"kind": "call", "ns": "map", "name": "set", "args": [
+											{"kind": "call", "ns": "map", "name": "set", "args": ["emptyMap", "idKey", {"kind": "var", "name": "rnNodeId"}]},
+											"exprKey", {"kind": "var", "name": "rnNewExpr"}
+										]},
+										"body": {"kind": "let", "name": "rnNextIdx",
+											"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "rnIdx"}, "one"]},
+											"body": {"kind": "let", "name": "rnRest",
+												"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "rnNodes"}, {"kind": "var", "name": "rnNextIdx"}, {"kind": "var", "name": "rnLookup"}], "fn": "rnRec"},
+												"body": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "rnNewNode"}, {"kind": "var", "name": "rnRest"}]}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "rewriteNodesRecInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["rnNodes", "rnIdx", "rnLookup"],
+			"body": "rewriteNodesRecBody"
+		}},
+		{"id": "rewriteNodesRecOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["rnRec"],
+			"body": "rewriteNodesRecInner"
+		}},
+		{"id": "rewriteNodesFix", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "rewriteNodesRecOuter"
+		}},
+		{"id": "rewriteNodesBody", "expr": {
+			"kind": "callExpr", "args": [{"kind": "var", "name": "rwNodes"}, "zero", {"kind": "var", "name": "rwLookup"}], "fn": "rewriteNodesFix"
+		}},
+		{"id": "rewriteNodes", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["rwNodes", "rwLookup"],
+			"body": "rewriteNodesBody"
+		}},
+
+
+		{"id": "desugarAirDefsBody", "expr": {
+			"kind": "let", "name": "docAirDefs",
+			"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "doc"}, "airDefsKey"]},
+			"body": {"kind": "let", "name": "docNodes",
+				"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "doc"}, "nodesKey"]},
+				"body": {"kind": "let", "name": "numDefs",
+					"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "docAirDefs"}]},
+					"body": {"kind": "let", "name": "hasDefs",
+						"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "numDefs"}, "one"]},
+						"body": {"kind": "if",
+							"cond": {"kind": "var", "name": "hasDefs"},
+							"then": {"kind": "let", "name": "processed",
+								"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "docAirDefs"}], "fn": "processAirDefs"},
+								"body": {"kind": "let", "name": "syntheticNodes",
+									"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "processed"}, "nodesKey"]},
+									"body": {"kind": "let", "name": "theLookup",
+										"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "processed"}, "lookupKey"]},
+										"body": {"kind": "let", "name": "rewrittenNodes",
+											"value": {"kind": "callExpr", "args": [{"kind": "var", "name": "docNodes"}, {"kind": "var", "name": "theLookup"}], "fn": "rewriteNodes"},
+											"body": {"kind": "let", "name": "allNodes",
+												"value": {"kind": "call", "ns": "list", "name": "concat", "args": [{"kind": "var", "name": "syntheticNodes"}, {"kind": "var", "name": "rewrittenNodes"}]},
+												"body": {"kind": "call", "ns": "map", "name": "set", "args": [
+													{"kind": "call", "ns": "map", "name": "set", "args": [{"kind": "var", "name": "doc"}, "airDefsKey", "emptyList"]},
+													"nodesKey", {"kind": "var", "name": "allNodes"}
+												]}
+											}
+										}
+									}
+								}
+							},
+							"else": {"kind": "var", "name": "doc"}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "desugarAirDefs", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["doc"],
+			"body": "desugarAirDefsBody"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "desugar:airDefs", "value": "desugarAirDefs"}
+			]
+		}}
+	],
+	"result": "exports"
+}
