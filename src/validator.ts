@@ -20,6 +20,7 @@ import {
 	EIRDocumentSchema,
 	LIRDocumentSchema,
 } from "./zod-schemas.js";
+import { desugarShorthands } from "./desugar-shorthands.js";
 
 //==============================================================================
 // Zod-to-ValidationError Conversion
@@ -1233,8 +1234,11 @@ function semanticValidateDocument<T extends { nodes: { id: string; expr?: unknow
 //==============================================================================
 
 export function validateAIR(doc: unknown): ValidationResult<AIRDocument> {
+	// Phase 0: Desugar shorthands (inline literals, lambda type inference, etc.)
+	const desugared = desugarShorthands(doc as AIRDocument);
+
 	// Phase 1: Structural validation via Zod
-	const parsed = AIRDocumentSchema.safeParse(doc);
+	const parsed = AIRDocumentSchema.safeParse(desugared);
 	if (!parsed.success) {
 		return invalidResult<AIRDocument>(zodToValidationErrors(parsed.error));
 	}
@@ -1244,8 +1248,11 @@ export function validateAIR(doc: unknown): ValidationResult<AIRDocument> {
 }
 
 export function validateCIR(doc: unknown): ValidationResult<CIRDocument> {
+	// Phase 0: Desugar shorthands (inline literals, lambda type inference, etc.)
+	const desugared = desugarShorthands(doc as CIRDocument);
+
 	// Phase 1: Structural validation via Zod
-	const parsed = CIRDocumentSchema.safeParse(doc);
+	const parsed = CIRDocumentSchema.safeParse(desugared);
 	if (!parsed.success) {
 		return invalidResult<CIRDocument>(zodToValidationErrors(parsed.error));
 	}
@@ -1255,8 +1262,11 @@ export function validateCIR(doc: unknown): ValidationResult<CIRDocument> {
 }
 
 export function validateEIR(doc: unknown): ValidationResult<EIRDocument> {
+	// Phase 0: Desugar shorthands (inline literals, lambda type inference, etc.)
+	const desugared = desugarShorthands(doc as EIRDocument);
+
 	// Phase 1: Structural validation via Zod
-	const parsed = EIRDocumentSchema.safeParse(doc);
+	const parsed = EIRDocumentSchema.safeParse(desugared);
 	if (!parsed.success) {
 		return invalidResult<EIRDocument>(zodToValidationErrors(parsed.error));
 	}
@@ -1266,8 +1276,11 @@ export function validateEIR(doc: unknown): ValidationResult<EIRDocument> {
 }
 
 export function validateLIR(doc: unknown): ValidationResult<LIRDocument> {
+	// Phase 0: Desugar shorthands (inline literals, lambda type inference, etc.)
+	const desugared = desugarShorthands(doc as LIRDocument);
+
 	// Phase 1: Structural validation via Zod
-	const parsed = LIRDocumentSchema.safeParse(doc);
+	const parsed = LIRDocumentSchema.safeParse(desugared);
 	if (!parsed.success) {
 		return invalidResult<LIRDocument>(zodToValidationErrors(parsed.error));
 	}
