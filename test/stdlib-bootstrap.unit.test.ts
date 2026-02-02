@@ -1374,6 +1374,59 @@ describe("typecheck stdlib — type utilities", () => {
 		const outer2 = makeFnType([inner2], makeType("string"));
 		assert.deepStrictEqual(typeEqual.fn(outer1, outer2), boolVal(true));
 	});
+
+	// --- Bound node analysis ---
+
+	function makeNodeVal(id: string, exprFields: [string, Value][]): Value {
+		const exprMap = new Map<string, Value>(exprFields.map(([k, v]) => [`s:${k}`, v]));
+		return mapVal(new Map([
+			["s:id", stringVal(id)],
+			["s:expr", mapVal(exprMap)],
+		]));
+	}
+
+	it("typecheck:buildNodeMap builds map from node list", () => {
+		const buildNodeMap = lookupOperator(registry, "typecheck", "buildNodeMap")!;
+		const nodes = listVal([
+			makeNodeVal("a", [["kind", stringVal("lit")], ["value", intVal(10)]]),
+			makeNodeVal("b", [["kind", stringVal("lit")], ["value", intVal(20)]]),
+		]);
+		const result = buildNodeMap.fn(nodes);
+		assert.ok(result.kind === "map");
+		assert.ok(result.value.has("s:a"));
+		assert.ok(result.value.has("s:b"));
+	});
+
+	it("typecheck:identifyBoundNodes finds lambda body nodes", () => {
+		const identifyBoundNodes = lookupOperator(registry, "typecheck", "identifyBoundNodes")!;
+		// A program: lit "five", call addFive, lambda addFiveLambda(body=addFive)
+		const nodes = listVal([
+			makeNodeVal("five", [["kind", stringVal("lit")], ["value", intVal(5)]]),
+			makeNodeVal("addFive", [["kind", stringVal("call")], ["ns", stringVal("core")], ["name", stringVal("add")], ["args", listVal([stringVal("x"), stringVal("five")])]]),
+			makeNodeVal("addFiveLambda", [
+				["kind", stringVal("lambda")],
+				["params", listVal([stringVal("x")])],
+				["body", stringVal("addFive")],
+				["type", mapVal(new Map([["s:kind", stringVal("fn")]]))],
+			]),
+		]);
+		const result = identifyBoundNodes.fn(nodes);
+		assert.ok(result.kind === "set");
+		// addFive should be bound (it's a lambda body), addFiveLambda should NOT be bound
+		assert.ok(result.value.has(hashValue(stringVal("addFive"))));
+		assert.ok(!result.value.has(hashValue(stringVal("addFiveLambda"))));
+	});
+
+	it("typecheck:identifyBoundNodes returns empty set when no lambdas", () => {
+		const identifyBoundNodes = lookupOperator(registry, "typecheck", "identifyBoundNodes")!;
+		const nodes = listVal([
+			makeNodeVal("a", [["kind", stringVal("lit")], ["value", intVal(1)]]),
+			makeNodeVal("b", [["kind", stringVal("call")], ["ns", stringVal("core")], ["name", stringVal("add")], ["args", listVal([stringVal("a"), stringVal("a")])]]),
+		]);
+		const result = identifyBoundNodes.fn(nodes);
+		assert.ok(result.kind === "set");
+		assert.strictEqual(result.value.size, 0);
+	});
 });
 
 describe("meta stdlib", () => {

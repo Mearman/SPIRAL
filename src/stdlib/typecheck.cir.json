@@ -354,10 +354,167 @@
 		{"id": "opRegistry", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["reg37", "kStrToFloat", "sigStrToInt"]}},
 
 
+		{"id": "idKey",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "id"}},
+		{"id": "exprKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+		{"id": "bodyKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "body"}},
+		{"id": "valueKey",    "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+		{"id": "condKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "cond"}},
+		{"id": "thenKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "then"}},
+		{"id": "elseKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "else"}},
+		{"id": "fnKey",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fn"}},
+		{"id": "argsKey",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "args"}},
+		{"id": "lambdaStr",   "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lambda"}},
+		{"id": "letStr",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "let"}},
+		{"id": "ifStr",       "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "if"}},
+		{"id": "callStr",     "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call"}},
+		{"id": "callExprStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "callExpr"}},
+		{"id": "refStr",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ref"}},
+		{"id": "fixStr",      "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fix"}},
+		{"id": "emptySet",    "expr": {"kind": "lit", "type": {"kind": "set", "of": {"kind": "int"}}, "value": []}},
+
+
+		{"id": "bnmFoldBody", "expr": {
+			"kind": "let", "name": "bnmNode",
+			"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "bnmNodes"}, {"kind": "var", "name": "bnmI"}]},
+			"body": {"kind": "let", "name": "bnmNid",
+				"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "bnmNode"}, "idKey"]},
+				"body": {"kind": "let", "name": "bnmNewMap",
+					"value": {"kind": "call", "ns": "map", "name": "set", "args": [{"kind": "var", "name": "bnmAcc"}, {"kind": "var", "name": "bnmNid"}, {"kind": "var", "name": "bnmNode"}]},
+					"body": {"kind": "let", "name": "bnmNextI",
+						"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "bnmI"}, "one"]},
+						"body": {"kind": "let", "name": "bnmDone",
+							"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "bnmNextI"}, {"kind": "var", "name": "bnmLen"}]},
+							"body": {"kind": "if",
+								"cond": {"kind": "var", "name": "bnmDone"},
+								"then": {"kind": "var", "name": "bnmNewMap"},
+								"else": {"kind": "callExpr", "args": [{"kind": "var", "name": "bnmNextI"}, {"kind": "var", "name": "bnmNewMap"}], "fn": "bnmRec"}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "bnmFoldInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["bnmI", "bnmAcc"],
+			"body": "bnmFoldBody"
+		}},
+		{"id": "bnmFoldOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["bnmRec"],
+			"body": "bnmFoldInner"
+		}},
+		{"id": "buildNodeMapBody", "expr": {
+			"kind": "let", "name": "bnmLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "bnmNodes"}]},
+			"body": {"kind": "let", "name": "bnmIsEmpty",
+				"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "bnmLen"}, "zero"]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "bnmIsEmpty"},
+					"then": "emptyMap",
+					"else": {"kind": "let", "name": "bnmIter",
+						"value": {"kind": "fix", "type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}, "fn": "bnmFoldOuter"},
+						"body": {"kind": "callExpr", "args": ["zero", "emptyMap"], "fn": "bnmIter"}
+					}
+				}
+			}
+		}},
+		{"id": "buildNodeMap", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["bnmNodes"],
+			"body": "buildNodeMapBody"
+		}},
+
+
+		{"id": "clbFoldBody", "expr": {
+			"kind": "let", "name": "clbNode",
+			"value": {"kind": "call", "ns": "list", "name": "nth", "args": [{"kind": "var", "name": "clbNodes"}, {"kind": "var", "name": "clbI"}]},
+			"body": {"kind": "let", "name": "clbExpr",
+				"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "clbNode"}, "exprKey"]},
+				"body": {"kind": "let", "name": "clbKind",
+					"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "clbExpr"}, "kindKey"]},
+					"body": {"kind": "let", "name": "clbIsLambda",
+						"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "clbKind"}, "lambdaStr"]},
+						"body": {"kind": "let", "name": "clbNewSet",
+							"value": {"kind": "if",
+								"cond": {"kind": "var", "name": "clbIsLambda"},
+								"then": {"kind": "let", "name": "clbBody",
+									"value": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "clbExpr"}, "bodyKey"]},
+									"body": {"kind": "call", "ns": "set", "name": "add", "args": [{"kind": "var", "name": "clbAcc"}, {"kind": "var", "name": "clbBody"}]}
+								},
+								"else": {"kind": "var", "name": "clbAcc"}
+							},
+							"body": {"kind": "let", "name": "clbNextI",
+								"value": {"kind": "call", "ns": "core", "name": "add", "args": [{"kind": "var", "name": "clbI"}, "one"]},
+								"body": {"kind": "let", "name": "clbDone",
+									"value": {"kind": "call", "ns": "core", "name": "gte", "args": [{"kind": "var", "name": "clbNextI"}, {"kind": "var", "name": "clbLen"}]},
+									"body": {"kind": "if",
+										"cond": {"kind": "var", "name": "clbDone"},
+										"then": {"kind": "var", "name": "clbNewSet"},
+										"else": {"kind": "callExpr", "args": [{"kind": "var", "name": "clbNextI"}, {"kind": "var", "name": "clbNewSet"}], "fn": "clbRec"}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{"id": "clbFoldInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["clbI", "clbAcc"],
+			"body": "clbFoldBody"
+		}},
+		{"id": "clbFoldOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["clbRec"],
+			"body": "clbFoldInner"
+		}},
+		{"id": "collectLambdaBodiesBody", "expr": {
+			"kind": "let", "name": "clbLen",
+			"value": {"kind": "call", "ns": "list", "name": "length", "args": [{"kind": "var", "name": "clbNodes"}]},
+			"body": {"kind": "let", "name": "clbIsEmpty",
+				"value": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "var", "name": "clbLen"}, "zero"]},
+				"body": {"kind": "if",
+					"cond": {"kind": "var", "name": "clbIsEmpty"},
+					"then": "emptySet",
+					"else": {"kind": "let", "name": "clbIter",
+						"value": {"kind": "fix", "type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}, "fn": "clbFoldOuter"},
+						"body": {"kind": "callExpr", "args": ["zero", "emptySet"], "fn": "clbIter"}
+					}
+				}
+			}
+		}},
+		{"id": "collectLambdaBodies", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["clbNodes"],
+			"body": "collectLambdaBodiesBody"
+		}},
+
+
+		{"id": "identifyBoundNodesBody", "expr": {
+			"kind": "callExpr", "args": [{"kind": "var", "name": "ibnInputNodes"}], "fn": "collectLambdaBodies"
+		}},
+		{"id": "identifyBoundNodes", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["ibnInputNodes"],
+			"body": "identifyBoundNodesBody"
+		}},
+
+
 		{"id": "exports", "expr": {
 			"kind": "record",
 			"fields": [
-				{"key": "typecheck:typeEqual", "value": "typeEqual"}
+				{"key": "typecheck:typeEqual", "value": "typeEqual"},
+				{"key": "typecheck:buildNodeMap", "value": "buildNodeMap"},
+				{"key": "typecheck:identifyBoundNodes", "value": "identifyBoundNodes"}
 			]
 		}}
 	],
