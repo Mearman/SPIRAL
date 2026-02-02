@@ -219,6 +219,20 @@ function usesBoundNodes(expr: Expr, bound: Set<string>): boolean {
 	if (expr.kind === "listOf") {
 		return expr.elements.some(e => typeof e === "string" && bound.has(e));
 	}
+	if (expr.kind === "lambda") {
+		return typeof expr.body === "string" && bound.has(expr.body);
+	}
+	if (expr.kind === "fix") {
+		return typeof expr.fn === "string" && bound.has(expr.fn);
+	}
+	if (expr.kind === "let") {
+		return [expr.value, expr.body].some(
+			id => typeof id === "string" && bound.has(id),
+		);
+	}
+	if (expr.kind === "do") {
+		return expr.exprs.some(e => typeof e === "string" && bound.has(e));
+	}
 	return false;
 }
 

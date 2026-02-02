@@ -95,12 +95,27 @@ function dispatchComplexExpr(ctx: ProgramCtx, expr: Expr, env: ValueEnv): NodeEv
 	case "lambda":
 		return evalNodeLambda(ctx, expr, env);
 	case "callExpr":
+		ensureNodeEvaluated(ctx, expr.fn, env);
+		for (const arg of expr.args) {
+			if (typeof arg === "string") ensureNodeEvaluated(ctx, arg, env);
+		}
 		return evalNodeCallExpr(ctx, expr, env);
 	case "fix":
+		ensureNodeEvaluated(ctx, expr.fn, env);
 		return evalNodeFix(ctx, expr, env);
 	default:
 		return evalNodeRemainder(expr, env);
 	}
+}
+
+/** Lazily evaluate a bound node on demand (nodeMap fallback for callExpr/fix fn). */
+function ensureNodeEvaluated(ctx: ProgramCtx, id: string, env: ValueEnv): void {
+	if (ctx.nodeValues.has(id)) return;
+	if (lookupValue(env, id)) return;
+	const node = ctx.nodeMap.get(id);
+	if (!node) return;
+	const r = evalNode(ctx, node, env);
+	ctx.nodeValues.set(id, r.value);
 }
 
 export function makeState(ctx: ProgramCtx): EvalContext {

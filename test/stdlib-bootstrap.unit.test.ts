@@ -1741,4 +1741,194 @@ describe("meta stdlib", () => {
 		], "r");
 		assert.deepStrictEqual(metaEval.fn(doc), intVal(2));
 	});
+
+	// --- CIR expression kinds ---
+
+	function litStrExpr(value: string): Value {
+		return mapVal(new Map([
+			["s:kind", stringVal("lit")],
+			["s:value", stringVal(value)],
+		]));
+	}
+
+	function letExprVal(name: string, value: string, body: string): Value {
+		return mapVal(new Map([
+			["s:kind", stringVal("let")],
+			["s:name", stringVal(name)],
+			["s:value", stringVal(value)],
+			["s:body", stringVal(body)],
+		]));
+	}
+
+	function lambdaExpr(params: string[], body: string): Value {
+		return mapVal(new Map([
+			["s:kind", stringVal("lambda")],
+			["s:params", listVal(params.map(stringVal))],
+			["s:body", stringVal(body)],
+		]));
+	}
+
+	function callExprVal(fn: string, args: string[]): Value {
+		return mapVal(new Map([
+			["s:kind", stringVal("callExpr")],
+			["s:fn", stringVal(fn)],
+			["s:args", listVal(args.map(stringVal))],
+		]));
+	}
+
+	function fixExprVal(fn: string): Value {
+		return mapVal(new Map([
+			["s:kind", stringVal("fix")],
+			["s:fn", stringVal(fn)],
+		]));
+	}
+
+	function ifExprRef(cond: string, then_: string, else_: string): Value {
+		return mapVal(new Map([
+			["s:kind", stringVal("if")],
+			["s:cond", stringVal(cond)],
+			["s:then", stringVal(then_)],
+			["s:else", stringVal(else_)],
+		]));
+	}
+
+	function recordExprVal(fields: [string, string][]): Value {
+		return mapVal(new Map([
+			["s:kind", stringVal("record")],
+			["s:fields", listVal(fields.map(([k, v]) => mapVal(new Map([
+				["s:key", stringVal(k)],
+				["s:value", stringVal(v)],
+			]))))],
+		]));
+	}
+
+	function listOfExprVal(elements: string[]): Value {
+		return mapVal(new Map([
+			["s:kind", stringVal("listOf")],
+			["s:elements", listVal(elements.map(stringVal))],
+		]));
+	}
+
+	function matchExprVal(value: string, cases: [string, string][], default_: string): Value {
+		return mapVal(new Map([
+			["s:kind", stringVal("match")],
+			["s:value", stringVal(value)],
+			["s:cases", listVal(cases.map(([pattern, body]) => mapVal(new Map([
+				["s:pattern", stringVal(pattern)],
+				["s:body", stringVal(body)],
+			]))))],
+			["s:default", stringVal(default_)],
+		]));
+	}
+
+	function doExprVal(exprs: string[]): Value {
+		return mapVal(new Map([
+			["s:kind", stringVal("do")],
+			["s:exprs", listVal(exprs.map(stringVal))],
+		]));
+	}
+
+	it("meta:eval handles let bindings (let x=5 in let y=10 in x+y = 15)", () => {
+		const metaEval = lookupOperator(registry, "meta", "eval")!;
+		const doc = makeDoc([
+			makeNode("five", litExpr(5)),
+			makeNode("ten", litExpr(10)),
+			makeNode("addBody", callExpr("core", "add", ["x", "y"])),
+			makeNode("letInner", letExprVal("y", "ten", "addBody")),
+			makeNode("result", letExprVal("x", "five", "letInner")),
+		], "result");
+		assert.deepStrictEqual(metaEval.fn(doc), intVal(15));
+	});
+
+	it("meta:eval handles lambda + callExpr (addFive(10) = 15)", () => {
+		const metaEval = lookupOperator(registry, "meta", "eval")!;
+		const doc = makeDoc([
+			makeNode("five", litExpr(5)),
+			makeNode("addBody", callExpr("core", "add", ["x", "five"])),
+			makeNode("addFn", lambdaExpr(["x"], "addBody")),
+			makeNode("ten", litExpr(10)),
+			makeNode("result", callExprVal("addFn", ["ten"])),
+		], "result");
+		assert.deepStrictEqual(metaEval.fn(doc), intVal(15));
+	});
+
+	it("meta:eval handles fix (factorial(5) = 120)", () => {
+		const metaEval = lookupOperator(registry, "meta", "eval")!;
+		// factorial: fix(outer -> inner(n) -> if n<=1 then 1 else n * inner(n-1))
+		const doc = makeDoc([
+			makeNode("zero", litExpr(0)),
+			makeNode("one", litExpr(1)),
+			makeNode("nMinus1", callExpr("core", "sub", ["n", "one"])),
+			makeNode("recCall", callExprVal("rec", ["nMinus1"])),
+			makeNode("nTimesRec", callExpr("core", "mul", ["n", "recCall"])),
+			makeNode("isBase", callExpr("core", "lte", ["n", "one"])),
+			makeNode("factBody", ifExprRef("isBase", "one", "nTimesRec")),
+			makeNode("factInner", lambdaExpr(["n"], "factBody")),
+			makeNode("factOuter", lambdaExpr(["rec"], "factInner")),
+			makeNode("factFn", fixExprVal("factOuter")),
+			makeNode("five", litExpr(5)),
+			makeNode("result", callExprVal("factFn", ["five"])),
+		], "result");
+		assert.deepStrictEqual(metaEval.fn(doc), intVal(120));
+	});
+
+	it("meta:eval handles record construction", () => {
+		const metaEval = lookupOperator(registry, "meta", "eval")!;
+		const doc = makeDoc([
+			makeNode("ten", litExpr(10)),
+			makeNode("twenty", litExpr(20)),
+			makeNode("rec", recordExprVal([["a", "ten"], ["b", "twenty"]])),
+			makeNode("key", litStrExpr("a")),
+			makeNode("result", callExpr("map", "get", ["rec", "key"])),
+		], "result");
+		assert.deepStrictEqual(metaEval.fn(doc), intVal(10));
+	});
+
+	it("meta:eval handles listOf construction", () => {
+		const metaEval = lookupOperator(registry, "meta", "eval")!;
+		const doc = makeDoc([
+			makeNode("a", litExpr(1)),
+			makeNode("b", litExpr(2)),
+			makeNode("c", litExpr(3)),
+			makeNode("lst", listOfExprVal(["a", "b", "c"])),
+			makeNode("idx", litExpr(1)),
+			makeNode("result", callExpr("list", "nth", ["lst", "idx"])),
+		], "result");
+		assert.deepStrictEqual(metaEval.fn(doc), intVal(2));
+	});
+
+	it("meta:eval handles match expression", () => {
+		const metaEval = lookupOperator(registry, "meta", "eval")!;
+		const doc = makeDoc([
+			makeNode("val", litStrExpr("b")),
+			makeNode("one", litExpr(1)),
+			makeNode("two", litExpr(2)),
+			makeNode("zero", litExpr(0)),
+			makeNode("result", matchExprVal("val", [["a", "one"], ["b", "two"]], "zero")),
+		], "result");
+		assert.deepStrictEqual(metaEval.fn(doc), intVal(2));
+	});
+
+	it("meta:eval handles do expression (returns last)", () => {
+		const metaEval = lookupOperator(registry, "meta", "eval")!;
+		const doc = makeDoc([
+			makeNode("a", litExpr(1)),
+			makeNode("b", litExpr(2)),
+			makeNode("c", litExpr(3)),
+			makeNode("result", doExprVal(["a", "b", "c"])),
+		], "result");
+		assert.deepStrictEqual(metaEval.fn(doc), intVal(3));
+	});
+
+	it("meta:eval handles multi-param lambda ((x,y) -> x+y)(3,7) = 10", () => {
+		const metaEval = lookupOperator(registry, "meta", "eval")!;
+		const doc = makeDoc([
+			makeNode("addBody", callExpr("core", "add", ["x", "y"])),
+			makeNode("addFn", lambdaExpr(["x", "y"], "addBody")),
+			makeNode("three", litExpr(3)),
+			makeNode("seven", litExpr(7)),
+			makeNode("result", callExprVal("addFn", ["three", "seven"])),
+		], "result");
+		assert.deepStrictEqual(metaEval.fn(doc), intVal(10));
+	});
 });

@@ -77,8 +77,8 @@ function evalRef(ctx: AirEvalCtx, expr: Expr & { kind: "ref" }, env: ValueEnv): 
 }
 
 function evalVar(expr: Expr & { kind: "var" }, env: ValueEnv): Value {
-	return lookupValue(env, expr.name)
-		?? errorVal(ErrorCodes.UnboundIdentifier, "Unbound identifier: " + expr.name);
+	const val = lookupValue(env, expr.name);
+	return val ?? errorVal(ErrorCodes.UnboundIdentifier, "Unbound identifier: " + expr.name);
 }
 
 /** Evaluate inline expression with nodeMap access. */
