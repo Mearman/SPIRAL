@@ -83,9 +83,11 @@ function rewriteChildren(expr: Expr, defMap: DefMap): Expr {
 	case "do":
 		return { ...expr, exprs: rewriteArgs(expr.exprs, defMap) };
 	case "lambda":
-		return { ...expr, body: rewriteArg(expr.body, defMap) };
+		// Lambda body is always a string node reference, never needs rewriting
+		return expr;
 	case "fix":
-		return { ...expr, fn: rewriteArg(expr.fn, defMap) };
+		// Fix fn is always a string node reference, never needs rewriting
+		return expr;
 	default:
 		return expr;
 	}
