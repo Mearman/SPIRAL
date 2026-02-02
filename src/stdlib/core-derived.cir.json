@@ -1,0 +1,52 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Derived core operators — abs, min, max implemented in SPIRAL CIR. Kernel provides core:neg, core:lt.",
+	"airDefs": [],
+	"nodes": [
+		{ "id": "zero", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 } },
+
+		{ "id": "absBody", "expr": {
+			"kind": "if",
+			"cond": { "kind": "call", "ns": "core", "name": "lt", "args": [{ "kind": "var", "name": "x" }, "zero"] },
+			"then": { "kind": "call", "ns": "core", "name": "neg", "args": [{ "kind": "var", "name": "x" }] },
+			"else": { "kind": "var", "name": "x" }
+		}},
+		{ "id": "abs", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "int" } }, "params": ["x"], "body": "absBody"
+		}},
+
+		{ "id": "minBody", "expr": {
+			"kind": "if",
+			"cond": { "kind": "call", "ns": "core", "name": "lt", "args": [{ "kind": "var", "name": "a" }, { "kind": "var", "name": "b" }] },
+			"then": { "kind": "var", "name": "a" },
+			"else": { "kind": "var", "name": "b" }
+		}},
+		{ "id": "min", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "int" } }, "params": ["a", "b"], "body": "minBody"
+		}},
+
+		{ "id": "maxBody", "expr": {
+			"kind": "if",
+			"cond": { "kind": "call", "ns": "core", "name": "gt", "args": [{ "kind": "var", "name": "a" }, { "kind": "var", "name": "b" }] },
+			"then": { "kind": "var", "name": "a" },
+			"else": { "kind": "var", "name": "b" }
+		}},
+		{ "id": "max", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "int" }], "returns": { "kind": "int" } }, "params": ["a", "b"], "body": "maxBody"
+		}},
+
+		{ "id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{ "key": "core:abs", "value": "abs" },
+				{ "key": "core:min", "value": "min" },
+				{ "key": "core:max", "value": "max" }
+			]
+		}}
+	],
+	"result": "exports"
+}

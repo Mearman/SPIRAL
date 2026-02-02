@@ -261,6 +261,50 @@ describe("list stdlib", () => {
 	});
 });
 
+describe("core-derived stdlib", () => {
+	const kernel = createKernelRegistry();
+	const registry = loadStdlib(kernel, [
+		resolve(stdlibDir, "core-derived.cir.json"),
+	]);
+
+	it("core:abs returns absolute value of positive", () => {
+		const abs = lookupOperator(registry, "core", "abs")!;
+		assert.deepStrictEqual(abs.fn(intVal(5)), intVal(5));
+	});
+
+	it("core:abs returns absolute value of negative", () => {
+		const abs = lookupOperator(registry, "core", "abs")!;
+		assert.deepStrictEqual(abs.fn(intVal(-7)), intVal(7));
+	});
+
+	it("core:abs of zero is zero", () => {
+		const abs = lookupOperator(registry, "core", "abs")!;
+		assert.deepStrictEqual(abs.fn(intVal(0)), intVal(0));
+	});
+
+	it("core:min returns smaller value", () => {
+		const min = lookupOperator(registry, "core", "min")!;
+		assert.deepStrictEqual(min.fn(intVal(3), intVal(7)), intVal(3));
+		assert.deepStrictEqual(min.fn(intVal(7), intVal(3)), intVal(3));
+	});
+
+	it("core:min with equal values", () => {
+		const min = lookupOperator(registry, "core", "min")!;
+		assert.deepStrictEqual(min.fn(intVal(5), intVal(5)), intVal(5));
+	});
+
+	it("core:max returns larger value", () => {
+		const max = lookupOperator(registry, "core", "max")!;
+		assert.deepStrictEqual(max.fn(intVal(3), intVal(7)), intVal(7));
+		assert.deepStrictEqual(max.fn(intVal(7), intVal(3)), intVal(7));
+	});
+
+	it("core:max with equal values", () => {
+		const max = lookupOperator(registry, "core", "max")!;
+		assert.deepStrictEqual(max.fn(intVal(5), intVal(5)), intVal(5));
+	});
+});
+
 describe("string stdlib", () => {
 	const kernel = createKernelRegistry();
 	const registry = loadStdlib(kernel, [
