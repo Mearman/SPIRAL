@@ -1,0 +1,64 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Conversion utilities — map:fromEntries implemented in SPIRAL CIR.",
+	"airDefs": [],
+	"nodes": [
+		{ "id": "zero", "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 } },
+		{ "id": "one",  "expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 } },
+		{ "id": "emptyMap", "expr": { "kind": "record", "fields": [] } },
+
+		{ "id": "fromEntriesRecBody", "expr": {
+			"kind": "let", "name": "len",
+			"value": { "kind": "call", "ns": "list", "name": "length", "args": [{ "kind": "var", "name": "entries" }] },
+			"body": { "kind": "let", "name": "done",
+				"value": { "kind": "call", "ns": "core", "name": "gte", "args": [{ "kind": "var", "name": "i" }, { "kind": "var", "name": "len" }] },
+				"body": { "kind": "if",
+					"cond": { "kind": "var", "name": "done" },
+					"then": { "kind": "var", "name": "acc" },
+					"else": { "kind": "let", "name": "entry",
+						"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "entries" }, { "kind": "var", "name": "i" }] },
+						"body": { "kind": "let", "name": "key",
+							"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "entry" }, "zero"] },
+							"body": { "kind": "let", "name": "val",
+								"value": { "kind": "call", "ns": "list", "name": "nth", "args": [{ "kind": "var", "name": "entry" }, "one"] },
+								"body": { "kind": "let", "name": "newAcc",
+									"value": { "kind": "call", "ns": "map", "name": "set", "args": [{ "kind": "var", "name": "acc" }, { "kind": "var", "name": "key" }, { "kind": "var", "name": "val" }] },
+									"body": { "kind": "let", "name": "nextI",
+										"value": { "kind": "call", "ns": "core", "name": "add", "args": [{ "kind": "var", "name": "i" }, "one"] },
+										"body": { "kind": "callExpr", "args": [{ "kind": "var", "name": "nextI" }, { "kind": "var", "name": "newAcc" }], "fn": "rec" }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}},
+		{ "id": "fromEntriesRecInner", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } }, "params": ["i", "acc"], "body": "fromEntriesRecBody"
+		}},
+		{ "id": "fromEntriesRecOuter", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "fn", "params": [{ "kind": "int" }, { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } }], "returns": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } } }, "params": ["rec"], "body": "fromEntriesRecInner"
+		}},
+		{ "id": "fromEntriesBody", "expr": {
+			"kind": "let", "name": "iter",
+			"value": { "kind": "fix", "type": { "kind": "fn", "params": [{ "kind": "int" }, { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } }, "fn": "fromEntriesRecOuter" },
+			"body": { "kind": "callExpr", "args": ["zero", "emptyMap"], "fn": "iter" }
+		}},
+		{ "id": "fromEntries", "expr": {
+			"kind": "lambda",
+			"type": { "kind": "fn", "params": [{ "kind": "list", "of": { "kind": "list", "of": { "kind": "int" } } }], "returns": { "kind": "map", "key": { "kind": "string" }, "value": { "kind": "int" } } }, "params": ["entries"], "body": "fromEntriesBody"
+		}},
+
+		{ "id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{ "key": "map:fromEntries", "value": "fromEntries" }
+			]
+		}}
+	],
+	"result": "exports"
+}

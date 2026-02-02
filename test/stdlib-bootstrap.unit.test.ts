@@ -739,6 +739,44 @@ describe("set stdlib", () => {
 	});
 });
 
+describe("conversion stdlib", () => {
+	const kernel = createKernelRegistry();
+	const registry = loadStdlib(kernel, [
+		resolve(stdlibDir, "bool.cir.json"),
+		resolve(stdlibDir, "list.cir.json"),
+		resolve(stdlibDir, "map.cir.json"),
+		resolve(stdlibDir, "set.cir.json"),
+		resolve(stdlibDir, "conversion.cir.json"),
+	]);
+
+	it("map:fromEntries builds map from key-value pairs", () => {
+		const fromEntries = lookupOperator(registry, "map", "fromEntries")!;
+		const entries = listVal([
+			listVal([stringVal("a"), intVal(1)]),
+			listVal([stringVal("b"), intVal(2)]),
+		]);
+		const result = fromEntries.fn(entries);
+		const expected = mapVal(new Map([["s:a", intVal(1)], ["s:b", intVal(2)]]));
+		assert.deepStrictEqual(result, expected);
+	});
+
+	it("map:fromEntries with empty list returns empty map", () => {
+		const fromEntries = lookupOperator(registry, "map", "fromEntries")!;
+		const result = fromEntries.fn(listVal([]));
+		assert.deepStrictEqual(result, mapVal(new Map()));
+	});
+
+	it("map:fromEntries with duplicate keys keeps last", () => {
+		const fromEntries = lookupOperator(registry, "map", "fromEntries")!;
+		const entries = listVal([
+			listVal([stringVal("x"), intVal(1)]),
+			listVal([stringVal("x"), intVal(2)]),
+		]);
+		const result = fromEntries.fn(entries);
+		assert.deepStrictEqual(result, mapVal(new Map([["s:x", intVal(2)]])));
+	});
+});
+
 describe("meta stdlib", () => {
 	const kernel = createKernelRegistry();
 	const registry = loadStdlib(kernel, [

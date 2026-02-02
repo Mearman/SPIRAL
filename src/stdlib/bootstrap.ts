@@ -25,6 +25,7 @@ export function bootstrapRegistry(): OperatorRegistry {
 		"core-derived.cir.json",
 		"map.cir.json",
 		"set.cir.json",
+		"conversion.cir.json",
 		"meta.cir.json",
 	];
 
