@@ -26,10 +26,15 @@ export function desugarAirDefs<T extends DocLike>(doc: T): T {
 
 	const defMap: DefMap = new Map();
 	const syntheticNodes = buildSyntheticNodes(doc.airDefs, defMap);
-	const rewrittenNodes = doc.nodes.map(node => ({
-		...node,
-		expr: rewriteExpr(node.expr, defMap),
-	}));
+	const rewrittenNodes = doc.nodes.map(node => {
+		// Skip nodes with $ref (aliasing) - they don't have expr and will be resolved during evaluation
+		// Skip block nodes - they use blocks instead of expr
+		if ("$ref" in node || "blocks" in node) return node;
+		return {
+			...node,
+			expr: rewriteExpr(node.expr, defMap),
+		};
+	});
 
 	return { ...doc, airDefs: [], nodes: [...syntheticNodes, ...rewrittenNodes] };
 }
