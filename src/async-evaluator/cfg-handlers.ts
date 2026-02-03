@@ -12,6 +12,8 @@ import {
 	errorVal,
 	isError,
 	isBlockNode,
+	isExprNode,
+	isRefNode,
 } from "../types.js";
 import type { EirInsChannelOp, EirExpr } from "../types.js";
 import { getChannels } from "./async-handlers.js";
@@ -152,6 +154,12 @@ function spawnTask(input: SpawnInput, ctx: AsyncEvalContext): void {
 					state: { ...ctx.state, env: taskEnv, taskId },
 				};
 				return (await ctx.svc.evalBlockNode(entryNode, taskCtx)).value;
+			}
+			if (isRefNode(entryNode)) {
+				return errorVal(ErrorCodes.DomainError, `RefNode not supported in async evaluator: ${entryNode.$ref}`);
+			}
+			if (!isExprNode(entryNode)) {
+				return errorVal(ErrorCodes.DomainError, `Invalid node type for spawn task: ${taskId}`);
 			}
 			return await ctx.svc.evalExpr(entryNode.expr, taskEnv, ctx);
 		} catch (error) {

@@ -12,6 +12,8 @@ import {
 	errorVal,
 	isError,
 	isBlockNode,
+	isExprNode,
+	isRefNode,
 	refCellVal,
 } from "../types.js";
 import { lookupEffect } from "../effects.js";
@@ -199,6 +201,12 @@ async function evalAndCacheBody(
 		ctx.nodeValues.set(input.bodyId, result.value);
 		return result.value;
 	}
+	if (isRefNode(input.bodyNode)) {
+		return errorVal(ErrorCodes.DomainError, `RefNode not supported in async evaluator: ${input.bodyNode.$ref}`);
+	}
+	if (!isExprNode(input.bodyNode)) {
+		return errorVal(ErrorCodes.DomainError, `Invalid node type for try body: ${input.bodyId}`);
+	}
 	const value = await ctx.svc.evalExpr(input.bodyNode.expr, env, ctx);
 	ctx.nodeValues.set(input.bodyId, value);
 	return value;
@@ -236,6 +244,12 @@ async function evalNodeOrExpr(
 
 	if (isBlockNode(node)) {
 		return (await ctx.svc.evalBlockNode(node, ctx)).value;
+	}
+	if (isRefNode(node)) {
+		return errorVal(ErrorCodes.DomainError, `RefNode not supported in async evaluator: ${node.$ref}`);
+	}
+	if (!isExprNode(node)) {
+		return errorVal(ErrorCodes.DomainError, `Invalid node type for ref: ${ref}`);
 	}
 
 	return ctx.svc.evalExpr(node.expr, env, ctx);

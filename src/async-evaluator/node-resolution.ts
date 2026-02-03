@@ -8,6 +8,8 @@ import { ErrorCodes } from "../errors.js";
 import {
 	type Value,
 	isBlockNode,
+	isExprNode,
+	isRefNode,
 	errorVal,
 	isError,
 } from "../types.js";
@@ -75,6 +77,12 @@ async function evalAndCacheNode(
 		const result = await ctx.svc.evalBlockNode(node, ctx);
 		ctx.nodeValues.set(nodeId, result.value);
 		return result.value;
+	}
+	if (isRefNode(node)) {
+		return errorVal(ErrorCodes.DomainError, `RefNode not supported in async evaluator: ${node.$ref}`);
+	}
+	if (!isExprNode(node)) {
+		return errorVal(ErrorCodes.DomainError, `Invalid node type: ${nodeId}`);
 	}
 
 	const value = await ctx.svc.evalExpr(node.expr, env, ctx);

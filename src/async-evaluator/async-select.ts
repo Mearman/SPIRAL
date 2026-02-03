@@ -6,6 +6,8 @@ import {
 	isFuture,
 	errorVal,
 	isBlockNode,
+	isExprNode,
+	isRefNode,
 } from "../types.js";
 import type { EirSelectExpr, EirRaceExpr } from "../types.js";
 import type { ValueEnv } from "../env.js";
@@ -92,6 +94,12 @@ async function evalRaceTask(
 	}
 	if (isBlockNode(node)) {
 		return (await ctx.svc.evalBlockNode(node, ctx)).value;
+	}
+	if (isRefNode(node)) {
+		return errorVal(ErrorCodes.DomainError, `RefNode not supported in async evaluator: ${node.$ref}`);
+	}
+	if (!isExprNode(node)) {
+		return errorVal(ErrorCodes.DomainError, `Invalid node type for race task: ${taskId}`);
 	}
 	return ctx.svc.evalExpr(node.expr, env, ctx);
 }

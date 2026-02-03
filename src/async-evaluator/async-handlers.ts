@@ -12,6 +12,8 @@ import {
 	listVal,
 	errorVal,
 	isBlockNode,
+	isExprNode,
+	isRefNode,
 	isError,
 } from "../types.js";
 import type {
@@ -57,6 +59,12 @@ async function evalParBranch(
 	if (isBlockNode(node)) {
 		return (await ctx.svc.evalBlockNode(node, ctx)).value;
 	}
+	if (isRefNode(node)) {
+		return errorVal(ErrorCodes.DomainError, `RefNode not supported in async evaluator: ${node.$ref}`);
+	}
+	if (!isExprNode(node)) {
+		return errorVal(ErrorCodes.DomainError, `Invalid node type for branch: ${branchId}`);
+	}
 	return ctx.svc.evalExpr(node.expr, env, ctx);
 }
 
@@ -97,6 +105,12 @@ export function evalSpawnExpr(
 		try {
 			if (isBlockNode(taskNode)) {
 				return (await ctx.svc.evalBlockNode(taskNode, ctx)).value;
+			}
+			if (isRefNode(taskNode)) {
+				return errorVal(ErrorCodes.DomainError, `RefNode not supported in async evaluator: ${taskNode.$ref}`);
+			}
+			if (!isExprNode(taskNode)) {
+				return errorVal(ErrorCodes.DomainError, `Invalid node type for spawn task: ${expr.task}`);
 			}
 			return await ctx.svc.evalExpr(taskNode.expr, capturedEnv, ctx);
 		} catch (error) {

@@ -13,6 +13,8 @@ import { ErrorCodes } from "../errors.js";
 import {
 	type BlockNode,
 	isBlockNode,
+	isExprNode,
+	isRefNode,
 	type Value,
 	voidVal,
 	errorVal,
@@ -229,6 +231,18 @@ export class AsyncEvaluator {
 		ctx: AsyncEvalContext,
 	): Promise<{ value: Value; state: import("../types.js").AsyncEvalState }> {
 		if (isBlockNode(node)) return this.evalBlockNode(node, ctx);
+		if (isRefNode(node)) {
+			return {
+				value: errorVal(ErrorCodes.DomainError, `RefNode not supported in async evaluator: ${node.$ref}`),
+				state: ctx.state,
+			};
+		}
+		if (!isExprNode(node)) {
+			return {
+				value: errorVal(ErrorCodes.DomainError, `Invalid node type`),
+				state: ctx.state,
+			};
+		}
 		const value = await this.evalExpr(node.expr, ctx.state.env, ctx);
 		return { value, state: ctx.state };
 	}
