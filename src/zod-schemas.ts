@@ -62,6 +62,7 @@ export interface PredicateExpr { kind: "predicate"; name: string; value: string 
 export interface RecordExpr { kind: "record"; fields: { key: string; value: string | Expr }[]; type?: Type | undefined }
 export interface ListOfExpr { kind: "listOf"; elements: (string | Expr)[]; type?: Type | undefined }
 export interface MatchExpr { kind: "match"; value: string | Expr; cases: { pattern: string; body: string | Expr }[]; default?: string | Expr | undefined; type?: Type | undefined }
+export interface RefPointerExpr { kind: "$ref"; $ref: string }
 
 // CIR extensions
 export interface LambdaExpr { kind: "lambda"; params: (string | LambdaParam)[]; body: string; type: Type }
@@ -93,7 +94,7 @@ export interface EirRaceExpr { kind: "race"; tasks: string[] }
 export type Expr =
 	| LitExpr | RefExpr | VarExpr | CallExpr | IfExpr | LetExpr
 	| AirRefExpr | PredicateExpr
-	| RecordExpr | ListOfExpr | MatchExpr
+	| RecordExpr | ListOfExpr | MatchExpr | RefPointerExpr
 	| LambdaExpr | CallFnExpr | FixExpr | DoExpr;
 
 export type EirExpr =
@@ -163,7 +164,10 @@ export interface EirBlock { id: string; instructions: EirInstruction[]; terminat
 export interface Node<E = Expr> { id: string; expr: E }
 export interface ExprNode<E = Expr> { id: string; type?: Type | undefined; expr: E }
 export interface BlockNode<B = LirBlock> { id: string; type?: Type | undefined; blocks: B[]; entry: string }
-export type HybridNode<E = Expr, B = LirBlock> = ExprNode<E> | BlockNode<B>;
+/** Node-level reference for aliasing entire nodes */
+export interface RefNode { id: string; $ref: string }
+
+export type HybridNode<E = Expr, B = LirBlock> = ExprNode<E> | BlockNode<B> | RefNode;
 
 export type AirHybridNode = HybridNode<Expr, AirBlock>;
 export type CirHybridNode = HybridNode<Expr, CirBlock>;
@@ -195,10 +199,39 @@ export interface AIRDef {
 	body: Expr;
 }
 
+//==============================================================================
+// Definition & Import Types
+//==============================================================================
+
+/** A definition in $defs - can be an expression or a node */
+export interface Def {
+	expr?: Expr | string;
+	node?: Node | ExprNode | BlockNode;
+	type?: Type;
+}
+
+/** $defs object - maps definition names to their content */
+export type DefsObject = Record<string, Def>;
+
+/** Single entry in $imports object */
+export interface ImportEntry {
+	/** URI of the document to import */
+	$ref: string;
+}
+
+/** $imports object - maps namespace to import entry */
+export type ImportsObject = Record<string, ImportEntry>;
+
+//==============================================================================
+// Document Types
+//==============================================================================
+
 export interface AIRDocument {
 	version: string;
 	capabilities?: string[] | undefined;
 	functionSigs?: FunctionSignature[] | undefined;
+	$defs?: DefsObject | undefined;
+	$imports?: ImportsObject | undefined;
 	airDefs: AIRDef[];
 	nodes: AirHybridNode[];
 	result: string;
@@ -208,6 +241,8 @@ export interface CIRDocument {
 	version: string;
 	capabilities?: string[] | undefined;
 	functionSigs?: FunctionSignature[] | undefined;
+	$defs?: DefsObject | undefined;
+	$imports?: ImportsObject | undefined;
 	airDefs: AIRDef[];
 	nodes: CirHybridNode[];
 	result: string;
@@ -217,6 +252,8 @@ export interface EIRDocument {
 	version: string;
 	capabilities?: string[] | undefined;
 	functionSigs?: FunctionSignature[] | undefined;
+	$defs?: DefsObject | undefined;
+	$imports?: ImportsObject | undefined;
 	airDefs?: AIRDef[] | undefined;
 	nodes: EirHybridNode[];
 	result: string;
@@ -226,6 +263,8 @@ export interface LIRDocument {
 	version: string;
 	capabilities?: string[] | undefined;
 	functionSigs?: FunctionSignature[] | undefined;
+	$defs?: DefsObject | undefined;
+	$imports?: ImportsObject | undefined;
 	airDefs?: AIRDef[] | undefined;
 	nodes: LirHybridNode[];
 	result: string;
@@ -414,6 +453,11 @@ export const MatchExprSchema: z.ZodType<MatchExpr> = z.object({
 	type: TypeSchema.optional(),
 }).meta({ id: "MatchExpr", title: "Match Expression", description: "Multi-way string matching that evaluates the body of the first matching case" });
 
+export const RefPointerExprSchema: z.ZodType<RefPointerExpr> = z.object({
+	kind: z.literal("$ref"),
+	$ref: z.string(),
+}).meta({ id: "RefPointerExpr", title: "JSON Pointer Reference", description: "RFC 6901 JSON Pointer reference for deduplication" });
+
 //==============================================================================
 // Zod Schemas - Expression Domain - CIR extensions (4 variants)
 //==============================================================================
@@ -580,6 +624,7 @@ export const AirExprSchema: z.ZodType<Expr> = z.union([
 	RecordExprSchema,
 	ListOfExprSchema,
 	MatchExprSchema,
+	RefPointerExprSchema,
 ] satisfies [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]).meta({ id: "AirExpr", title: "AIR Expression", description: "Pure, bounded expression (no recursion or side effects)" });
 
 /** CIR-only expression variants: AIR plus lambda/callExpr/fix/do. No async extensions. */
@@ -595,6 +640,7 @@ export const CirExprSchema: z.ZodType<Expr> = z.union([
 	RecordExprSchema,
 	ListOfExprSchema,
 	MatchExprSchema,
+	RefPointerExprSchema,
 	LambdaExprSchema,
 	CallFnExprSchema,
 	FixExprSchema,
@@ -619,6 +665,7 @@ export const ExprSchema: z.ZodType<Expr> = z.union([
 	RecordExprSchema,
 	ListOfExprSchema,
 	MatchExprSchema,
+	RefPointerExprSchema,
 	LambdaExprSchema,
 	CallFnExprSchema,
 	FixExprSchema,
@@ -638,6 +685,7 @@ export const EirExprSchema: z.ZodType<EirExpr> = z.union([
 	RecordExprSchema,
 	ListOfExprSchema,
 	MatchExprSchema,
+	RefPointerExprSchema,
 	LambdaExprSchema,
 	CallFnExprSchema,
 	FixExprSchema,
@@ -864,6 +912,12 @@ export const EirBlockSchema = z.object({
 // Zod Schemas - Hybrid Nodes
 //==============================================================================
 
+/** Node-level reference for aliasing entire nodes */
+export const RefNodeSchema: z.ZodType<RefNode> = z.object({
+	id: z.string(),
+	$ref: z.string(),
+}).meta({ id: "RefNode", title: "Node Reference", description: "Node-level JSON Pointer reference for aliasing" });
+
 /** Expression-based node for AIR layer (restricted expression set) */
 export const AirExprNodeSchema = z.object({
 	id: z.string(),
@@ -895,7 +949,7 @@ function blockNodeSchema<B>(blockSchema: z.ZodType<B>) {
 	});
 }
 
-export const AirHybridNodeSchema = z.union([AirExprNodeSchema, blockNodeSchema(AirBlockSchema)]);
+export const AirHybridNodeSchema = z.union([AirExprNodeSchema, RefNodeSchema, blockNodeSchema(AirBlockSchema)]);
 /** Expression-based node for CIR layer (no async expressions) */
 export const CirExprNodeSchema = z.object({
 	id: z.string(),
@@ -903,8 +957,8 @@ export const CirExprNodeSchema = z.object({
 	expr: CirExprSchema,
 });
 
-export const CirHybridNodeSchema = z.union([CirExprNodeSchema, blockNodeSchema(CirBlockSchema)]);
-export const EirHybridNodeSchema = z.union([EirExprNodeSchema, blockNodeSchema(EirBlockSchema)]);
+export const CirHybridNodeSchema = z.union([CirExprNodeSchema, RefNodeSchema, blockNodeSchema(CirBlockSchema)]);
+export const EirHybridNodeSchema = z.union([EirExprNodeSchema, RefNodeSchema, blockNodeSchema(EirBlockSchema)]);
 /** Expression-based node for LIR layer (no async expressions) */
 export const LirExprNodeSchema = z.object({
 	id: z.string(),
@@ -912,7 +966,7 @@ export const LirExprNodeSchema = z.object({
 	expr: CirExprSchema,
 });
 
-export const LirHybridNodeSchema = z.union([LirExprNodeSchema, blockNodeSchema(LirBlockSchema)]);
+export const LirHybridNodeSchema = z.union([LirExprNodeSchema, RefNodeSchema, blockNodeSchema(LirBlockSchema)]);
 
 //==============================================================================
 // Zod Schemas - Supporting
@@ -935,6 +989,28 @@ export const AIRDefSchema: z.ZodType<AIRDef> = z.object({
 }).meta({ id: "AIRDef", title: "AIR Definition", description: "Reusable pure function definition scoped to AIR" });
 
 //==============================================================================
+// Zod Schemas - Definitions & Imports
+//==============================================================================
+
+/** Schema for a single definition in $defs */
+export const DefSchema = z.object({
+	expr: z.union([ExprSchema, z.string()]).optional(),
+	node: z.union([ExprNodeSchema, blockNodeSchema(LirBlockSchema)]).optional(),
+	type: TypeSchema.optional(),
+}).meta({ id: "Def", title: "Definition", description: "A definition in $defs (expression, node, or type)" });
+
+/** Schema for $defs object - maps definition names to their content */
+export const DefsObjectSchema: z.ZodType<DefsObject> = z.record(z.string(), DefSchema).optional();
+
+/** Schema for a single import entry */
+export const ImportEntrySchema = z.object({
+	$ref: z.string(),
+}).meta({ id: "ImportEntry", title: "Import Entry", description: "Single entry in $imports object" });
+
+/** Schema for $imports object - maps namespace to import entry */
+export const ImportsObjectSchema: z.ZodType<ImportsObject> = z.record(z.string(), ImportEntrySchema).optional();
+
+//==============================================================================
 // Zod Schemas - Documents
 //==============================================================================
 
@@ -942,6 +1018,8 @@ export const AIRDocumentSchema: z.ZodType<AIRDocument> = z.object({
 	version: SemVer,
 	capabilities: z.array(z.string()).optional(),
 	functionSigs: z.array(FunctionSignatureSchema).optional(),
+	$defs: DefsObjectSchema,
+	$imports: ImportsObjectSchema,
 	airDefs: z.array(AIRDefSchema),
 	nodes: z.array(AirHybridNodeSchema),
 	result: z.string(),
@@ -951,6 +1029,8 @@ export const CIRDocumentSchema: z.ZodType<CIRDocument> = z.object({
 	version: SemVer,
 	capabilities: z.array(z.string()).optional(),
 	functionSigs: z.array(FunctionSignatureSchema).optional(),
+	$defs: DefsObjectSchema,
+	$imports: ImportsObjectSchema,
 	airDefs: z.array(AIRDefSchema),
 	nodes: z.array(CirHybridNodeSchema),
 	result: z.string(),
@@ -960,6 +1040,8 @@ export const EIRDocumentSchema: z.ZodType<EIRDocument> = z.object({
 	version: SemVer,
 	capabilities: z.array(z.string()).optional(),
 	functionSigs: z.array(FunctionSignatureSchema).optional(),
+	$defs: DefsObjectSchema,
+	$imports: ImportsObjectSchema,
 	airDefs: z.array(AIRDefSchema).optional(),
 	nodes: z.array(EirHybridNodeSchema),
 	result: z.string(),
@@ -969,6 +1051,8 @@ export const LIRDocumentSchema: z.ZodType<LIRDocument> = z.object({
 	version: SemVer,
 	capabilities: z.array(z.string()).optional(),
 	functionSigs: z.array(FunctionSignatureSchema).optional(),
+	$defs: DefsObjectSchema,
+	$imports: ImportsObjectSchema,
 	airDefs: z.array(AIRDefSchema).optional(),
 	nodes: z.array(LirHybridNodeSchema),
 	result: z.string(),
