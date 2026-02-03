@@ -1,5 +1,6 @@
 // evalNode - dispatch per expression kind for AIR/CIR nodes
 
+import { navigate } from "../utils/json-pointer.js";
 import {
 	type ValueEnv,
 	emptyValueEnv,
@@ -11,9 +12,11 @@ import {
 	type AirHybridNode,
 	type Expr,
 	type LambdaParam,
+	type Type,
 	type Value,
 	isBlockNode,
 	isExprNode,
+	isRefNode,
 	voidVal,
 	closureVal,
 	boolVal,
@@ -27,6 +30,7 @@ import type { ProgramCtx } from "./air-program.js";
 import { applyOperator, type OpCall } from "./helpers.js";
 import { evaluateBlockNode } from "./block-eval.js";
 import { evalExprWithNodeMap } from "./air-expr.js";
+import { evalLitValue } from "./lit-eval.js";
 import {
 	evalNodeCallExpr,
 	evalNodeFix,
@@ -42,6 +46,10 @@ export function evalNode(
 	node: AirHybridNode,
 	env: ValueEnv,
 ): NodeEvalResult {
+	// Handle node-level $ref (RefNode) for aliasing
+	if ("$ref" in node) {
+		return evalNodeJsonPointerRef(ctx, node as { id: string; $ref: string }, env);
+	}
 	if (isBlockNode(node)) {
 		const blockCtx = { registry: ctx.registry, nodeValues: ctx.nodeValues, options: ctx.options };
 		return { value: evaluateBlockNode(node, blockCtx, env), env };
@@ -66,6 +74,8 @@ function dispatchBasicExpr(ctx: ProgramCtx, expr: Expr, env: ValueEnv): NodeEval
 		return evalNodeSimple(ctx, expr, env);
 	case "ref":
 		return evalNodeRef(ctx, expr, env);
+	case "$ref":
+		return evalNodeJsonPointerRef(ctx, { id: "", $ref: expr.$ref }, env);
 	case "call":
 		return evalNodeCall(ctx, expr, env);
 	case "if":
@@ -153,6 +163,58 @@ function evalNodeRef(ctx: ProgramCtx, expr: Expr & { kind: "ref" }, env: ValueEn
 	return { value, env };
 }
 
+function evalNodeJsonPointerRef(ctx: ProgramCtx, node: { id: string; $ref: string }, env: ValueEnv): NodeEvalResult {
+	// Use the document itself as the root for JSON Pointer navigation
+	const docRoot = ctx.docDefs ?? { nodes: [] };
+	const result = navigate(docRoot, node.$ref);
+	if (!result.success) {
+		return { value: errorVal(ErrorCodes.DomainError, "JSON Pointer resolution failed: " + result.error), env };
+	}
+	const refValue = result.value;
+
+	// If the reference points to another node, evaluate it
+	if (isNodeValue(refValue)) {
+		return evalNode(ctx, refValue, env);
+	}
+
+	// If the reference points to an expression, evaluate it
+	if (isExprValue(refValue)) {
+		return { value: evalExprWithNodeMap(ctx, refValue, env), env };
+	}
+
+	// If the reference points to a literal value, convert it to a Value
+	if (isLitValue(refValue)) {
+		// refValue has structure { kind: "lit", type: Type, value: unknown }
+		// evalLitValue expects { type: Type, value: unknown }
+		return { value: evalLitValue({ type: refValue.type, value: refValue.value }), env };
+	}
+
+	return { value: errorVal(ErrorCodes.DomainError, "JSON Pointer reference did not resolve to a valid value"), env };
+}
+
+/** Check if a value is a node (has id and expr or blocks) */
+function isNodeValue(value: unknown): value is AirHybridNode {
+	if (typeof value !== "object" || value === null) return false;
+	const v = value as Record<string, unknown>;
+	return "id" in v && typeof v.id === "string" && ("expr" in v || "blocks" in v || "$ref" in v);
+}
+
+/** Check if a value is an expression (has kind) */
+function isExprValue(value: unknown): value is Expr {
+	if (typeof value !== "object" || value === null) return false;
+	const v = value as Record<string, unknown>;
+	const kind = v.kind;
+	return "kind" in v && typeof kind === "string";
+}
+
+/** Check if a value is a literal expression (LitExpr) */
+function isLitValue(value: unknown): value is { kind: "lit"; type: Type; value: unknown } {
+	if (typeof value !== "object" || value === null) return false;
+	const v = value as Record<string, unknown>;
+	const kind = v.kind;
+	return typeof kind === "string" && kind === "lit" && "type" in v && "value" in v;
+}
+
 function evalNodePredicate(ctx: ProgramCtx, expr: Expr & { kind: "predicate" }): NodeEvalResult {
 	const v = ctx.nodeValues.get(expr.value);
 	if (!v) {
@@ -164,8 +226,11 @@ function evalNodePredicate(ctx: ProgramCtx, expr: Expr & { kind: "predicate" }):
 function evalNodeLambda(ctx: ProgramCtx, expr: Expr & { kind: "lambda" }, env: ValueEnv): NodeEvalResult {
 	const bodyNode = ctx.nodeMap.get(expr.body);
 	if (!bodyNode) return { value: errorVal(ErrorCodes.DomainError, "Body node not found: " + expr.body), env };
-	if (isBlockNode(bodyNode)) {
+	if (isBlockNode(bodyNode) || isRefNode(bodyNode)) {
 		return { value: errorVal(ErrorCodes.DomainError, "Block nodes as lambda bodies are not supported"), env };
+	}
+	if (!isExprNode(bodyNode)) {
+		return { value: errorVal(ErrorCodes.DomainError, "Invalid body node type"), env };
 	}
 	const params: LambdaParam[] = expr.params.map(p => typeof p === "string" ? { name: p } : p);
 	return { value: closureVal(params, bodyNode.expr, env), env };
@@ -317,6 +382,11 @@ function resolveLetValueNode(ctx: ProgramCtx, valueId: string, env: ValueEnv): V
 	const node = ctx.nodeMap.get(valueId);
 	if (!node) return errorVal(ErrorCodes.DomainError, "Value node not evaluated: " + valueId);
 	if (isBlockNode(node)) return evaluateBlockNode(node, { registry: ctx.registry, nodeValues: ctx.nodeValues, options: ctx.options }, env);
+	if (isRefNode(node)) {
+		// RefNode - evaluate by resolving the reference
+		return evalNode(ctx, node, env).value;
+	}
+	if (!isExprNode(node)) return errorVal(ErrorCodes.DomainError, "Invalid node type");
 	return evalExprWithNodeMap(ctx, node.expr, env);
 }
 
@@ -329,6 +399,11 @@ function resolveLetBody(ctx: ProgramCtx, expr: Expr & { kind: "let" }, extEnv: V
 	if (isBlockNode(bodyNode)) {
 		return { value: evaluateBlockNode(bodyNode, { registry: ctx.registry, nodeValues: ctx.nodeValues, options: ctx.options }, extEnv), env: extEnv };
 	}
+	if (isRefNode(bodyNode)) {
+		// RefNode - evaluate by resolving the reference
+		return evalNode(ctx, bodyNode, extEnv);
+	}
+	if (!isExprNode(bodyNode)) return { value: errorVal(ErrorCodes.DomainError, "Invalid body node type"), env: extEnv };
 	return resolveLetBodyExpr(ctx, bodyNode, extEnv);
 }
 
@@ -378,6 +453,11 @@ function resolveDoRef(ctx: ProgramCtx, e: string, env: ValueEnv): Value {
 	const node = ctx.nodeMap.get(e);
 	if (!node) return errorVal(ErrorCodes.DomainError, "Do expr ref not found: " + e);
 	if (isBlockNode(node)) return evaluateBlockNode(node, { registry: ctx.registry, nodeValues: ctx.nodeValues, options: ctx.options }, env);
+	if (isRefNode(node)) {
+		// RefNode - evaluate by resolving the reference
+		return evalNode(ctx, node, env).value;
+	}
+	if (!isExprNode(node)) return errorVal(ErrorCodes.DomainError, "Invalid node type");
 	return evalExprWithNodeMap(ctx, node.expr, env);
 }
 
