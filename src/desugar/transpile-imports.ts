@@ -9,7 +9,7 @@
 // the transpiled form is 100% compliant with JSON Schema.
 
 import type { AIRDocument, CIRDocument, EIRDocument, LIRDocument } from "../types.js";
-import type { ImportsObject, RefsObject } from "../types/resolution.js";
+import type { ImportsObject } from "../types/resolution.js";
 
 //==============================================================================
 // Types
@@ -18,10 +18,19 @@ import type { ImportsObject, RefsObject } from "../types/resolution.js";
 /** Any SPIRAL document type that can have $imports */
 type SPIRALDocument = AIRDocument | CIRDocument | EIRDocument | LIRDocument;
 
-/** Document with optional $imports field */
-interface DocumentWithImports extends SPIRALDocument {
-	$imports?: ImportsObject;
+/** Document with optional $imports field - use intersection type */
+type DocumentWithImports = SPIRALDocument & { $imports?: ImportsObject };
+
+/** Transpiled $defs entry - a reference to external document's $defs */
+interface TranspiledDefEntry {
+	$ref: string;
 }
+
+/** Transpiled $defs object - maps namespace to reference entry */
+type TranspiledDefsObject = Record<string, TranspiledDefEntry>;
+
+/** Any defs object type (from existing documents) */
+type AnyDefsObject = Record<string, unknown>;
 
 //==============================================================================
 // Transpilation
@@ -43,7 +52,7 @@ interface DocumentWithImports extends SPIRALDocument {
  * @returns The transpiled document with $defs (no $imports)
  */
 export function transpileImports<T extends SPIRALDocument>(doc: T): T {
-	// Type assertion: doc extends DocumentWithImports for accessing $imports
+	// Type assertion: doc as DocumentWithImports for accessing $imports
 	const docWithImports = doc as unknown as DocumentWithImports;
 
 	// If no $imports, return document unchanged
@@ -52,7 +61,7 @@ export function transpileImports<T extends SPIRALDocument>(doc: T): T {
 	}
 
 	// Merge existing $defs with transpiled $imports
-	const existingDefs = (doc as { $defs?: RefsObject }).$defs ?? {};
+	const existingDefs = (doc as unknown as { $defs?: AnyDefsObject }).$defs ?? {};
 	const transpiledDefs = transpileImportsToDefs(docWithImports.$imports);
 	const mergedDefs = { ...existingDefs, ...transpiledDefs };
 
@@ -76,8 +85,8 @@ export function transpileImports<T extends SPIRALDocument>(doc: T): T {
  * @param imports - The $imports object to transpile
  * @returns The transpiled $defs object
  */
-function transpileImportsToDefs(imports: ImportsObject): RefsObject {
-	const defs: RefsObject = {};
+function transpileImportsToDefs(imports: ImportsObject): TranspiledDefsObject {
+	const defs: TranspiledDefsObject = {};
 
 	for (const [namespace, entry] of Object.entries(imports)) {
 		const uri = entry.$ref;
