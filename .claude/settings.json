@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "deny": [
+      "Write(*eslint.config.ts)",
+      "Edit(*eslint.config.ts)"
+    ]
+  }
+}
