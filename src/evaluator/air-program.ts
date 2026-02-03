@@ -21,6 +21,7 @@ import { Evaluator } from "./helpers.js";
 import { evalNode } from "./air-node.js";
 import { desugarAirDefs } from "../desugar-airdefs.js";
 import { desugarShorthands } from "../desugar-shorthands.js";
+import { transpileImports } from "../desugar/transpile-imports.js";
 
 export { Evaluator };
 
@@ -44,8 +45,10 @@ interface ProgramArgs {
 export function evaluateProgram(
 	...params: [AIRDocument, AirEvalCtx["registry"], Defs, Map<string, Value>?, EvalOptions?]
 ): Value {
-	// Desugar shorthands first (inline literals, lambda type inference, etc.)
-	const desugared1 = desugarShorthands(params[0]);
+	// Transpile $imports to $defs first (must happen before shorthands desugaring)
+	const withDefs = transpileImports(params[0]);
+	// Desugar shorthands (inline literals, lambda type inference, etc.)
+	const desugared1 = desugarShorthands(withDefs);
 	// Desugar airDefs (convert airDefs to lambdas/callExprs)
 	// Type assertion: desugared1 is structurally compatible with desugarAirDefs DocLike
 	const desugared2 = desugarAirDefs(desugared1 as unknown as Parameters<typeof desugarAirDefs>[0]);

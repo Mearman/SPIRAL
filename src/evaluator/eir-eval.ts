@@ -36,6 +36,7 @@ import { evalEirWhile } from "./eir-loop.js";
 import { evalEirFor } from "./eir-loop.js";
 import { evalEirIter } from "./eir-loop.js";
 import { evalEirTry } from "./eir-try.js";
+import { transpileImports } from "../desugar/transpile-imports.js";
 
 export type { EIROptions };
 
@@ -65,7 +66,9 @@ interface EirArgs {
 export function evaluateEIR(
 	...params: [EIRDocument, OperatorRegistry, Defs, Map<string, Value>?, EIROptions?]
 ): { result: Value; state: EvalState } {
-	const args: EirArgs = { doc: params[0], registry: params[1], defs: params[2], inputs: params[3], options: params[4] };
+	// Transpile $imports to $defs first
+	const withDefs = transpileImports(params[0]);
+	const args: EirArgs = { doc: withDefs, registry: params[1], defs: params[2], inputs: params[3], options: params[4] };
 	const ctx = buildEirCtx(args);
 	return runEirProgram(args.doc, ctx, args.inputs);
 }

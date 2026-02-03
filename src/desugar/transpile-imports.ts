@@ -1,0 +1,101 @@
+// SPDX-License-Identifier: MIT
+// Transpilation Pipeline for $imports to $defs
+//
+// This module transforms the user-facing $imports object syntax into pure
+// JSON Schema $defs with $ref. The transpilation rule is:
+//   $imports: { namespace: { $ref: uri } }  -->  $defs: { namespace: { $ref: uri#/$defs } }
+//
+// This maintains ergonomics (short, namespace-based imports) while ensuring
+// the transpiled form is 100% compliant with JSON Schema.
+
+import type { AIRDocument, CIRDocument, EIRDocument, LIRDocument } from "../types.js";
+import type { ImportsObject, RefsObject } from "../types/resolution.js";
+
+//==============================================================================
+// Types
+//==============================================================================
+
+/** Any SPIRAL document type that can have $imports */
+type SPIRALDocument = AIRDocument | CIRDocument | EIRDocument | LIRDocument;
+
+/** Document with optional $imports field */
+interface DocumentWithImports extends SPIRALDocument {
+	$imports?: ImportsObject;
+}
+
+//==============================================================================
+// Transpilation
+//==============================================================================
+
+/**
+ * Transpile $imports object to $defs with $ref#/$defs.
+ *
+ * Each entry in $imports:
+ *   { namespace: { $ref: uri } }
+ *
+ * Becomes a $def entry:
+ *   { namespace: { $ref: uri#/$defs } }
+ *
+ * The #/$defs suffix is appended to each URI to reference the $defs
+ * object at the root of the imported document.
+ *
+ * @param doc - The document to transpile
+ * @returns The transpiled document with $defs (no $imports)
+ */
+export function transpileImports<T extends SPIRALDocument>(doc: T): T {
+	// Type assertion: doc extends DocumentWithImports for accessing $imports
+	const docWithImports = doc as unknown as DocumentWithImports;
+
+	// If no $imports, return document unchanged
+	if (!docWithImports.$imports || Object.keys(docWithImports.$imports).length === 0) {
+		return doc;
+	}
+
+	// Merge existing $defs with transpiled $imports
+	const existingDefs = (doc as { $defs?: RefsObject }).$defs ?? {};
+	const transpiledDefs = transpileImportsToDefs(docWithImports.$imports);
+	const mergedDefs = { ...existingDefs, ...transpiledDefs };
+
+	// Return new document without $imports, with merged $defs
+	return {
+		...doc,
+		$defs: mergedDefs,
+		$imports: undefined,
+	} as T;
+}
+
+/**
+ * Convert $imports object to $defs object with #/$defs appended.
+ *
+ * Each import entry:
+ *   { namespace: { $ref: uri } }
+ *
+ * Becomes:
+ *   { namespace: { $ref: uri#/$defs } }
+ *
+ * @param imports - The $imports object to transpile
+ * @returns The transpiled $defs object
+ */
+function transpileImportsToDefs(imports: ImportsObject): RefsObject {
+	const defs: RefsObject = {};
+
+	for (const [namespace, entry] of Object.entries(imports)) {
+		const uri = entry.$ref;
+
+		// Append #/$defs to the URI to reference the $defs object
+		// Handle URIs that already have a fragment
+		let refUri: string;
+		if (uri.includes("#")) {
+			// URI already has a fragment - replace it with #/$defs
+			const baseUri = uri.split("#")[0] ?? uri;
+			refUri = `${baseUri}#/$defs`;
+		} else {
+			// No fragment - append #/$defs
+			refUri = `${uri}#/$defs`;
+		}
+
+		defs[namespace] = { $ref: refUri };
+	}
+
+	return defs;
+}

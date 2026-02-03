@@ -17,6 +17,7 @@ import type { AIRCheckContext, EIRCheckContext } from "./typechecker/context.js"
 import { collectLambdaParamsAndLetBindings, identifyBoundNodes } from "./typechecker/bound-nodes.js";
 import { typeCheckNode } from "./typechecker/air-checker.js";
 import { typeCheckEIRNode } from "./typechecker/eir-checker.js";
+import { transpileImports } from "./desugar/transpile-imports.js";
 
 //==============================================================================
 // Type Checking Result
@@ -242,21 +243,24 @@ export function typeCheckProgram(
 	registry: OperatorRegistry,
 	defs: Defs,
 ): { nodeTypes: Map<string, Type>; resultType: Type } {
+	// Transpile $imports to $defs first
+	const withDefs = transpileImports(doc);
+
 	const checker = new TypeChecker(registry, defs);
 	const nodeTypes = new Map<string, Type>();
 	const nodeEnvs = new Map<string, TypeEnv>();
 
 	const nodeMap = new Map<string, AirHybridNode>();
-	for (const node of doc.nodes) {
+	for (const node of withDefs.nodes) {
 		nodeMap.set(node.id, node);
 	}
 
-	const lambdaParams = collectLambdaParamsAndLetBindings(doc.nodes);
-	const boundNodes = identifyBoundNodes(doc.nodes, nodeMap);
+	const lambdaParams = collectLambdaParamsAndLetBindings(withDefs.nodes);
+	const boundNodes = identifyBoundNodes(withDefs.nodes, nodeMap);
 
 	return typeCheckProgramNodes(
-		{ checker, nodeMap, nodeTypes, nodeEnvs, env: emptyTypeEnv(), lambdaParams, boundNodes, docDefs: getDocDefs(doc) },
-		doc,
+		{ checker, nodeMap, nodeTypes, nodeEnvs, env: emptyTypeEnv(), lambdaParams, boundNodes, docDefs: getDocDefs(withDefs) },
+		withDefs,
 	);
 }
 
@@ -318,6 +322,9 @@ export function typeCheckEIRProgram(
 function runEIRTypeCheck(
 	input: EIRProgramInput,
 ): { nodeTypes: Map<string, Type>; resultType: Type } {
+	// Transpile $imports to $defs first
+	const withDefs = transpileImports(input.doc);
+
 	const checker = new TypeChecker(input.registry, input.defs);
 	const ctx: EIRCheckContext = {
 		checker,
@@ -329,14 +336,14 @@ function runEIRTypeCheck(
 		effects: input.effects,
 		lambdaParams: new Set<string>(),
 		boundNodes: new Set<string>(),
-		docDefs: getEIRDocDefs(input.doc),
+		docDefs: getEIRDocDefs(withDefs),
 	};
 
-	for (const node of input.doc.nodes) {
+	for (const node of withDefs.nodes) {
 		ctx.nodeMap.set(node.id, node);
 	}
 
-	return typeCheckEIRProgramNodes(ctx, input.doc);
+	return typeCheckEIRProgramNodes(ctx, withDefs);
 }
 
 function getEIRDocDefs(doc: EIRDocument): Record<string, unknown> | undefined {
