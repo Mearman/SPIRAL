@@ -15,6 +15,7 @@ import {
 	type Value,
 	isBlockNode,
 	isExprNode,
+	isRefNode,
 	voidVal,
 	createEvalState,
 	refCellVal,
@@ -121,6 +122,17 @@ export function evalEIRNode(ctx: EirEvalCtx, node: EirHybridNode): EIRNodeEvalRe
 	if (isBlockNode(node)) {
 		const result = evaluateBlockNode(node, { registry: ctx.registry, nodeValues: ctx.nodeValues, options: ctx.options }, ctx.state.env);
 		return eirResult(result, ctx);
+	}
+	if (isRefNode(node)) {
+		// RefNode (node-level $ref) - resolve and evaluate the referenced node
+		const refNode = ctx.nodeMap.get(node.$ref);
+		if (!refNode) {
+			return eirResult(errorVal(ErrorCodes.DomainError, "Referenced node not found: " + node.$ref), ctx);
+		}
+		return evalEIRNode(ctx, refNode);
+	}
+	if (!isExprNode(node)) {
+		return eirResult(errorVal(ErrorCodes.DomainError, "Invalid node type"), ctx);
 	}
 	const expr = node.expr;
 	if (isCirExpr(expr)) return evalCirInEir(ctx, node.id, expr);
