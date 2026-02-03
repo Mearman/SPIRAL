@@ -12,7 +12,8 @@
 		"./schemas": "./dist/schemas.js"
 	},
 	"scripts": {
-		"build": "tsc",
+		"build": "tsc && npm run build:stdlib",
+		"build:stdlib": "mkdir -p dist/stdlib && cp src/stdlib/*.cir.json dist/stdlib/",
 		"ci": "npm run lint && npm run test:types && npm run test",
 		"examples": "tsx examples/cli.ts",
 		"examples:help": "tsx examples/cli.ts --help",
