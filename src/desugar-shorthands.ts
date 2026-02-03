@@ -48,6 +48,12 @@ function isExpr(val: unknown): val is Expr {
 		"kind" in val && typeof val.kind === "string";
 }
 
+/** Type guard to check if value is a $ref expression (has $ref property) */
+function isRefExpr(val: unknown): val is { kind: "$ref"; $ref: string } {
+	return typeof val === "object" && val !== null &&
+		"$ref" in val && typeof val.$ref === "string";
+}
+
 /** Type guard to check if value is an expression node (has id and expr properties) */
 function isExprNode(val: unknown): val is { id: string; expr: unknown } {
 	return typeof val === "object" && val !== null &&
@@ -137,6 +143,11 @@ function toExpr(val: unknown, options: Required<ShorthandDesugarOptions>): Expr 
 		return { kind: "ref", id: "" };
 	}
 
+	// Handle $ref expressions - pass through unchanged
+	if (isRefExpr(val)) {
+		return { kind: "$ref", $ref: val.$ref };
+	}
+
 	// DO NOT convert strings here - string refs are valid in CIR and should be preserved
 	// This function is only called on top-level node expr values, which should be objects
 	if (typeof val === "string") {
@@ -179,6 +190,7 @@ function desugarExpr(val: unknown, options: Required<ShorthandDesugarOptions>): 
 
 	// Transform based on expression kind - type narrowing happens here via the kind property
 	switch (expr.kind) {
+	case "$ref":
 	case "lit":
 	case "ref":
 	case "var":
