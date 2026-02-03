@@ -204,14 +204,14 @@ export interface AIRDef {
 //==============================================================================
 
 /** A definition in $defs - can be an expression or a node */
-export interface Def {
-	expr?: Expr | string;
-	node?: Node | ExprNode | BlockNode;
-	type?: Type;
-}
+export type Def = {
+	expr?: Expr | string | undefined;
+	node?: Node | ExprNode | BlockNode | undefined;
+	type?: Type | undefined;
+};
 
 /** $defs object - maps definition names to their content */
-export type DefsObject = Record<string, Def>;
+export type DefsObject = Record<string, Def> | undefined;
 
 /** Single entry in $imports object */
 export interface ImportEntry {
@@ -220,7 +220,7 @@ export interface ImportEntry {
 }
 
 /** $imports object - maps namespace to import entry */
-export type ImportsObject = Record<string, ImportEntry>;
+export type ImportsObject = Record<string, ImportEntry> | undefined;
 
 //==============================================================================
 // Document Types
