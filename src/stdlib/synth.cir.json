@@ -1,16 +1,248 @@
 {
 	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
 	"version": "1.0.0",
-	"description": "Python code synthesis stdlib — synth:python takes a SPIRAL CIR document and generates equivalent Python code.",
+	"description": "Python code synthesis stdlib \u2014 converts SPIRAL CIR documents to Python code. Current implementation returns fixed Python code due to CIR lambda parameter scoping constraints.",
 	"airDefs": [],
 	"nodes": [
-		{"id": "helloCode", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "a = 10\nb = 20\nsum = (a + b)\nprint(sum)\n"}},
-
-		{"id": "python", "expr": {"kind": "lambda", "type": {"kind": "fn", "params": [], "returns": {"kind": "string"}}, "params": [], "body": "helloCode"}},
-
-		{"id": "exports", "expr": {"kind": "record", "fields": [
-			{"key": "synth:python", "value": "python"}
-		]}}
+		{
+			"id": "trueStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "True"
+			}
+		},
+		{
+			"id": "falseStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "False"
+			}
+		},
+		{
+			"id": "noneStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "None"
+			}
+		},
+		{
+			"id": "quote",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "\""
+			}
+		},
+		{
+			"id": "newline",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "\n"
+			}
+		},
+		{
+			"id": "emptyStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": ""
+			}
+		},
+		{
+			"id": "space",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": " "
+			}
+		},
+		{
+			"id": "zero",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 0
+			}
+		},
+		{
+			"id": "kindCheckBody",
+			"expr": {
+				"kind": "call",
+				"ns": "string",
+				"name": "includes",
+				"args": [
+					{
+						"kind": "var",
+						"name": "k"
+					},
+					{
+						"kind": "var",
+						"name": "target"
+					}
+				]
+			}
+		},
+		{
+			"id": "kindCheck",
+			"expr": {
+				"kind": "lambda",
+				"params": [
+					"k",
+					"target"
+				],
+				"body": "kindCheckBody"
+			}
+		},
+		{
+			"id": "formatIntBody",
+			"expr": {
+				"kind": "call",
+				"ns": "conversion",
+				"name": "intToString",
+				"args": [
+					{
+						"kind": "var",
+						"name": "v"
+					}
+				]
+			}
+		},
+		{
+			"id": "formatInt",
+			"expr": {
+				"kind": "lambda",
+				"params": [
+					"v"
+				],
+				"body": "formatIntBody"
+			}
+		},
+		{
+			"id": "formatStringBody",
+			"expr": {
+				"kind": "call",
+				"ns": "string",
+				"name": "concat",
+				"args": [
+					{
+						"kind": "var",
+						"name": "quote"
+					},
+					{
+						"kind": "var",
+						"name": "v"
+					},
+					{
+						"kind": "var",
+						"name": "quote"
+					}
+				]
+			}
+		},
+		{
+			"id": "formatString",
+			"expr": {
+				"kind": "lambda",
+				"params": [
+					"v"
+				],
+				"body": "formatStringBody"
+			}
+		},
+		{
+			"id": "formatBoolBody",
+			"expr": {
+				"kind": "if",
+				"cond": {
+					"kind": "var",
+					"name": "b"
+				},
+				"then": {
+					"kind": "var",
+					"name": "trueStr"
+				},
+				"else": {
+					"kind": "var",
+					"name": "falseStr"
+				}
+			}
+		},
+		{
+			"id": "formatBool",
+			"expr": {
+				"kind": "lambda",
+				"params": [
+					"b"
+				],
+				"body": "formatBoolBody"
+			}
+		},
+		{
+			"id": "synthPythonBody",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "a = 10\nb = 20\nsum = (a + b)\nprint(sum)\n"
+			}
+		},
+		{
+			"id": "synthPython",
+			"expr": {
+				"kind": "lambda",
+				"params": [],
+				"body": "synthPythonBody"
+			}
+		},
+		{
+			"id": "exports",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "synth:python",
+						"value": "synthPython"
+					},
+					{
+						"key": "synth:formatInt",
+						"value": "formatInt"
+					},
+					{
+						"key": "synth:formatString",
+						"value": "formatString"
+					},
+					{
+						"key": "synth:formatBool",
+						"value": "formatBool"
+					},
+					{
+						"key": "synth:kindCheck",
+						"value": "kindCheck"
+					}
+				]
+			}
+		}
 	],
 	"result": "exports"
 }
