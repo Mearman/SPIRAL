@@ -125,27 +125,57 @@ export function isValidJsonPointer(ptr: string): boolean {
 //==============================================================================
 
 /**
+ * Check if a value is a SPIRAL node (has id property)
+ */
+function isSpiralNode(value: unknown): value is { id: string } {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"id" in value &&
+		typeof (value as { id: unknown }).id === "string"
+	);
+}
+
+/**
  * Navigate array index safely
+ *
+ * For SPIRAL node arrays, also supports referencing nodes by their ID.
+ * For example: "#/nodes/myNode" will find the node with id="myNode" in the nodes array.
  */
 function navigateArray(
 	arr: unknown[],
 	token: string,
 	pointer: string,
 ): Result<unknown> {
+	// First, try to parse as numeric index
 	const index = parseInt(token, 10);
-	if (isNaN(index)) {
+	if (!isNaN(index)) {
+		if (index < 0 || index >= arr.length) {
+			return {
+				success: false,
+				error: `Array index ${index} out of bounds [0, ${arr.length}) in pointer "${pointer}"`,
+			};
+		}
+		return { success: true, value: arr[index] };
+	}
+
+	// For non-numeric tokens, check if this is a SPIRAL node array
+	// and try to find a node with matching ID
+	if (arr.length > 0 && arr.every(isSpiralNode)) {
+		const node = arr.find((n) => n.id === token);
+		if (node) {
+			return { success: true, value: node };
+		}
 		return {
 			success: false,
-			error: `Invalid array index "${token}" in pointer "${pointer}"`,
+			error: `Node with id "${token}" not found in pointer "${pointer}"`,
 		};
 	}
-	if (index < 0 || index >= arr.length) {
-		return {
-			success: false,
-			error: `Array index ${index} out of bounds [0, ${arr.length}) in pointer "${pointer}"`,
-		};
-	}
-	return { success: true, value: arr[index] };
+
+	return {
+		success: false,
+		error: `Invalid array index "${token}" in pointer "${pointer}"`,
+	};
 }
 
 /**
