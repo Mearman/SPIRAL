@@ -1,0 +1,3295 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Shorthand desugaring stdlib \u2014 desugar:shorthands takes a document and transforms shorthand syntax into verbose forms. Handles: inline literals, lambda type inference, record field shorthand, call op shorthand.",
+	"airDefs": [],
+	"nodes": [
+		{
+			"id": "zero",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 0
+			}
+		},
+		{
+			"id": "one",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "int"
+				},
+				"value": 1
+			}
+		},
+		{
+			"id": "trueVal",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "bool"
+				},
+				"value": true
+			}
+		},
+		{
+			"id": "falseVal",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "bool"
+				},
+				"value": false
+			}
+		},
+		{
+			"id": "emptyStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": ""
+			}
+		},
+		{
+			"id": "emptyList",
+			"expr": {
+				"kind": "listOf",
+				"elements": []
+			}
+		},
+		{
+			"id": "emptyMap",
+			"expr": {
+				"kind": "record",
+				"fields": []
+			}
+		},
+		{
+			"id": "kindKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "kind"
+			}
+		},
+		{
+			"id": "typeKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "type"
+			}
+		},
+		{
+			"id": "valueKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "value"
+			}
+		},
+		{
+			"id": "idKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "id"
+			}
+		},
+		{
+			"id": "exprKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "expr"
+			}
+		},
+		{
+			"id": "nodesKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "nodes"
+			}
+		},
+		{
+			"id": "paramsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "params"
+			}
+		},
+		{
+			"id": "bodyKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "body"
+			}
+		},
+		{
+			"id": "returnsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "returns"
+			}
+		},
+		{
+			"id": "fieldsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "fields"
+			}
+		},
+		{
+			"id": "keyKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "key"
+			}
+		},
+		{
+			"id": "opKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "op"
+			}
+		},
+		{
+			"id": "nsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "ns"
+			}
+		},
+		{
+			"id": "nameKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "name"
+			}
+		},
+		{
+			"id": "argsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "args"
+			}
+		},
+		{
+			"id": "condKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "cond"
+			}
+		},
+		{
+			"id": "thenKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "then"
+			}
+		},
+		{
+			"id": "elseKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "else"
+			}
+		},
+		{
+			"id": "elementsKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "elements"
+			}
+		},
+		{
+			"id": "fnKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "fn"
+			}
+		},
+		{
+			"id": "casesKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "cases"
+			}
+		},
+		{
+			"id": "defaultKey",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "default"
+			}
+		},
+		{
+			"id": "litKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "lit"
+			}
+		},
+		{
+			"id": "refKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "ref"
+			}
+		},
+		{
+			"id": "varKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "var"
+			}
+		},
+		{
+			"id": "airRefKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "airRef"
+			}
+		},
+		{
+			"id": "predicateKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "predicate"
+			}
+		},
+		{
+			"id": "fixKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "fix"
+			}
+		},
+		{
+			"id": "doKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "do"
+			}
+		},
+		{
+			"id": "callKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "call"
+			}
+		},
+		{
+			"id": "callExprKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "callExpr"
+			}
+		},
+		{
+			"id": "ifKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "if"
+			}
+		},
+		{
+			"id": "letKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "let"
+			}
+		},
+		{
+			"id": "recordKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "record"
+			}
+		},
+		{
+			"id": "listOfKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "listOf"
+			}
+		},
+		{
+			"id": "matchKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "match"
+			}
+		},
+		{
+			"id": "lambdaKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "lambda"
+			}
+		},
+		{
+			"id": "intKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "int"
+			}
+		},
+		{
+			"id": "boolKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "bool"
+			}
+		},
+		{
+			"id": "stringKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "string"
+			}
+		},
+		{
+			"id": "voidKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "void"
+			}
+		},
+		{
+			"id": "fnKind",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": "fn"
+			}
+		},
+		{
+			"id": "intType",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "kind",
+						"value": "intKind"
+					}
+				]
+			}
+		},
+		{
+			"id": "boolType",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "kind",
+						"value": "boolKind"
+					}
+				]
+			}
+		},
+		{
+			"id": "stringType",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "kind",
+						"value": "stringKind"
+					}
+				]
+			}
+		},
+		{
+			"id": "voidType",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "kind",
+						"value": "voidKind"
+					}
+				]
+			}
+		},
+		{
+			"id": "colonStr",
+			"expr": {
+				"kind": "lit",
+				"type": {
+					"kind": "string"
+				},
+				"value": ":"
+			}
+		},
+		{
+			"id": "isPrimitiveBody",
+			"expr": {
+				"kind": "let",
+				"name": "ipTypeof",
+				"value": {
+					"kind": "call",
+					"ns": "core",
+					"name": "typeof",
+					"args": [
+						{
+							"kind": "var",
+							"name": "ipVal"
+						}
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "ipIsNumber",
+					"value": {
+						"kind": "call",
+						"ns": "string",
+						"name": "eq",
+						"args": [
+							{
+								"kind": "var",
+								"name": "ipTypeof"
+							},
+							{
+								"kind": "lit",
+								"type": {
+									"kind": "string"
+								},
+								"value": "number"
+							}
+						]
+					},
+					"body": {
+						"kind": "if",
+						"cond": {
+							"kind": "var",
+							"name": "ipIsNumber"
+						},
+						"then": {
+							"kind": "lit",
+							"type": {
+								"kind": "bool"
+							},
+							"value": true
+						},
+						"else": {
+							"kind": "let",
+							"name": "ipIsBoolean",
+							"value": {
+								"kind": "call",
+								"ns": "string",
+								"name": "eq",
+								"args": [
+									{
+										"kind": "var",
+										"name": "ipTypeof"
+									},
+									{
+										"kind": "lit",
+										"type": {
+											"kind": "string"
+										},
+										"value": "boolean"
+									}
+								]
+							},
+							"body": {
+								"kind": "if",
+								"cond": {
+									"kind": "var",
+									"name": "ipIsBoolean"
+								},
+								"then": {
+									"kind": "lit",
+									"type": {
+										"kind": "bool"
+									},
+									"value": true
+								},
+								"else": {
+									"kind": "call",
+									"ns": "string",
+									"name": "eq",
+									"args": [
+										{
+											"kind": "var",
+											"name": "ipTypeof"
+										},
+										{
+											"kind": "lit",
+											"type": {
+												"kind": "string"
+											},
+											"value": "string"
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "isPrimitive",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "bool"
+					}
+				},
+				"params": [
+					"ipVal"
+				],
+				"body": "isPrimitiveBody"
+			}
+		},
+		{
+			"id": "inferTypeFromBody",
+			"expr": {
+				"kind": "let",
+				"name": "itfbTypeof",
+				"value": {
+					"kind": "call",
+					"ns": "core",
+					"name": "typeof",
+					"args": [
+						{
+							"kind": "var",
+							"name": "itfbVal"
+						}
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "itfbIsBoolean",
+					"value": {
+						"kind": "call",
+						"ns": "string",
+						"name": "eq",
+						"args": [
+							{
+								"kind": "var",
+								"name": "itfbTypeof"
+							},
+							{
+								"kind": "lit",
+								"type": {
+									"kind": "string"
+								},
+								"value": "boolean"
+							}
+						]
+					},
+					"body": {
+						"kind": "if",
+						"cond": {
+							"kind": "var",
+							"name": "itfbIsBoolean"
+						},
+						"then": "boolType",
+						"else": {
+							"kind": "let",
+							"name": "itfbIsNumber",
+							"value": {
+								"kind": "call",
+								"ns": "string",
+								"name": "eq",
+								"args": [
+									{
+										"kind": "var",
+										"name": "itfbTypeof"
+									},
+									{
+										"kind": "lit",
+										"type": {
+											"kind": "string"
+										},
+										"value": "number"
+									}
+								]
+							},
+							"body": {
+								"kind": "if",
+								"cond": {
+									"kind": "var",
+									"name": "itfbIsNumber"
+								},
+								"then": "intType",
+								"else": {
+									"kind": "let",
+									"name": "itfbIsString",
+									"value": {
+										"kind": "call",
+										"ns": "string",
+										"name": "eq",
+										"args": [
+											{
+												"kind": "var",
+												"name": "itfbTypeof"
+											},
+											{
+												"kind": "lit",
+												"type": {
+													"kind": "string"
+												},
+												"value": "string"
+											}
+										]
+									},
+									"body": {
+										"kind": "if",
+										"cond": {
+											"kind": "var",
+											"name": "itfbIsString"
+										},
+										"then": "stringType",
+										"else": "voidType"
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "inferTypeFrom",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"itfbVal"
+				],
+				"body": "inferTypeFromBody"
+			}
+		},
+		{
+			"id": "transformInlineLiteralBody",
+			"expr": {
+				"kind": "let",
+				"name": "tilInferredType",
+				"value": {
+					"kind": "callExpr",
+					"args": [
+						{
+							"kind": "var",
+							"name": "tilVal"
+						}
+					],
+					"fn": "inferTypeFrom"
+				},
+				"body": {
+					"kind": "record",
+					"fields": [
+						{
+							"key": "kind",
+							"value": "litKind"
+						},
+						{
+							"key": "type",
+							"value": {
+								"kind": "var",
+								"name": "tilInferredType"
+							}
+						},
+						{
+							"key": "value",
+							"value": {
+								"kind": "var",
+								"name": "tilVal"
+							}
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "transformInlineLiteral",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"tilVal"
+				],
+				"body": "transformInlineLiteralBody"
+			}
+		},
+		{
+			"id": "isRecordWithObjectFieldsBody",
+			"expr": {
+				"kind": "let",
+				"name": "irwofHasKind",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "has",
+					"args": [
+						{
+							"kind": "var",
+							"name": "irwofExpr"
+						},
+						"kindKey"
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "irwofKind",
+					"value": {
+						"kind": "call",
+						"ns": "map",
+						"name": "get",
+						"args": [
+							{
+								"kind": "var",
+								"name": "irwofExpr"
+							},
+							"kindKey"
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "irwofIsRecord",
+						"value": {
+							"kind": "call",
+							"ns": "string",
+							"name": "eq",
+							"args": [
+								{
+									"kind": "var",
+									"name": "irwofKind"
+								},
+								{
+									"kind": "lit",
+									"type": {
+										"kind": "string"
+									},
+									"value": "record"
+								}
+							]
+						},
+						"body": {
+							"kind": "if",
+							"cond": {
+								"kind": "var",
+								"name": "irwofIsRecord"
+							},
+							"then": {
+								"kind": "let",
+								"name": "irwofHasFields",
+								"value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "has",
+									"args": [
+										{
+											"kind": "var",
+											"name": "irwofExpr"
+										},
+										"fieldsKey"
+									]
+								},
+								"body": {
+									"kind": "if",
+									"cond": {
+										"kind": "var",
+										"name": "irwofHasFields"
+									},
+									"then": {
+										"kind": "let",
+										"name": "irwofFields",
+										"value": {
+											"kind": "call",
+											"ns": "map",
+											"name": "get",
+											"args": [
+												{
+													"kind": "var",
+													"name": "irwofExpr"
+												},
+												"fieldsKey"
+											]
+										},
+										"body": {
+											"kind": "call",
+											"ns": "core",
+											"name": "not",
+											"args": [
+												{
+													"kind": "call",
+													"ns": "list",
+													"name": "isList",
+													"args": [
+														{
+															"kind": "var",
+															"name": "irwofFields"
+														}
+													]
+												}
+											]
+										}
+									},
+									"else": {
+										"kind": "lit",
+										"type": {
+											"kind": "bool"
+										},
+										"value": false
+									}
+								}
+							},
+							"else": {
+								"kind": "lit",
+								"type": {
+									"kind": "bool"
+								},
+								"value": false
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "isRecordWithObjectFields",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "bool"
+					}
+				},
+				"params": [
+					"irwofExpr"
+				],
+				"body": "isRecordWithObjectFieldsBody"
+			}
+		},
+		{
+			"id": "isLambdaWithoutTypeBody",
+			"expr": {
+				"kind": "let",
+				"name": "ilwtHasKind",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "has",
+					"args": [
+						{
+							"kind": "var",
+							"name": "ilwtExpr"
+						},
+						"kindKey"
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "ilwtKind",
+					"value": {
+						"kind": "call",
+						"ns": "map",
+						"name": "get",
+						"args": [
+							{
+								"kind": "var",
+								"name": "ilwtExpr"
+							},
+							"kindKey"
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "ilwtIsLambda",
+						"value": {
+							"kind": "call",
+							"ns": "string",
+							"name": "eq",
+							"args": [
+								{
+									"kind": "var",
+									"name": "ilwtKind"
+								},
+								{
+									"kind": "lit",
+									"type": {
+										"kind": "string"
+									},
+									"value": "lambda"
+								}
+							]
+						},
+						"body": {
+							"kind": "if",
+							"cond": {
+								"kind": "var",
+								"name": "ilwtIsLambda"
+							},
+							"then": {
+								"kind": "let",
+								"name": "ilwtHasType",
+								"value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "has",
+									"args": [
+										{
+											"kind": "var",
+											"name": "ilwtExpr"
+										},
+										"typeKey"
+									]
+								},
+								"body": {
+									"kind": "call",
+									"ns": "core",
+									"name": "not",
+									"args": [
+										{
+											"kind": "var",
+											"name": "ilwtHasType"
+										}
+									]
+								}
+							},
+							"else": {
+								"kind": "lit",
+								"type": {
+									"kind": "bool"
+								},
+								"value": false
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "isLambdaWithoutType",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "bool"
+					}
+				},
+				"params": [
+					"ilwtExpr"
+				],
+				"body": "isLambdaWithoutTypeBody"
+			}
+		},
+		{
+			"id": "isCallWithOpBody",
+			"expr": {
+				"kind": "let",
+				"name": "icwoHasKind",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "has",
+					"args": [
+						{
+							"kind": "var",
+							"name": "icwoExpr"
+						},
+						"kindKey"
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "icwoKind",
+					"value": {
+						"kind": "call",
+						"ns": "map",
+						"name": "get",
+						"args": [
+							{
+								"kind": "var",
+								"name": "icwoExpr"
+							},
+							"kindKey"
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "icwoIsCall",
+						"value": {
+							"kind": "call",
+							"ns": "string",
+							"name": "eq",
+							"args": [
+								{
+									"kind": "var",
+									"name": "icwoKind"
+								},
+								{
+									"kind": "lit",
+									"type": {
+										"kind": "string"
+									},
+									"value": "call"
+								}
+							]
+						},
+						"body": {
+							"kind": "if",
+							"cond": {
+								"kind": "var",
+								"name": "icwoIsCall"
+							},
+							"then": {
+								"kind": "let",
+								"name": "icwoHasOp",
+								"value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "has",
+									"args": [
+										{
+											"kind": "var",
+											"name": "icwoExpr"
+										},
+										"opKey"
+									]
+								},
+								"body": {
+									"kind": "if",
+									"cond": {
+										"kind": "var",
+										"name": "icwoHasOp"
+									},
+									"then": {
+										"kind": "let",
+										"name": "icwoHasNs",
+										"value": {
+											"kind": "call",
+											"ns": "map",
+											"name": "has",
+											"args": [
+												{
+													"kind": "var",
+													"name": "icwoExpr"
+												},
+												"nsKey"
+											]
+										},
+										"body": {
+											"kind": "call",
+											"ns": "core",
+											"name": "not",
+											"args": [
+												{
+													"kind": "var",
+													"name": "icwoHasNs"
+												}
+											]
+										}
+									},
+									"else": {
+										"kind": "lit",
+										"type": {
+											"kind": "bool"
+										},
+										"value": false
+									}
+								}
+							},
+							"else": {
+								"kind": "lit",
+								"type": {
+									"kind": "bool"
+								},
+								"value": false
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "isCallWithOp",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "bool"
+					}
+				},
+				"params": [
+					"icwoExpr"
+				],
+				"body": "isCallWithOpBody"
+			}
+		},
+		{
+			"id": "transformEntryBody",
+			"expr": {
+				"kind": "let",
+				"name": "teKey",
+				"value": {
+					"kind": "call",
+					"ns": "list",
+					"name": "nth",
+					"args": [
+						{
+							"kind": "var",
+							"name": "teEntry"
+						},
+						{
+							"kind": "var",
+							"name": "zero"
+						}
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "teValue",
+					"value": {
+						"kind": "call",
+						"ns": "list",
+						"name": "nth",
+						"args": [
+							{
+								"kind": "var",
+								"name": "teEntry"
+							},
+							{
+								"kind": "var",
+								"name": "one"
+							}
+						]
+					},
+					"body": {
+						"kind": "record",
+						"fields": [
+							{
+								"key": "key",
+								"value": {
+									"kind": "var",
+									"name": "teKey"
+								}
+							},
+							{
+								"key": "value",
+								"value": {
+									"kind": "var",
+									"name": "teValue"
+								}
+							}
+						]
+					}
+				}
+			}
+		},
+		{
+			"id": "transformEntry",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"teEntry"
+				],
+				"body": "transformEntryBody"
+			}
+		},
+		{
+			"id": "transformRecordFieldsBody",
+			"expr": {
+				"kind": "let",
+				"name": "trfEntries",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "entries",
+					"args": [
+						{
+							"kind": "var",
+							"name": "trfFields"
+						}
+					]
+				},
+				"body": {
+					"kind": "call",
+					"ns": "list",
+					"name": "map",
+					"args": [
+						{
+							"kind": "var",
+							"name": "trfEntries"
+						},
+						{
+							"kind": "var",
+							"name": "transformEntry"
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "transformRecordFields",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"trfFields"
+				],
+				"body": "transformRecordFieldsBody"
+			}
+		},
+		{
+			"id": "transformCallOpBody",
+			"expr": {
+				"kind": "let",
+				"name": "tcoOp",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "get",
+					"args": [
+						{
+							"kind": "var",
+							"name": "tcoCall"
+						},
+						"opKey"
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "tcoColonIndex",
+					"value": {
+						"kind": "call",
+						"ns": "string",
+						"name": "indexOf",
+						"args": [
+							{
+								"kind": "var",
+								"name": "tcoOp"
+							},
+							"colonStr"
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "tcoHasColon",
+						"value": {
+							"kind": "call",
+							"ns": "core",
+							"name": "gte",
+							"args": [
+								{
+									"kind": "var",
+									"name": "tcoColonIndex"
+								},
+								"zero"
+							]
+						},
+						"body": {
+							"kind": "if",
+							"cond": {
+								"kind": "var",
+								"name": "tcoHasColon"
+							},
+							"then": {
+								"kind": "let",
+								"name": "tcoNs",
+								"value": {
+									"kind": "call",
+									"ns": "string",
+									"name": "slice",
+									"args": [
+										{
+											"kind": "var",
+											"name": "tcoOp"
+										},
+										"zero",
+										{
+											"kind": "var",
+											"name": "tcoColonIndex"
+										}
+									]
+								},
+								"body": {
+									"kind": "let",
+									"name": "tcoColonPlusOne",
+									"value": {
+										"kind": "call",
+										"ns": "core",
+										"name": "add",
+										"args": [
+											{
+												"kind": "var",
+												"name": "tcoColonIndex"
+											},
+											"one"
+										]
+									},
+									"body": {
+										"kind": "let",
+										"name": "tcoName",
+										"value": {
+											"kind": "call",
+											"ns": "string",
+											"name": "slice",
+											"args": [
+												{
+													"kind": "var",
+													"name": "tcoOp"
+												},
+												{
+													"kind": "var",
+													"name": "tcoColonPlusOne"
+												}
+											]
+										},
+										"body": {
+											"kind": "let",
+											"name": "tcoArgs",
+											"value": {
+												"kind": "call",
+												"ns": "map",
+												"name": "get",
+												"args": [
+													{
+														"kind": "var",
+														"name": "tcoCall"
+													},
+													"argsKey"
+												]
+											},
+											"body": {
+												"kind": "record",
+												"fields": [
+													{
+														"key": "kind",
+														"value": "callKind"
+													},
+													{
+														"key": "ns",
+														"value": {
+															"kind": "var",
+															"name": "tcoNs"
+														}
+													},
+													{
+														"key": "name",
+														"value": {
+															"kind": "var",
+															"name": "tcoName"
+														}
+													},
+													{
+														"key": "args",
+														"value": {
+															"kind": "var",
+															"name": "tcoArgs"
+														}
+													}
+												]
+											}
+										}
+									}
+								}
+							},
+							"else": {
+								"kind": "record",
+								"fields": [
+									{
+										"key": "kind",
+										"value": "callKind"
+									},
+									{
+										"key": "ns",
+										"value": {
+											"kind": "lit",
+											"type": {
+												"kind": "string"
+											},
+											"value": ""
+										}
+									},
+									{
+										"key": "name",
+										"value": {
+											"kind": "lit",
+											"type": {
+												"kind": "string"
+											},
+											"value": ""
+										}
+									},
+									{
+										"key": "args",
+										"value": "emptyList"
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "transformCallOp",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"tcoCall"
+				],
+				"body": "transformCallOpBody"
+			}
+		},
+		{
+			"id": "transformLambdaTypeBody",
+			"expr": {
+				"kind": "let",
+				"name": "tltParams",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "get",
+					"args": [
+						{
+							"kind": "var",
+							"name": "tltLambda"
+						},
+						{
+							"kind": "var",
+							"name": "paramsKey"
+						}
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "tltBody",
+					"value": {
+						"kind": "call",
+						"ns": "map",
+						"name": "get",
+						"args": [
+							{
+								"kind": "var",
+								"name": "tltLambda"
+							},
+							{
+								"kind": "var",
+								"name": "bodyKey"
+							}
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "tltFnType",
+						"value": {
+							"kind": "record",
+							"fields": [
+								{
+									"key": "kind",
+									"value": {
+										"kind": "var",
+										"name": "fnKind"
+									}
+								},
+								{
+									"key": "params",
+									"value": {
+										"kind": "var",
+										"name": "emptyList"
+									}
+								},
+								{
+									"key": "returns",
+									"value": {
+										"kind": "var",
+										"name": "intType"
+									}
+								}
+							]
+						},
+						"body": {
+							"kind": "record",
+							"fields": [
+								{
+									"key": "kind",
+									"value": {
+										"kind": "var",
+										"name": "lambdaKind"
+									}
+								},
+								{
+									"key": "params",
+									"value": {
+										"kind": "var",
+										"name": "tltParams"
+									}
+								},
+								{
+									"key": "body",
+									"value": {
+										"kind": "var",
+										"name": "tltBody"
+									}
+								},
+								{
+									"key": "type",
+									"value": {
+										"kind": "var",
+										"name": "tltFnType"
+									}
+								}
+							]
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "transformLambdaType",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"tltLambda"
+				],
+				"body": "transformLambdaTypeBody"
+			}
+		},
+		{
+			"id": "isStringBody",
+			"expr": {
+				"kind": "let",
+				"name": "isbTypeof",
+				"value": {
+					"kind": "call",
+					"ns": "core",
+					"name": "typeof",
+					"args": [
+						{
+							"kind": "var",
+							"name": "isbVal"
+						}
+					]
+				},
+				"body": {
+					"kind": "call",
+					"ns": "string",
+					"name": "eq",
+					"args": [
+						{
+							"kind": "var",
+							"name": "isbTypeof"
+						},
+						{
+							"kind": "lit",
+							"type": {
+								"kind": "string"
+							},
+							"value": "string"
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "isString",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "bool"
+					}
+				},
+				"params": [
+					"isbVal"
+				],
+				"body": "isStringBody"
+			}
+		},
+		{
+			"id": "desugarChildBody",
+			"expr": {
+				"kind": "let",
+				"name": "dscIsString",
+				"value": {
+					"kind": "callExpr",
+					"args": [
+						{
+							"kind": "var",
+							"name": "dscChild"
+						}
+					],
+					"fn": "isString"
+				},
+				"body": {
+					"kind": "if",
+					"cond": {
+						"kind": "var",
+						"name": "dscIsString"
+					},
+					"then": {
+						"kind": "var",
+						"name": "dscChild"
+					},
+					"else": {
+						"kind": "callExpr",
+						"args": [
+							{
+								"kind": "var",
+								"name": "dscChild"
+							}
+						],
+						"fn": "desugarExpr"
+					}
+				}
+			}
+		},
+		{
+			"id": "desugarChild",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"dscChild"
+				],
+				"body": "desugarChildBody"
+			}
+		},
+		{
+			"id": "desugarIfBody",
+			"expr": {
+				"kind": "let",
+				"name": "diCond",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "get",
+					"args": [
+						{
+							"kind": "var",
+							"name": "diExpr"
+						},
+						"condKey"
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "diThen",
+					"value": {
+						"kind": "call",
+						"ns": "map",
+						"name": "get",
+						"args": [
+							{
+								"kind": "var",
+								"name": "diExpr"
+							},
+							"thenKey"
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "diElse",
+						"value": {
+							"kind": "call",
+							"ns": "map",
+							"name": "get",
+							"args": [
+								{
+									"kind": "var",
+									"name": "diExpr"
+								},
+								"elseKey"
+							]
+						},
+						"body": {
+							"kind": "let",
+							"name": "diDesugaredCond",
+							"value": {
+								"kind": "callExpr",
+								"args": [
+									{
+										"kind": "var",
+										"name": "diCond"
+									}
+								],
+								"fn": "desugarChild"
+							},
+							"body": {
+								"kind": "let",
+								"name": "diDesugaredThen",
+								"value": {
+									"kind": "callExpr",
+									"args": [
+										{
+											"kind": "var",
+											"name": "diThen"
+										}
+									],
+									"fn": "desugarChild"
+								},
+								"body": {
+									"kind": "let",
+									"name": "diDesugaredElse",
+									"value": {
+										"kind": "callExpr",
+										"args": [
+											{
+												"kind": "var",
+												"name": "diElse"
+											}
+										],
+										"fn": "desugarChild"
+									},
+									"body": {
+										"kind": "record",
+										"fields": [
+											{
+												"key": "kind",
+												"value": "ifKind"
+											},
+											{
+												"key": "cond",
+												"value": {
+													"kind": "var",
+													"name": "diDesugaredCond"
+												}
+											},
+											{
+												"key": "then",
+												"value": {
+													"kind": "var",
+													"name": "diDesugaredThen"
+												}
+											},
+											{
+												"key": "else",
+												"value": {
+													"kind": "var",
+													"name": "diDesugaredElse"
+												}
+											}
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "desugarIf",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"diExpr"
+				],
+				"body": "desugarIfBody"
+			}
+		},
+		{
+			"id": "desugarLetBody",
+			"expr": {
+				"kind": "let",
+				"name": "dlValue",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "get",
+					"args": [
+						{
+							"kind": "var",
+							"name": "dlExpr"
+						},
+						"valueKey"
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "dlBody",
+					"value": {
+						"kind": "call",
+						"ns": "map",
+						"name": "get",
+						"args": [
+							{
+								"kind": "var",
+								"name": "dlExpr"
+							},
+							{
+								"kind": "var",
+								"name": "bodyKey"
+							}
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "dlDesugaredValue",
+						"value": {
+							"kind": "callExpr",
+							"args": [
+								{
+									"kind": "var",
+									"name": "dlValue"
+								}
+							],
+							"fn": "desugarChild"
+						},
+						"body": {
+							"kind": "let",
+							"name": "dlDesugaredBody",
+							"value": {
+								"kind": "callExpr",
+								"args": [
+									{
+										"kind": "var",
+										"name": "dlBody"
+									}
+								],
+								"fn": "desugarChild"
+							},
+							"body": {
+								"kind": "let",
+								"name": "dlName",
+								"value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "get",
+									"args": [
+										{
+											"kind": "var",
+											"name": "dlExpr"
+										},
+										{
+											"kind": "var",
+											"name": "nameKey"
+										}
+									]
+								},
+								"body": {
+									"kind": "record",
+									"fields": [
+										{
+											"key": "kind",
+											"value": "letKind"
+										},
+										{
+											"key": "name",
+											"value": {
+												"kind": "var",
+												"name": "dlName"
+											}
+										},
+										{
+											"key": "value",
+											"value": {
+												"kind": "var",
+												"name": "dlDesugaredValue"
+											}
+										},
+										{
+											"key": "body",
+											"value": {
+												"kind": "var",
+												"name": "dlDesugaredBody"
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "desugarLet",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"dlExpr"
+				],
+				"body": "desugarLetBody"
+			}
+		},
+		{
+			"id": "desugarListOfBody",
+			"expr": {
+				"kind": "let",
+				"name": "dloElements",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "get",
+					"args": [
+						{
+							"kind": "var",
+							"name": "dloExpr"
+						},
+						"elementsKey"
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "dloDesugaredElements",
+					"value": {
+						"kind": "call",
+						"ns": "list",
+						"name": "map",
+						"args": [
+							{
+								"kind": "var",
+								"name": "dloElements"
+							},
+							{
+								"kind": "var",
+								"name": "desugarChild"
+							}
+						]
+					},
+					"body": {
+						"kind": "record",
+						"fields": [
+							{
+								"key": "kind",
+								"value": "listOfKind"
+							},
+							{
+								"key": "elements",
+								"value": {
+									"kind": "var",
+									"name": "dloDesugaredElements"
+								}
+							}
+						]
+					}
+				}
+			}
+		},
+		{
+			"id": "desugarListOf",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"dloExpr"
+				],
+				"body": "desugarListOfBody"
+			}
+		},
+		{
+			"id": "desugarCallExprBody",
+			"expr": {
+				"kind": "let",
+				"name": "dceFn",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "get",
+					"args": [
+						{
+							"kind": "var",
+							"name": "dceExpr"
+						},
+						{
+							"kind": "var",
+							"name": "fnKey"
+						}
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "dceArgs",
+					"value": {
+						"kind": "call",
+						"ns": "map",
+						"name": "get",
+						"args": [
+							{
+								"kind": "var",
+								"name": "dceExpr"
+							},
+							{
+								"kind": "var",
+								"name": "argsKey"
+							}
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "dceDesugaredArgs",
+						"value": {
+							"kind": "call",
+							"ns": "list",
+							"name": "map",
+							"args": [
+								{
+									"kind": "var",
+									"name": "dceArgs"
+								},
+								{
+									"kind": "var",
+									"name": "desugarChild"
+								}
+							]
+						},
+						"body": {
+							"kind": "record",
+							"fields": [
+								{
+									"key": "kind",
+									"value": "callExprKind"
+								},
+								{
+									"key": "fn",
+									"value": {
+										"kind": "var",
+										"name": "dceFn"
+									}
+								},
+								{
+									"key": "args",
+									"value": {
+										"kind": "var",
+										"name": "dceDesugaredArgs"
+									}
+								}
+							]
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "desugarCallExpr",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"dceExpr"
+				],
+				"body": "desugarCallExprBody"
+			}
+		},
+		{
+			"id": "toExprBody",
+			"expr": {
+				"kind": "let",
+				"name": "teIsPrimitive",
+				"value": {
+					"kind": "callExpr",
+					"args": [
+						{
+							"kind": "var",
+							"name": "teVal"
+						}
+					],
+					"fn": "isPrimitive"
+				},
+				"body": {
+					"kind": "if",
+					"cond": {
+						"kind": "var",
+						"name": "teIsPrimitive"
+					},
+					"then": {
+						"kind": "callExpr",
+						"args": [
+							{
+								"kind": "var",
+								"name": "teVal"
+							}
+						],
+						"fn": "transformInlineLiteral"
+					},
+					"else": {
+						"kind": "let",
+						"name": "teIsMap",
+						"value": {
+							"kind": "call",
+							"ns": "map",
+							"name": "isMap",
+							"args": [
+								{
+									"kind": "var",
+									"name": "teVal"
+								}
+							]
+						},
+						"body": {
+							"kind": "if",
+							"cond": {
+								"kind": "var",
+								"name": "teIsMap"
+							},
+							"then": {
+								"kind": "let",
+								"name": "teHasKind",
+								"value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "has",
+									"args": [
+										{
+											"kind": "var",
+											"name": "teVal"
+										},
+										"kindKey"
+									]
+								},
+								"body": {
+									"kind": "if",
+									"cond": {
+										"kind": "var",
+										"name": "teHasKind"
+									},
+									"then": {
+										"kind": "var",
+										"name": "teVal"
+									},
+									"else": {
+										"kind": "record",
+										"fields": [
+											{
+												"key": "kind",
+												"value": "litKind"
+											},
+											{
+												"key": "type",
+												"value": "voidType"
+											},
+											{
+												"key": "value",
+												"value": {
+													"kind": "var",
+													"name": "teVal"
+												}
+											}
+										]
+									}
+								}
+							},
+							"else": {
+								"kind": "record",
+								"fields": [
+									{
+										"key": "kind",
+										"value": "litKind"
+									},
+									{
+										"key": "type",
+										"value": "voidType"
+									},
+									{
+										"key": "value",
+										"value": {
+											"kind": "var",
+											"name": "teVal"
+										}
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "toExpr",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"teVal"
+				],
+				"body": "toExprBody"
+			}
+		},
+		{
+			"id": "desugarCallArgsBody",
+			"expr": {
+				"kind": "let",
+				"name": "dcaaIsCallWithOp",
+				"value": {
+					"kind": "callExpr",
+					"args": [
+						{
+							"kind": "var",
+							"name": "dcaaExpr"
+						}
+					],
+					"fn": "isCallWithOp"
+				},
+				"body": {
+					"kind": "if",
+					"cond": {
+						"kind": "var",
+						"name": "dcaaIsCallWithOp"
+					},
+					"then": {
+						"kind": "let",
+						"name": "dcaaTransformed",
+						"value": {
+							"kind": "callExpr",
+							"args": [
+								{
+									"kind": "var",
+									"name": "dcaaExpr"
+								}
+							],
+							"fn": "transformCallOp"
+						},
+						"body": {
+							"kind": "let",
+							"name": "dcaaArgs",
+							"value": {
+								"kind": "call",
+								"ns": "map",
+								"name": "get",
+								"args": [
+									{
+										"kind": "var",
+										"name": "dcaaTransformed"
+									},
+									"argsKey"
+								]
+							},
+							"body": {
+								"kind": "let",
+								"name": "dcaaDesugaredArgs",
+								"value": {
+									"kind": "call",
+									"ns": "list",
+									"name": "map",
+									"args": [
+										{
+											"kind": "var",
+											"name": "dcaaArgs"
+										},
+										{
+											"kind": "var",
+											"name": "preserveString"
+										}
+									]
+								},
+								"body": {
+									"kind": "record",
+									"fields": [
+										{
+											"key": "kind",
+											"value": {
+												"kind": "call",
+												"ns": "map",
+												"name": "get",
+												"args": [
+													{
+														"kind": "var",
+														"name": "dcaaTransformed"
+													},
+													"kindKey"
+												]
+											}
+										},
+										{
+											"key": "ns",
+											"value": {
+												"kind": "call",
+												"ns": "map",
+												"name": "get",
+												"args": [
+													{
+														"kind": "var",
+														"name": "dcaaTransformed"
+													},
+													"nsKey"
+												]
+											}
+										},
+										{
+											"key": "name",
+											"value": {
+												"kind": "call",
+												"ns": "map",
+												"name": "get",
+												"args": [
+													{
+														"kind": "var",
+														"name": "dcaaTransformed"
+													},
+													"nameKey"
+												]
+											}
+										},
+										{
+											"key": "args",
+											"value": {
+												"kind": "var",
+												"name": "dcaaDesugaredArgs"
+											}
+										}
+									]
+								}
+							}
+						}
+					},
+					"else": {
+						"kind": "let",
+						"name": "dcaaArgs",
+						"value": {
+							"kind": "call",
+							"ns": "map",
+							"name": "get",
+							"args": [
+								{
+									"kind": "var",
+									"name": "dcaaExpr"
+								},
+								"argsKey"
+							]
+						},
+						"body": {
+							"kind": "let",
+							"name": "dcaaDesugaredArgs",
+							"value": {
+								"kind": "call",
+								"ns": "list",
+								"name": "map",
+								"args": [
+									{
+										"kind": "var",
+										"name": "dcaaArgs"
+									},
+									{
+										"kind": "var",
+										"name": "preserveString"
+									}
+								]
+							},
+							"body": {
+								"kind": "record",
+								"fields": [
+									{
+										"key": "kind",
+										"value": {
+											"kind": "call",
+											"ns": "map",
+											"name": "get",
+											"args": [
+												{
+													"kind": "var",
+													"name": "dcaaExpr"
+												},
+												"kindKey"
+											]
+										}
+									},
+									{
+										"key": "ns",
+										"value": {
+											"kind": "call",
+											"ns": "map",
+											"name": "get",
+											"args": [
+												{
+													"kind": "var",
+													"name": "dcaaExpr"
+												},
+												"nsKey"
+											]
+										}
+									},
+									{
+										"key": "name",
+										"value": {
+											"kind": "call",
+											"ns": "map",
+											"name": "get",
+											"args": [
+												{
+													"kind": "var",
+													"name": "dcaaExpr"
+												},
+												"nameKey"
+											]
+										}
+									},
+									{
+										"key": "args",
+										"value": {
+											"kind": "var",
+											"name": "dcaaDesugaredArgs"
+										}
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "desugarCall",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"dcaaExpr"
+				],
+				"body": "desugarCallArgsBody"
+			}
+		},
+		{
+			"id": "preserveStringBody",
+			"expr": {
+				"kind": "var",
+				"name": "psVal"
+			}
+		},
+		{
+			"id": "preserveString",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"psVal"
+				],
+				"body": "preserveStringBody"
+			}
+		},
+		{
+			"id": "desugarExprBody",
+			"expr": {
+				"kind": "let",
+				"name": "deKind",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "get",
+					"args": [
+						{
+							"kind": "var",
+							"name": "deExpr"
+						},
+						"kindKey"
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "deIsCall",
+					"value": {
+						"kind": "call",
+						"ns": "string",
+						"name": "eq",
+						"args": [
+							{
+								"kind": "var",
+								"name": "deKind"
+							},
+							"callKind"
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "deIsCallExpr",
+						"value": {
+							"kind": "call",
+							"ns": "string",
+							"name": "eq",
+							"args": [
+								{
+									"kind": "var",
+									"name": "deKind"
+								},
+								"callExprKind"
+							]
+						},
+						"body": {
+							"kind": "let",
+							"name": "deIsIf",
+							"value": {
+								"kind": "call",
+								"ns": "string",
+								"name": "eq",
+								"args": [
+									{
+										"kind": "var",
+										"name": "deKind"
+									},
+									"ifKind"
+								]
+							},
+							"body": {
+								"kind": "let",
+								"name": "deIsLet",
+								"value": {
+									"kind": "call",
+									"ns": "string",
+									"name": "eq",
+									"args": [
+										{
+											"kind": "var",
+											"name": "deKind"
+										},
+										"letKind"
+									]
+								},
+								"body": {
+									"kind": "let",
+									"name": "deIsListOf",
+									"value": {
+										"kind": "call",
+										"ns": "string",
+										"name": "eq",
+										"args": [
+											{
+												"kind": "var",
+												"name": "deKind"
+											},
+											"listOfKind"
+										]
+									},
+									"body": {
+										"kind": "let",
+										"name": "deIsLambda",
+										"value": {
+											"kind": "call",
+											"ns": "string",
+											"name": "eq",
+											"args": [
+												{
+													"kind": "var",
+													"name": "deKind"
+												},
+												"lambdaKind"
+											]
+										},
+										"body": {
+											"kind": "let",
+											"name": "deIsRecord",
+											"value": {
+												"kind": "call",
+												"ns": "string",
+												"name": "eq",
+												"args": [
+													{
+														"kind": "var",
+														"name": "deKind"
+													},
+													"recordKind"
+												]
+											},
+											"body": {
+												"kind": "if",
+												"cond": {
+													"kind": "var",
+													"name": "deIsCall"
+												},
+												"then": {
+													"kind": "callExpr",
+													"args": [
+														{
+															"kind": "var",
+															"name": "deExpr"
+														}
+													],
+													"fn": "desugarCall"
+												},
+												"else": {
+													"kind": "if",
+													"cond": {
+														"kind": "var",
+														"name": "deIsCallExpr"
+													},
+													"then": {
+														"kind": "callExpr",
+														"args": [
+															{
+																"kind": "var",
+																"name": "deExpr"
+															}
+														],
+														"fn": "desugarCallExpr"
+													},
+													"else": {
+														"kind": "if",
+														"cond": {
+															"kind": "var",
+															"name": "deIsIf"
+														},
+														"then": {
+															"kind": "callExpr",
+															"args": [
+																{
+																	"kind": "var",
+																	"name": "deExpr"
+																}
+															],
+															"fn": "desugarIf"
+														},
+														"else": {
+															"kind": "if",
+															"cond": {
+																"kind": "var",
+																"name": "deIsLet"
+															},
+															"then": {
+																"kind": "callExpr",
+																"args": [
+																	{
+																		"kind": "var",
+																		"name": "deExpr"
+																	}
+																],
+																"fn": "desugarLet"
+															},
+															"else": {
+																"kind": "if",
+																"cond": {
+																	"kind": "var",
+																	"name": "deIsListOf"
+																},
+																"then": {
+																	"kind": "callExpr",
+																	"args": [
+																		{
+																			"kind": "var",
+																			"name": "deExpr"
+																		}
+																	],
+																	"fn": "desugarListOf"
+																},
+																"else": {
+																	"kind": "if",
+																	"cond": {
+																		"kind": "var",
+																		"name": "deIsLambda"
+																	},
+																	"then": {
+																		"kind": "let",
+																		"name": "deIsLambdaNoType",
+																		"value": {
+																			"kind": "callExpr",
+																			"args": [
+																				{
+																					"kind": "var",
+																					"name": "deExpr"
+																				}
+																			],
+																			"fn": "isLambdaWithoutType"
+																		},
+																		"body": {
+																			"kind": "if",
+																			"cond": {
+																				"kind": "var",
+																				"name": "deIsLambdaNoType"
+																			},
+																			"then": {
+																				"kind": "callExpr",
+																				"args": [
+																					{
+																						"kind": "var",
+																						"name": "deExpr"
+																					}
+																				],
+																				"fn": "transformLambdaType"
+																			},
+																			"else": {
+																				"kind": "var",
+																				"name": "deExpr"
+																			}
+																		}
+																	},
+																	"else": {
+																		"kind": "if",
+																		"cond": {
+																			"kind": "var",
+																			"name": "deIsRecord"
+																		},
+																		"then": {
+																			"kind": "let",
+																			"name": "deIsRecordObj",
+																			"value": {
+																				"kind": "callExpr",
+																				"args": [
+																					{
+																						"kind": "var",
+																						"name": "deExpr"
+																					}
+																				],
+																				"fn": "isRecordWithObjectFields"
+																			},
+																			"body": {
+																				"kind": "if",
+																				"cond": {
+																					"kind": "var",
+																					"name": "deIsRecordObj"
+																				},
+																				"then": {
+																					"kind": "let",
+																					"name": "deFields",
+																					"value": {
+																						"kind": "call",
+																						"ns": "map",
+																						"name": "get",
+																						"args": [
+																							{
+																								"kind": "var",
+																								"name": "deExpr"
+																							},
+																							"fieldsKey"
+																						]
+																					},
+																					"body": {
+																						"kind": "let",
+																						"name": "deTransformedFields",
+																						"value": {
+																							"kind": "callExpr",
+																							"args": [
+																								{
+																									"kind": "var",
+																									"name": "deFields"
+																								}
+																							],
+																							"fn": "transformRecordFields"
+																						},
+																						"body": {
+																							"kind": "record",
+																							"fields": [
+																								{
+																									"key": "kind",
+																									"value": "recordKind"
+																								},
+																								{
+																									"key": "fields",
+																									"value": {
+																										"kind": "var",
+																										"name": "deTransformedFields"
+																									}
+																								}
+																							]
+																						}
+																					}
+																				},
+																				"else": {
+																					"kind": "var",
+																					"name": "deExpr"
+																				}
+																			}
+																		},
+																		"else": {
+																			"kind": "var",
+																			"name": "deExpr"
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "desugarExpr",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"deExpr"
+				],
+				"body": "desugarExprBody"
+			}
+		},
+		{
+			"id": "desugarNodeBody",
+			"expr": {
+				"kind": "let",
+				"name": "dnId",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "get",
+					"args": [
+						{
+							"kind": "var",
+							"name": "dnNode"
+						},
+						"idKey"
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "dnExpr",
+					"value": {
+						"kind": "call",
+						"ns": "map",
+						"name": "get",
+						"args": [
+							{
+								"kind": "var",
+								"name": "dnNode"
+							},
+							"exprKey"
+						]
+					},
+					"body": {
+						"kind": "let",
+						"name": "dnDesugaredExpr",
+						"value": {
+							"kind": "callExpr",
+							"args": [
+								{
+									"kind": "var",
+									"name": "dnExpr"
+								}
+							],
+							"fn": "desugarExpr"
+						},
+						"body": {
+							"kind": "record",
+							"fields": [
+								{
+									"key": "id",
+									"value": {
+										"kind": "var",
+										"name": "dnId"
+									}
+								},
+								{
+									"key": "expr",
+									"value": {
+										"kind": "var",
+										"name": "dnDesugaredExpr"
+									}
+								}
+							]
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "desugarNode",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"dnNode"
+				],
+				"body": "desugarNodeBody"
+			}
+		},
+		{
+			"id": "desugarShorthandsBody",
+			"expr": {
+				"kind": "let",
+				"name": "dshNodes",
+				"value": {
+					"kind": "call",
+					"ns": "map",
+					"name": "get",
+					"args": [
+						{
+							"kind": "var",
+							"name": "dshDoc"
+						},
+						"nodesKey"
+					]
+				},
+				"body": {
+					"kind": "let",
+					"name": "dshTransformedNodes",
+					"value": {
+						"kind": "call",
+						"ns": "list",
+						"name": "map",
+						"args": [
+							{
+								"kind": "var",
+								"name": "dshNodes"
+							},
+							{
+								"kind": "var",
+								"name": "desugarNode"
+							}
+						]
+					},
+					"body": {
+						"kind": "call",
+						"ns": "map",
+						"name": "set",
+						"args": [
+							{
+								"kind": "var",
+								"name": "dshDoc"
+							},
+							"nodesKey",
+							{
+								"kind": "var",
+								"name": "dshTransformedNodes"
+							}
+						]
+					}
+				}
+			}
+		},
+		{
+			"id": "desugarShorthands",
+			"expr": {
+				"kind": "lambda",
+				"type": {
+					"kind": "fn",
+					"params": [
+						{
+							"kind": "int"
+						}
+					],
+					"returns": {
+						"kind": "int"
+					}
+				},
+				"params": [
+					"dshDoc"
+				],
+				"body": "desugarShorthandsBody"
+			}
+		},
+		{
+			"id": "exports",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{
+						"key": "desugar:shorthands",
+						"value": "desugarShorthands"
+					}
+				]
+			}
+		}
+	],
+	"result": "exports"
+}

@@ -33,6 +33,7 @@ export function bootstrapRegistry(): OperatorRegistry {
 		"parse.cir.json",
 		"typecheck.cir.json",
 		"meta.cir.json",
+		"desugar-shorthands.cir.json",
 		"desugar.cir.json",
 		"optimize-dce.cir.json",
 		"optimize-fold.cir.json",
