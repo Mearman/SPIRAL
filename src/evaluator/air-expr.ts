@@ -1,5 +1,6 @@
 // evalExprWithNodeMap + evalExprInline - evaluate expressions with node map access
 
+import { navigate } from "../utils/json-pointer.js";
 import { lookupOperator } from "../domains/registry.js";
 import {
 	type ValueEnv,
@@ -13,8 +14,11 @@ import {
 	type ClosureVal,
 	type Expr,
 	type LambdaParam,
+	type Type,
 	type Value,
 	isBlockNode,
+	isExprNode,
+	isRefNode,
 	voidVal,
 	closureVal,
 	undefinedVal,
@@ -33,6 +37,8 @@ import { evalLitValue } from "./lit-eval.js";
 /** Evaluate an expression with access to nodeMap for resolving references. */
 export function evalExprWithNodeMap(ctx: AirEvalCtx, expr: Expr, env: ValueEnv): Value {
 	switch (expr.kind) {
+	case "$ref":
+		return evalJsonPointerRef(ctx, expr, env);
 	case "lambda":
 		return evalLambda(ctx, expr, env);
 	case "callExpr":
@@ -76,6 +82,56 @@ function evalRef(ctx: AirEvalCtx, expr: Expr & { kind: "ref" }, env: ValueEnv): 
 		?? errorVal(ErrorCodes.DomainError, "Reference not found: " + expr.id);
 }
 
+function evalJsonPointerRef(ctx: AirEvalCtx, expr: Expr & { kind: "$ref" }, env: ValueEnv): Value {
+	// Use the document itself as the root for JSON Pointer navigation
+	const docRoot = ctx.docDefs ?? { nodes: [] };
+	const result = navigate(docRoot, expr.$ref);
+	if (!result.success) {
+		return errorVal(ErrorCodes.DomainError, "JSON Pointer resolution failed: " + result.error);
+	}
+	const refValue = result.value;
+
+	// If the reference points to a node, evaluate it
+	if (isRefNodeValue(refValue)) {
+		return resolveNodeValue(ctx, refValue, env);
+	}
+
+	// If the reference points to a literal expression, evaluate it directly
+	if (isLitExprValue(refValue)) {
+		return evalLitValue({ type: refValue.type, value: refValue.value });
+	}
+
+	// If the reference points to any other expression, evaluate it
+	if (isExprValue(refValue)) {
+		return evalExprWithNodeMap(ctx, refValue, env);
+	}
+
+	return errorVal(ErrorCodes.DomainError, "JSON Pointer reference did not resolve to a valid value");
+}
+
+/** Check if a value is a node (has id and expr or blocks) */
+function isRefNodeValue(value: unknown): value is AirHybridNode {
+	if (typeof value !== "object" || value === null) return false;
+	const v = value as Record<string, unknown>;
+	return "id" in v && typeof v.id === "string" && ("expr" in v || "blocks" in v || "$ref" in v);
+}
+
+/** Check if a value is a literal expression (LitExpr) */
+function isLitExprValue(value: unknown): value is { kind: "lit"; type: Type; value: unknown } {
+	if (typeof value !== "object" || value === null) return false;
+	const v = value as Record<string, unknown>;
+	const kind = v.kind;
+	return typeof kind === "string" && kind === "lit" && "type" in v && "value" in v;
+}
+
+/** Check if a value is an expression (has kind) */
+function isExprValue(value: unknown): value is Expr {
+	if (typeof value !== "object" || value === null) return false;
+	const v = value as Record<string, unknown>;
+	const kind = v.kind;
+	return "kind" in v && typeof kind === "string";
+}
+
 function evalVar(expr: Expr & { kind: "var" }, env: ValueEnv): Value {
 	const val = lookupValue(env, expr.name);
 	return val ?? errorVal(ErrorCodes.UnboundIdentifier, "Unbound identifier: " + expr.name);
@@ -95,7 +151,8 @@ export function evalExprInline(ctx: Pick<AirEvalCtx, "registry" | "defs" | "node
 function evalLambda(ctx: AirEvalCtx, expr: Expr & { kind: "lambda" }, env: ValueEnv): Value {
 	const bodyNode = ctx.nodeMap.get(expr.body);
 	if (!bodyNode) return errorVal(ErrorCodes.DomainError, "Lambda body node not found: " + expr.body);
-	if (isBlockNode(bodyNode)) return errorVal(ErrorCodes.DomainError, "Block nodes as lambda bodies are not supported");
+	if (isBlockNode(bodyNode) || isRefNode(bodyNode)) return errorVal(ErrorCodes.DomainError, "Block nodes as lambda bodies are not supported");
+	if (!isExprNode(bodyNode)) return errorVal(ErrorCodes.DomainError, "Invalid body node type");
 	const params: LambdaParam[] = expr.params.map(p => typeof p === "string" ? { name: p } : p);
 	return closureVal(params, bodyNode.expr, env);
 }
@@ -116,6 +173,11 @@ function resolveDoRef(ctx: AirEvalCtx, e: string, env: ValueEnv): Value {
 	const node = ctx.nodeMap.get(e);
 	if (!node) return errorVal(ErrorCodes.DomainError, "Do expr ref not found: " + e);
 	if (isBlockNode(node)) return evaluateBlockNode(node, { registry: ctx.registry, nodeValues: ctx.nodeValues, options: ctx.options }, env);
+	if (isRefNode(node)) {
+		// RefNode - need to resolve the reference
+		return evalExprWithNodeMap(ctx, { kind: "$ref", $ref: node.$ref }, env);
+	}
+	if (!isExprNode(node)) return errorVal(ErrorCodes.DomainError, "Invalid node type");
 	return evalExprWithNodeMap(ctx, node.expr, env);
 }
 
@@ -144,6 +206,12 @@ function resolveFnValue(ctx: AirEvalCtx, fn: string, env: ValueEnv): Value | und
 
 function resolveNodeValue(ctx: AirEvalCtx, node: AirHybridNode, env: ValueEnv): Value {
 	if (isBlockNode(node)) return evaluateBlockNode(node, { registry: ctx.registry, nodeValues: ctx.nodeValues, options: ctx.options }, env);
+	if (isRefNode(node)) {
+		// RefNode - resolve the reference
+		return evalExprWithNodeMap(ctx, { kind: "$ref", $ref: node.$ref }, env);
+	}
+	// Handle node-like objects from JSON Pointer resolution
+	if (!isExprNode(node)) return errorVal(ErrorCodes.DomainError, "Invalid node type");
 	return evalExprWithNodeMap(ctx, node.expr, env);
 }
 
