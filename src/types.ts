@@ -58,7 +58,7 @@ export type { AIRDef, FunctionSignature, LambdaParam } from "./zod-schemas.js";
 //==============================================================================
 
 export type {
-	Node, ExprNode, BlockNode, HybridNode,
+	Node, ExprNode, BlockNode, HybridNode, RefNode,
 	AirHybridNode, CirHybridNode, EirHybridNode, LirHybridNode,
 	EirNode,
 	AIRDocument, CIRDocument, EIRDocument, LIRDocument,
@@ -98,7 +98,7 @@ import type {
 	BoolType, IntType, FloatType, StringType,
 	SetType, ListType, MapType, OptionType, OpaqueType, FnType,
 	VoidType, RefType,
-	HybridNode, BlockNode, ExprNode,
+	HybridNode, BlockNode, ExprNode, RefNode,
 	EirParExpr, EirSpawnExpr, EirAwaitExpr,
 } from "./zod-schemas.js";
 
@@ -264,6 +264,11 @@ export function isBlockNode<E, B>(node: HybridNode<E, B>): node is BlockNode<B> 
 /** Check if a node is expression-based (has expr) */
 export function isExprNode<E, B>(node: HybridNode<E, B>): node is ExprNode<E> {
 	return "expr" in node && !("blocks" in node);
+}
+
+/** Check if a node is a reference (has $ref) */
+export function isRefNode<E, B>(node: HybridNode<E, B>): node is RefNode {
+	return "$ref" in node && "id" in node && !("expr" in node) && !("blocks" in node);
 }
 
 //==============================================================================
