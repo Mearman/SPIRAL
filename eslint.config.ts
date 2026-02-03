@@ -173,6 +173,15 @@ export default [
         "error",
         { assertionStyle: "never" },
       ],
+      // Forbid dynamic imports (use static imports only)
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "ImportExpression",
+          message:
+            "Dynamic imports are not allowed. Use static imports instead.",
+        },
+      ],
       indent: ["error", "tab"],
       quotes: ["error", "double", { avoidEscape: true }],
       // File and function size/complexity limits
@@ -207,50 +216,6 @@ export default [
       "max-statements": "off",
       complexity: "off",
       "max-depth": "off",
-    },
-  },
-  {
-    files: ["src/validator.ts"],
-    rules: {
-      "@typescript-eslint/no-unnecessary-condition": "off",
-      "@typescript-eslint/no-non-null-assertion": "off",
-      "@typescript-eslint/consistent-type-assertions": "off",
-      "@typescript-eslint/no-unsafe-assignment": "off",
-    },
-  },
-  {
-    files: ["src/desugar-shorthands.ts"],
-    rules: {
-      "max-lines-per-function": "off",
-      "max-statements": "off",
-      "complexity": "off",
-      "@typescript-eslint/consistent-type-assertions": "off",
-      "@typescript-eslint/no-unnecessary-condition": "off",
-    },
-  },
-  {
-    files: ["src/evaluator/air-program.ts"],
-    rules: {
-      "@typescript-eslint/consistent-type-assertions": "off",
-    },
-  },
-  {
-    files: ["src/synth/python.ts"],
-    rules: {
-      "@typescript-eslint/no-unnecessary-condition": "off",
-    },
-  },
-  {
-    files: ["src/scheduler.ts", "src/default-scheduler.ts"],
-    rules: {
-      "@typescript-eslint/no-empty-function": "off",
-    },
-  },
-  {
-    files: ["src/default-scheduler.ts"],
-    rules: {
-      "@typescript-eslint/no-unsafe-argument": "off",
-      "@typescript-eslint/use-unknown-in-catch-callback-variable": "off",
     },
   },
 
