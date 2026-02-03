@@ -1,126 +1,67 @@
 {
 	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
 	"version": "1.0.0",
+	"$defs": {
+		"one": {
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+		},
+		"five": {
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 5 }
+		},
+		"ten": {
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 10 }
+		}
+	},
 	"airDefs": [
 		{
 			"ns": "core",
 			"name": "add",
-			"params": [
-				"a",
-				"b"
-			],
-			"result": {
-				"kind": "int"
-			},
-			"body": {
-				"kind": "ref",
-				"id": "a"
-			}
+			"params": ["a", "b"],
+			"result": { "kind": "int" },
+			"body": { "kind": "ref", "id": "a" }
 		}
 	],
 	"nodes": [
 		{
 			"id": "one",
-			"expr": {
-				"kind": "lit",
-				"type": {
-					"kind": "int"
-				},
-				"value": 1
-			}
+			"expr": { "$ref": "#/$defs/one/expr" }
 		},
 		{
 			"id": "five",
-			"expr": {
-				"kind": "lit",
-				"type": {
-					"kind": "int"
-				},
-				"value": 5
-			}
+			"expr": { "$ref": "#/$defs/five/expr" }
 		},
 		{
 			"id": "ten",
-			"expr": {
-				"kind": "lit",
-				"type": {
-					"kind": "int"
-				},
-				"value": 10
-			}
+			"expr": { "$ref": "#/$defs/ten/expr" }
 		},
 		{
 			"id": "addOne",
 			"expr": {
 				"kind": "lambda",
-				"type": {
-					"kind": "fn",
-					"params": [
-						{
-							"kind": "int"
-						}
-					],
-					"returns": {
-						"kind": "int"
-					}
-				},
-				"params": [
-					"x"
-				],
+				"type": { "kind": "fn", "params": [{ "kind": "int" }], "returns": { "kind": "int" } },
+				"params": ["x"],
 				"body": "xPlusOne"
 			}
 		},
 		{
 			"id": "xPlusOne",
-			"expr": {
-				"kind": "call",
-				"ns": "core",
-				"name": "add",
-				"args": [
-					"x",
-					"one"
-				]
-			}
+			"expr": { "kind": "call", "ns": "core", "name": "add", "args": ["x", "one"] }
 		},
 		{
 			"id": "applyToFive",
-			"expr": {
-				"kind": "callExpr",
-				"args": [
-					"five"
-				],
-				"fn": "addOne"
-			}
+			"expr": { "kind": "callExpr", "args": ["five"], "fn": "addOne" }
 		},
 		{
 			"id": "applyToTen",
-			"expr": {
-				"kind": "callExpr",
-				"args": [
-					"ten"
-				],
-				"fn": "addOne"
-			}
+			"expr": { "kind": "callExpr", "args": ["ten"], "fn": "addOne" }
 		},
 		{
 			"id": "nestedCall",
-			"expr": {
-				"kind": "callExpr",
-				"args": [
-					"applyToFive"
-				],
-				"fn": "addOne"
-			}
+			"expr": { "kind": "callExpr", "args": ["applyToFive"], "fn": "addOne" }
 		},
 		{
 			"id": "doubleNested",
-			"expr": {
-				"kind": "callExpr",
-				"args": [
-					"nestedCall"
-				],
-				"fn": "addOne"
-			}
+			"expr": { "kind": "callExpr", "args": ["nestedCall"], "fn": "addOne" }
 		}
 	],
 	"result": "doubleNested",
