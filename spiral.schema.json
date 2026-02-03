@@ -225,6 +225,37 @@
 			],
 			"id": "CallFnExpr"
 		},
+		"CallPat": {
+			"title": "Call Pattern",
+			"description": "Matches call expressions with namespace, name, and argument patterns",
+			"type": "object",
+			"properties": {
+				"args": {
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/ExprPattern"
+					}
+				},
+				"kind": {
+					"type": "string",
+					"const": "callPat"
+				},
+				"name": {
+					"type": "string"
+				},
+				"ns": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"ns",
+				"name",
+				"args"
+			],
+			"id": "CallPat"
+		},
 		"ChannelType": {
 			"title": "Channel Type",
 			"description": "Typed communication channel between concurrent tasks",
@@ -304,6 +335,15 @@
 				},
 				{
 					"$ref": "#/$defs/DoExpr"
+				},
+				{
+					"$ref": "#/$defs/MatchExprExpr"
+				},
+				{
+					"$ref": "#/$defs/QuoteExpr"
+				},
+				{
+					"$ref": "#/$defs/SpliceExpr"
 				}
 			],
 			"description": "Functional expression with lambdas and recursion (no side effects)",
@@ -465,6 +505,28 @@
 			"description": "Wide expression union used for recursive inline expressions",
 			"id": "Expr",
 			"title": "Expression"
+		},
+		"ExprPattern": {
+			"anyOf": [
+				{
+					"$ref": "#/$defs/LitPat"
+				},
+				{
+					"$ref": "#/$defs/VarPat"
+				},
+				{
+					"$ref": "#/$defs/CallPat"
+				},
+				{
+					"$ref": "#/$defs/LambdaPat"
+				},
+				{
+					"$ref": "#/$defs/WildcardPat"
+				}
+			],
+			"description": "Structural pattern for matching expression ASTs",
+			"id": "ExprPattern",
+			"title": "Expression Pattern"
 		},
 		"FixExpr": {
 			"title": "Fix-Point Combinator",
@@ -737,6 +799,33 @@
 				"name"
 			],
 			"id": "LambdaParam"
+		},
+		"LambdaPat": {
+			"title": "Lambda Pattern",
+			"description": "Matches lambda expressions with parameter patterns and body pattern",
+			"type": "object",
+			"properties": {
+				"body": {
+					"$ref": "#/$defs/ExprPattern"
+				},
+				"kind": {
+					"type": "string",
+					"const": "lambdaPat"
+				},
+				"params": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"params",
+				"body"
+			],
+			"id": "LambdaPat"
 		},
 		"LetExpr": {
 			"title": "Let Expression",
@@ -1205,6 +1294,27 @@
 			],
 			"id": "LitExpr"
 		},
+		"LitPat": {
+			"title": "Literal Pattern",
+			"description": "Matches literal values with optional type constraint",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "litPat"
+				},
+				"value": {},
+				"type": {
+					"$ref": "#/$defs/Type"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"value"
+			],
+			"id": "LitPat"
+		},
 		"MapType": {
 			"title": "Map Type",
 			"description": "Key-value associative container",
@@ -1296,6 +1406,73 @@
 			],
 			"id": "MatchExpr"
 		},
+		"MatchExprExpr": {
+			"title": "Expression Match Expression",
+			"description": "Structural pattern matching on expression ASTs",
+			"type": "object",
+			"properties": {
+				"type": {
+					"$ref": "#/$defs/Type"
+				},
+				"value": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "#/$defs/Expr"
+						}
+					]
+				},
+				"cases": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"body": {
+								"anyOf": [
+									{
+										"type": "string"
+									},
+									{
+										"$ref": "#/$defs/Expr"
+									}
+								]
+							},
+							"pattern": {
+								"$ref": "#/$defs/ExprPattern"
+							}
+						},
+						"additionalProperties": false,
+						"required": [
+							"pattern",
+							"body"
+						]
+					}
+				},
+				"default": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "#/$defs/Expr"
+						}
+					]
+				},
+				"kind": {
+					"type": "string",
+					"const": "matchExpr"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"value",
+				"cases"
+			],
+			"id": "MatchExprExpr"
+		},
 		"OpaqueType": {
 			"title": "Opaque Type",
 			"description": "Named opaque type whose internal structure is hidden",
@@ -1359,6 +1536,29 @@
 				"value"
 			],
 			"id": "PredicateExpr"
+		},
+		"QuoteExpr": {
+			"title": "Quote Expression",
+			"description": "Quote an expression as data (prevents evaluation)",
+			"type": "object",
+			"properties": {
+				"type": {
+					"$ref": "#/$defs/Type"
+				},
+				"expr": {
+					"$ref": "#/$defs/Expr"
+				},
+				"kind": {
+					"type": "string",
+					"const": "quote"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"expr"
+			],
+			"id": "QuoteExpr"
 		},
 		"RecordExpr": {
 			"title": "Record Expression",
@@ -1505,6 +1705,29 @@
 			],
 			"id": "SetType"
 		},
+		"SpliceExpr": {
+			"title": "Splice Expression",
+			"description": "Splice a quoted expression into code (unquote)",
+			"type": "object",
+			"properties": {
+				"type": {
+					"$ref": "#/$defs/Type"
+				},
+				"expr": {
+					"$ref": "#/$defs/Expr"
+				},
+				"kind": {
+					"type": "string",
+					"const": "splice"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"expr"
+			],
+			"id": "SpliceExpr"
+		},
 		"StringType": {
 			"title": "String Type",
 			"description": "UTF-8 string type",
@@ -1616,6 +1839,26 @@
 			],
 			"id": "VarExpr"
 		},
+		"VarPat": {
+			"title": "Variable Pattern",
+			"description": "Matches any expression and binds it to a variable name",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "varPat"
+				},
+				"name": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"name"
+			],
+			"id": "VarPat"
+		},
 		"VoidType": {
 			"title": "Void Type",
 			"description": "Unit type representing no value",
@@ -1631,6 +1874,22 @@
 				"kind"
 			],
 			"id": "VoidType"
+		},
+		"WildcardPat": {
+			"title": "Wildcard Pattern",
+			"description": "Matches any expression without binding",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "_"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind"
+			],
+			"id": "WildcardPat"
 		}
 	},
 	"title": "SPIRAL Document",

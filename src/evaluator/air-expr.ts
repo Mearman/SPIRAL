@@ -11,21 +11,32 @@ import {
 import { SPIRALError, ErrorCodes } from "../errors.js";
 import {
 	type AirHybridNode,
+	type CallPat,
 	type ClosureVal,
 	type Expr,
+	type ExprPattern,
 	type LambdaParam,
+	type LambdaPat,
+	type MapVal,
+	type MatchExprExpr,
+	type QuoteExpr,
+	type SpliceExpr,
 	type Type,
 	type Value,
 	isBlockNode,
 	isExprNode,
 	isRefNode,
-	voidVal,
+} from "../types.js";
+import {
 	closureVal,
-	undefinedVal,
+	errorVal,
+	isError,
 	listVal,
 	mapVal,
+	stringVal,
+	undefinedVal,
+	voidVal,
 } from "../types.js";
-import { errorVal, isError } from "../types.js";
 import type { AirEvalCtx } from "./types.js";
 import { evaluateBlockNode } from "./block-eval.js";
 import { evalLitValue } from "./lit-eval.js";
@@ -57,6 +68,12 @@ export function evalExprWithNodeMap(ctx: AirEvalCtx, expr: Expr, env: ValueEnv):
 		return evalLitValue(expr);
 	case "do":
 		return evalDo(ctx, expr, env);
+	case "matchExpr":
+		return evalMatchExprExpr(ctx, expr, env);
+	case "quote":
+		return evalQuote(ctx, expr);
+	case "splice":
+		return evalSplice(ctx, expr, env);
 	default:
 		return evalDataExpr(ctx, expr, env);
 	}
@@ -112,24 +129,22 @@ function evalJsonPointerRef(ctx: AirEvalCtx, expr: Expr & { kind: "$ref" }, env:
 /** Check if a value is a node (has id and expr or blocks) */
 function isRefNodeValue(value: unknown): value is AirHybridNode {
 	if (typeof value !== "object" || value === null) return false;
-	const v = value as Record<string, unknown>;
+	const v = value;
 	return "id" in v && typeof v.id === "string" && ("expr" in v || "blocks" in v || "$ref" in v);
 }
 
 /** Check if a value is a literal expression (LitExpr) */
 function isLitExprValue(value: unknown): value is { kind: "lit"; type: Type; value: unknown } {
 	if (typeof value !== "object" || value === null) return false;
-	const v = value as Record<string, unknown>;
-	const kind = v.kind;
-	return typeof kind === "string" && kind === "lit" && "type" in v && "value" in v;
+	const v = value;
+	return "kind" in v && v.kind === "lit" && "type" in v && "value" in v;
 }
 
 /** Check if a value is an expression (has kind) */
 function isExprValue(value: unknown): value is Expr {
 	if (typeof value !== "object" || value === null) return false;
-	const v = value as Record<string, unknown>;
-	const kind = v.kind;
-	return "kind" in v && typeof kind === "string";
+	const v = value;
+	return "kind" in v && typeof v.kind === "string";
 }
 
 function evalVar(expr: Expr & { kind: "var" }, env: ValueEnv): Value {
@@ -422,6 +437,257 @@ function evalMatchExpr(ctx: AirEvalCtx, expr: Expr & { kind: "match" }, env: Val
 	return errorVal(ErrorCodes.DomainError, "No matching case for: " + matchVal.value);
 }
 
+//==============================================================================
+// matchExpr handler - structural pattern matching on expressions
+//==============================================================================
+
+function evalMatchExprExpr(ctx: AirEvalCtx, expr: MatchExprExpr, env: ValueEnv): Value {
+	// Evaluate the target expression
+	const targetExpr = typeof expr.value === "string"
+		? resolveStringOrExprInCtx(ctx, expr.value, env)
+		: evalExprWithNodeMap(ctx, expr.value, env);
+
+	if (isError(targetExpr)) return targetExpr;
+
+	// Try each pattern in order
+	for (const c of expr.cases) {
+		const matchResult = matchExprPattern(ctx, c.pattern, targetExpr, env);
+		if (!isValueEnv(matchResult)) {
+			if (isError(matchResult) && matchResult.code === "PatternMatchFailed") {
+				continue; // Try next pattern
+			}
+			return matchResult; // Real error
+		}
+
+		// Pattern matched - matchResult is the extended environment
+		const mergedEnv = mergeEnvs(env, matchResult);
+		return resolveStringOrExprInCtx(ctx, c.body, mergedEnv);
+	}
+
+	// No pattern matched - try default
+	if (expr.default !== undefined) {
+		return resolveStringOrExprInCtx(ctx, expr.default, env);
+	}
+
+	return errorVal(ErrorCodes.DomainError, "No pattern matched for expression");
+}
+
+/** Type guard to check if result is a ValueEnv (Map) */
+function isValueEnv(result: ValueEnv | Value): result is ValueEnv {
+	return result instanceof Map;
+}
+
+/** Match a pattern against a value, return extended environment or error */
+function matchExprPattern(
+	_ctx: AirEvalCtx,
+	pattern: ExprPattern,
+	value: Value,
+	env: ValueEnv,
+): ValueEnv | Value {
+	switch (pattern.kind) {
+	case "_":
+		return env; // Wildcard always matches, no bindings
+
+	case "varPat":
+		return extendValueEnv(env, pattern.name, value);
+
+	case "litPat":
+		if (valuesMatch(pattern.value, value)) {
+			return env;
+		}
+		return errorVal(ErrorCodes.DomainError, "PatternMatchFailed");
+
+	case "callPat":
+		if (value.kind !== "closure") {
+			return errorVal(ErrorCodes.DomainError, "PatternMatchFailed");
+		}
+		// Match the closure against the call pattern
+		return matchCallPattern(pattern, value, env);
+
+	case "lambdaPat":
+		if (value.kind !== "closure") {
+			return errorVal(ErrorCodes.DomainError, "PatternMatchFailed");
+		}
+		return matchLambdaPattern(pattern, value, env);
+
+	default: {
+		// TypeScript narrows pattern to `never` in default case after handling all known kinds
+		// At runtime, this handles unknown/exhaustive patterns
+		return errorVal(ErrorCodes.DomainError, "Unknown pattern kind");
+	}
+	}
+}
+
+/** Check if a pattern literal value matches a runtime value */
+function valuesMatch(patternValue: unknown, runtimeValue: Value): boolean {
+	if (typeof patternValue === "boolean") {
+		return runtimeValue.kind === "bool" && runtimeValue.value === patternValue;
+	}
+	if (typeof patternValue === "number") {
+		if (runtimeValue.kind === "int") return runtimeValue.value === patternValue;
+		if (runtimeValue.kind === "float") return runtimeValue.value === patternValue;
+		return false;
+	}
+	if (typeof patternValue === "string") {
+		return runtimeValue.kind === "string" && runtimeValue.value === patternValue;
+	}
+	return false;
+}
+
+/** Match a call pattern against a closure value */
+function matchCallPattern(
+	_pattern: CallPat,
+	_value: ClosureVal,
+	env: ValueEnv,
+): ValueEnv | Value {
+	// For closures, we can't match the namespace/name since that info is lost
+	// We can only match the arity (number of parameters)
+	// TODO: Once we have Quote/Splice, we can match against the AST structure
+	return env;
+}
+
+/** Match a lambda pattern against a closure value */
+function matchLambdaPattern(
+	_pattern: LambdaPat,
+	_value: ClosureVal,
+	env: ValueEnv,
+): ValueEnv | Value {
+	// TODO: Check arity once we have proper pattern matching
+	return env;
+}
+
+//==============================================================================
+// quote handler - quote an expression as data
+//==============================================================================
+
+function evalQuote(_ctx: AirEvalCtx, expr: QuoteExpr): Value {
+	// Quote returns the expression as a value (as a map/record)
+	// For now, we convert the expression AST to a serializable value
+	return exprToValue(expr.expr);
+}
+
+/** Convert an expression AST to a runtime value */
+function exprToValue(expr: Expr): Value {
+	switch (expr.kind) {
+	case "lit":
+		return evalLitValue(expr);
+	case "ref":
+		return stringVal(expr.id);
+	case "var":
+		return stringVal(expr.name);
+	case "call":
+		return recordVal([
+			{ key: "kind", value: stringVal("call") },
+			{ key: "ns", value: stringVal(expr.ns) },
+			{ key: "name", value: stringVal(expr.name) },
+			{ key: "args", value: listVal(expr.args.map(a =>
+				typeof a === "string" ? stringVal(a) : exprToValue(a)
+			)) },
+		]);
+	case "lambda":
+		return recordVal([
+			{ key: "kind", value: stringVal("lambda") },
+			{ key: "params", value: listVal(expr.params.map(p =>
+				typeof p === "string" ? stringVal(p) : recordVal([
+					{ key: "name", value: stringVal(p.name) },
+					...(p.type ? [{ key: "type", value: typeToValue(p.type) }] as const : []),
+				])
+			)) },
+			{ key: "body", value: stringVal(expr.body) },
+		]);
+	default:
+		// For unsupported expressions, return an error
+		return errorVal(ErrorCodes.DomainError, "Cannot quote expression kind: " + expr.kind);
+	}
+}
+
+/** Convert a type AST to a runtime value */
+function typeToValue(type: Type): Value {
+	if (type.kind === "int" || type.kind === "bool" || type.kind === "string" || type.kind === "void") {
+		return recordVal([{ key: "kind", value: stringVal(type.kind) }]);
+	}
+	if (type.kind === "list" || type.kind === "set" || type.kind === "option" || type.kind === "future") {
+		return recordVal([
+			{ key: "kind", value: stringVal(type.kind) },
+			{ key: "of", value: typeToValue(type.of) },
+		]);
+	}
+	if (type.kind === "task") {
+		return recordVal([
+			{ key: "kind", value: stringVal(type.kind) },
+			{ key: "returns", value: typeToValue(type.returns) },
+		]);
+	}
+	if (type.kind === "map") {
+		return recordVal([
+			{ key: "kind", value: stringVal(type.kind) },
+			{ key: "key", value: typeToValue(type.key) },
+			{ key: "value", value: typeToValue(type.value) },
+		]);
+	}
+	if (type.kind === "fn") {
+		return recordVal([
+			{ key: "kind", value: stringVal(type.kind) },
+			{ key: "params", value: listVal(type.params.map(typeToValue)) },
+			{ key: "returns", value: typeToValue(type.returns) },
+		]);
+	}
+	return recordVal([{ key: "kind", value: stringVal(type.kind) }]);
+}
+
+function recordVal(fields: { key: string; value: Value }[]): Value {
+	const m = new Map<string, Value>();
+	for (const f of fields) {
+		m.set("s:" + f.key, f.value);
+	}
+	return mapVal(m);
+}
+
+//==============================================================================
+// splice handler - splice a quoted expression into code
+//==============================================================================
+
+function evalSplice(ctx: AirEvalCtx, expr: SpliceExpr, env: ValueEnv): Value {
+	// Evaluate the expression to get the quoted value
+	const quotedVal = typeof expr.expr === "string"
+		? resolveStringOrExprInCtx(ctx, expr.expr, env)
+		: evalExprWithNodeMap(ctx, expr.expr, env);
+
+	if (isError(quotedVal)) return quotedVal;
+
+	// Convert the quoted value back to an expression and evaluate it
+	// For now, we only support splicing simple literals and references
+	return valueToExprAndEval(ctx, quotedVal);
+}
+
+/** Convert a runtime value back to an expression and evaluate it */
+function valueToExprAndEval(ctx: AirEvalCtx, value: Value): Value {
+	if (value.kind === "int" || value.kind === "bool" || value.kind === "string" || value.kind === "float") {
+		return value;
+	}
+	if (value.kind === "map") {
+		// Try to reconstruct an expression from the map
+		return evalQuotedExpr(ctx, value);
+	}
+	return errorVal(ErrorCodes.DomainError, "Cannot splice value of kind: " + value.kind);
+}
+
+/** Evaluate a quoted expression stored as a map */
+function evalQuotedExpr(_ctx: AirEvalCtx, mapValue: MapVal): Value {
+	const kindField = mapValue.value.get("s:kind");
+	if (kindField?.kind === "string") {
+		if (kindField.value === "call") {
+			const ns = mapValue.value.get("s:ns");
+			const name = mapValue.value.get("s:name");
+			if (ns?.kind === "string" && name?.kind === "string") {
+				// For now, just return a placeholder - actual call evaluation would require more work
+				return errorVal(ErrorCodes.DomainError, "Splicing call expressions not yet implemented");
+			}
+		}
+	}
+	return errorVal(ErrorCodes.DomainError, "Cannot evaluate quoted expression");
+}
+
 function mergeEnvs(base: ValueEnv, overlay: ValueEnv): ValueEnv {
 	const merged = new Map(base);
 	for (const [k, v] of overlay) merged.set(k, v);
@@ -446,3 +712,4 @@ function evalFixInline(ctx: AirEvalCtx, expr: Expr & { kind: "fix" }, env: Value
 	selfRef.env = extendValueEnv(mergeEnvs(inner.env, env), param.name, selfRef);
 	return selfRef;
 }
+

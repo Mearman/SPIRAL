@@ -110,7 +110,7 @@ describe("kernel registry", () => {
 	});
 
 	it("has 37 total operators", () => {
-		assert.strictEqual(kernel.size, 37);
+		assert.strictEqual(kernel.size, 39);
 	});
 });
 

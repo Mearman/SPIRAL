@@ -419,6 +419,28 @@ const jsonParse: Operator = defineOperator("json", "parse")
 		}
 	}).build();
 
+// meta — type introspection (2): type-level programming
+
+const metaTypeOf: Operator = defineOperator("meta", "typeOf")
+	.setParams(intType).setReturns(mapType(stringType, intType)).setPure(true)
+	.setImpl((a) => {
+		if (isError(a)) return a;
+		// Return a map representation of the value's type
+		// For now, just return the kind as a string
+		const typeMap = new Map<string, Value>();
+		typeMap.set("s:kind", stringVal(a.kind));
+		return mapVal(typeMap);
+	}).build();
+
+const metaTypeEq: Operator = defineOperator("meta", "typeEq")
+	.setParams(intType, intType).setReturns(boolType).setPure(true)
+	.setImpl((a, b) => {
+		if (isError(a)) return a;
+		if (isError(b)) return b;
+		// Check if two values have the same type kind
+		return boolVal(a.kind === b.kind);
+	}).build();
+
 // Kernel Registry — 37 native operators
 
 export function createKernelRegistry(): OperatorRegistry {
@@ -445,6 +467,8 @@ export function createKernelRegistry(): OperatorRegistry {
 		strToInt, strToFloat,
 		// json: parse (1)
 		jsonParse,
+		// meta: type introspection (2)
+		metaTypeOf, metaTypeEq,
 	];
 
 	return operators.reduce<OperatorRegistry>(

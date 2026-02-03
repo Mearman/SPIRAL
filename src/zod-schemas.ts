@@ -91,11 +91,46 @@ export interface EirRecvExpr { kind: "recv"; channel: string }
 export interface EirSelectExpr { kind: "select"; futures: string[]; timeout?: string | Expr | undefined; fallback?: string | Expr | undefined; returnIndex?: boolean | undefined }
 export interface EirRaceExpr { kind: "race"; tasks: string[] }
 
+//==============================================================================
+// Metaprogramming Pattern Types
+//==============================================================================
+
+export interface LitPat { kind: "litPat"; value: unknown; type?: Type | undefined }
+export interface VarPat { kind: "varPat"; name: string }
+export interface CallPat { kind: "callPat"; ns: string; name: string; args: ExprPattern[] }
+export interface LambdaPat { kind: "lambdaPat"; params: string[]; body: ExprPattern }
+export interface WildcardPat { kind: "_" }
+
+export type ExprPattern = LitPat | VarPat | CallPat | LambdaPat | WildcardPat;
+
+export interface MatchExprExpr {
+	kind: "matchExpr";
+	value: string | Expr;
+	cases: { pattern: ExprPattern; body: string | Expr }[];
+	default?: string | Expr | undefined;
+	type?: Type | undefined;
+}
+
+export interface QuoteExpr {
+	kind: "quote";
+	expr: Expr;
+	type?: Type | undefined;
+}
+
+export interface SpliceExpr {
+	kind: "splice";
+	expr: Expr;
+	type?: Type | undefined;
+}
+
 export type Expr =
 	| LitExpr | RefExpr | VarExpr | CallExpr | IfExpr | LetExpr
 	| AirRefExpr | PredicateExpr
 	| RecordExpr | ListOfExpr | MatchExpr | RefPointerExpr
-	| LambdaExpr | CallFnExpr | FixExpr | DoExpr;
+	| LambdaExpr | CallFnExpr | FixExpr | DoExpr
+	| MatchExprExpr
+	| QuoteExpr
+	| SpliceExpr;
 
 export type EirExpr =
 	| Expr
@@ -204,11 +239,11 @@ export interface AIRDef {
 //==============================================================================
 
 /** A definition in $defs - can be an expression or a node */
-export type Def = {
+export interface Def {
 	expr?: Expr | string | undefined;
 	node?: Node | ExprNode | BlockNode | undefined;
 	type?: Type | undefined;
-};
+}
 
 /** $defs object - maps definition names to their content */
 export type DefsObject = Record<string, Def> | undefined;
@@ -494,6 +529,69 @@ export const DoExprSchema: z.ZodType<DoExpr> = z.object({
 }).meta({ id: "DoExpr", title: "Do Expression", description: "Sequence of expressions returning the last value" });
 
 //==============================================================================
+// Zod Schemas - Metaprogramming Pattern Domain
+//==============================================================================
+
+export const LitPatSchema: z.ZodType<LitPat> = z.object({
+	kind: z.literal("litPat"),
+	value: z.unknown(),
+	type: TypeSchema.optional(),
+}).meta({ id: "LitPat", title: "Literal Pattern", description: "Matches literal values with optional type constraint" });
+
+export const VarPatSchema: z.ZodType<VarPat> = z.object({
+	kind: z.literal("varPat"),
+	name: z.string(),
+}).meta({ id: "VarPat", title: "Variable Pattern", description: "Matches any expression and binds it to a variable name" });
+
+export const CallPatSchema: z.ZodType<CallPat> = z.object({
+	kind: z.literal("callPat"),
+	ns: z.string(),
+	name: z.string(),
+	args: z.array(z.any()),
+}).meta({ id: "CallPat", title: "Call Pattern", description: "Matches call expressions with namespace, name, and argument patterns" });
+
+export const LambdaPatSchema: z.ZodType<LambdaPat> = z.object({
+	kind: z.literal("lambdaPat"),
+	params: z.array(z.string()),
+	body: z.any(),
+}).meta({ id: "LambdaPat", title: "Lambda Pattern", description: "Matches lambda expressions with parameter patterns and body pattern" });
+
+export const WildcardPatSchema = z.object({
+	kind: z.literal("_"),
+}).meta({ id: "WildcardPat", title: "Wildcard Pattern", description: "Matches any expression without binding" });
+
+export const ExprPatternSchema: z.ZodType<ExprPattern> = z.union([
+	LitPatSchema,
+	VarPatSchema,
+	CallPatSchema,
+	LambdaPatSchema,
+	WildcardPatSchema,
+]).meta({ id: "ExprPattern", title: "Expression Pattern", description: "Structural pattern for matching expression ASTs" });
+
+export const MatchExprExprSchema: z.ZodType<MatchExprExpr> = z.object({
+	kind: z.literal("matchExpr"),
+	get value() { return stringOrExpr(); },
+	cases: z.array(z.object({
+		pattern: z.any(),
+		get body() { return stringOrExpr(); },
+	})),
+	get default() { return stringOrExpr().optional(); },
+	type: TypeSchema.optional(),
+}).meta({ id: "MatchExprExpr", title: "Expression Match Expression", description: "Structural pattern matching on expression ASTs" });
+
+export const QuoteExprSchema: z.ZodType<QuoteExpr> = z.object({
+	kind: z.literal("quote"),
+	expr: z.any(),
+	type: TypeSchema.optional(),
+}).meta({ id: "QuoteExpr", title: "Quote Expression", description: "Quote an expression as data (prevents evaluation)" });
+
+export const SpliceExprSchema: z.ZodType<SpliceExpr> = z.object({
+	kind: z.literal("splice"),
+	expr: z.any(),
+	type: TypeSchema.optional(),
+}).meta({ id: "SpliceExpr", title: "Splice Expression", description: "Splice a quoted expression into code (unquote)" });
+
+//==============================================================================
 // Zod Schemas - Expression Domain - EIR extensions (9 variants)
 //==============================================================================
 
@@ -645,6 +743,9 @@ export const CirExprSchema: z.ZodType<Expr> = z.union([
 	CallFnExprSchema,
 	FixExprSchema,
 	DoExprSchema,
+	MatchExprExprSchema,
+	QuoteExprSchema,
+	SpliceExprSchema,
 ] satisfies [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]).meta({ id: "CirExpr", title: "CIR Expression", description: "Functional expression with lambdas and recursion (no side effects)" });
 
 /**
@@ -670,6 +771,9 @@ export const ExprSchema: z.ZodType<Expr> = z.union([
 	CallFnExprSchema,
 	FixExprSchema,
 	DoExprSchema,
+	MatchExprExprSchema,
+	QuoteExprSchema,
+	SpliceExprSchema,
 ] satisfies [z.ZodType<Expr>, z.ZodType<Expr>, ...z.ZodType<Expr>[]]).meta({ id: "Expr", title: "Expression", description: "Wide expression union used for recursive inline expressions" });
 
 /** EIR expression variants: all base expressions plus EIR imperative and async extensions. */

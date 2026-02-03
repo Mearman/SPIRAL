@@ -15,6 +15,7 @@ export const ErrorCodes = {
 	UnknownDefinition: "UnknownDefinition",
 	UnboundIdentifier: "UnboundIdentifier",
 	NonTermination: "NonTermination",
+	PatternMatchFailed: "PatternMatchFailed",
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
@@ -40,6 +41,11 @@ export type {
 	AirRefExpr, PredicateExpr,
 	RecordExpr, ListOfExpr, MatchExpr,
 	LambdaExpr, CallFnExpr, FixExpr, DoExpr,
+	MatchExprExpr,
+	ExprPattern,
+	LitPat, VarPat, CallPat, LambdaPat, WildcardPat,
+	QuoteExpr,
+	SpliceExpr,
 	EirSeqExpr, EirAssignExpr, EirWhileExpr, EirForExpr, EirIterExpr,
 	EirEffectExpr, EirRefCellExpr, EirDerefExpr, EirTryExpr,
 	EirParExpr, EirSpawnExpr, EirAwaitExpr, EirChannelExpr,
