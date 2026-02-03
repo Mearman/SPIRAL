@@ -65,11 +65,12 @@ export function transpileImports<T extends SPIRALDocument>(doc: T): T {
 	const transpiledDefs = transpileImportsToDefs(docWithImports.$imports);
 	const mergedDefs = { ...existingDefs, ...transpiledDefs };
 
-	// Return new document without $imports, with merged $defs
+	// Create new document without $imports property
+	// Destructure to exclude $imports, then add $defs
+	const { $imports, ...rest } = doc as unknown as { $imports?: ImportsObject; [key: string]: unknown };
 	return {
-		...doc,
+		...rest,
 		$defs: mergedDefs,
-		$imports: undefined,
 	} as T;
 }
 
