@@ -2,8 +2,9 @@
 
 import { SPIRALError } from "../errors.js";
 import { extendTypeEnv } from "../env.js";
+import { navigate } from "../utils/json-pointer.js";
 import type { EirExpr, EirHybridNode, Expr, LambdaParam, Type } from "../types.js";
-import { isBlockNode } from "../types.js";
+import { isBlockNode, isExprNode, isRefNode } from "../types.js";
 import {
 	boolType,
 	intType,
@@ -31,6 +32,28 @@ export function typeCheckNode(
 	if (isBlockNode(node)) {
 		return { type: node.type ?? intType, env: ctx.env };
 	}
+	if (isRefNode(node)) {
+		// RefNode (node-level $ref) - resolve and type-check the referenced target
+		const docRoot = ctx.docDefs ?? { nodes: [] };
+		const result = navigate(docRoot, node.$ref);
+		if (!result.success) {
+			throw SPIRALError.validation("$ref", "JSON Pointer resolution failed: " + result.error);
+		}
+		const refValue = result.value;
+		// If the reference points to a node, type-check it
+		if (isRefNodeWithValue(refValue)) {
+			return typeCheckNode(ctx, refValue as EirHybridNode);
+		}
+		// If the reference points to an expression, type-check it
+		if (isRefExprValue(refValue)) {
+			return ctx.checker.typeCheck(refValue, ctx.env);
+		}
+		// Default to int type
+		return { type: intType, env: ctx.env };
+	}
+	if (!isExprNode(node)) {
+		return { type: intType, env: ctx.env };
+	}
 	return checkExprKind(ctx, node.expr);
 }
 
@@ -41,6 +64,8 @@ function checkExprKind(ctx: AIRCheckContext, expr: EirExpr): TypeCheckResult {
 		return ctx.checker.typeCheck(expr, ctx.env);
 	case "ref":
 		return checkRef(ctx, expr);
+	case "$ref":
+		return checkJsonPointerRef(ctx, expr);
 	case "call":
 		return ctx.checker.typeCheck(expr, ctx.env);
 	case "if":
@@ -96,6 +121,45 @@ function checkRef(
 		throw SPIRALError.validation("ref", "Referenced node not found: " + expr.id);
 	}
 	return { type: targetType, env: ctx.env };
+}
+
+function checkJsonPointerRef(
+	ctx: AIRCheckContext,
+	expr: { kind: "$ref"; $ref: string },
+): TypeCheckResult {
+	const docRoot = ctx.docDefs ?? { nodes: [] };
+	const result = navigate(docRoot, expr.$ref);
+	if (!result.success) {
+		throw SPIRALError.validation("$ref", "JSON Pointer resolution failed: " + result.error);
+	}
+	const refValue = result.value;
+
+	// Check if the reference points to a literal expression
+	if (isRefLitValue(refValue)) {
+		return { type: refValue.type, env: ctx.env };
+	}
+	// Check if the reference points to another expression
+	if (isRefExprValue(refValue)) {
+		return ctx.checker.typeCheck(refValue, ctx.env);
+	}
+	// Check if the reference points to a node with an expression
+	if (isRefNodeWithValue(refValue)) {
+		return ctx.checker.typeCheck(refValue.expr, ctx.env);
+	}
+	// Default to int type for other cases
+	return { type: intType, env: ctx.env };
+}
+
+function isRefLitValue(value: unknown): value is { type: Type; kind: string } {
+	return typeof value === "object" && value !== null && "type" in value && "kind" in value && (value as { kind: string }).kind === "lit";
+}
+
+function isRefExprValue(value: unknown): value is Expr {
+	return typeof value === "object" && value !== null && "kind" in value;
+}
+
+function isRefNodeWithValue(value: unknown): value is { expr: Expr } {
+	return typeof value === "object" && value !== null && "expr" in value && "id" in value;
 }
 
 function checkIf(

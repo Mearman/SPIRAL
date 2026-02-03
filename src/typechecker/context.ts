@@ -16,6 +16,8 @@ export interface AIRCheckContext {
 	env: TypeEnv;
 	lambdaParams: Set<string>;
 	boundNodes: Set<string>;
+	/** Document $defs for JSON Pointer reference resolution */
+	docDefs?: Record<string, unknown> | undefined;
 }
 
 /**
@@ -32,6 +34,8 @@ export interface EIRCheckContext {
 	effects: import("../effects.js").EffectRegistry;
 	lambdaParams: Set<string>;
 	boundNodes: Set<string>;
+	/** Document $defs for JSON Pointer reference resolution */
+	docDefs?: Record<string, unknown> | undefined;
 }
 
 export type { TypeCheckResult, TypeChecker, TypeEnv, Defs, AirHybridNode, Type };

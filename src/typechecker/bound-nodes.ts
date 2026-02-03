@@ -1,7 +1,7 @@
 // Bound node identification and lambda parameter collection
 
 import type { AirHybridNode, Expr } from "../types.js";
-import { isBlockNode, isExprNode } from "../types.js";
+import { isBlockNode, isExprNode, isRefNode } from "../types.js";
 
 /**
  * Collect all lambda parameters and let binding names from a CIR program.
@@ -49,7 +49,8 @@ function collectDeps(
 	state.boundNodes.add(nodeId);
 
 	const node = state.nodeMap.get(nodeId);
-	if (!node || isBlockNode(node)) return;
+	if (!node || isBlockNode(node) || isRefNode(node)) return;
+	if (!isExprNode(node)) return;
 
 	visitExprRefs(state, node.expr, visited);
 }

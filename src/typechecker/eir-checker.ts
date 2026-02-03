@@ -3,12 +3,12 @@
 import { SPIRALError } from "../errors.js";
 import { lookupType } from "../env.js";
 import type {
-	EirHybridNode, Expr, Type,
+	EirHybridNode, Expr, Type, EirExpr,
 	EirSeqExpr, EirAssignExpr, EirWhileExpr,
 	EirForExpr, EirIterExpr, EirEffectExpr,
 	EirRefCellExpr, EirDerefExpr, EirTryExpr,
 } from "../types.js";
-import { isBlockNode } from "../types.js";
+import { isBlockNode, isRefNode } from "../types.js";
 import {
 	boolType,
 	intType,
@@ -30,12 +30,20 @@ export function typeCheckEIRNode(
 	if (isBlockNode(node)) {
 		return { type: node.type ?? intType, env: ctx.env };
 	}
+	if (isRefNode(node)) {
+		// RefNode (node-level $ref) - resolve and type-check the referenced target
+		const refNode = ctx.nodeMap.get(node.$ref);
+		if (!refNode) {
+			throw SPIRALError.validation("$ref", "Referenced node not found: " + node.$ref);
+		}
+		return typeCheckEIRNode(ctx, refNode);
+	}
 	return dispatchEirExpr(ctx, node);
 }
 
 function dispatchEirExpr(
 	ctx: EIRCheckContext,
-	node: EirHybridNode & { expr: import("../types.js").EirExpr },
+	node: EirHybridNode & { expr: EirExpr },
 ): TypeCheckResult {
 	const expr = node.expr;
 	switch (expr.kind) {
@@ -65,9 +73,13 @@ function dispatchEirExpr(
 function fallThroughToAIR(
 	ctx: EIRCheckContext,
 	node: EirHybridNode,
-	expr: import("../types.js").EirExpr,
+	expr: EirExpr,
 ): TypeCheckResult {
-	const baseNode: EirHybridNode = { id: node.id, type: node.type, expr };
+	// Handle RefNode (node-level $ref) - type is determined from the referenced node
+	const nodeType = ("type" in node) ? node.type : undefined;
+	const baseNode: EirHybridNode = nodeType
+		? { id: node.id, type: nodeType, expr }
+		: { id: node.id, expr };
 	return typeCheckNode(
 		{
 			checker: ctx.checker,
@@ -77,6 +89,7 @@ function fallThroughToAIR(
 			env: ctx.env,
 			lambdaParams: ctx.lambdaParams,
 			boundNodes: ctx.boundNodes,
+			docDefs: ctx.docDefs,
 		},
 		baseNode,
 	);

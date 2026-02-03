@@ -4,7 +4,7 @@
 import { lookupOperator, type OperatorRegistry } from "./domains/registry.js";
 import { type TypeEnv, emptyTypeEnv, lookupDef, type Defs } from "./env.js";
 import { SPIRALError } from "./errors.js";
-import type { AIRDocument, Expr, LambdaParam, Type } from "./types.js";
+import type { AIRDocument, AirHybridNode, EIRDocument, EirHybridNode, Expr, LambdaParam, Type } from "./types.js";
 import {
 	boolType,
 	fnType as fnTypeCtor,
@@ -12,6 +12,7 @@ import {
 	typeEqual,
 	voidType,
 } from "./types.js";
+import type { EffectRegistry } from "./effects.js";
 import type { AIRCheckContext, EIRCheckContext } from "./typechecker/context.js";
 import { collectLambdaParamsAndLetBindings, identifyBoundNodes } from "./typechecker/bound-nodes.js";
 import { typeCheckNode } from "./typechecker/air-checker.js";
@@ -71,6 +72,10 @@ function dispatchSimpleExpr(expr: Expr, env: TypeEnv): TypeCheckResult | undefin
 		return { type: intType, env };
 	case "fix":
 		return { type: expr.type, env };
+	case "$ref":
+		// $ref type is determined during program type checking
+		// For inline expressions, we defer to the program-level checker
+		return { type: intType, env };
 	default:
 		return undefined;
 	}
@@ -241,7 +246,7 @@ export function typeCheckProgram(
 	const nodeTypes = new Map<string, Type>();
 	const nodeEnvs = new Map<string, TypeEnv>();
 
-	const nodeMap = new Map<string, import("./types.js").AirHybridNode>();
+	const nodeMap = new Map<string, AirHybridNode>();
 	for (const node of doc.nodes) {
 		nodeMap.set(node.id, node);
 	}
@@ -250,9 +255,22 @@ export function typeCheckProgram(
 	const boundNodes = identifyBoundNodes(doc.nodes, nodeMap);
 
 	return typeCheckProgramNodes(
-		{ checker, nodeMap, nodeTypes, nodeEnvs, env: emptyTypeEnv(), lambdaParams, boundNodes },
+		{ checker, nodeMap, nodeTypes, nodeEnvs, env: emptyTypeEnv(), lambdaParams, boundNodes, docDefs: getDocDefs(doc) },
 		doc,
 	);
+}
+
+/** Get the full document root for JSON Pointer navigation. */
+function getDocDefs(doc: AIRDocument): Record<string, unknown> {
+	// Extract $defs safely using optional chaining and nullish coalescing
+	const hasDefs = "$defs" in doc && typeof doc.$defs === "object" && doc.$defs !== null;
+	const defs: Record<string, unknown> = hasDefs ? { ...doc.$defs as Record<string, unknown> } : {};
+	return {
+		$defs: defs,
+		nodes: doc.nodes,
+		result: doc.result,
+		version: doc.version,
+	};
 }
 
 function typeCheckProgramNodes(
@@ -282,10 +300,10 @@ function typeCheckProgramNodes(
 
 /** Input for EIR program type checking. */
 export interface EIRProgramInput {
-	doc: import("./types.js").EIRDocument;
+	doc: EIRDocument;
 	registry: OperatorRegistry;
 	defs: Defs;
-	effects: import("./effects.js").EffectRegistry;
+	effects: EffectRegistry;
 }
 
 /**
@@ -303,7 +321,7 @@ function runEIRTypeCheck(
 	const checker = new TypeChecker(input.registry, input.defs);
 	const ctx: EIRCheckContext = {
 		checker,
-		nodeMap: new Map<string, import("./types.js").EirHybridNode>(),
+		nodeMap: new Map<string, EirHybridNode>(),
 		nodeTypes: new Map<string, Type>(),
 		nodeEnvs: new Map<string, TypeEnv>(),
 		mutableTypes: new Map<string, Type>(),
@@ -311,6 +329,7 @@ function runEIRTypeCheck(
 		effects: input.effects,
 		lambdaParams: new Set<string>(),
 		boundNodes: new Set<string>(),
+		docDefs: getEIRDocDefs(input.doc),
 	};
 
 	for (const node of input.doc.nodes) {
@@ -320,9 +339,21 @@ function runEIRTypeCheck(
 	return typeCheckEIRProgramNodes(ctx, input.doc);
 }
 
+function getEIRDocDefs(doc: EIRDocument): Record<string, unknown> | undefined {
+	// Extract $defs safely using optional chaining and nullish coalescing
+	const hasDefs = "$defs" in doc && typeof doc.$defs === "object" && doc.$defs !== null;
+	const defs: Record<string, unknown> = hasDefs ? { ...doc.$defs as Record<string, unknown> } : {};
+	return {
+		$defs: defs,
+		nodes: doc.nodes,
+		result: doc.result,
+		version: doc.version,
+	};
+}
+
 function typeCheckEIRProgramNodes(
 	ctx: EIRCheckContext,
-	doc: import("./types.js").EIRDocument,
+	doc: EIRDocument,
 ): { nodeTypes: Map<string, Type>; resultType: Type } {
 	for (const node of doc.nodes) {
 		const env = emptyTypeEnv();
