@@ -3,35 +3,12 @@
 	"$id": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/spiral.schema.json",
 	"$defs": {
 		"AIRDef": {
+			"title": "AIR Definition",
+			"description": "Reusable pure function definition scoped to AIR",
 			"type": "object",
 			"properties": {
 				"body": {
-					"anyOf": [
-						{
-							"$ref": "#/$defs/LitExpr"
-						},
-						{
-							"$ref": "#/$defs/RefExpr"
-						},
-						{
-							"$ref": "#/$defs/VarExpr"
-						},
-						{
-							"$ref": "#/$defs/CallExpr"
-						},
-						{
-							"$ref": "#/$defs/IfExpr"
-						},
-						{
-							"$ref": "#/$defs/LetExpr"
-						},
-						{
-							"$ref": "#/$defs/AirRefExpr"
-						},
-						{
-							"$ref": "#/$defs/PredicateExpr"
-						}
-					]
+					"$ref": "#/$defs/AirExpr"
 				},
 				"name": {
 					"type": "string"
@@ -59,7 +36,52 @@
 			],
 			"id": "AIRDef"
 		},
+		"AirExpr": {
+			"anyOf": [
+				{
+					"$ref": "#/$defs/LitExpr"
+				},
+				{
+					"$ref": "#/$defs/RefExpr"
+				},
+				{
+					"$ref": "#/$defs/VarExpr"
+				},
+				{
+					"$ref": "#/$defs/CallExpr"
+				},
+				{
+					"$ref": "#/$defs/IfExpr"
+				},
+				{
+					"$ref": "#/$defs/LetExpr"
+				},
+				{
+					"$ref": "#/$defs/AirRefExpr"
+				},
+				{
+					"$ref": "#/$defs/PredicateExpr"
+				},
+				{
+					"$ref": "#/$defs/RecordExpr"
+				},
+				{
+					"$ref": "#/$defs/ListOfExpr"
+				},
+				{
+					"$ref": "#/$defs/MatchExpr"
+				},
+				{
+					"$ref": "#/$defs/RefPointerExpr"
+				}
+			],
+			"description": "Pure, bounded expression (no recursion or side effects)",
+			"id": "AirExpr",
+			"title": "AIR Expression"
+		},
 		"AirRefExpr": {
+			"title": "AIR Definition Reference",
+			"description": "Call to a reusable AIR definition by namespace and name",
 			"type": "object",
 			"properties": {
 				"args": {
@@ -88,7 +110,52 @@
 			],
 			"id": "AirRefExpr"
 		},
+		"AsyncFnType": {
+			"title": "Async Function Type",
+			"description": "Asynchronous function returning a Future",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "async"
+				},
+				"params": {
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/Type"
+					}
+				},
+				"returns": {
+					"$ref": "#/$defs/FutureType"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"params",
+				"returns"
+			],
+			"id": "AsyncFnType"
+		},
+		"BoolType": {
+			"title": "Boolean Type",
+			"description": "Boolean truth value type",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "bool"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind"
+			],
+			"id": "BoolType"
+		},
 		"CallExpr": {
+			"title": "Call Expression",
+			"description": "Namespaced operator call (e.g., core:add)",
 			"type": "object",
 			"properties": {
 				"args": {
@@ -124,6 +191,226 @@
 			],
 			"id": "CallExpr"
 		},
+		"CallFnExpr": {
+			"title": "Function Call Expression",
+			"description": "Invocation of a first-class function node with arguments",
+			"type": "object",
+			"properties": {
+				"args": {
+					"type": "array",
+					"items": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"$ref": "#/$defs/Expr"
+							}
+						]
+					}
+				},
+				"fn": {
+					"type": "string"
+				},
+				"kind": {
+					"type": "string",
+					"const": "callExpr"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"fn",
+				"args"
+			],
+			"id": "CallFnExpr"
+		},
+		"ChannelType": {
+			"title": "Channel Type",
+			"description": "Typed communication channel between concurrent tasks",
+			"type": "object",
+			"properties": {
+				"channelType": {
+					"type": "string",
+					"enum": [
+						"mpsc",
+						"spsc",
+						"mpmc",
+						"broadcast"
+					]
+				},
+				"kind": {
+					"type": "string",
+					"const": "channel"
+				},
+				"of": {
+					"$ref": "#/$defs/Type"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"channelType",
+				"of"
+			],
+			"id": "ChannelType"
+		},
+		"CirExpr": {
+			"anyOf": [
+				{
+					"$ref": "#/$defs/LitExpr"
+				},
+				{
+					"$ref": "#/$defs/RefExpr"
+				},
+				{
+					"$ref": "#/$defs/VarExpr"
+				},
+				{
+					"$ref": "#/$defs/CallExpr"
+				},
+				{
+					"$ref": "#/$defs/IfExpr"
+				},
+				{
+					"$ref": "#/$defs/LetExpr"
+				},
+				{
+					"$ref": "#/$defs/AirRefExpr"
+				},
+				{
+					"$ref": "#/$defs/PredicateExpr"
+				},
+				{
+					"$ref": "#/$defs/RecordExpr"
+				},
+				{
+					"$ref": "#/$defs/ListOfExpr"
+				},
+				{
+					"$ref": "#/$defs/MatchExpr"
+				},
+				{
+					"$ref": "#/$defs/RefPointerExpr"
+				},
+				{
+					"$ref": "#/$defs/LambdaExpr"
+				},
+				{
+					"$ref": "#/$defs/CallFnExpr"
+				},
+				{
+					"$ref": "#/$defs/FixExpr"
+				},
+				{
+					"$ref": "#/$defs/DoExpr"
+				}
+			],
+			"description": "Functional expression with lambdas and recursion (no side effects)",
+			"id": "CirExpr",
+			"title": "CIR Expression"
+		},
+		"Def": {
+			"title": "Definition",
+			"description": "A definition in $defs (expression, node, or type)",
+			"type": "object",
+			"properties": {
+				"type": {
+					"$ref": "#/$defs/Type"
+				},
+				"expr": {
+					"anyOf": [
+						{
+							"$ref": "#/$defs/Expr"
+						},
+						{
+							"type": "string"
+						}
+					]
+				},
+				"node": {
+					"anyOf": [
+						{
+							"type": "object",
+							"properties": {
+								"type": {
+									"$ref": "#/$defs/Type"
+								},
+								"expr": {
+									"$ref": "#/$defs/Expr"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"additionalProperties": false,
+							"required": [
+								"id",
+								"expr"
+							]
+						},
+						{
+							"type": "object",
+							"properties": {
+								"type": {
+									"$ref": "#/$defs/Type"
+								},
+								"blocks": {
+									"type": "array",
+									"items": {
+										"$ref": "#/$defs/LirBlock"
+									}
+								},
+								"entry": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"additionalProperties": false,
+							"required": [
+								"id",
+								"blocks",
+								"entry"
+							]
+						}
+					]
+				}
+			},
+			"additionalProperties": false,
+			"id": "Def"
+		},
+		"DoExpr": {
+			"title": "Do Expression",
+			"description": "Sequence of expressions returning the last value",
+			"type": "object",
+			"properties": {
+				"exprs": {
+					"type": "array",
+					"items": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"$ref": "#/$defs/Expr"
+							}
+						]
+					}
+				},
+				"kind": {
+					"type": "string",
+					"const": "do"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"exprs"
+			],
+			"id": "DoExpr"
+		},
 		"Expr": {
 			"anyOf": [
 				{
@@ -151,141 +438,110 @@
 					"$ref": "#/$defs/PredicateExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"type": {
-							"$ref": "#/$defs/Type"
-						},
-						"body": {
-							"type": "string"
-						},
-						"kind": {
-							"type": "string",
-							"const": "lambda"
-						},
-						"params": {
-							"type": "array",
-							"items": {
-								"anyOf": [
-									{
-										"type": "string"
-									},
-									{
-										"type": "object",
-										"properties": {
-											"type": {
-												"$ref": "#/$defs/Type"
-											},
-											"default": {
-												"$ref": "#/$defs/Expr"
-											},
-											"name": {
-												"type": "string"
-											},
-											"optional": {
-												"type": "boolean"
-											}
-										},
-										"additionalProperties": false,
-										"required": [
-											"name"
-										]
-									}
-								]
-							}
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"params",
-						"body",
-						"type"
-					]
+					"$ref": "#/$defs/RecordExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"args": {
-							"type": "array",
-							"items": {
-								"anyOf": [
-									{
-										"type": "string"
-									},
-									{
-										"$ref": "#/$defs/Expr"
-									}
-								]
-							}
-						},
-						"fn": {
-							"type": "string"
-						},
-						"kind": {
-							"type": "string",
-							"const": "callExpr"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"fn",
-						"args"
-					]
+					"$ref": "#/$defs/ListOfExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"type": {
-							"$ref": "#/$defs/Type"
-						},
-						"fn": {
-							"type": "string"
-						},
-						"kind": {
-							"type": "string",
-							"const": "fix"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"fn",
-						"type"
-					]
+					"$ref": "#/$defs/MatchExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"exprs": {
-							"type": "array",
-							"items": {
-								"anyOf": [
-									{
-										"type": "string"
-									},
-									{
-										"$ref": "#/$defs/Expr"
-									}
-								]
-							}
-						},
-						"kind": {
-							"type": "string",
-							"const": "do"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"exprs"
-					]
+					"$ref": "#/$defs/RefPointerExpr"
+				},
+				{
+					"$ref": "#/$defs/LambdaExpr"
+				},
+				{
+					"$ref": "#/$defs/CallFnExpr"
+				},
+				{
+					"$ref": "#/$defs/FixExpr"
+				},
+				{
+					"$ref": "#/$defs/DoExpr"
 				}
 			],
-			"id": "Expr"
+			"description": "Wide expression union used for recursive inline expressions",
+			"id": "Expr",
+			"title": "Expression"
+		},
+		"FixExpr": {
+			"title": "Fix-Point Combinator",
+			"description": "Y-combinator for general recursion (CIR and above)",
+			"type": "object",
+			"properties": {
+				"type": {
+					"$ref": "#/$defs/Type"
+				},
+				"fn": {
+					"type": "string"
+				},
+				"kind": {
+					"type": "string",
+					"const": "fix"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"fn",
+				"type"
+			],
+			"id": "FixExpr"
+		},
+		"FloatType": {
+			"title": "Float Type",
+			"description": "IEEE 754 floating-point type",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "float"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind"
+			],
+			"id": "FloatType"
+		},
+		"FnType": {
+			"title": "Function Type",
+			"description": "Function signature with parameter and return types",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "fn"
+				},
+				"optionalParams": {
+					"type": "array",
+					"items": {
+						"type": "boolean"
+					}
+				},
+				"params": {
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/Type"
+					}
+				},
+				"returns": {
+					"$ref": "#/$defs/Type"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"params",
+				"returns"
+			],
+			"id": "FnType"
 		},
 		"FunctionSignature": {
+			"title": "Function Signature",
+			"description": "Declared function signature with purity annotation",
 			"type": "object",
 			"properties": {
 				"name": {
@@ -317,7 +573,29 @@
 			],
 			"id": "FunctionSignature"
 		},
+		"FutureType": {
+			"title": "Future Type",
+			"description": "Asynchronous value that resolves later",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "future"
+				},
+				"of": {
+					"$ref": "#/$defs/Type"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"of"
+			],
+			"id": "FutureType"
+		},
 		"IfExpr": {
+			"title": "If Expression",
+			"description": "Conditional expression with then/else branches",
 			"type": "object",
 			"properties": {
 				"type": {
@@ -367,7 +645,102 @@
 			],
 			"id": "IfExpr"
 		},
+		"ImportEntry": {
+			"title": "Import Entry",
+			"description": "Single entry in $imports object",
+			"type": "object",
+			"properties": {
+				"$ref": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"$ref"
+			],
+			"id": "ImportEntry"
+		},
+		"IntType": {
+			"title": "Integer Type",
+			"description": "Arbitrary-precision integer type",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "int"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind"
+			],
+			"id": "IntType"
+		},
+		"LambdaExpr": {
+			"title": "Lambda Expression",
+			"description": "Anonymous function with parameters and a body node",
+			"type": "object",
+			"properties": {
+				"type": {
+					"$ref": "#/$defs/Type"
+				},
+				"body": {
+					"type": "string"
+				},
+				"kind": {
+					"type": "string",
+					"const": "lambda"
+				},
+				"params": {
+					"type": "array",
+					"items": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"$ref": "#/$defs/LambdaParam"
+							}
+						]
+					}
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"params",
+				"body",
+				"type"
+			],
+			"id": "LambdaExpr"
+		},
+		"LambdaParam": {
+			"title": "Lambda Parameter",
+			"description": "Named parameter with optional type, default value, and optionality flag",
+			"type": "object",
+			"properties": {
+				"type": {
+					"$ref": "#/$defs/Type"
+				},
+				"default": {
+					"$ref": "#/$defs/Expr"
+				},
+				"name": {
+					"type": "string"
+				},
+				"optional": {
+					"type": "boolean"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"name"
+			],
+			"id": "LambdaParam"
+		},
 		"LetExpr": {
+			"title": "Let Expression",
+			"description": "Local binding that scopes a name to a value within a body",
 			"type": "object",
 			"properties": {
 				"type": {
@@ -410,7 +783,179 @@
 			],
 			"id": "LetExpr"
 		},
+		"LirBlock": {
+			"title": "Basic Block",
+			"description": "Sequence of instructions ending with a control-flow terminator",
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"instructions": {
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/LirInstruction"
+					}
+				},
+				"terminator": {
+					"$ref": "#/$defs/LirTerminator"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"id",
+				"instructions",
+				"terminator"
+			],
+			"id": "LirBlock"
+		},
+		"LirInsAssign": {
+			"title": "LIR Assign Instruction",
+			"description": "Assign an expression result to a target variable",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "assign"
+				},
+				"target": {
+					"type": "string"
+				},
+				"value": {
+					"$ref": "#/$defs/CirExpr"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"target",
+				"value"
+			],
+			"id": "LirInsAssign"
+		},
+		"LirInsAssignRef": {
+			"title": "LIR Assign-Ref Instruction",
+			"description": "Assign a value to a mutable reference cell",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "assignRef"
+				},
+				"target": {
+					"type": "string"
+				},
+				"value": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"target",
+				"value"
+			],
+			"id": "LirInsAssignRef"
+		},
+		"LirInsCall": {
+			"title": "LIR Call Instruction",
+			"description": "Direct function call storing result in target",
+			"type": "object",
+			"properties": {
+				"args": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"callee": {
+					"type": "string"
+				},
+				"kind": {
+					"type": "string",
+					"const": "call"
+				},
+				"target": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"target",
+				"callee",
+				"args"
+			],
+			"id": "LirInsCall"
+		},
+		"LirInsEffect": {
+			"title": "LIR Effect Instruction",
+			"description": "Side-effecting operation within a basic block",
+			"type": "object",
+			"properties": {
+				"args": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"kind": {
+					"type": "string",
+					"const": "effect"
+				},
+				"op": {
+					"type": "string"
+				},
+				"target": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"op",
+				"args"
+			],
+			"id": "LirInsEffect"
+		},
+		"LirInsOp": {
+			"title": "LIR Operator Instruction",
+			"description": "Namespaced operator application storing result in target",
+			"type": "object",
+			"properties": {
+				"args": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"kind": {
+					"type": "string",
+					"const": "op"
+				},
+				"name": {
+					"type": "string"
+				},
+				"ns": {
+					"type": "string"
+				},
+				"target": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"target",
+				"ns",
+				"name",
+				"args"
+			],
+			"id": "LirInsOp"
+		},
 		"LirInsPhi": {
+			"title": "LIR Phi Instruction",
+			"description": "SSA phi node selecting a value based on predecessor block",
 			"type": "object",
 			"properties": {
 				"kind": {
@@ -448,7 +993,34 @@
 			],
 			"id": "LirInsPhi"
 		},
+		"LirInstruction": {
+			"anyOf": [
+				{
+					"$ref": "#/$defs/LirInsAssign"
+				},
+				{
+					"$ref": "#/$defs/LirInsCall"
+				},
+				{
+					"$ref": "#/$defs/LirInsOp"
+				},
+				{
+					"$ref": "#/$defs/LirInsPhi"
+				},
+				{
+					"$ref": "#/$defs/LirInsEffect"
+				},
+				{
+					"$ref": "#/$defs/LirInsAssignRef"
+				}
+			],
+			"description": "Single instruction within a basic block",
+			"id": "LirInstruction",
+			"title": "LIR Instruction"
+		},
 		"LirTermBranch": {
+			"title": "Branch Terminator",
+			"description": "Conditional branch to then or else block based on a condition",
 			"type": "object",
 			"properties": {
 				"cond": {
@@ -475,6 +1047,8 @@
 			"id": "LirTermBranch"
 		},
 		"LirTermExit": {
+			"title": "Exit Terminator",
+			"description": "Terminate program execution with an optional exit code",
 			"type": "object",
 			"properties": {
 				"code": {
@@ -499,6 +1073,8 @@
 			"id": "LirTermExit"
 		},
 		"LirTermJump": {
+			"title": "Jump Terminator",
+			"description": "Unconditional jump to a target block",
 			"type": "object",
 			"properties": {
 				"kind": {
@@ -517,6 +1093,8 @@
 			"id": "LirTermJump"
 		},
 		"LirTermReturn": {
+			"title": "Return Terminator",
+			"description": "Return a value from the current function",
 			"type": "object",
 			"properties": {
 				"kind": {
@@ -533,7 +1111,81 @@
 			],
 			"id": "LirTermReturn"
 		},
+		"LirTerminator": {
+			"anyOf": [
+				{
+					"$ref": "#/$defs/LirTermJump"
+				},
+				{
+					"$ref": "#/$defs/LirTermBranch"
+				},
+				{
+					"$ref": "#/$defs/LirTermReturn"
+				},
+				{
+					"$ref": "#/$defs/LirTermExit"
+				}
+			],
+			"description": "Control-flow terminator ending a basic block",
+			"id": "LirTerminator",
+			"title": "LIR Terminator"
+		},
+		"ListOfExpr": {
+			"title": "ListOf Expression",
+			"description": "Construct a list from computed node references and inline expressions",
+			"type": "object",
+			"properties": {
+				"type": {
+					"$ref": "#/$defs/Type"
+				},
+				"elements": {
+					"type": "array",
+					"items": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"$ref": "#/$defs/Expr"
+							}
+						]
+					}
+				},
+				"kind": {
+					"type": "string",
+					"const": "listOf"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"elements"
+			],
+			"id": "ListOfExpr"
+		},
+		"ListType": {
+			"title": "List Type",
+			"description": "Ordered sequence of elements",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "list"
+				},
+				"of": {
+					"$ref": "#/$defs/Type"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"of"
+			],
+			"id": "ListType"
+		},
 		"LitExpr": {
+			"title": "Literal Expression",
+			"description": "Constant value with an explicit type annotation",
 			"type": "object",
 			"properties": {
 				"type": {
@@ -553,7 +1205,140 @@
 			],
 			"id": "LitExpr"
 		},
+		"MapType": {
+			"title": "Map Type",
+			"description": "Key-value associative container",
+			"type": "object",
+			"properties": {
+				"key": {
+					"$ref": "#/$defs/Type"
+				},
+				"kind": {
+					"type": "string",
+					"const": "map"
+				},
+				"value": {
+					"$ref": "#/$defs/Type"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"key",
+				"value"
+			],
+			"id": "MapType"
+		},
+		"MatchExpr": {
+			"title": "Match Expression",
+			"description": "Multi-way string matching that evaluates the body of the first matching case",
+			"type": "object",
+			"properties": {
+				"type": {
+					"$ref": "#/$defs/Type"
+				},
+				"default": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "#/$defs/Expr"
+						}
+					]
+				},
+				"cases": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"body": {
+								"anyOf": [
+									{
+										"type": "string"
+									},
+									{
+										"$ref": "#/$defs/Expr"
+									}
+								]
+							},
+							"pattern": {
+								"type": "string"
+							}
+						},
+						"additionalProperties": false,
+						"required": [
+							"pattern",
+							"body"
+						]
+					}
+				},
+				"kind": {
+					"type": "string",
+					"const": "match"
+				},
+				"value": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "#/$defs/Expr"
+						}
+					]
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"value",
+				"cases"
+			],
+			"id": "MatchExpr"
+		},
+		"OpaqueType": {
+			"title": "Opaque Type",
+			"description": "Named opaque type whose internal structure is hidden",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "opaque"
+				},
+				"name": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"name"
+			],
+			"id": "OpaqueType"
+		},
+		"OptionType": {
+			"title": "Option Type",
+			"description": "Nullable wrapper type (Some or None)",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "option"
+				},
+				"of": {
+					"$ref": "#/$defs/Type"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"of"
+			],
+			"id": "OptionType"
+		},
 		"PredicateExpr": {
+			"title": "Predicate Expression",
+			"description": "Type predicate that always returns true for its argument",
 			"type": "object",
 			"properties": {
 				"kind": {
@@ -575,7 +1360,55 @@
 			],
 			"id": "PredicateExpr"
 		},
+		"RecordExpr": {
+			"title": "Record Expression",
+			"description": "Construct a map/record from string keys and computed values",
+			"type": "object",
+			"properties": {
+				"type": {
+					"$ref": "#/$defs/Type"
+				},
+				"fields": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"key": {
+								"type": "string"
+							},
+							"value": {
+								"anyOf": [
+									{
+										"type": "string"
+									},
+									{
+										"$ref": "#/$defs/Expr"
+									}
+								]
+							}
+						},
+						"additionalProperties": false,
+						"required": [
+							"key",
+							"value"
+						]
+					}
+				},
+				"kind": {
+					"type": "string",
+					"const": "record"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"fields"
+			],
+			"id": "RecordExpr"
+		},
 		"RefExpr": {
+			"title": "Reference Expression",
+			"description": "Reference to another node by its ID",
 			"type": "object",
 			"properties": {
 				"id": {
@@ -593,312 +1426,179 @@
 			],
 			"id": "RefExpr"
 		},
+		"RefNode": {
+			"title": "Node Reference",
+			"description": "Node-level JSON Pointer reference for aliasing",
+			"type": "object",
+			"properties": {
+				"$ref": {
+					"type": "string"
+				},
+				"id": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"id",
+				"$ref"
+			],
+			"id": "RefNode"
+		},
+		"RefPointerExpr": {
+			"title": "JSON Pointer Reference",
+			"description": "RFC 6901 JSON Pointer reference for deduplication",
+			"type": "object",
+			"properties": {
+				"$ref": {
+					"type": "string"
+				},
+				"kind": {
+					"type": "string",
+					"const": "$ref"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"$ref"
+			],
+			"id": "RefPointerExpr"
+		},
+		"RefType": {
+			"title": "Reference Type",
+			"description": "Mutable reference to a value",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "ref"
+				},
+				"of": {
+					"$ref": "#/$defs/Type"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"of"
+			],
+			"id": "RefType"
+		},
+		"SetType": {
+			"title": "Set Type",
+			"description": "Unordered collection of unique elements",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "set"
+				},
+				"of": {
+					"$ref": "#/$defs/Type"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"of"
+			],
+			"id": "SetType"
+		},
+		"StringType": {
+			"title": "String Type",
+			"description": "UTF-8 string type",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind"
+			],
+			"id": "StringType"
+		},
+		"TaskType": {
+			"title": "Task Type",
+			"description": "Spawnable concurrent task with a return type",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "task"
+				},
+				"returns": {
+					"$ref": "#/$defs/Type"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"returns"
+			],
+			"id": "TaskType"
+		},
 		"Type": {
 			"anyOf": [
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "bool"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind"
-					]
+					"$ref": "#/$defs/BoolType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "int"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind"
-					]
+					"$ref": "#/$defs/IntType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "float"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind"
-					]
+					"$ref": "#/$defs/FloatType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "string"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind"
-					]
+					"$ref": "#/$defs/StringType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "void"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind"
-					]
+					"$ref": "#/$defs/VoidType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "set"
-						},
-						"of": {
-							"$ref": "#/$defs/Type"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"of"
-					]
+					"$ref": "#/$defs/SetType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "list"
-						},
-						"of": {
-							"$ref": "#/$defs/Type"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"of"
-					]
+					"$ref": "#/$defs/ListType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"key": {
-							"$ref": "#/$defs/Type"
-						},
-						"kind": {
-							"type": "string",
-							"const": "map"
-						},
-						"value": {
-							"$ref": "#/$defs/Type"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"key",
-						"value"
-					]
+					"$ref": "#/$defs/MapType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "option"
-						},
-						"of": {
-							"$ref": "#/$defs/Type"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"of"
-					]
+					"$ref": "#/$defs/OptionType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "opaque"
-						},
-						"name": {
-							"type": "string"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"name"
-					]
+					"$ref": "#/$defs/OpaqueType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "fn"
-						},
-						"optionalParams": {
-							"type": "array",
-							"items": {
-								"type": "boolean"
-							}
-						},
-						"params": {
-							"type": "array",
-							"items": {
-								"$ref": "#/$defs/Type"
-							}
-						},
-						"returns": {
-							"$ref": "#/$defs/Type"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"params",
-						"returns"
-					]
+					"$ref": "#/$defs/FnType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "ref"
-						},
-						"of": {
-							"$ref": "#/$defs/Type"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"of"
-					]
+					"$ref": "#/$defs/RefType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "future"
-						},
-						"of": {
-							"$ref": "#/$defs/Type"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"of"
-					]
+					"$ref": "#/$defs/FutureType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"channelType": {
-							"type": "string",
-							"enum": [
-								"mpsc",
-								"spsc",
-								"mpmc",
-								"broadcast"
-							]
-						},
-						"kind": {
-							"type": "string",
-							"const": "channel"
-						},
-						"of": {
-							"$ref": "#/$defs/Type"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"channelType",
-						"of"
-					]
+					"$ref": "#/$defs/ChannelType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "task"
-						},
-						"returns": {
-							"$ref": "#/$defs/Type"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"returns"
-					]
+					"$ref": "#/$defs/TaskType"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "async"
-						},
-						"params": {
-							"type": "array",
-							"items": {
-								"$ref": "#/$defs/Type"
-							}
-						},
-						"returns": {
-							"type": "object",
-							"properties": {
-								"kind": {
-									"type": "string",
-									"const": "future"
-								},
-								"of": {
-									"$ref": "#/$defs/Type"
-								}
-							},
-							"additionalProperties": false,
-							"required": [
-								"kind",
-								"of"
-							]
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"params",
-						"returns"
-					]
+					"$ref": "#/$defs/AsyncFnType"
 				}
 			],
-			"id": "Type"
+			"description": "Union of all SPIRAL type annotations",
+			"id": "Type",
+			"title": "Type"
 		},
 		"VarExpr": {
+			"title": "Variable Expression",
+			"description": "Named variable reference (e.g., lambda parameter)",
 			"type": "object",
 			"properties": {
 				"kind": {
@@ -915,1588 +1615,39 @@
 				"name"
 			],
 			"id": "VarExpr"
+		},
+		"VoidType": {
+			"title": "Void Type",
+			"description": "Unit type representing no value",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "void"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind"
+			],
+			"id": "VoidType"
 		}
 	},
 	"title": "SPIRAL Document",
 	"description": "SPIRALDocument",
 	"anyOf": [
 		{
-			"description": "AIRDocument",
-			"type": "object",
-			"properties": {
-				"airDefs": {
-					"type": "array",
-					"items": {
-						"$ref": "#/$defs/AIRDef"
-					}
-				},
-				"capabilities": {
-					"type": "array",
-					"items": {
-						"type": "string"
-					}
-				},
-				"functionSigs": {
-					"type": "array",
-					"items": {
-						"$ref": "#/$defs/FunctionSignature"
-					}
-				},
-				"nodes": {
-					"type": "array",
-					"items": {
-						"anyOf": [
-							{
-								"type": "object",
-								"properties": {
-									"type": {
-										"$ref": "#/$defs/Type"
-									},
-									"expr": {
-										"anyOf": [
-											{
-												"$ref": "#/$defs/LitExpr"
-											},
-											{
-												"$ref": "#/$defs/RefExpr"
-											},
-											{
-												"$ref": "#/$defs/VarExpr"
-											},
-											{
-												"$ref": "#/$defs/CallExpr"
-											},
-											{
-												"$ref": "#/$defs/IfExpr"
-											},
-											{
-												"$ref": "#/$defs/LetExpr"
-											},
-											{
-												"$ref": "#/$defs/AirRefExpr"
-											},
-											{
-												"$ref": "#/$defs/PredicateExpr"
-											}
-										]
-									},
-									"id": {
-										"type": "string"
-									}
-								},
-								"additionalProperties": false,
-								"required": [
-									"id",
-									"expr"
-								]
-							},
-							{
-								"type": "object",
-								"properties": {
-									"type": {
-										"$ref": "#/$defs/Type"
-									},
-									"blocks": {
-										"type": "array",
-										"items": {
-											"type": "object",
-											"properties": {
-												"id": {
-													"type": "string"
-												},
-												"instructions": {
-													"type": "array",
-													"items": {
-														"anyOf": [
-															{
-																"type": "object",
-																"properties": {
-																	"kind": {
-																		"type": "string",
-																		"const": "assign"
-																	},
-																	"target": {
-																		"type": "string"
-																	},
-																	"value": {
-																		"anyOf": [
-																			{
-																				"$ref": "#/$defs/LitExpr"
-																			},
-																			{
-																				"$ref": "#/$defs/RefExpr"
-																			},
-																			{
-																				"$ref": "#/$defs/VarExpr"
-																			},
-																			{
-																				"$ref": "#/$defs/CallExpr"
-																			},
-																			{
-																				"$ref": "#/$defs/IfExpr"
-																			},
-																			{
-																				"$ref": "#/$defs/LetExpr"
-																			},
-																			{
-																				"$ref": "#/$defs/AirRefExpr"
-																			},
-																			{
-																				"$ref": "#/$defs/PredicateExpr"
-																			}
-																		]
-																	}
-																},
-																"additionalProperties": false,
-																"required": [
-																	"kind",
-																	"target",
-																	"value"
-																]
-															},
-															{
-																"type": "object",
-																"properties": {
-																	"args": {
-																		"type": "array",
-																		"items": {
-																			"type": "string"
-																		}
-																	},
-																	"kind": {
-																		"type": "string",
-																		"const": "op"
-																	},
-																	"name": {
-																		"type": "string"
-																	},
-																	"ns": {
-																		"type": "string"
-																	},
-																	"target": {
-																		"type": "string"
-																	}
-																},
-																"additionalProperties": false,
-																"required": [
-																	"kind",
-																	"target",
-																	"ns",
-																	"name",
-																	"args"
-																]
-															},
-															{
-																"$ref": "#/$defs/LirInsPhi"
-															}
-														]
-													}
-												},
-												"terminator": {
-													"anyOf": [
-														{
-															"$ref": "#/$defs/LirTermJump"
-														},
-														{
-															"$ref": "#/$defs/LirTermBranch"
-														},
-														{
-															"$ref": "#/$defs/LirTermReturn"
-														},
-														{
-															"$ref": "#/$defs/LirTermExit"
-														}
-													]
-												}
-											},
-											"additionalProperties": false,
-											"required": [
-												"id",
-												"instructions",
-												"terminator"
-											]
-										}
-									},
-									"entry": {
-										"type": "string"
-									},
-									"id": {
-										"type": "string"
-									}
-								},
-								"additionalProperties": false,
-								"required": [
-									"id",
-									"blocks",
-									"entry"
-								]
-							}
-						]
-					}
-				},
-				"result": {
-					"type": "string"
-				},
-				"version": {
-					"type": "string",
-					"pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?$"
-				}
-			},
-			"additionalProperties": false,
-			"required": [
-				"version",
-				"airDefs",
-				"nodes",
-				"result"
-			]
+			"$ref": "#/$defs/AIRDocument"
 		},
 		{
-			"description": "CIRDocument",
-			"type": "object",
-			"properties": {
-				"airDefs": {
-					"type": "array",
-					"items": {
-						"$ref": "#/$defs/AIRDef"
-					}
-				},
-				"capabilities": {
-					"type": "array",
-					"items": {
-						"type": "string"
-					}
-				},
-				"functionSigs": {
-					"type": "array",
-					"items": {
-						"$ref": "#/$defs/FunctionSignature"
-					}
-				},
-				"nodes": {
-					"type": "array",
-					"items": {
-						"anyOf": [
-							{
-								"type": "object",
-								"properties": {
-									"type": {
-										"$ref": "#/$defs/Type"
-									},
-									"expr": {
-										"anyOf": [
-											{
-												"$ref": "#/$defs/LitExpr"
-											},
-											{
-												"$ref": "#/$defs/RefExpr"
-											},
-											{
-												"$ref": "#/$defs/VarExpr"
-											},
-											{
-												"$ref": "#/$defs/CallExpr"
-											},
-											{
-												"$ref": "#/$defs/IfExpr"
-											},
-											{
-												"$ref": "#/$defs/LetExpr"
-											},
-											{
-												"$ref": "#/$defs/AirRefExpr"
-											},
-											{
-												"$ref": "#/$defs/PredicateExpr"
-											},
-											{
-												"type": "object",
-												"properties": {
-													"type": {
-														"$ref": "#/$defs/Type"
-													},
-													"body": {
-														"type": "string"
-													},
-													"kind": {
-														"type": "string",
-														"const": "lambda"
-													},
-													"params": {
-														"type": "array",
-														"items": {
-															"anyOf": [
-																{
-																	"type": "string"
-																},
-																{
-																	"type": "object",
-																	"properties": {
-																		"type": {
-																			"$ref": "#/$defs/Type"
-																		},
-																		"default": {
-																			"$ref": "#/$defs/Expr"
-																		},
-																		"name": {
-																			"type": "string"
-																		},
-																		"optional": {
-																			"type": "boolean"
-																		}
-																	},
-																	"additionalProperties": false,
-																	"required": [
-																		"name"
-																	]
-																}
-															]
-														}
-													}
-												},
-												"additionalProperties": false,
-												"required": [
-													"kind",
-													"params",
-													"body",
-													"type"
-												]
-											},
-											{
-												"type": "object",
-												"properties": {
-													"args": {
-														"type": "array",
-														"items": {
-															"anyOf": [
-																{
-																	"type": "string"
-																},
-																{
-																	"$ref": "#/$defs/Expr"
-																}
-															]
-														}
-													},
-													"fn": {
-														"type": "string"
-													},
-													"kind": {
-														"type": "string",
-														"const": "callExpr"
-													}
-												},
-												"additionalProperties": false,
-												"required": [
-													"kind",
-													"fn",
-													"args"
-												]
-											},
-											{
-												"type": "object",
-												"properties": {
-													"type": {
-														"$ref": "#/$defs/Type"
-													},
-													"fn": {
-														"type": "string"
-													},
-													"kind": {
-														"type": "string",
-														"const": "fix"
-													}
-												},
-												"additionalProperties": false,
-												"required": [
-													"kind",
-													"fn",
-													"type"
-												]
-											},
-											{
-												"type": "object",
-												"properties": {
-													"exprs": {
-														"type": "array",
-														"items": {
-															"anyOf": [
-																{
-																	"type": "string"
-																},
-																{
-																	"$ref": "#/$defs/Expr"
-																}
-															]
-														}
-													},
-													"kind": {
-														"type": "string",
-														"const": "do"
-													}
-												},
-												"additionalProperties": false,
-												"required": [
-													"kind",
-													"exprs"
-												]
-											}
-										]
-									},
-									"id": {
-										"type": "string"
-									}
-								},
-								"additionalProperties": false,
-								"required": [
-									"id",
-									"expr"
-								]
-							},
-							{
-								"type": "object",
-								"properties": {
-									"type": {
-										"$ref": "#/$defs/Type"
-									},
-									"blocks": {
-										"type": "array",
-										"items": {
-											"type": "object",
-											"properties": {
-												"id": {
-													"type": "string"
-												},
-												"instructions": {
-													"type": "array",
-													"items": {
-														"anyOf": [
-															{
-																"type": "object",
-																"properties": {
-																	"kind": {
-																		"type": "string",
-																		"const": "assign"
-																	},
-																	"target": {
-																		"type": "string"
-																	},
-																	"value": {
-																		"anyOf": [
-																			{
-																				"$ref": "#/$defs/LitExpr"
-																			},
-																			{
-																				"$ref": "#/$defs/RefExpr"
-																			},
-																			{
-																				"$ref": "#/$defs/VarExpr"
-																			},
-																			{
-																				"$ref": "#/$defs/CallExpr"
-																			},
-																			{
-																				"$ref": "#/$defs/IfExpr"
-																			},
-																			{
-																				"$ref": "#/$defs/LetExpr"
-																			},
-																			{
-																				"$ref": "#/$defs/AirRefExpr"
-																			},
-																			{
-																				"$ref": "#/$defs/PredicateExpr"
-																			},
-																			{
-																				"type": "object",
-																				"properties": {
-																					"type": {
-																						"$ref": "#/$defs/Type"
-																					},
-																					"body": {
-																						"type": "string"
-																					},
-																					"kind": {
-																						"type": "string",
-																						"const": "lambda"
-																					},
-																					"params": {
-																						"type": "array",
-																						"items": {
-																							"anyOf": [
-																								{
-																									"type": "string"
-																								},
-																								{
-																									"type": "object",
-																									"properties": {
-																										"type": {
-																											"$ref": "#/$defs/Type"
-																										},
-																										"default": {
-																											"$ref": "#/$defs/Expr"
-																										},
-																										"name": {
-																											"type": "string"
-																										},
-																										"optional": {
-																											"type": "boolean"
-																										}
-																									},
-																									"additionalProperties": false,
-																									"required": [
-																										"name"
-																									]
-																								}
-																							]
-																						}
-																					}
-																				},
-																				"additionalProperties": false,
-																				"required": [
-																					"kind",
-																					"params",
-																					"body",
-																					"type"
-																				]
-																			},
-																			{
-																				"type": "object",
-																				"properties": {
-																					"args": {
-																						"type": "array",
-																						"items": {
-																							"anyOf": [
-																								{
-																									"type": "string"
-																								},
-																								{
-																									"$ref": "#/$defs/Expr"
-																								}
-																							]
-																						}
-																					},
-																					"fn": {
-																						"type": "string"
-																					},
-																					"kind": {
-																						"type": "string",
-																						"const": "callExpr"
-																					}
-																				},
-																				"additionalProperties": false,
-																				"required": [
-																					"kind",
-																					"fn",
-																					"args"
-																				]
-																			},
-																			{
-																				"type": "object",
-																				"properties": {
-																					"type": {
-																						"$ref": "#/$defs/Type"
-																					},
-																					"fn": {
-																						"type": "string"
-																					},
-																					"kind": {
-																						"type": "string",
-																						"const": "fix"
-																					}
-																				},
-																				"additionalProperties": false,
-																				"required": [
-																					"kind",
-																					"fn",
-																					"type"
-																				]
-																			},
-																			{
-																				"type": "object",
-																				"properties": {
-																					"exprs": {
-																						"type": "array",
-																						"items": {
-																							"anyOf": [
-																								{
-																									"type": "string"
-																								},
-																								{
-																									"$ref": "#/$defs/Expr"
-																								}
-																							]
-																						}
-																					},
-																					"kind": {
-																						"type": "string",
-																						"const": "do"
-																					}
-																				},
-																				"additionalProperties": false,
-																				"required": [
-																					"kind",
-																					"exprs"
-																				]
-																			}
-																		]
-																	}
-																},
-																"additionalProperties": false,
-																"required": [
-																	"kind",
-																	"target",
-																	"value"
-																]
-															},
-															{
-																"type": "object",
-																"properties": {
-																	"args": {
-																		"type": "array",
-																		"items": {
-																			"type": "string"
-																		}
-																	},
-																	"kind": {
-																		"type": "string",
-																		"const": "op"
-																	},
-																	"name": {
-																		"type": "string"
-																	},
-																	"ns": {
-																		"type": "string"
-																	},
-																	"target": {
-																		"type": "string"
-																	}
-																},
-																"additionalProperties": false,
-																"required": [
-																	"kind",
-																	"target",
-																	"ns",
-																	"name",
-																	"args"
-																]
-															},
-															{
-																"$ref": "#/$defs/LirInsPhi"
-															}
-														]
-													}
-												},
-												"terminator": {
-													"anyOf": [
-														{
-															"$ref": "#/$defs/LirTermJump"
-														},
-														{
-															"$ref": "#/$defs/LirTermBranch"
-														},
-														{
-															"$ref": "#/$defs/LirTermReturn"
-														},
-														{
-															"$ref": "#/$defs/LirTermExit"
-														}
-													]
-												}
-											},
-											"additionalProperties": false,
-											"required": [
-												"id",
-												"instructions",
-												"terminator"
-											]
-										}
-									},
-									"entry": {
-										"type": "string"
-									},
-									"id": {
-										"type": "string"
-									}
-								},
-								"additionalProperties": false,
-								"required": [
-									"id",
-									"blocks",
-									"entry"
-								]
-							}
-						]
-					}
-				},
-				"result": {
-					"type": "string"
-				},
-				"version": {
-					"type": "string",
-					"pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?$"
-				}
-			},
-			"additionalProperties": false,
-			"required": [
-				"version",
-				"airDefs",
-				"nodes",
-				"result"
-			]
+			"$ref": "#/$defs/CIRDocument"
 		},
 		{
-			"description": "EIRDocument",
-			"type": "object",
-			"properties": {
-				"airDefs": {
-					"type": "array",
-					"items": {
-						"$ref": "#/$defs/AIRDef"
-					}
-				},
-				"capabilities": {
-					"type": "array",
-					"items": {
-						"type": "string"
-					}
-				},
-				"functionSigs": {
-					"type": "array",
-					"items": {
-						"$ref": "#/$defs/FunctionSignature"
-					}
-				},
-				"nodes": {
-					"type": "array",
-					"items": {
-						"anyOf": [
-							{
-								"type": "object",
-								"properties": {
-									"type": {
-										"$ref": "#/$defs/Type"
-									},
-									"expr": {
-										"$ref": "#/$defs/EirExpr"
-									},
-									"id": {
-										"type": "string"
-									}
-								},
-								"additionalProperties": false,
-								"required": [
-									"id",
-									"expr"
-								]
-							},
-							{
-								"type": "object",
-								"properties": {
-									"type": {
-										"$ref": "#/$defs/Type"
-									},
-									"blocks": {
-										"type": "array",
-										"items": {
-											"type": "object",
-											"properties": {
-												"id": {
-													"type": "string"
-												},
-												"instructions": {
-													"type": "array",
-													"items": {
-														"anyOf": [
-															{
-																"anyOf": [
-																	{
-																		"type": "object",
-																		"properties": {
-																			"kind": {
-																				"type": "string",
-																				"const": "assign"
-																			},
-																			"target": {
-																				"type": "string"
-																			},
-																			"value": {
-																				"$ref": "#/$defs/EirExpr"
-																			}
-																		},
-																		"additionalProperties": false,
-																		"required": [
-																			"kind",
-																			"target",
-																			"value"
-																		]
-																	},
-																	{
-																		"type": "object",
-																		"properties": {
-																			"args": {
-																				"type": "array",
-																				"items": {
-																					"type": "string"
-																				}
-																			},
-																			"kind": {
-																				"type": "string",
-																				"const": "op"
-																			},
-																			"name": {
-																				"type": "string"
-																			},
-																			"ns": {
-																				"type": "string"
-																			},
-																			"target": {
-																				"type": "string"
-																			}
-																		},
-																		"additionalProperties": false,
-																		"required": [
-																			"kind",
-																			"target",
-																			"ns",
-																			"name",
-																			"args"
-																		]
-																	},
-																	{
-																		"$ref": "#/$defs/LirInsPhi"
-																	},
-																	{
-																		"type": "object",
-																		"properties": {
-																			"args": {
-																				"type": "array",
-																				"items": {
-																					"type": "string"
-																				}
-																			},
-																			"kind": {
-																				"type": "string",
-																				"const": "effect"
-																			},
-																			"op": {
-																				"type": "string"
-																			},
-																			"target": {
-																				"type": "string"
-																			}
-																		},
-																		"additionalProperties": false,
-																		"required": [
-																			"kind",
-																			"target",
-																			"op",
-																			"args"
-																		]
-																	},
-																	{
-																		"type": "object",
-																		"properties": {
-																			"kind": {
-																				"type": "string",
-																				"const": "assignRef"
-																			},
-																			"target": {
-																				"type": "string"
-																			},
-																			"value": {
-																				"type": "string"
-																			}
-																		},
-																		"additionalProperties": false,
-																		"required": [
-																			"kind",
-																			"target",
-																			"value"
-																		]
-																	}
-																]
-															},
-															{
-																"type": "object",
-																"properties": {
-																	"args": {
-																		"type": "array",
-																		"items": {
-																			"type": "string"
-																		}
-																	},
-																	"entry": {
-																		"type": "string"
-																	},
-																	"kind": {
-																		"type": "string",
-																		"const": "spawn"
-																	},
-																	"target": {
-																		"type": "string"
-																	}
-																},
-																"additionalProperties": false,
-																"required": [
-																	"kind",
-																	"target",
-																	"entry"
-																]
-															},
-															{
-																"type": "object",
-																"properties": {
-																	"channel": {
-																		"type": "string"
-																	},
-																	"kind": {
-																		"type": "string",
-																		"const": "channelOp"
-																	},
-																	"op": {
-																		"type": "string",
-																		"enum": [
-																			"send",
-																			"recv",
-																			"trySend",
-																			"tryRecv"
-																		]
-																	},
-																	"target": {
-																		"type": "string"
-																	},
-																	"value": {
-																		"type": "string"
-																	}
-																},
-																"additionalProperties": false,
-																"required": [
-																	"kind",
-																	"op",
-																	"channel"
-																]
-															},
-															{
-																"type": "object",
-																"properties": {
-																	"future": {
-																		"type": "string"
-																	},
-																	"kind": {
-																		"type": "string",
-																		"const": "await"
-																	},
-																	"target": {
-																		"type": "string"
-																	}
-																},
-																"additionalProperties": false,
-																"required": [
-																	"kind",
-																	"target",
-																	"future"
-																]
-															}
-														]
-													}
-												},
-												"terminator": {
-													"anyOf": [
-														{
-															"$ref": "#/$defs/LirTermJump"
-														},
-														{
-															"$ref": "#/$defs/LirTermBranch"
-														},
-														{
-															"$ref": "#/$defs/LirTermReturn"
-														},
-														{
-															"$ref": "#/$defs/LirTermExit"
-														},
-														{
-															"type": "object",
-															"properties": {
-																"branches": {
-																	"type": "array",
-																	"items": {
-																		"type": "object",
-																		"properties": {
-																			"block": {
-																				"type": "string"
-																			},
-																			"taskId": {
-																				"type": "string"
-																			}
-																		},
-																		"additionalProperties": false,
-																		"required": [
-																			"block",
-																			"taskId"
-																		]
-																	}
-																},
-																"continuation": {
-																	"type": "string"
-																},
-																"kind": {
-																	"type": "string",
-																	"const": "fork"
-																}
-															},
-															"additionalProperties": false,
-															"required": [
-																"kind",
-																"branches",
-																"continuation"
-															]
-														},
-														{
-															"type": "object",
-															"properties": {
-																"kind": {
-																	"type": "string",
-																	"const": "join"
-																},
-																"results": {
-																	"type": "array",
-																	"items": {
-																		"type": "string"
-																	}
-																},
-																"tasks": {
-																	"type": "array",
-																	"items": {
-																		"type": "string"
-																	}
-																},
-																"to": {
-																	"type": "string"
-																}
-															},
-															"additionalProperties": false,
-															"required": [
-																"kind",
-																"tasks",
-																"to"
-															]
-														},
-														{
-															"type": "object",
-															"properties": {
-																"future": {
-																	"type": "string"
-																},
-																"kind": {
-																	"type": "string",
-																	"const": "suspend"
-																},
-																"resumeBlock": {
-																	"type": "string"
-																}
-															},
-															"additionalProperties": false,
-															"required": [
-																"kind",
-																"future",
-																"resumeBlock"
-															]
-														}
-													]
-												}
-											},
-											"additionalProperties": false,
-											"required": [
-												"id",
-												"instructions",
-												"terminator"
-											]
-										}
-									},
-									"entry": {
-										"type": "string"
-									},
-									"id": {
-										"type": "string"
-									}
-								},
-								"additionalProperties": false,
-								"required": [
-									"id",
-									"blocks",
-									"entry"
-								]
-							}
-						]
-					}
-				},
-				"result": {
-					"type": "string"
-				},
-				"version": {
-					"type": "string",
-					"pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?$"
-				}
-			},
-			"additionalProperties": false,
-			"required": [
-				"version",
-				"nodes",
-				"result"
-			]
+			"$ref": "#/$defs/EIRDocument"
 		},
 		{
-			"description": "LIRDocument",
-			"type": "object",
-			"properties": {
-				"airDefs": {
-					"type": "array",
-					"items": {
-						"$ref": "#/$defs/AIRDef"
-					}
-				},
-				"capabilities": {
-					"type": "array",
-					"items": {
-						"type": "string"
-					}
-				},
-				"functionSigs": {
-					"type": "array",
-					"items": {
-						"$ref": "#/$defs/FunctionSignature"
-					}
-				},
-				"nodes": {
-					"type": "array",
-					"items": {
-						"anyOf": [
-							{
-								"type": "object",
-								"properties": {
-									"type": {
-										"$ref": "#/$defs/Type"
-									},
-									"expr": {
-										"anyOf": [
-											{
-												"$ref": "#/$defs/LitExpr"
-											},
-											{
-												"$ref": "#/$defs/RefExpr"
-											},
-											{
-												"$ref": "#/$defs/VarExpr"
-											},
-											{
-												"$ref": "#/$defs/CallExpr"
-											},
-											{
-												"$ref": "#/$defs/IfExpr"
-											},
-											{
-												"$ref": "#/$defs/LetExpr"
-											},
-											{
-												"$ref": "#/$defs/AirRefExpr"
-											},
-											{
-												"$ref": "#/$defs/PredicateExpr"
-											},
-											{
-												"type": "object",
-												"properties": {
-													"type": {
-														"$ref": "#/$defs/Type"
-													},
-													"body": {
-														"type": "string"
-													},
-													"kind": {
-														"type": "string",
-														"const": "lambda"
-													},
-													"params": {
-														"type": "array",
-														"items": {
-															"anyOf": [
-																{
-																	"type": "string"
-																},
-																{
-																	"type": "object",
-																	"properties": {
-																		"type": {
-																			"$ref": "#/$defs/Type"
-																		},
-																		"default": {
-																			"$ref": "#/$defs/Expr"
-																		},
-																		"name": {
-																			"type": "string"
-																		},
-																		"optional": {
-																			"type": "boolean"
-																		}
-																	},
-																	"additionalProperties": false,
-																	"required": [
-																		"name"
-																	]
-																}
-															]
-														}
-													}
-												},
-												"additionalProperties": false,
-												"required": [
-													"kind",
-													"params",
-													"body",
-													"type"
-												]
-											},
-											{
-												"type": "object",
-												"properties": {
-													"args": {
-														"type": "array",
-														"items": {
-															"anyOf": [
-																{
-																	"type": "string"
-																},
-																{
-																	"$ref": "#/$defs/Expr"
-																}
-															]
-														}
-													},
-													"fn": {
-														"type": "string"
-													},
-													"kind": {
-														"type": "string",
-														"const": "callExpr"
-													}
-												},
-												"additionalProperties": false,
-												"required": [
-													"kind",
-													"fn",
-													"args"
-												]
-											},
-											{
-												"type": "object",
-												"properties": {
-													"type": {
-														"$ref": "#/$defs/Type"
-													},
-													"fn": {
-														"type": "string"
-													},
-													"kind": {
-														"type": "string",
-														"const": "fix"
-													}
-												},
-												"additionalProperties": false,
-												"required": [
-													"kind",
-													"fn",
-													"type"
-												]
-											},
-											{
-												"type": "object",
-												"properties": {
-													"exprs": {
-														"type": "array",
-														"items": {
-															"anyOf": [
-																{
-																	"type": "string"
-																},
-																{
-																	"$ref": "#/$defs/Expr"
-																}
-															]
-														}
-													},
-													"kind": {
-														"type": "string",
-														"const": "do"
-													}
-												},
-												"additionalProperties": false,
-												"required": [
-													"kind",
-													"exprs"
-												]
-											}
-										]
-									},
-									"id": {
-										"type": "string"
-									}
-								},
-								"additionalProperties": false,
-								"required": [
-									"id",
-									"expr"
-								]
-							},
-							{
-								"type": "object",
-								"properties": {
-									"type": {
-										"$ref": "#/$defs/Type"
-									},
-									"blocks": {
-										"type": "array",
-										"items": {
-											"type": "object",
-											"properties": {
-												"id": {
-													"type": "string"
-												},
-												"instructions": {
-													"type": "array",
-													"items": {
-														"anyOf": [
-															{
-																"$ref": "#/$defs/LirInsAssign"
-															},
-															{
-																"type": "object",
-																"properties": {
-																	"args": {
-																		"type": "array",
-																		"items": {
-																			"type": "string"
-																		}
-																	},
-																	"callee": {
-																		"type": "string"
-																	},
-																	"kind": {
-																		"type": "string",
-																		"const": "call"
-																	},
-																	"target": {
-																		"type": "string"
-																	}
-																},
-																"additionalProperties": false,
-																"required": [
-																	"kind",
-																	"target",
-																	"callee",
-																	"args"
-																]
-															},
-															{
-																"$ref": "#/$defs/LirInsOp"
-															},
-															{
-																"$ref": "#/$defs/LirInsPhi"
-															},
-															{
-																"type": "object",
-																"properties": {
-																	"args": {
-																		"type": "array",
-																		"items": {
-																			"type": "string"
-																		}
-																	},
-																	"kind": {
-																		"type": "string",
-																		"const": "effect"
-																	},
-																	"op": {
-																		"type": "string"
-																	},
-																	"target": {
-																		"type": "string"
-																	}
-																},
-																"additionalProperties": false,
-																"required": [
-																	"kind",
-																	"op",
-																	"args"
-																]
-															},
-															{
-																"type": "object",
-																"properties": {
-																	"kind": {
-																		"type": "string",
-																		"const": "assignRef"
-																	},
-																	"target": {
-																		"type": "string"
-																	},
-																	"value": {
-																		"type": "string"
-																	}
-																},
-																"additionalProperties": false,
-																"required": [
-																	"kind",
-																	"target",
-																	"value"
-																]
-															}
-														]
-													}
-												},
-												"terminator": {
-													"anyOf": [
-														{
-															"$ref": "#/$defs/LirTermJump"
-														},
-														{
-															"$ref": "#/$defs/LirTermBranch"
-														},
-														{
-															"$ref": "#/$defs/LirTermReturn"
-														},
-														{
-															"$ref": "#/$defs/LirTermExit"
-														},
-														{
-															"type": "object",
-															"properties": {
-																"branches": {
-																	"type": "array",
-																	"items": {
-																		"type": "object",
-																		"properties": {
-																			"block": {
-																				"type": "string"
-																			},
-																			"taskId": {
-																				"type": "string"
-																			}
-																		},
-																		"additionalProperties": false,
-																		"required": [
-																			"block",
-																			"taskId"
-																		]
-																	}
-																},
-																"continuation": {
-																	"type": "string"
-																},
-																"kind": {
-																	"type": "string",
-																	"const": "fork"
-																}
-															},
-															"additionalProperties": false,
-															"required": [
-																"kind",
-																"branches",
-																"continuation"
-															]
-														},
-														{
-															"type": "object",
-															"properties": {
-																"kind": {
-																	"type": "string",
-																	"const": "join"
-																},
-																"results": {
-																	"type": "array",
-																	"items": {
-																		"type": "string"
-																	}
-																},
-																"tasks": {
-																	"type": "array",
-																	"items": {
-																		"type": "string"
-																	}
-																},
-																"to": {
-																	"type": "string"
-																}
-															},
-															"additionalProperties": false,
-															"required": [
-																"kind",
-																"tasks",
-																"to"
-															]
-														},
-														{
-															"type": "object",
-															"properties": {
-																"future": {
-																	"type": "string"
-																},
-																"kind": {
-																	"type": "string",
-																	"const": "suspend"
-																},
-																"resumeBlock": {
-																	"type": "string"
-																}
-															},
-															"additionalProperties": false,
-															"required": [
-																"kind",
-																"future",
-																"resumeBlock"
-															]
-														}
-													]
-												}
-											},
-											"additionalProperties": false,
-											"required": [
-												"id",
-												"instructions",
-												"terminator"
-											]
-										}
-									},
-									"entry": {
-										"type": "string"
-									},
-									"id": {
-										"type": "string"
-									}
-								},
-								"additionalProperties": false,
-								"required": [
-									"id",
-									"blocks",
-									"entry"
-								]
-							}
-						]
-					}
-				},
-				"result": {
-					"type": "string"
-				},
-				"version": {
-					"type": "string",
-					"pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?$"
-				}
-			},
-			"additionalProperties": false,
-			"required": [
-				"version",
-				"nodes",
-				"result"
-			]
+			"$ref": "#/$defs/LIRDocument"
 		}
-	]
+	],
+	"id": "SPIRALDocument"
 }

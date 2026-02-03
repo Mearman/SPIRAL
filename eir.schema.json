@@ -2,6 +2,170 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/eir.schema.json",
 	"$defs": {
+		"EirAssignExpr": {
+			"title": "Assignment Expression",
+			"description": "Assign a value to a mutable variable",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "assign"
+				},
+				"target": {
+					"type": "string"
+				},
+				"value": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"target",
+				"value"
+			],
+			"id": "EirAssignExpr"
+		},
+		"EirAwaitExpr": {
+			"title": "Await Expression",
+			"description": "Block until a future resolves, with optional timeout and fallback",
+			"type": "object",
+			"properties": {
+				"fallback": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				},
+				"future": {
+					"type": "string"
+				},
+				"kind": {
+					"type": "string",
+					"const": "await"
+				},
+				"returnIndex": {
+					"type": "boolean"
+				},
+				"timeout": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"future"
+			],
+			"id": "EirAwaitExpr"
+		},
+		"EirChannelExpr": {
+			"title": "Channel Expression",
+			"description": "Create a typed communication channel with optional buffer",
+			"type": "object",
+			"properties": {
+				"bufferSize": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				},
+				"channelType": {
+					"type": "string",
+					"enum": [
+						"mpsc",
+						"spsc",
+						"mpmc",
+						"broadcast"
+					]
+				},
+				"kind": {
+					"type": "string",
+					"const": "channel"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"channelType"
+			],
+			"id": "EirChannelExpr"
+		},
+		"EirDerefExpr": {
+			"title": "Dereference Expression",
+			"description": "Read the current value of a mutable reference cell",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "deref"
+				},
+				"target": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"target"
+			],
+			"id": "EirDerefExpr"
+		},
+		"EirEffectExpr": {
+			"title": "Effect Expression",
+			"description": "Side-effecting operation (e.g., print, I/O)",
+			"type": "object",
+			"properties": {
+				"args": {
+					"type": "array",
+					"items": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"$ref": "spiral.schema.json#/$defs/Expr"
+							}
+						]
+					}
+				},
+				"kind": {
+					"type": "string",
+					"const": "effect"
+				},
+				"op": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"op",
+				"args"
+			],
+			"id": "EirEffectExpr"
+		},
 		"EirExpr": {
 			"anyOf": [
 				{
@@ -29,675 +193,712 @@
 					"$ref": "spiral.schema.json#/$defs/PredicateExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"type": {
-							"$ref": "spiral.schema.json#/$defs/Type"
-						},
-						"body": {
-							"type": "string"
-						},
-						"kind": {
-							"type": "string",
-							"const": "lambda"
-						},
-						"params": {
-							"type": "array",
-							"items": {
-								"anyOf": [
-									{
-										"type": "string"
-									},
-									{
-										"type": "object",
-										"properties": {
-											"type": {
-												"$ref": "spiral.schema.json#/$defs/Type"
-											},
-											"default": {
-												"$ref": "spiral.schema.json#/$defs/Expr"
-											},
-											"name": {
-												"type": "string"
-											},
-											"optional": {
-												"type": "boolean"
-											}
-										},
-										"additionalProperties": false,
-										"required": [
-											"name"
-										]
-									}
-								]
-							}
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"params",
-						"body",
-						"type"
-					]
+					"$ref": "spiral.schema.json#/$defs/RecordExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"args": {
-							"type": "array",
-							"items": {
-								"anyOf": [
-									{
-										"type": "string"
-									},
-									{
-										"$ref": "spiral.schema.json#/$defs/Expr"
-									}
-								]
-							}
-						},
-						"fn": {
-							"type": "string"
-						},
-						"kind": {
-							"type": "string",
-							"const": "callExpr"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"fn",
-						"args"
-					]
+					"$ref": "spiral.schema.json#/$defs/ListOfExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"type": {
-							"$ref": "spiral.schema.json#/$defs/Type"
-						},
-						"fn": {
-							"type": "string"
-						},
-						"kind": {
-							"type": "string",
-							"const": "fix"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"fn",
-						"type"
-					]
+					"$ref": "spiral.schema.json#/$defs/MatchExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"exprs": {
-							"type": "array",
-							"items": {
-								"anyOf": [
-									{
-										"type": "string"
-									},
-									{
-										"$ref": "spiral.schema.json#/$defs/Expr"
-									}
-								]
-							}
-						},
-						"kind": {
-							"type": "string",
-							"const": "do"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"exprs"
-					]
+					"$ref": "spiral.schema.json#/$defs/RefPointerExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"first": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						},
-						"kind": {
-							"type": "string",
-							"const": "seq"
-						},
-						"then": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"first",
-						"then"
-					]
+					"$ref": "spiral.schema.json#/$defs/LambdaExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "assign"
-						},
-						"target": {
-							"type": "string"
-						},
-						"value": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"target",
-						"value"
-					]
+					"$ref": "spiral.schema.json#/$defs/CallFnExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"body": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						},
-						"cond": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						},
-						"kind": {
-							"type": "string",
-							"const": "while"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"cond",
-						"body"
-					]
+					"$ref": "spiral.schema.json#/$defs/FixExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"body": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						},
-						"cond": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						},
-						"init": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						},
-						"kind": {
-							"type": "string",
-							"const": "for"
-						},
-						"update": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						},
-						"var": {
-							"type": "string"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"var",
-						"init",
-						"cond",
-						"update",
-						"body"
-					]
+					"$ref": "spiral.schema.json#/$defs/DoExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"body": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						},
-						"iter": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						},
-						"kind": {
-							"type": "string",
-							"const": "iter"
-						},
-						"var": {
-							"type": "string"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"var",
-						"iter",
-						"body"
-					]
+					"$ref": "#/$defs/EirSeqExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"args": {
-							"type": "array",
-							"items": {
-								"anyOf": [
-									{
-										"type": "string"
-									},
-									{
-										"$ref": "spiral.schema.json#/$defs/Expr"
-									}
-								]
-							}
-						},
-						"kind": {
-							"type": "string",
-							"const": "effect"
-						},
-						"op": {
-							"type": "string"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"op",
-						"args"
-					]
+					"$ref": "#/$defs/EirAssignExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "refCell"
-						},
-						"target": {
-							"type": "string"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"target"
-					]
+					"$ref": "#/$defs/EirWhileExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "deref"
-						},
-						"target": {
-							"type": "string"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"target"
-					]
+					"$ref": "#/$defs/EirForExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"catchBody": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						},
-						"catchParam": {
-							"type": "string"
-						},
-						"fallback": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						},
-						"kind": {
-							"type": "string",
-							"const": "try"
-						},
-						"tryBody": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"tryBody",
-						"catchParam",
-						"catchBody"
-					]
+					"$ref": "#/$defs/EirIterExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"branches": {
-							"type": "array",
-							"items": {
-								"type": "string"
-							}
-						},
-						"kind": {
-							"type": "string",
-							"const": "par"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"branches"
-					]
+					"$ref": "#/$defs/EirEffectExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "spawn"
-						},
-						"task": {
-							"type": "string"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"task"
-					]
+					"$ref": "#/$defs/EirRefCellExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"fallback": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						},
-						"future": {
-							"type": "string"
-						},
-						"kind": {
-							"type": "string",
-							"const": "await"
-						},
-						"returnIndex": {
-							"type": "boolean"
-						},
-						"timeout": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"future"
-					]
+					"$ref": "#/$defs/EirDerefExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"bufferSize": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						},
-						"channelType": {
-							"type": "string",
-							"enum": [
-								"mpsc",
-								"spsc",
-								"mpmc",
-								"broadcast"
-							]
-						},
-						"kind": {
-							"type": "string",
-							"const": "channel"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"channelType"
-					]
+					"$ref": "#/$defs/EirTryExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"channel": {
-							"type": "string"
-						},
-						"kind": {
-							"type": "string",
-							"const": "send"
-						},
-						"value": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"channel",
-						"value"
-					]
+					"$ref": "#/$defs/EirParExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"channel": {
-							"type": "string"
-						},
-						"kind": {
-							"type": "string",
-							"const": "recv"
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"channel"
-					]
+					"$ref": "#/$defs/EirSpawnExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"fallback": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						},
-						"futures": {
-							"type": "array",
-							"items": {
-								"type": "string"
-							}
-						},
-						"kind": {
-							"type": "string",
-							"const": "select"
-						},
-						"returnIndex": {
-							"type": "boolean"
-						},
-						"timeout": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"$ref": "spiral.schema.json#/$defs/Expr"
-								}
-							]
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"futures"
-					]
+					"$ref": "#/$defs/EirAwaitExpr"
 				},
 				{
-					"type": "object",
-					"properties": {
-						"kind": {
-							"type": "string",
-							"const": "race"
-						},
-						"tasks": {
-							"type": "array",
-							"items": {
-								"type": "string"
-							}
-						}
-					},
-					"additionalProperties": false,
-					"required": [
-						"kind",
-						"tasks"
-					]
+					"$ref": "#/$defs/EirChannelExpr"
+				},
+				{
+					"$ref": "#/$defs/EirSendExpr"
+				},
+				{
+					"$ref": "#/$defs/EirRecvExpr"
+				},
+				{
+					"$ref": "#/$defs/EirSelectExpr"
+				},
+				{
+					"$ref": "#/$defs/EirRaceExpr"
 				}
 			],
-			"id": "EirExpr"
+			"description": "Imperative expression with effects, mutation, loops, and concurrency",
+			"id": "EirExpr",
+			"title": "EIR Expression"
+		},
+		"EirForExpr": {
+			"title": "For Loop",
+			"description": "C-style for loop with init, condition, update, and body",
+			"type": "object",
+			"properties": {
+				"body": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				},
+				"cond": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				},
+				"init": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				},
+				"kind": {
+					"type": "string",
+					"const": "for"
+				},
+				"update": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				},
+				"var": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"var",
+				"init",
+				"cond",
+				"update",
+				"body"
+			],
+			"id": "EirForExpr"
+		},
+		"EirInsAwait": {
+			"title": "EIR Await Instruction",
+			"description": "Block until a future resolves, storing result in target",
+			"type": "object",
+			"properties": {
+				"future": {
+					"type": "string"
+				},
+				"kind": {
+					"type": "string",
+					"const": "await"
+				},
+				"target": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"target",
+				"future"
+			],
+			"id": "EirInsAwait"
+		},
+		"EirInsChannelOp": {
+			"title": "EIR Channel Operation",
+			"description": "Send or receive on a typed channel within a block",
+			"type": "object",
+			"properties": {
+				"channel": {
+					"type": "string"
+				},
+				"kind": {
+					"type": "string",
+					"const": "channelOp"
+				},
+				"op": {
+					"type": "string",
+					"enum": [
+						"send",
+						"recv",
+						"trySend",
+						"tryRecv"
+					]
+				},
+				"target": {
+					"type": "string"
+				},
+				"value": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"op",
+				"channel"
+			],
+			"id": "EirInsChannelOp"
+		},
+		"EirInsSpawn": {
+			"title": "EIR Spawn Instruction",
+			"description": "Spawn a concurrent task from an entry block",
+			"type": "object",
+			"properties": {
+				"args": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"entry": {
+					"type": "string"
+				},
+				"kind": {
+					"type": "string",
+					"const": "spawn"
+				},
+				"target": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"target",
+				"entry"
+			],
+			"id": "EirInsSpawn"
+		},
+		"EirIterExpr": {
+			"title": "Iterator Loop",
+			"description": "For-each loop binding each element to a variable",
+			"type": "object",
+			"properties": {
+				"body": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				},
+				"iter": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				},
+				"kind": {
+					"type": "string",
+					"const": "iter"
+				},
+				"var": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"var",
+				"iter",
+				"body"
+			],
+			"id": "EirIterExpr"
+		},
+		"EirParExpr": {
+			"title": "Parallel Expression",
+			"description": "Execute branches concurrently and collect all results",
+			"type": "object",
+			"properties": {
+				"branches": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"kind": {
+					"type": "string",
+					"const": "par"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"branches"
+			],
+			"id": "EirParExpr"
+		},
+		"EirRaceExpr": {
+			"title": "Race Expression",
+			"description": "Race multiple tasks, returning the first to complete",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "race"
+				},
+				"tasks": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"tasks"
+			],
+			"id": "EirRaceExpr"
+		},
+		"EirRecvExpr": {
+			"title": "Receive Expression",
+			"description": "Receive a value from a channel",
+			"type": "object",
+			"properties": {
+				"channel": {
+					"type": "string"
+				},
+				"kind": {
+					"type": "string",
+					"const": "recv"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"channel"
+			],
+			"id": "EirRecvExpr"
+		},
+		"EirRefCellExpr": {
+			"title": "Ref Cell Expression",
+			"description": "Create a mutable reference cell wrapping a target",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "refCell"
+				},
+				"target": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"target"
+			],
+			"id": "EirRefCellExpr"
+		},
+		"EirSelectExpr": {
+			"title": "Select Expression",
+			"description": "Wait for the first of multiple futures to resolve",
+			"type": "object",
+			"properties": {
+				"fallback": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				},
+				"futures": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"kind": {
+					"type": "string",
+					"const": "select"
+				},
+				"returnIndex": {
+					"type": "boolean"
+				},
+				"timeout": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"futures"
+			],
+			"id": "EirSelectExpr"
+		},
+		"EirSendExpr": {
+			"title": "Send Expression",
+			"description": "Send a value into a channel",
+			"type": "object",
+			"properties": {
+				"channel": {
+					"type": "string"
+				},
+				"kind": {
+					"type": "string",
+					"const": "send"
+				},
+				"value": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"channel",
+				"value"
+			],
+			"id": "EirSendExpr"
+		},
+		"EirSeqExpr": {
+			"title": "Sequence Expression",
+			"description": "Execute first, discard result, then evaluate and return second",
+			"type": "object",
+			"properties": {
+				"first": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				},
+				"kind": {
+					"type": "string",
+					"const": "seq"
+				},
+				"then": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"first",
+				"then"
+			],
+			"id": "EirSeqExpr"
+		},
+		"EirSpawnExpr": {
+			"title": "Spawn Expression",
+			"description": "Launch a concurrent task and return a future handle",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "spawn"
+				},
+				"task": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"task"
+			],
+			"id": "EirSpawnExpr"
+		},
+		"EirTermFork": {
+			"title": "Fork Terminator",
+			"description": "Fork execution into multiple concurrent branches",
+			"type": "object",
+			"properties": {
+				"branches": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"block": {
+								"type": "string"
+							},
+							"taskId": {
+								"type": "string"
+							}
+						},
+						"additionalProperties": false,
+						"required": [
+							"block",
+							"taskId"
+						]
+					}
+				},
+				"continuation": {
+					"type": "string"
+				},
+				"kind": {
+					"type": "string",
+					"const": "fork"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"branches",
+				"continuation"
+			],
+			"id": "EirTermFork"
+		},
+		"EirTermJoin": {
+			"title": "Join Terminator",
+			"description": "Wait for all tasks to complete, then continue",
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string",
+					"const": "join"
+				},
+				"results": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"tasks": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"to": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"tasks",
+				"to"
+			],
+			"id": "EirTermJoin"
+		},
+		"EirTermSuspend": {
+			"title": "Suspend Terminator",
+			"description": "Suspend until a future resolves, then resume at a block",
+			"type": "object",
+			"properties": {
+				"future": {
+					"type": "string"
+				},
+				"kind": {
+					"type": "string",
+					"const": "suspend"
+				},
+				"resumeBlock": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"future",
+				"resumeBlock"
+			],
+			"id": "EirTermSuspend"
+		},
+		"EirTryExpr": {
+			"title": "Try/Catch Expression",
+			"description": "Error handling with a try body and catch clause",
+			"type": "object",
+			"properties": {
+				"catchBody": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				},
+				"catchParam": {
+					"type": "string"
+				},
+				"fallback": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				},
+				"kind": {
+					"type": "string",
+					"const": "try"
+				},
+				"tryBody": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"tryBody",
+				"catchParam",
+				"catchBody"
+			],
+			"id": "EirTryExpr"
+		},
+		"EirWhileExpr": {
+			"title": "While Loop",
+			"description": "Loop that repeats body while condition is true",
+			"type": "object",
+			"properties": {
+				"body": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				},
+				"cond": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"$ref": "spiral.schema.json#/$defs/Expr"
+						}
+					]
+				},
+				"kind": {
+					"type": "string",
+					"const": "while"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"cond",
+				"body"
+			],
+			"id": "EirWhileExpr"
 		}
 	},
-	"title": "EIR (Execution IR)",
+	"title": "EIR Document",
 	"description": "EIRDocument",
 	"type": "object",
 	"properties": {
+		"$defs": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "spiral.schema.json#/$defs/Def"
+			},
+			"propertyNames": {
+				"type": "string"
+			}
+		},
+		"$imports": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "spiral.schema.json#/$defs/ImportEntry"
+			},
+			"propertyNames": {
+				"type": "string"
+			}
+		},
 		"airDefs": {
 			"type": "array",
 			"items": {
@@ -738,6 +939,9 @@
 							"id",
 							"expr"
 						]
+					},
+					{
+						"$ref": "spiral.schema.json#/$defs/RefNode"
 					},
 					{
 						"type": "object",
@@ -867,85 +1071,13 @@
 														]
 													},
 													{
-														"type": "object",
-														"properties": {
-															"args": {
-																"type": "array",
-																"items": {
-																	"type": "string"
-																}
-															},
-															"entry": {
-																"type": "string"
-															},
-															"kind": {
-																"type": "string",
-																"const": "spawn"
-															},
-															"target": {
-																"type": "string"
-															}
-														},
-														"additionalProperties": false,
-														"required": [
-															"kind",
-															"target",
-															"entry"
-														]
+														"$ref": "#/$defs/EirInsSpawn"
 													},
 													{
-														"type": "object",
-														"properties": {
-															"channel": {
-																"type": "string"
-															},
-															"kind": {
-																"type": "string",
-																"const": "channelOp"
-															},
-															"op": {
-																"type": "string",
-																"enum": [
-																	"send",
-																	"recv",
-																	"trySend",
-																	"tryRecv"
-																]
-															},
-															"target": {
-																"type": "string"
-															},
-															"value": {
-																"type": "string"
-															}
-														},
-														"additionalProperties": false,
-														"required": [
-															"kind",
-															"op",
-															"channel"
-														]
+														"$ref": "#/$defs/EirInsChannelOp"
 													},
 													{
-														"type": "object",
-														"properties": {
-															"future": {
-																"type": "string"
-															},
-															"kind": {
-																"type": "string",
-																"const": "await"
-															},
-															"target": {
-																"type": "string"
-															}
-														},
-														"additionalProperties": false,
-														"required": [
-															"kind",
-															"target",
-															"future"
-														]
+														"$ref": "#/$defs/EirInsAwait"
 													}
 												]
 											}
@@ -965,92 +1097,13 @@
 													"$ref": "spiral.schema.json#/$defs/LirTermExit"
 												},
 												{
-													"type": "object",
-													"properties": {
-														"branches": {
-															"type": "array",
-															"items": {
-																"type": "object",
-																"properties": {
-																	"block": {
-																		"type": "string"
-																	},
-																	"taskId": {
-																		"type": "string"
-																	}
-																},
-																"additionalProperties": false,
-																"required": [
-																	"block",
-																	"taskId"
-																]
-															}
-														},
-														"continuation": {
-															"type": "string"
-														},
-														"kind": {
-															"type": "string",
-															"const": "fork"
-														}
-													},
-													"additionalProperties": false,
-													"required": [
-														"kind",
-														"branches",
-														"continuation"
-													]
+													"$ref": "#/$defs/EirTermFork"
 												},
 												{
-													"type": "object",
-													"properties": {
-														"kind": {
-															"type": "string",
-															"const": "join"
-														},
-														"results": {
-															"type": "array",
-															"items": {
-																"type": "string"
-															}
-														},
-														"tasks": {
-															"type": "array",
-															"items": {
-																"type": "string"
-															}
-														},
-														"to": {
-															"type": "string"
-														}
-													},
-													"additionalProperties": false,
-													"required": [
-														"kind",
-														"tasks",
-														"to"
-													]
+													"$ref": "#/$defs/EirTermJoin"
 												},
 												{
-													"type": "object",
-													"properties": {
-														"future": {
-															"type": "string"
-														},
-														"kind": {
-															"type": "string",
-															"const": "suspend"
-														},
-														"resumeBlock": {
-															"type": "string"
-														}
-													},
-													"additionalProperties": false,
-													"required": [
-														"kind",
-														"future",
-														"resumeBlock"
-													]
+													"$ref": "#/$defs/EirTermSuspend"
 												}
 											]
 										}
@@ -1093,5 +1146,6 @@
 		"version",
 		"nodes",
 		"result"
-	]
+	],
+	"id": "EIRDocument"
 }

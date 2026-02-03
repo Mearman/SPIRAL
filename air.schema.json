@@ -1,10 +1,28 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "https://raw.githubusercontent.com/Mearman/SPIRAL/refs/heads/main/air.schema.json",
-	"title": "AIR (Algebraic IR)",
+	"title": "AIR Document",
 	"description": "AIRDocument",
 	"type": "object",
 	"properties": {
+		"$defs": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "spiral.schema.json#/$defs/Def"
+			},
+			"propertyNames": {
+				"type": "string"
+			}
+		},
+		"$imports": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "spiral.schema.json#/$defs/ImportEntry"
+			},
+			"propertyNames": {
+				"type": "string"
+			}
+		},
 		"airDefs": {
 			"type": "array",
 			"items": {
@@ -34,32 +52,7 @@
 								"$ref": "spiral.schema.json#/$defs/Type"
 							},
 							"expr": {
-								"anyOf": [
-									{
-										"$ref": "spiral.schema.json#/$defs/LitExpr"
-									},
-									{
-										"$ref": "spiral.schema.json#/$defs/RefExpr"
-									},
-									{
-										"$ref": "spiral.schema.json#/$defs/VarExpr"
-									},
-									{
-										"$ref": "spiral.schema.json#/$defs/CallExpr"
-									},
-									{
-										"$ref": "spiral.schema.json#/$defs/IfExpr"
-									},
-									{
-										"$ref": "spiral.schema.json#/$defs/LetExpr"
-									},
-									{
-										"$ref": "spiral.schema.json#/$defs/AirRefExpr"
-									},
-									{
-										"$ref": "spiral.schema.json#/$defs/PredicateExpr"
-									}
-								]
+								"$ref": "spiral.schema.json#/$defs/AirExpr"
 							},
 							"id": {
 								"type": "string"
@@ -70,6 +63,9 @@
 							"id",
 							"expr"
 						]
+					},
+					{
+						"$ref": "spiral.schema.json#/$defs/RefNode"
 					},
 					{
 						"type": "object",
@@ -100,32 +96,7 @@
 																"type": "string"
 															},
 															"value": {
-																"anyOf": [
-																	{
-																		"$ref": "spiral.schema.json#/$defs/LitExpr"
-																	},
-																	{
-																		"$ref": "spiral.schema.json#/$defs/RefExpr"
-																	},
-																	{
-																		"$ref": "spiral.schema.json#/$defs/VarExpr"
-																	},
-																	{
-																		"$ref": "spiral.schema.json#/$defs/CallExpr"
-																	},
-																	{
-																		"$ref": "spiral.schema.json#/$defs/IfExpr"
-																	},
-																	{
-																		"$ref": "spiral.schema.json#/$defs/LetExpr"
-																	},
-																	{
-																		"$ref": "spiral.schema.json#/$defs/AirRefExpr"
-																	},
-																	{
-																		"$ref": "spiral.schema.json#/$defs/PredicateExpr"
-																	}
-																]
+																"$ref": "spiral.schema.json#/$defs/AirExpr"
 															}
 														},
 														"additionalProperties": false,
@@ -174,20 +145,7 @@
 											}
 										},
 										"terminator": {
-											"anyOf": [
-												{
-													"$ref": "spiral.schema.json#/$defs/LirTermJump"
-												},
-												{
-													"$ref": "spiral.schema.json#/$defs/LirTermBranch"
-												},
-												{
-													"$ref": "spiral.schema.json#/$defs/LirTermReturn"
-												},
-												{
-													"$ref": "spiral.schema.json#/$defs/LirTermExit"
-												}
-											]
+											"$ref": "spiral.schema.json#/$defs/LirTerminator"
 										}
 									},
 									"additionalProperties": false,
@@ -229,5 +187,6 @@
 		"airDefs",
 		"nodes",
 		"result"
-	]
+	],
+	"id": "AIRDocument"
 }
