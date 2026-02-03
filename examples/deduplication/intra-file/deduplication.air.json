@@ -1,0 +1,101 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/air.schema.json",
+	"version": "1.0.0",
+	"$comment": "Intra-file deduplication example using $defs and $ref",
+	"$defs": {
+		"hundred": {
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 100 }
+		},
+		"one": {
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 1 }
+		},
+		"ten": {
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 10 }
+		},
+		"two": {
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 2 }
+		},
+		"zero": {
+			"expr": { "kind": "lit", "type": { "kind": "int" }, "value": 0 }
+		}
+	},
+	"airDefs": [
+		{
+			"ns": "core",
+			"name": "add",
+			"params": ["a", "b"],
+			"result": { "kind": "int" },
+			"body": { "kind": "ref", "id": "a" }
+		},
+		{
+			"ns": "core",
+			"name": "mul",
+			"params": ["a", "b"],
+			"result": { "kind": "int" },
+			"body": { "kind": "ref", "id": "a" }
+		},
+		{
+			"ns": "core",
+			"name": "sub",
+			"params": ["a", "b"],
+			"result": { "kind": "int" },
+			"body": { "kind": "ref", "id": "a" }
+		}
+	],
+	"nodes": [
+		{
+			"id": "zero",
+			"expr": { "$ref": "#/$defs/zero/expr" }
+		},
+		{
+			"id": "one",
+			"expr": { "$ref": "#/$defs/one/expr" }
+		},
+		{
+			"id": "two",
+			"expr": { "$ref": "#/$defs/two/expr" }
+		},
+		{
+			"id": "ten",
+			"expr": { "$ref": "#/$defs/ten/expr" }
+		},
+		{
+			"id": "hundred",
+			"expr": { "$ref": "#/$defs/hundred/expr" }
+		},
+		{
+			"id": "sum_1_2",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "add",
+				"args": ["one", "two"]
+			}
+		},
+		{
+			"id": "product_10_12",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "mul",
+				"args": ["ten", "sum_1_2"]
+			}
+		},
+		{
+			"id": "difference_100_120",
+			"expr": {
+				"kind": "call",
+				"ns": "core",
+				"name": "sub",
+				"args": ["hundred", "product_10_12"]
+			}
+		},
+		{
+			"$comment": "Node aliasing: references another entire node",
+			"id": "result_alias",
+			"$ref": "#/nodes/difference_100_120"
+		}
+	],
+	"result": "result_alias",
+	"expected_result": 70
+}

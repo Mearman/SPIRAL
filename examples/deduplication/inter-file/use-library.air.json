@@ -1,0 +1,36 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/air.schema.json",
+	"version": "1.0.0",
+	"$comment": "Example of $imports syntax (transpiles to $defs with #/$defs suffix). Note: Cross-file loading is not yet fully implemented - this demonstrates the syntax",
+	"$imports": {
+		"math": { "$ref": "math-library.cir.json" },
+		"types": { "$ref": "stdlib:core-types" }
+	},
+	"$defs": {
+		"e": {
+			"expr": { "kind": "lit", "type": { "kind": "float" }, "value": 2.718281828459045 }
+		},
+		"pi": {
+			"expr": { "kind": "lit", "type": { "kind": "float" }, "value": 3.141592653589793 }
+		}
+	},
+	"airDefs": [],
+	"nodes": [
+		{
+			"$comment": "Local $defs reference - this works now",
+			"id": "pi",
+			"expr": { "$ref": "#/$defs/pi/expr" }
+		},
+		{
+			"id": "e",
+			"expr": { "$ref": "#/$defs/e/expr" }
+		},
+		{
+			"$comment": "After transpilation, #/$defs/math would reference the imported library. For now, we use local definitions to demonstrate the pattern",
+			"id": "golden_ratio",
+			"expr": { "kind": "lit", "type": { "kind": "float" }, "value": 1.618033988749895 }
+		}
+	],
+	"result": "pi",
+	"expected_result": 3.141592653589793
+}
