@@ -13,6 +13,7 @@ import {
 	type Value,
 	isBlockNode,
 	isExprNode,
+	isRefNode,
 } from "../types.js";
 import { errorVal, isError } from "../types.js";
 import type { AirEvalCtx, EvalOptions } from "./types.js";
@@ -66,6 +67,25 @@ function buildProgramCtx(args: ProgramArgs): ProgramCtx {
 		registry: args.registry, defs: args.defs, nodeMap,
 		nodeValues: new Map<string, Value>(),
 		options: args.options,
+		docDefs: getDocRoot(args.doc),
+	};
+}
+
+/** Get the full document root for JSON Pointer navigation. */
+function getDocRoot(doc: AIRDocument): Record<string, unknown> {
+	// Extract $defs safely using property checking
+	const defs: Record<string, unknown> = {};
+	if ("$defs" in doc && typeof doc.$defs === "object" && doc.$defs !== null) {
+		const docDefs = doc.$defs;
+		for (const [key, value] of Object.entries(docDefs)) {
+			defs[key] = value;
+		}
+	}
+	return {
+		$defs: defs,
+		nodes: doc.nodes,
+		result: doc.result,
+		version: doc.version,
 	};
 }
 
@@ -160,12 +180,15 @@ function checkRefParams(expr: Expr, params: Set<string>): boolean {
 function isTrivalNode(node: AirHybridNode | undefined): boolean {
 	if (!node) return true;
 	if (isBlockNode(node)) return false;
+	if (isRefNode(node)) return false;
+	if (!isExprNode(node)) return false;
 	return node.expr.kind === "lit";
 }
 
 function markInitialBound(bc: BoundCtx, lambdaParams: Set<string>): void {
 	for (const node of bc.doc.nodes) {
-		if (isBlockNode(node)) continue;
+		if (isBlockNode(node) || isRefNode(node)) continue;
+		if (!isExprNode(node)) continue;
 		const expr = node.expr;
 		if (expr.kind === "lambda" && typeof expr.body === "string") {
 			markBoundRecursively(expr.body, bc.bound, bc.nodeMap);
@@ -182,9 +205,10 @@ function markBoundRecursively(
 ): void {
 	if (bound.has(nodeId)) return;
 	const node = nodeMap.get(nodeId);
-	if (!node || isTrivalNode(node)) return;
+	if (!node || isTrivalNode(node) || isRefNode(node)) return;
 	bound.add(nodeId);
 	if (isBlockNode(node)) return;
+	if (!isExprNode(node)) return;
 	if (node.expr.kind === "let") {
 		if (typeof node.expr.body === "string") markBoundRecursively(node.expr.body, bound, nodeMap);
 	}
@@ -248,7 +272,8 @@ function markTransitiveBound(bc: BoundCtx): void {
 	while (changed) {
 		changed = false;
 		for (const node of bc.doc.nodes) {
-			if (bc.bound.has(node.id) || isTrivalNode(node) || isBlockNode(node)) continue;
+			if (bc.bound.has(node.id) || isTrivalNode(node) || isBlockNode(node) || isRefNode(node)) continue;
+			if (!isExprNode(node)) continue;
 			if (usesBoundNodes(node.expr, bc.bound)) {
 				bc.bound.add(node.id);
 				changed = true;
@@ -259,7 +284,8 @@ function markTransitiveBound(bc: BoundCtx): void {
 
 function markRefToBound(bc: BoundCtx): void {
 	for (const node of bc.doc.nodes) {
-		if (isBlockNode(node)) continue;
+		if (isBlockNode(node) || isRefNode(node)) continue;
+		if (!isExprNode(node)) continue;
 		if (node.expr.kind !== "ref") continue;
 		const refNode = bc.nodeMap.get(node.expr.id);
 		if (!refNode || !isExprNode(refNode)) continue;

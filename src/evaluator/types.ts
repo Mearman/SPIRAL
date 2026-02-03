@@ -59,6 +59,8 @@ export interface AirEvalCtx {
 	nodeMap: Map<string, AirHybridNode>;
 	nodeValues: Map<string, Value>;
 	options?: EvalOptions | undefined;
+	/** Document $defs for JSON Pointer deduplication */
+	docDefs?: Record<string, unknown> | undefined;
 }
 
 /** Context for EIR program-level evaluation. */
