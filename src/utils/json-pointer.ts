@@ -97,7 +97,9 @@ export function parseJsonPointer(ptr: string): Result<ParsedPointer> {
 
 	// First token is empty due to leading /
 	for (let i = 1; i < rawTokens.length; i++) {
-		const token = unescapeToken(rawTokens[i]);
+		const rawToken = rawTokens[i];
+		if (rawToken === undefined) continue;
+		const token = unescapeToken(rawToken);
 		tokens.push(token);
 	}
 
@@ -274,7 +276,7 @@ function getPropertyValue(
 export function navigateWithParent(
 	obj: unknown,
 	pointer: string,
-): Result<{ parent: Record<string, unknown> | unknown[]; key: string; value: unknown }> {
+): Result<{ parent: Record<string, unknown> | unknown[] | null; key: string; value: unknown }> {
 	const parseResult = parseJsonPointer(pointer);
 	if (!parseResult.success) {
 		return parseResult;
@@ -300,6 +302,14 @@ export function navigateWithParent(
 
 	const parent = parentResult.value;
 	const finalKey = tokens[tokens.length - 1];
+
+	// Handle empty tokens (root pointer)
+	if (finalKey === undefined) {
+		return {
+			success: true,
+			value: { parent: null, key: "", value: parent },
+		};
+	}
 
 	// Verify parent is valid type (object or array) and get its value
 	if (Array.isArray(parent)) {
