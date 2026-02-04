@@ -73,7 +73,7 @@
 		{"id": "evDispatchSeq", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsSeq", "then": "evSeqResult", "else": "evAssignResult"}},
 		{"id": "evDispatchAssign", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsAssign", "then": "evAssignResult", "else": "evWhileResult"}},
 		{"id": "evDispatchWhile", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsWhile", "then": "evWhileResult", "else": "evForResult"}},
-		{"id": "evDispatchFor", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsFor", "then": "evForResult", "else": "evIterResult"}},
+		{"id": "evDispatchFor", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsFor", "then": "evForResult", "else": "evDispatchIter"}},
 		{"id": "evDispatchIter", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsIter", "then": "evIterResult", "else": "evEffectResult"}},
 		{"id": "evDispatchEffect", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsEffect", "then": "evEffectResult", "else": "evRefCellResult"}},
 		{"id": "evDispatchRefCell", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsRefCell", "then": "evRefCellResult", "else": "evDerefResult"}},
@@ -113,7 +113,7 @@
 		{"id": "finalNodeValues", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["finalState"]}},
 		{"id": "hasResult", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["finalNodeValues", "resultId"]}},
 		{"id": "cachedResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["finalNodeValues", "resultId"]}},
-		{"id": "resultNode", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["nodes", "zero"]}},
+		{"id": "resultNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["nodes", "resultId"]}},
 		{"id": "fallbackResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["resultNode", "exprKey"]}},
 		{"id": "result", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "hasResult", "then": "cachedResult", "else": "fallbackResult"}},
 
