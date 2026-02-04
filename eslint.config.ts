@@ -144,6 +144,7 @@ export default [
     files: ["src/**/*.ts"],
     linterOptions: {
       noInlineConfig: true,
+      reportUnusedDisableDirectives: "error",
     },
     languageOptions: {
       parserOptions: {
