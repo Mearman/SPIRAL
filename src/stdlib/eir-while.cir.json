@@ -10,8 +10,8 @@
 		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
 		{"id": "voidValue", "expr": {"kind": "record", "fields": []}},
 
-		{"id": "condKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "cond"}},
-		{"id": "bodyKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "body"}},
+		{"id": "condKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:cond"}},
+		{"id": "bodyKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:body"}},
 		{"id": "nodesKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodes"}},
 		{"id": "exprKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
 		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
