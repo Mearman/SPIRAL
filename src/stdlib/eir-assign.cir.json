@@ -36,8 +36,11 @@
 		{"id": "avrUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "avrInCache", "then": "avrFromCache", "else": "avrEval"}},
 		{"id": "assignValue", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "avrIsString", "then": "avrUseCache", "else": "avrInlineEval"}},
 
-		{"id": "newEnv", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["assignEnv", "assignTarget", "assignValue"]}},
-		{"id": "newState", "expr": {"kind": "call", "ns": "eir-state", "name": "state:withEnv", "args": ["assignState", "newEnv"]}},
+		{"id": "assignNodeValuesAfter", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["assignNodeValues", "assignValueRef", "assignValue"]}},
+		{"id": "assignStateWithCache", "expr": {"kind": "call", "ns": "eir-state", "name": "state:setNodeValues", "args": ["assignState", "assignNodeValuesAfter"]}},
+		{"id": "assignEnvAfterCache", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["assignStateWithCache"]}},
+		{"id": "newEnv", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["assignEnvAfterCache", "assignTarget", "assignValue"]}},
+		{"id": "newState", "expr": {"kind": "call", "ns": "eir-state", "name": "state:withEnv", "args": ["assignStateWithCache", "newEnv"]}},
 
 		{"id": "assignResultRecord", "expr": {"kind": "record", "fields": [
 			{"key": "s:state", "value": "newState"},
