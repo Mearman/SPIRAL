@@ -1,0 +1,121 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "EIR effect expression — evaluates effect arguments and returns a record describing the effect to be performed. Effects are side-effecting operations (I/O, etc.) delegated to an effect registry.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+		{"id": "voidValue", "expr": {"kind": "record", "fields": []}},
+
+		{"id": "opKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:op"}},
+		{"id": "argsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:args"}},
+		{"id": "stateKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:state"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:value"}},
+		{"id": "nodesKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodes"}},
+		{"id": "exprKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+
+		{"id": "stringType", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
+
+		{"id": "effectState", "expr": {"kind": "var", "name": "effectState"}},
+		{"id": "effectDoc", "expr": {"kind": "var", "name": "effectDoc"}},
+		{"id": "effectExpr", "expr": {"kind": "var", "name": "effectExpr"}},
+
+		{"id": "effectOp", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["effectExpr", "opKey"]}},
+		{"id": "effectArgs", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["effectExpr", "argsKey"]}},
+		{"id": "effectEnv", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["effectState"]}},
+		{"id": "effectNodeValues", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["effectState"]}},
+		{"id": "effectNodes", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["effectDoc", "nodesKey"]}},
+
+		{"id": "eaListVar", "expr": {"kind": "var", "name": "eaList"}},
+		{"id": "eaIndexVar", "expr": {"kind": "var", "name": "eaIndex"}},
+		{"id": "eaAccumVar", "expr": {"kind": "var", "name": "eaAccum"}},
+		{"id": "eaStateVar", "expr": {"kind": "var", "name": "eaState"}},
+		{"id": "eaDocVar", "expr": {"kind": "var", "name": "eaDoc"}},
+		{"id": "eaEnvVar", "expr": {"kind": "var", "name": "eaEnv"}},
+		{"id": "eaNodeValuesVar", "expr": {"kind": "var", "name": "eaNodeValues"}},
+		{"id": "eaNodesVar", "expr": {"kind": "var", "name": "eaNodes"}},
+
+		{"id": "eaListLength", "expr": {"kind": "call", "ns": "list", "name": "length", "args": ["eaListVar"]}},
+		{"id": "eaDone", "expr": {"kind": "call", "ns": "core", "name": "gte", "args": ["eaIndexVar", "eaListLength"]}},
+		{"id": "eaCurrentArgRef", "expr": {"kind": "call", "ns": "list", "name": "get", "args": ["eaListVar", "eaIndexVar"]}},
+
+		{"id": "eacType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["eaCurrentArgRef"]}},
+		{"id": "eacIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["eacType", "stringType"]}},
+		{"id": "eacInCache", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["eaNodeValuesVar", "eaCurrentArgRef"]}},
+		{"id": "eacFromCache", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["eaNodeValuesVar", "eaCurrentArgRef"]}},
+		{"id": "eacNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["eaNodesVar", "eaCurrentArgRef"]}},
+		{"id": "eacNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["eacNode", "exprKey"]}},
+		{"id": "eacEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["eaDocVar", "eaEnvVar", "eacNodeExpr"]}},
+		{"id": "eacInlineEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["eaDocVar", "eaEnvVar", "eaCurrentArgRef"]}},
+		{"id": "eacUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "eacInCache", "then": "eacFromCache", "else": "eacEval"}},
+		{"id": "eacArgValue", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "eacIsString", "then": "eacUseCache", "else": "eacInlineEval"}},
+
+		{"id": "eacNewNodeValues", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["eaNodeValuesVar", "eaCurrentArgRef", "eacArgValue"]}},
+		{"id": "eacNewState", "expr": {"kind": "call", "ns": "eir-state", "name": "state:setNodeValues", "args": ["eaStateVar", "eacNewNodeValues"]}},
+		{"id": "eacNewEnv", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["eacNewState"]}},
+
+		{"id": "eacNewAccum", "expr": {"kind": "call", "ns": "list", "name": "append", "args": ["eaAccumVar", "eacArgValue"]}},
+		{"id": "eacNewIndex", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["eaIndexVar", "one"]}},
+		{"id": "eacRecurse", "expr": {"kind": "callExpr", "args": ["eaListVar", "eacNewIndex", "eacNewAccum", "eacNewState", "eaDocVar", "eacNewEnv", "eacNewNodeValues", "eaNodesVar"], "fn": "eaRecVar"}},
+		{"id": "eacResult", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "eaDone", "then": "eaAccumVar", "else": "eacRecurse"}},
+
+		{"id": "eaInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["eaList", "eaIndex", "eaAccum", "eaState", "eaDoc", "eaEnv", "eaNodeValues", "eaNodes"],
+			"body": "eacResult"
+		}},
+		{"id": "eaOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["eaRec"],
+			"body": "eaInner"
+		}},
+		{"id": "eaRecVar", "expr": {"kind": "var", "name": "eaRec"}},
+		{"id": "evalArgsFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "eaOuter"
+		}},
+
+		{"id": "evalArgsResult", "expr": {"kind": "callExpr", "args": ["effectArgs", "zero", "emptyList", "effectState", "effectDoc", "effectEnv", "effectNodeValues", "effectNodes"], "fn": "evalArgsFn"}},
+
+		{"id": "evaluatedArgs", "expr": {"kind": "var", "name": "evaluatedArgs"}},
+		{"id": "finalState", "expr": {"kind": "var", "name": "finalState"}},
+
+		{"id": "effectResultValue", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "effect"},
+			{"key": "s:op", "value": "effectOp"},
+			{"key": "s:args", "value": "evaluatedArgs"}
+		]}},
+
+		{"id": "effectResultRecord", "expr": {"kind": "record", "fields": [
+			{"key": "s:state", "value": "finalState"},
+			{"key": "s:value", "value": "effectResultValue"}
+		]}},
+
+		{"id": "eaFinalResult", "expr": {"kind": "record", "fields": [
+			{"key": "s:evaluatedArgs", "value": "evalArgsResult"},
+			{"key": "s:finalState", "value": "finalState"}
+		]}},
+
+		{"id": "eir:effect", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["effectState", "effectDoc", "effectExpr"],
+			"body": "eaFinalResult"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "eir:effect", "value": "eir:effect"}
+			]
+		}}
+	],
+	"result": "exports"
+}
