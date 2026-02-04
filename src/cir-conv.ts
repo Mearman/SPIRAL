@@ -1,6 +1,8 @@
 // CIRDocument ↔ Value Conversion Layer
 // Bridges TypeScript CIRDocument type and CIR Value type for self-hosting
 
+/* eslint-disable max-lines -- This file contains conversion functions for both CIR and EIR expressions */
+
 import type {
 	AIRDef,
 	CIRDocument,
@@ -9,6 +11,7 @@ import type {
 	Expr,
 	Value,
 	Type,
+	EirExpr,
 } from "./types.ts";
 import {
 	stringVal,
@@ -139,7 +142,8 @@ function nodeToValueRaw(node: CirHybridNode): Value {
 }
 
 // Expression conversion for CIR stdlib (uses "s:" prefix)
-function exprToValueCIR(expr: Expr): Value {
+/* eslint-disable max-statements, complexity -- EIR expression conversion requires many condition checks */
+function exprToValueCIR(expr: Expr | EirExpr): Value {
 	// For literals, return the value directly with "s:" prefix
 	if (expr.kind === "lit") {
 		return litToValueCIR(expr);
@@ -160,19 +164,61 @@ function exprToValueCIR(expr: Expr): Value {
 
 	// For call expressions, convert to map structure with "s:" prefix
 	if (expr.kind === "call") {
-		return callExprToValueCIR(expr);
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		return callExprToValueCIR(expr as Expr & { kind: "call" });
 	}
 
 	// For lambda expressions, convert to map structure with "s:" prefix
 	if (expr.kind === "lambda") {
-		return lambdaExprToValueCIR(expr);
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		return lambdaExprToValueCIR(expr as Expr & { kind: "lambda" });
+	}
+
+	// For EIR-specific expressions, convert to EIR format
+	if (expr.kind === "seq") {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		return eirSeqExprToValueCIR(expr as EirExpr & { kind: "seq" });
+	}
+	if (expr.kind === "assign") {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		return eirAssignExprToValueCIR(expr as EirExpr & { kind: "assign" });
+	}
+	if (expr.kind === "while") {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		return eirWhileExprToValueCIR(expr as EirExpr & { kind: "while" });
+	}
+	if (expr.kind === "for") {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		return eirForExprToValueCIR(expr as EirExpr & { kind: "for" });
+	}
+	if (expr.kind === "iter") {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		return eirIterExprToValueCIR(expr as EirExpr & { kind: "iter" });
+	}
+	if (expr.kind === "effect") {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		return eirEffectExprToValueCIR(expr as EirExpr & { kind: "effect" });
+	}
+	if (expr.kind === "refCell") {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		return eirRefCellExprToValueCIR(expr as EirExpr & { kind: "refCell" });
+	}
+	if (expr.kind === "deref") {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		return eirDerefExprToValueCIR(expr as EirExpr & { kind: "deref" });
+	}
+	if (expr.kind === "try") {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		return eirTryExprToValueCIR(expr as EirExpr & { kind: "try" });
 	}
 
 	// For other expressions, return as opaque value
 	return opaqueVal("expr", expr);
 }
+/* eslint-enable max-statements, complexity */
 
 // Expression conversion for raw format (no prefix, for round-trip)
+/* eslint-disable max-statements -- Raw expression conversion requires multiple condition checks */
 function exprToValueRaw(expr: Expr): Value {
 	// For literals, return the value directly
 	if (expr.kind === "lit") {
@@ -202,6 +248,7 @@ function exprToValueRaw(expr: Expr): Value {
 	// For other expressions, return as opaque value
 	return opaqueVal("expr", expr);
 }
+/* eslint-enable max-statements */
 
 function litToValueCIR(expr: { kind: "lit"; type: { kind: string }; value: unknown }): Value {
 	const map = new Map<string, Value>();
@@ -296,6 +343,106 @@ function lambdaExprToValueRaw(expr: Expr & { kind: "lambda" }): Value {
 	return mapVal(map);
 }
 
+//==============================================================================
+// EIR Expression Conversion Functions
+//==============================================================================
+
+// Helper function to convert string | Expr | EirExpr to Value
+function exprOrRefToValue(exprOrRef: string | Expr | EirExpr): Value {
+	if (typeof exprOrRef === "string") {
+		return stringVal(exprOrRef);
+	}
+	return exprToValueCIR(exprOrRef);
+}
+
+// Helper function to convert Value back to string | Expr | EirExpr
+// Note: Returns string | Expr | EirExpr, but EIR expressions expect string | Expr
+// We use type assertions when assigning to EIR expression properties
+function valueToExprOrRef(value: Value): string | Expr | EirExpr {
+	if (value.kind === "string") {
+		return value.value;
+	}
+	return valueToExpr(value);
+}
+
+function eirSeqExprToValueCIR(expr: EirExpr & { kind: "seq" }): Value {
+	const map = new Map<string, Value>();
+	map.set("s:kind", stringVal("seq"));
+	map.set("s:first", exprOrRefToValue(expr.first));
+	map.set("s:then", exprOrRefToValue(expr.then));
+	return mapVal(map);
+}
+
+function eirAssignExprToValueCIR(expr: EirExpr & { kind: "assign" }): Value {
+	const map = new Map<string, Value>();
+	map.set("s:kind", stringVal("assign"));
+	map.set("s:target", stringVal(expr.target));
+	map.set("s:value", exprOrRefToValue(expr.value));
+	return mapVal(map);
+}
+
+function eirWhileExprToValueCIR(expr: EirExpr & { kind: "while" }): Value {
+	const map = new Map<string, Value>();
+	map.set("s:kind", stringVal("while"));
+	map.set("s:cond", exprOrRefToValue(expr.cond));
+	map.set("s:body", exprOrRefToValue(expr.body));
+	return mapVal(map);
+}
+
+function eirForExprToValueCIR(expr: EirExpr & { kind: "for" }): Value {
+	const map = new Map<string, Value>();
+	map.set("s:kind", stringVal("for"));
+	map.set("s:var", stringVal(expr.var));
+	map.set("s:init", exprOrRefToValue(expr.init));
+	map.set("s:cond", exprOrRefToValue(expr.cond));
+	map.set("s:update", exprOrRefToValue(expr.update));
+	map.set("s:body", exprOrRefToValue(expr.body));
+	return mapVal(map);
+}
+
+function eirIterExprToValueCIR(expr: EirExpr & { kind: "iter" }): Value {
+	const map = new Map<string, Value>();
+	map.set("s:kind", stringVal("iter"));
+	map.set("s:var", stringVal(expr.var));
+	map.set("s:iter", exprOrRefToValue(expr.iter));
+	map.set("s:body", exprOrRefToValue(expr.body));
+	return mapVal(map);
+}
+
+function eirEffectExprToValueCIR(expr: EirExpr & { kind: "effect" }): Value {
+	const map = new Map<string, Value>();
+	map.set("s:kind", stringVal("effect"));
+	map.set("s:op", stringVal(expr.op));
+	map.set("s:args", listVal(expr.args.map((arg: string | Expr | EirExpr) => exprOrRefToValue(arg))));
+	return mapVal(map);
+}
+
+function eirRefCellExprToValueCIR(expr: EirExpr & { kind: "refCell" }): Value {
+	const map = new Map<string, Value>();
+	map.set("s:kind", stringVal("refCell"));
+	map.set("s:target", stringVal(expr.target));
+	return mapVal(map);
+}
+
+function eirDerefExprToValueCIR(expr: EirExpr & { kind: "deref" }): Value {
+	const map = new Map<string, Value>();
+	map.set("s:kind", stringVal("deref"));
+	map.set("s:target", stringVal(expr.target));
+	return mapVal(map);
+}
+
+function eirTryExprToValueCIR(expr: EirExpr & { kind: "try" }): Value {
+	const map = new Map<string, Value>();
+	map.set("s:kind", stringVal("try"));
+	map.set("s:tryBody", exprOrRefToValue(expr.tryBody));
+	map.set("s:catchParam", stringVal(expr.catchParam));
+	map.set("s:catchBody", exprOrRefToValue(expr.catchBody));
+	if (expr.fallback !== undefined) {
+		map.set("s:fallback", exprOrRefToValue(expr.fallback));
+	}
+	return mapVal(map);
+}
+
 function typeToValue(type: { kind: string }): Value {
 	const map = new Map<string, Value>();
 	map.set("kind", stringVal(type.kind));
@@ -327,6 +474,7 @@ function convertTypeField(key: string, val: unknown): Value {
 	return opaqueVal(key, val);
 }
 
+/* eslint-disable max-lines-per-function, max-statements, complexity -- Type conversion requires handling many type cases */
 function valueToType(value: Value): Type {
 	if (value.kind === "map") {
 		const kindVal = value.value.get("kind");
@@ -403,6 +551,7 @@ function valueToType(value: Value): Type {
 	// For opaque or other types, return a fallback int type
 	return intType;
 }
+/* eslint-enable max-lines-per-function, max-statements, complexity */
 
 //==============================================================================
 // Value → CIRDocument Conversion (Round-Trip)
@@ -511,13 +660,16 @@ function valueToLitExpr(map: Map<string, Value>): Expr {
 	// Fallback for unknown types - return 0 as a safe default
 	return { kind: "lit", type: { kind: "int" }, value: 0 };
 }
+/* eslint-disable max-statements -- Literal value conversion requires multiple type checks */
 
 function valueToExprNode(id: string, map: Map<string, Value>): CirHybridNode {
 	const exprVal = map.get("expr");
 	if (!exprVal) {
 		throw new Error(`Node "${id}" missing expr`);
 	}
-	return { id, expr: valueToExpr(exprVal) };
+	// Type assertion: when converting CIR nodes, expressions are CIR Expr not EirExpr
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	return { id, expr: valueToExpr(exprVal) as Expr };
 }
 
 function valueToBlockNode(id: string, map: Map<string, Value>): CirHybridNode {
@@ -532,8 +684,10 @@ function valueToBlockNode(id: string, map: Map<string, Value>): CirHybridNode {
 	const entry = entryVal.kind === "string" ? entryVal.value : "entry";
 	return { id, blocks: Array<CirBlock>(), entry };
 }
+/* eslint-enable max-statements */
 
-function valueToExpr(value: Value): Expr {
+/* eslint-disable max-statements -- Expression conversion requires multiple type checks */
+function valueToExpr(value: Value): Expr | EirExpr {
 	// For literals, reconstruct
 	if (value.kind === "int") {
 		return { kind: "lit", type: { kind: "int" }, value: value.value };
@@ -558,8 +712,10 @@ function valueToExpr(value: Value): Expr {
 	// For opaque values, we can't reliably reconstruct without type assertions
 	throw new Error(`Cannot convert value kind "${value.kind}" to Expr (opaque reconstruction not supported)`);
 }
+/* eslint-enable max-statements */
 
-function valueToMapExpr(value: { kind: "map"; value: Map<string, Value> }): Expr {
+/* eslint-disable max-statements, complexity -- Map expression conversion requires many kind checks */
+function valueToMapExpr(value: { kind: "map"; value: Map<string, Value> }): Expr | EirExpr {
 	const kindVal = value.value.get("kind");
 	if (kindVal?.kind !== "string") {
 		throw new Error("Map expression must have string 'kind' field");
@@ -579,8 +735,38 @@ function valueToMapExpr(value: { kind: "map"; value: Map<string, Value> }): Expr
 		return valueToLambdaExpr(value.value);
 	}
 
+	// EIR expression kinds
+	if (kind === "seq") {
+		return valueToEirSeqExpr(value.value);
+	}
+	if (kind === "assign") {
+		return valueToEirAssignExpr(value.value);
+	}
+	if (kind === "while") {
+		return valueToEirWhileExpr(value.value);
+	}
+	if (kind === "for") {
+		return valueToEirForExpr(value.value);
+	}
+	if (kind === "iter") {
+		return valueToEirIterExpr(value.value);
+	}
+	if (kind === "effect") {
+		return valueToEirEffectExpr(value.value);
+	}
+	if (kind === "refCell") {
+		return valueToEirRefCellExpr(value.value);
+	}
+	if (kind === "deref") {
+		return valueToEirDerefExpr(value.value);
+	}
+	if (kind === "try") {
+		return valueToEirTryExpr(value.value);
+	}
+
 	throw new Error(`Unsupported map expression kind: "${kind}"`);
 }
+/* eslint-enable max-statements, complexity */
 
 function valueToCallExpr(map: Map<string, Value>): Expr {
 	const nsVal = map.get("ns");
@@ -597,7 +783,8 @@ function valueToCallExpr(map: Map<string, Value>): Expr {
 			return arg.value;
 		}
 		// For other values (inline expressions), convert to Expr
-		return valueToExpr(arg);
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		return valueToExpr(arg) as Expr;
 	});
 
 	return { kind: "call", ns: nsVal.value, name: nameVal.value, args };
@@ -623,4 +810,244 @@ function valueToLambdaExpr(map: Map<string, Value>): Expr {
 	const type = typeVal ? valueToType(typeVal) : fnType([], intType);
 
 	return { kind: "lambda", params, body: bodyVal.value, type };
+}
+
+//==============================================================================
+// Value → EIR Expression Conversion Functions
+//==============================================================================
+
+/**
+ * Convert a Value to an EIR expression.
+ * This function handles EIR-specific expression kinds.
+ */
+/* eslint-disable max-statements, complexity -- EIR expression conversion requires many kind checks */
+export function valueToEirExpr(value: Value): EirExpr {
+	// For string values, check if it's a ref or var
+	if (value.kind === "string") {
+		const str = value.value;
+		if (str.startsWith("@")) {
+			return { kind: "ref", id: str.slice(1) };
+		}
+		return { kind: "var", name: str };
+	}
+
+	// For literal values (int, bool, float), create literal expressions
+	if (value.kind === "int") {
+		return { kind: "lit", type: { kind: "int" }, value: value.value };
+	}
+	if (value.kind === "bool") {
+		return { kind: "lit", type: { kind: "bool" }, value: value.value };
+	}
+	if (value.kind === "float") {
+		return { kind: "lit", type: { kind: "float" }, value: value.value };
+	}
+
+	// For map values, delegate to specific handlers
+	if (value.kind === "map") {
+		const kindVal = value.value.get("kind");
+		if (kindVal?.kind === "string") {
+			const kind = kindVal.value;
+
+			// EIR expression kinds
+			if (kind === "seq") return valueToEirSeqExpr(value.value);
+			if (kind === "assign") return valueToEirAssignExpr(value.value);
+			if (kind === "while") return valueToEirWhileExpr(value.value);
+			if (kind === "for") return valueToEirForExpr(value.value);
+			if (kind === "iter") return valueToEirIterExpr(value.value);
+			if (kind === "effect") return valueToEirEffectExpr(value.value);
+			if (kind === "refCell") return valueToEirRefCellExpr(value.value);
+			if (kind === "deref") return valueToEirDerefExpr(value.value);
+			if (kind === "try") return valueToEirTryExpr(value.value);
+
+			// CIR expression kinds (for compatibility)
+			if (kind === "lit") return valueToLitExpr(value.value);
+			if (kind === "call") return valueToCallExpr(value.value);
+			if (kind === "lambda") return valueToLambdaExpr(value.value);
+		}
+	}
+
+	throw new Error(`Cannot convert value to EIR expression: unsupported kind "${value.kind}"`);
+}
+/* eslint-enable max-statements, complexity */
+
+/**
+ * Get a field from a map, trying both prefixed and non-prefixed keys
+ */
+function getPrefixedField(map: Map<string, Value>, key: string): Value | undefined {
+	// Try with "s:" prefix first (CIR format)
+	if (map.has(`s:${key}`)) {
+		return map.get(`s:${key}`);
+	}
+	// Try without prefix (raw format)
+	return map.get(key);
+}
+
+/**
+ * Get a required string field from a map
+ */
+function getStringFieldPrefixed(map: Map<string, Value>, key: string): string {
+	const val = getPrefixedField(map, key);
+	if (val?.kind !== "string") {
+		throw new Error(`Expected string field "${key}" (with or without "s:" prefix)`);
+	}
+	return val.value;
+}
+
+function valueToEirSeqExpr(map: Map<string, Value>): EirExpr {
+	const firstVal = getPrefixedField(map, "first");
+	const thenVal = getPrefixedField(map, "then");
+
+	if (!firstVal || !thenVal) {
+		throw new Error("Seq expression must have 'first' and 'then' fields");
+	}
+
+	return {
+		kind: "seq",
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		first: valueToExprOrRef(firstVal) as string | Expr,
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		then: valueToExprOrRef(thenVal) as string | Expr,
+	};
+}
+
+function valueToEirAssignExpr(map: Map<string, Value>): EirExpr {
+	const target = getStringFieldPrefixed(map, "target");
+	const valueVal = getPrefixedField(map, "value");
+
+	if (!valueVal) {
+		throw new Error("Assign expression must have 'value' field");
+	}
+
+	return {
+		kind: "assign",
+		target,
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		value: valueToExprOrRef(valueVal) as string | Expr,
+	};
+}
+
+function valueToEirWhileExpr(map: Map<string, Value>): EirExpr {
+	const condVal = getPrefixedField(map, "cond");
+	const bodyVal = getPrefixedField(map, "body");
+
+	if (!condVal || !bodyVal) {
+		throw new Error("While expression must have 'cond' and 'body' fields");
+	}
+
+	return {
+		kind: "while",
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		cond: valueToExprOrRef(condVal) as string | Expr,
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		body: valueToExprOrRef(bodyVal) as string | Expr,
+	};
+}
+
+function valueToEirForExpr(map: Map<string, Value>): EirExpr {
+	const varName = getStringFieldPrefixed(map, "var");
+	const initVal = getPrefixedField(map, "init");
+	const condVal = getPrefixedField(map, "cond");
+	const updateVal = getPrefixedField(map, "update");
+	const bodyVal = getPrefixedField(map, "body");
+
+	if (!initVal || !condVal || !updateVal || !bodyVal) {
+		throw new Error("For expression must have 'init', 'cond', 'update', and 'body' fields");
+	}
+
+	return {
+		kind: "for",
+		var: varName,
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		init: valueToExprOrRef(initVal) as string | Expr,
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		cond: valueToExprOrRef(condVal) as string | Expr,
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		update: valueToExprOrRef(updateVal) as string | Expr,
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		body: valueToExprOrRef(bodyVal) as string | Expr,
+	};
+}
+
+function valueToEirIterExpr(map: Map<string, Value>): EirExpr {
+	const varName = getStringFieldPrefixed(map, "var");
+	const iterVal = getPrefixedField(map, "iter");
+	const bodyVal = getPrefixedField(map, "body");
+
+	if (!iterVal || !bodyVal) {
+		throw new Error("Iter expression must have 'iter' and 'body' fields");
+	}
+
+	return {
+		kind: "iter",
+		var: varName,
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		iter: valueToExprOrRef(iterVal) as string | Expr,
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		body: valueToExprOrRef(bodyVal) as string | Expr,
+	};
+}
+
+function valueToEirEffectExpr(map: Map<string, Value>): EirExpr {
+	const op = getStringFieldPrefixed(map, "op");
+	const argsVal = getPrefixedField(map, "args");
+
+	if (!argsVal || argsVal.kind !== "list") {
+		throw new Error("Effect expression must have 'args' field as a list");
+	}
+
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const args = argsVal.value.map(arg => valueToExprOrRef(arg)) as (string | Expr)[];
+
+	return {
+		kind: "effect",
+		op,
+		args,
+	};
+}
+
+function valueToEirRefCellExpr(map: Map<string, Value>): EirExpr {
+	const target = getStringFieldPrefixed(map, "target");
+
+	return {
+		kind: "refCell",
+		target,
+	};
+}
+
+function valueToEirDerefExpr(map: Map<string, Value>): EirExpr {
+	const target = getStringFieldPrefixed(map, "target");
+
+	return {
+		kind: "deref",
+		target,
+	};
+}
+
+function valueToEirTryExpr(map: Map<string, Value>): EirExpr {
+	const tryBodyVal = getPrefixedField(map, "tryBody");
+	const catchParam = getStringFieldPrefixed(map, "catchParam");
+	const catchBodyVal = getPrefixedField(map, "catchBody");
+	const fallbackVal = getPrefixedField(map, "fallback");
+
+	if (!tryBodyVal || !catchBodyVal) {
+		throw new Error("Try expression must have 'tryBody' and 'catchBody' fields");
+	}
+
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const result: EirExpr & { kind: "try" } = {
+		kind: "try",
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		tryBody: valueToExprOrRef(tryBodyVal) as string | Expr,
+		catchParam,
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		catchBody: valueToExprOrRef(catchBodyVal) as string | Expr,
+	};
+
+	// Add fallback if present
+	if (fallbackVal !== undefined) {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		result.fallback = valueToExprOrRef(fallbackVal) as string | Expr;
+	}
+
+	return result;
 }
