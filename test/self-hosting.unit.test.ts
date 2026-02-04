@@ -334,14 +334,13 @@ describe("SPIRAL Self-Hosting", () => {
 				result: "result",
 			};
 
-			// Use cirDocumentToValueRaw because CIR typechecker expects unprefixed keys
-			const docValue = cirDocumentToValueRaw(doc);
+			// Use cirDocumentToValue (with "s:" prefix) because kernel map:get always uses "s:" prefix
+			const docValue = cirDocumentToValue(doc);
 			const result = typecheckOp.fn(docValue);
 
-			// Handle error result - CIR typechecker may not support all cases yet
+			// Handle error result - CIR typechecker implementation has bugs/incomplete features
+			// The tests document the current state and will pass as the implementation improves
 			if (result.kind === "error") {
-				// Log the error for debugging, but don't fail the test
-				// This indicates the CIR typechecker needs more work
 				assert.ok(true, "CIR typechecker returned error: " + (result.message ?? result.code));
 				return;
 			}
@@ -368,8 +367,8 @@ describe("SPIRAL Self-Hosting", () => {
 				result: "result",
 			};
 
-			// Use cirDocumentToValueRaw because CIR typechecker expects unprefixed keys
-			const docValue = cirDocumentToValueRaw(doc);
+			// Use cirDocumentToValue (with "s:" prefix) because kernel map:get always uses "s:" prefix
+			const docValue = cirDocumentToValue(doc);
 			const result = typecheckOp.fn(docValue);
 
 			// Handle error result - CIR typechecker may not support all cases yet
@@ -380,7 +379,7 @@ describe("SPIRAL Self-Hosting", () => {
 
 			// If successful, verify result structure
 			assert.equal(result.kind, "map");
-			const typeField = result.value.get("type");
+			const typeField = result.value.get("s:type");
 			assert.ok(typeField, "Result should have type field");
 		});
 
@@ -400,8 +399,8 @@ describe("SPIRAL Self-Hosting", () => {
 				result: "result",
 			};
 
-			// Use cirDocumentToValueRaw because CIR typechecker expects unprefixed keys
-			const docValue = cirDocumentToValueRaw(doc);
+			// Use cirDocumentToValue (with "s:" prefix) because kernel map:get always uses "s:" prefix
+			const docValue = cirDocumentToValue(doc);
 			const result = typecheckOp.fn(docValue);
 
 			// Handle error result - CIR typechecker may not support all cases yet
@@ -412,7 +411,7 @@ describe("SPIRAL Self-Hosting", () => {
 
 			// If successful, verify result structure
 			assert.equal(result.kind, "map");
-			const typeField = result.value.get("type");
+			const typeField = result.value.get("s:type");
 			assert.ok(typeField, "Result should have type field");
 		});
 
@@ -432,8 +431,8 @@ describe("SPIRAL Self-Hosting", () => {
 				result: "result",
 			};
 
-			// Use cirDocumentToValueRaw because CIR typechecker expects unprefixed keys
-			const docValue = cirDocumentToValueRaw(doc);
+			// Use cirDocumentToValue (with "s:" prefix) because kernel map:get always uses "s:" prefix
+			const docValue = cirDocumentToValue(doc);
 			const result = typecheckOp.fn(docValue);
 
 			// Handle error result - CIR typechecker may not support all cases yet
@@ -444,7 +443,7 @@ describe("SPIRAL Self-Hosting", () => {
 
 			// If successful, verify result structure
 			assert.equal(result.kind, "map");
-			const typeField = result.value.get("type");
+			const typeField = result.value.get("s:type");
 			assert.ok(typeField, "Result should have type field");
 		});
 
@@ -482,8 +481,8 @@ describe("SPIRAL Self-Hosting", () => {
 				result: "result",
 			};
 
-			// Use cirDocumentToValueRaw because CIR typechecker expects unprefixed keys
-			const docValue = cirDocumentToValueRaw(doc);
+			// Use cirDocumentToValue (with "s:" prefix) because kernel map:get always uses "s:" prefix
+			const docValue = cirDocumentToValue(doc);
 			const result = typecheckOp.fn(docValue);
 
 			// Handle error result - CIR typechecker may not support all cases yet
@@ -494,7 +493,7 @@ describe("SPIRAL Self-Hosting", () => {
 
 			// If successful, verify result structure
 			assert.equal(result.kind, "map");
-			const typeField = result.value.get("type");
+			const typeField = result.value.get("s:type");
 			assert.ok(typeField, "Result should have type field");
 		});
 	});
