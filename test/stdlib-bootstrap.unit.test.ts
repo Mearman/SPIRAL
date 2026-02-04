@@ -109,8 +109,170 @@ describe("kernel registry", () => {
 		assert.equal(parse.fn(stringVal("{invalid")).kind, "error");
 	});
 
-	it("has 40 total operators", () => {
+	it("has 42 total operators", () => {
 		assert.strictEqual(kernel.size, 42);
+	});
+
+	// env: operators
+	it("has env:get operator", () => {
+		const envGet = lookupOperator(kernel, "env", "get");
+		assert.ok(envGet);
+	});
+
+	it("has env:set operator", () => {
+		const envSet = lookupOperator(kernel, "env", "set");
+		assert.ok(envSet);
+	});
+
+	it("has env:extend operator", () => {
+		const envExtend = lookupOperator(kernel, "env", "extend");
+		assert.ok(envExtend);
+	});
+
+	// meta: operators
+	it("has meta:typeOf operator", () => {
+		const typeOf = lookupOperator(kernel, "meta", "typeOf");
+		assert.ok(typeOf);
+	});
+
+	it("has meta:typeEq operator", () => {
+		const typeEq = lookupOperator(kernel, "meta", "typeEq");
+		assert.ok(typeEq);
+	});
+});
+
+describe("env stdlib", () => {
+	const kernel = createKernelRegistry();
+
+	// Helper to create a map with s:-prefixed keys
+	function makeEnvMap(entries: [string, Value][]): Value {
+		return mapVal(new Map(entries.map(([k, v]) => ["s:" + k, v])));
+	}
+
+	it("env:get retrieves values with s: prefix", () => {
+		const envGet = lookupOperator(kernel, "env", "get")!;
+		const env = makeEnvMap([["x", intVal(42)], ["y", intVal(99)]]);
+		assert.deepStrictEqual(envGet.fn(env, stringVal("x")), intVal(42));
+		assert.deepStrictEqual(envGet.fn(env, stringVal("y")), intVal(99));
+	});
+
+	it("env:get returns error for missing keys", () => {
+		const envGet = lookupOperator(kernel, "env", "get")!;
+		const env = makeEnvMap([["x", intVal(1)]]);
+		const result = envGet.fn(env, stringVal("missing"));
+		assert.equal(result.kind, "error");
+		assert.ok(result.kind === "error" && result.message.includes("Key not found"));
+	});
+
+	it("env:get returns error for non-map env", () => {
+		const envGet = lookupOperator(kernel, "env", "get")!;
+		const result = envGet.fn(intVal(123), stringVal("x"));
+		assert.equal(result.kind, "error");
+		assert.ok(result.kind === "error" && result.message.includes("Expected map value"));
+	});
+
+	it("env:get returns error for non-string key", () => {
+		const envGet = lookupOperator(kernel, "env", "get")!;
+		const env = makeEnvMap([["x", intVal(1)]]);
+		const result = envGet.fn(env, intVal(42));
+		assert.equal(result.kind, "error");
+		assert.ok(result.kind === "error" && result.message.includes("Expected string key"));
+	});
+
+	it("env:set creates new map without modifying original", () => {
+		const envSet = lookupOperator(kernel, "env", "set")!;
+		const env = makeEnvMap([["x", intVal(1)]]);
+		const result = envSet.fn(env, stringVal("y"), intVal(2));
+		assert.strictEqual(result.kind, "map");
+		// Original should be unchanged
+		assert.strictEqual(env.value.size, 1);
+		assert.deepStrictEqual(env.value.get("s:x"), intVal(1));
+		// New map should have both keys
+		if (result.kind === "map") {
+			assert.strictEqual(result.value.size, 2);
+			assert.deepStrictEqual(result.value.get("s:x"), intVal(1));
+			assert.deepStrictEqual(result.value.get("s:y"), intVal(2));
+		}
+	});
+
+	it("env:set overwrites existing key", () => {
+		const envSet = lookupOperator(kernel, "env", "set")!;
+		const env = makeEnvMap([["x", intVal(1)]]);
+		const result = envSet.fn(env, stringVal("x"), intVal(99));
+		assert.strictEqual(result.kind, "map");
+		if (result.kind === "map") {
+			assert.strictEqual(result.value.size, 1);
+			assert.deepStrictEqual(result.value.get("s:x"), intVal(99));
+		}
+	});
+
+	it("env:set returns error for non-map env", () => {
+		const envSet = lookupOperator(kernel, "env", "set")!;
+		const result = envSet.fn(intVal(123), stringVal("x"), intVal(1));
+		assert.equal(result.kind, "error");
+		assert.ok(result.kind === "error" && result.message.includes("Expected map value"));
+	});
+
+	it("env:set returns error for non-string key", () => {
+		const envSet = lookupOperator(kernel, "env", "set")!;
+		const env = makeEnvMap([]);
+		const result = envSet.fn(env, intVal(42), intVal(1));
+		assert.equal(result.kind, "error");
+		assert.ok(result.kind === "error" && result.message.includes("Expected string key"));
+	});
+
+	it("env:extend merges two maps correctly", () => {
+		const envExtend = lookupOperator(kernel, "env", "extend")!;
+		const base = makeEnvMap([["x", intVal(1)], ["y", intVal(2)]]);
+		const extension = makeEnvMap([["y", intVal(99)], ["z", intVal(3)]]);
+		const result = envExtend.fn(base, extension);
+		assert.strictEqual(result.kind, "map");
+		if (result.kind === "map") {
+			assert.strictEqual(result.value.size, 3);
+			assert.deepStrictEqual(result.value.get("s:x"), intVal(1));
+			assert.deepStrictEqual(result.value.get("s:y"), intVal(99)); // extension wins
+			assert.deepStrictEqual(result.value.get("s:z"), intVal(3));
+		}
+	});
+
+	it("env:extend with empty extension returns base unchanged", () => {
+		const envExtend = lookupOperator(kernel, "env", "extend")!;
+		const base = makeEnvMap([["x", intVal(1)]]);
+		const extension = makeEnvMap([]);
+		const result = envExtend.fn(base, extension);
+		assert.strictEqual(result.kind, "map");
+		if (result.kind === "map") {
+			assert.strictEqual(result.value.size, 1);
+			assert.deepStrictEqual(result.value.get("s:x"), intVal(1));
+		}
+	});
+
+	it("env:extend with empty base returns extension", () => {
+		const envExtend = lookupOperator(kernel, "env", "extend")!;
+		const base = makeEnvMap([]);
+		const extension = makeEnvMap([["x", intVal(1)]]);
+		const result = envExtend.fn(base, extension);
+		assert.strictEqual(result.kind, "map");
+		if (result.kind === "map") {
+			assert.strictEqual(result.value.size, 1);
+			assert.deepStrictEqual(result.value.get("s:x"), intVal(1));
+		}
+	});
+
+	it("env:extend returns error for non-map base", () => {
+		const envExtend = lookupOperator(kernel, "env", "extend")!;
+		const extension = makeEnvMap([["x", intVal(1)]]);
+		const result = envExtend.fn(intVal(123), extension);
+		assert.equal(result.kind, "error");
+		assert.ok(result.kind === "error" && result.message.includes("Expected map value"));
+	});
+
+	it("env:extend returns error for non-map extension", () => {
+		const envExtend = lookupOperator(kernel, "env", "extend")!;
+		const base = makeEnvMap([]);
+		const result = envExtend.fn(base, intVal(123));
+		assert.equal(result.kind, "error");
+		assert.ok(result.kind === "error" && result.message.includes("Expected map value"));
 	});
 });
 

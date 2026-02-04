@@ -442,6 +442,8 @@ const metaTypeEq: Operator = defineOperator("meta", "typeEq")
 	}).build();
 
 // env — Environment manipulation (3): for EIR evaluation
+// NOTE: Type limitation - uses mapType(stringType, intType) which restricts to int values.
+// For full EIR evaluation, we'll need to store heterogeneous types (Value union).
 
 const envGet: Operator = defineOperator("env", "get")
 	.setParams(mapType(stringType, intType), stringType).setReturns(intType).setPure(true)
@@ -450,6 +452,7 @@ const envGet: Operator = defineOperator("env", "get")
 		if (isError(key)) return key;
 		if (env.kind !== "map") return errorVal(ErrorCodes.TypeError, "Expected map value");
 		if (key.kind !== "string") return errorVal(ErrorCodes.TypeError, "Expected string key");
+		// "s:" prefix is used for string keys in map storage
 		const hash = "s:" + key.value;
 		const result = env.value.get(hash);
 		if (result === undefined) return errorVal(ErrorCodes.DomainError, "Key not found: " + key.value);
@@ -483,7 +486,7 @@ const envExtend: Operator = defineOperator("env", "extend")
 		return mapVal(newMap);
 	}).build();
 
-// Kernel Registry — 40 native operators
+// Kernel Registry — 42 native operators
 
 export function createKernelRegistry(): OperatorRegistry {
 	const operators: Operator[] = [
