@@ -1,0 +1,241 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"airDefs": [],
+	"nodes": [
+		{
+			"id": "emptyRegistry",
+			"expr": {
+				"kind": "record",
+				"fields": []
+			}
+		},
+		{
+			"id": "lookupEffect",
+			"expr": {
+				"kind": "lambda",
+				"params": [
+					{ "name": "registry", "type": { "kind": "map", "keys": { "kind": "string" }, "values": { "kind": "opaque" } } },
+					{ "name": "name", "type": { "kind": "string" } }
+				],
+				"body": "lookupEffectBody"
+			}
+		},
+		{
+			"id": "registryVar",
+			"expr": {
+				"kind": "var",
+				"name": "registry"
+			}
+		},
+		{
+			"id": "nameVar",
+			"expr": {
+				"kind": "var",
+				"name": "name"
+			}
+		},
+		{
+			"id": "lookupEffectBody",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "get",
+				"args": ["registryVar", "nameVar"]
+			}
+		},
+		{
+			"id": "registerEffect",
+			"expr": {
+				"kind": "lambda",
+				"params": [
+					{ "name": "registry", "type": { "kind": "map", "keys": { "kind": "string" }, "values": { "kind": "opaque" } } },
+					{ "name": "op", "type": { "kind": "map", "keys": { "kind": "string" }, "values": { "kind": "opaque" } } }
+				],
+				"body": "registerEffectBody"
+			}
+		},
+		{
+			"id": "registryVar2",
+			"expr": {
+				"kind": "var",
+				"name": "registry"
+			}
+		},
+		{
+			"id": "opVar",
+			"expr": {
+				"kind": "var",
+				"name": "op"
+			}
+		},
+		{
+			"id": "nameKey",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "name"
+			}
+		},
+		{
+			"id": "opName",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "get",
+				"args": ["opVar", "nameKey"]
+			}
+		},
+		{
+			"id": "registerEffectBody",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": ["registryVar2", "opName", "opVar"]
+			}
+		},
+		{
+			"id": "createIOEffect",
+			"expr": {
+				"kind": "lambda",
+				"params": [
+					{ "name": "name", "type": { "kind": "string" } },
+					{ "name": "params", "type": { "kind": "list", "items": { "kind": "opaque" } } },
+					{ "name": "returns", "type": { "kind": "opaque" } }
+				],
+				"body": "createIOEffectBody"
+			}
+		},
+		{
+			"id": "pureKey",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "pure"
+			}
+		},
+		{
+			"id": "pureFalse",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "bool" },
+				"value": false
+			}
+		},
+		{
+			"id": "nameKey2",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "name"
+			}
+		},
+		{
+			"id": "paramsKey",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "params"
+			}
+		},
+		{
+			"id": "returnsKey",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "returns"
+			}
+		},
+		{
+			"id": "emptyRecord",
+			"expr": {
+				"kind": "record",
+				"fields": []
+			}
+		},
+		{
+			"id": "withPure",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": ["emptyRecord", "pureKey", "pureFalse"]
+			}
+		},
+		{
+			"id": "nameVar2",
+			"expr": {
+				"kind": "var",
+				"name": "name"
+			}
+		},
+		{
+			"id": "withName",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": ["withPure", "nameKey2", "nameVar2"]
+			}
+		},
+		{
+			"id": "paramsVar",
+			"expr": {
+				"kind": "var",
+				"name": "params"
+			}
+		},
+		{
+			"id": "withParams",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": ["withName", "paramsKey", "paramsVar"]
+			}
+		},
+		{
+			"id": "returnsVar",
+			"expr": {
+				"kind": "var",
+				"name": "returns"
+			}
+		},
+		{
+			"id": "createIOEffectBody",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": ["withParams", "returnsKey", "returnsVar"]
+			}
+		},
+		{
+			"id": "createStateEffect",
+			"expr": {
+				"kind": "lambda",
+				"params": [
+					{ "name": "name", "type": { "kind": "string" } },
+					{ "name": "params", "type": { "kind": "list", "items": { "kind": "opaque" } } },
+					{ "name": "returns", "type": { "kind": "opaque" } }
+				],
+				"body": "createIOEffectBody"
+			}
+		},
+		{
+			"id": "exports",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{ "key": "effects:empty", "value": "emptyRegistry" },
+					{ "key": "effects:lookup", "value": "lookupEffect" },
+					{ "key": "effects:register", "value": "registerEffect" },
+					{ "key": "effects:createIO", "value": "createIOEffect" },
+					{ "key": "effects:createState", "value": "createStateEffect" }
+				]
+			}
+		}
+	],
+	"result": "exports"
+}
