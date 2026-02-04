@@ -11,6 +11,7 @@ import { SPIRALError, ErrorCodes } from "../errors.ts";
 import {
 	type Expr,
 	type Type,
+	type CIRDocument,
 	type Value,
 	voidVal,
 } from "../types.ts";
@@ -24,6 +25,7 @@ import {
 } from "../types.ts";
 import type { EvalContext, EvalOptions } from "./types.ts";
 import { evalLitValue } from "./lit-eval.ts";
+import { cirDocumentToValue } from "../cir-conv.ts";
 
 //==============================================================================
 // Evaluator Class
@@ -57,6 +59,35 @@ export class Evaluator {
 
 	evaluateWithState(expr: Expr, env: ValueEnv, state: EvalContext): Value {
 		return this.evalExpr(expr, env, state);
+	}
+
+	/**
+	 * Evaluate a CIR document using the CIR meta:eval implementation.
+	 * This provides a self-hosted evaluation path where the evaluation logic
+	 * is implemented in CIR rather than TypeScript.
+	 *
+	 * Example:
+	 * ```ts
+	 * const doc = {
+	 *   version: "1.0.0",
+	 *   airDefs: [],
+	 *   nodes: [
+	 *     { id: "a", expr: { kind: "lit", type: { kind: "int" }, value: 10 } },
+	 *     { id: "b", expr: { kind: "lit", type: { kind: "int" }, value: 20 } },
+	 *     { id: "result", expr: { kind: "call", ns: "core", name: "add", "args": ["a", "b"] } },
+	 *   ],
+	 *   result: "result",
+	 * };
+	 * const result = evaluator.evaluateCIR(doc); // Returns int value 30
+	 * ```
+	 */
+	evaluateCIR(doc: CIRDocument): Value {
+		const metaEval = this._registry.get("meta:eval");
+		if (!metaEval) {
+			return errorVal(ErrorCodes.DomainError, "meta:eval operator not available");
+		}
+		const docValue = cirDocumentToValue(doc);
+		return metaEval.fn(docValue);
 	}
 
 	private evalExpr(expr: Expr, env: ValueEnv, state: EvalContext): Value {

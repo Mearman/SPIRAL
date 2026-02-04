@@ -523,4 +523,62 @@ describe("SPIRAL Self-Hosting", () => {
 			assert.ok(result.kind === "map" || result.kind === "error");
 		});
 	});
+
+	describe("Evaluator.evaluateCIR - CIR Document Evaluation", () => {
+		it("should evaluate CIR document via evaluator.evaluateCIR", async () => {
+			const { bootstrapRegistry } = await import("../src/stdlib/bootstrap.ts");
+			const registry = bootstrapRegistry();
+
+			// Create a simple CIR document: 10 + 20 = 30
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{ id: "a", expr: { kind: "lit", type: { kind: "int" }, value: 10 } },
+					{ id: "b", expr: { kind: "lit", type: { kind: "int" }, value: 20 } },
+					{ id: "result", expr: { kind: "call", ns: "core", name: "add", args: ["a", "b"] } },
+				],
+				result: "result",
+			};
+
+			// Create evaluator and use evaluateCIR
+			const { Evaluator } = await import("../src/evaluator/helpers.ts");
+			const { emptyDefs } = await import("../src/env.ts");
+			const evaluator = new Evaluator(registry, emptyDefs());
+
+			const result = evaluator.evaluateCIR(doc);
+
+			// Verify the result
+			assert.equal(result.kind, "int");
+			assert.equal(result.value, 30);
+		});
+
+		it("should evaluate complex CIR document with multiple operations", async () => {
+			const { bootstrapRegistry } = await import("../src/stdlib/bootstrap.ts");
+			const registry = bootstrapRegistry();
+
+			// Document: (10 + 20) * 2 = 60
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{ id: "ten", expr: { kind: "lit", type: { kind: "int" }, value: 10 } },
+					{ id: "twenty", expr: { kind: "lit", type: { kind: "int" }, value: 20 } },
+					{ id: "sum", expr: { kind: "call", ns: "core", name: "add", args: ["ten", "twenty"] } },
+					{ id: "two", expr: { kind: "lit", type: { kind: "int" }, value: 2 } },
+					{ id: "result", expr: { kind: "call", ns: "core", name: "mul", args: ["sum", "two"] } },
+				],
+				result: "result",
+			};
+
+			const { Evaluator } = await import("../src/evaluator/helpers.ts");
+			const { emptyDefs } = await import("../src/env.ts");
+			const evaluator = new Evaluator(registry, emptyDefs());
+
+			const result = evaluator.evaluateCIR(doc);
+
+			assert.equal(result.kind, "int");
+			assert.equal(result.value, 60);
+		});
+	});
 });
