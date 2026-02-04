@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import {
 	bootstrapRegistry,
 	cirDocumentToValue,
+	cirDocumentToValueRaw,
 	valueToCirDocument,
 	typeCheckProgram,
 	evaluateProgram,
@@ -60,7 +61,7 @@ describe("SPIRAL Self-Hosting", () => {
 				result: "x",
 			};
 
-			const value = cirDocumentToValue(doc);
+			const value = cirDocumentToValueRaw(doc);
 			assert.equal(value.kind, "map", "Result should be a map");
 			assert.ok(value.value.has("version"), "Map should have version");
 			assert.ok(value.value.has("nodes"), "Map should have nodes");
@@ -79,7 +80,7 @@ describe("SPIRAL Self-Hosting", () => {
 				result: "result",
 			};
 
-			const value = cirDocumentToValue(doc);
+			const value = cirDocumentToValueRaw(doc);
 			const nodesList = value.value.get("nodes");
 			assert.ok(nodesList, "Should have nodes");
 			assert.equal(nodesList.kind, "list");
@@ -96,7 +97,7 @@ describe("SPIRAL Self-Hosting", () => {
 				result: "x",
 			};
 
-			const value = cirDocumentToValue(originalDoc);
+			const value = cirDocumentToValueRaw(originalDoc);
 			const roundTripped = valueToCirDocument(value);
 
 			assert.equal(roundTripped.version, originalDoc.version);
@@ -120,7 +121,7 @@ describe("SPIRAL Self-Hosting", () => {
 				result: "aRef",
 			};
 
-			const value = cirDocumentToValue(originalDoc);
+			const value = cirDocumentToValueRaw(originalDoc);
 			const roundTripped = valueToCirDocument(value);
 
 			assert.equal(roundTripped.nodes.length, 4);
@@ -147,6 +148,34 @@ describe("SPIRAL Self-Hosting", () => {
 			if ("expr" in varNode) {
 				assert.equal(varNode.expr.kind, "var");
 				assert.equal(varNode.expr.name, "result");
+			}
+		});
+
+		it("should support round-trip conversion for call expressions", () => {
+			const originalDoc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{ id: "a", expr: { kind: "lit", type: { kind: "int" }, value: 10 } },
+					{ id: "b", expr: { kind: "lit", type: { kind: "int" }, value: 20 } },
+					{ id: "result", expr: { kind: "call", ns: "core", "name": "add", "args": ["a", "b"] } },
+				],
+				result: "result",
+			};
+
+			const value = cirDocumentToValueRaw(originalDoc);
+			const roundTripped = valueToCirDocument(value);
+
+			assert.equal(roundTripped.nodes.length, 3);
+
+			// Check call expression round-trips correctly
+			const resultNode = roundTripped.nodes.find(n => n.id === "result");
+			assert.ok(resultNode, "Should have result node");
+			if ("expr" in resultNode) {
+				assert.equal(resultNode.expr.kind, "call");
+				assert.equal((resultNode.expr as { ns: string }).ns, "core");
+				assert.equal((resultNode.expr as { name: string }).name, "add");
+				assert.ok(Array.isArray((resultNode.expr as { args: unknown[] }).args));
 			}
 		});
 	});
@@ -198,6 +227,31 @@ describe("SPIRAL Self-Hosting", () => {
 			const metaEval = registry.get("meta:eval");
 			assert.ok(metaEval, "meta:eval operator should be available");
 			assert.equal(metaEval.params.length, 1);
+		});
+
+		it("should evaluate with CIR implementation (via meta:eval)", () => {
+			const metaEval = registry.get("meta:eval");
+			assert.ok(metaEval, "meta:eval operator should be available");
+
+			// Create a simple document: 10 + 20 = 30
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{ id: "a", expr: { kind: "lit", type: { kind: "int" }, value: 10 } },
+					{ id: "b", expr: { kind: "lit", type: { kind: "int" }, value: 20 } },
+					{ id: "result", expr: { kind: "call", ns: "core", "name": "add", "args": ["a", "b"] } },
+				],
+				result: "result",
+			};
+
+			// Convert to CIR Value format
+			const docValue = cirDocumentToValue(doc);
+
+			// Evaluate with CIR meta:eval
+			const result = metaEval.fn(docValue);
+			assert.equal(result.kind, "int");
+			assert.equal(result.value, 30);
 		});
 	});
 });
