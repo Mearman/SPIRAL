@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+		"allowImportingTsExtensions": true,
 		"declaration": true,
 		"declarationMap": true,
 		"downlevelIteration": true,
@@ -18,10 +19,13 @@
 		"noUnusedParameters": true,
 		"outDir": "./dist",
 		"resolveJsonModule": true,
+		"rewriteRelativeImportExtensions": true,
+		"rootDir": "./src",
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": true,
-		"target": "ES2022"
+		"target": "ES2022",
+		"verbatimModuleSyntax": true
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules", "dist", "test", "eslint.config.ts"]
