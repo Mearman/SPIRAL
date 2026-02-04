@@ -66,11 +66,11 @@ const roundTripped = valueToCirDocument(value);
 | Literals (int, bool, string, float) | ✅ | ✅ |
 | Ref expressions | ✅ | ✅ |
 | Var expressions | ✅ | ✅ |
-| Call expressions | ⚠️ Opaque | ❌ Not supported |
-| Lambda expressions | ⚠️ Opaque | ❌ Not supported |
+| Call expressions | ✅ | ✅ (with type fallback) |
+| Lambda expressions | ✅ | ✅ (with type fallback) |
 | Other expressions | ⚠️ Opaque | ❌ Not supported |
 
-Note: Opaque values preserve the original data for round-trip verification but cannot be converted back to Expr without additional implementation.
+Note: Call and lambda expressions now support round-trip conversion. Lambda types use fallback types for full type reconstruction.
 
 ## Irreducible Kernel
 
@@ -169,11 +169,12 @@ Effect registry data operations are implemented in CIR:
 
 To increase self-hosting coverage:
 
-1. **Expand Conversion Layer**: Support full Expr round-trip (call, lambda, etc.)
+1. ~~**Expand Conversion Layer**: Support full Expr round-trip (call, lambda, etc.)~~ ✅ Done
 2. ~~**Port Registry**: Implement operator registry in CIR~~ ✅ Done (data operations only)
 3. ~~**Port Effects**: Implement effect system in CIR~~ ✅ Done (data operations only)
-4. **Direct CIR Evaluation**: Enable `meta:eval` to work without TypeScript wrapper
+4. ~~**Direct CIR Evaluation**: Enable `meta:eval` to work without TypeScript wrapper~~ ✅ Done
 5. **Port More Stdlib**: Implement additional utility libraries in CIR
+6. **Full Type Reconstruction**: Preserve complete type information in lambda round-trip
 
 ## Statistics
 
@@ -183,6 +184,6 @@ To increase self-hosting coverage:
 | Self-hosted CIR stdlib | ~700KB (22 files) |
 | Irreducible kernel | ~1,761 lines |
 | Operators in registry | 132 |
-| Test coverage | 2,195 tests passing |
+| Test coverage | 2,198 tests passing (15 self-hosting tests) |
 
 See [wiki/Self-Hosting.md](../wiki/Self-Hosting.md) for architectural details.
