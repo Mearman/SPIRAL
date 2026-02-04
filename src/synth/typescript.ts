@@ -4,12 +4,12 @@
 import type {
 	AIRDocument, CIRDocument, EIRDocument,
 	LIRDocument,
-} from "../types.js";
-import type { TypeScriptSynthOptions } from "./ts-synth-shared.js";
-import { synthesizeExprBased } from "./ts-synth-expr.js";
-import { synthesizeLIR } from "./ts-synth-lir.js";
+} from "../types.ts";
+import type { TypeScriptSynthOptions } from "./ts-synth-shared.ts";
+import { synthesizeExprBased } from "./ts-synth-expr.ts";
+import { synthesizeLIR } from "./ts-synth-lir.ts";
 
-export type { TypeScriptSynthOptions } from "./ts-synth-shared.js";
+export type { TypeScriptSynthOptions } from "./ts-synth-shared.ts";
 
 type Document = AIRDocument | CIRDocument | EIRDocument | LIRDocument;
 

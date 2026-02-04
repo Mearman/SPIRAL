@@ -1,19 +1,19 @@
 // Evaluator class and shared helper functions
 
-import { lookupOperator, type OperatorRegistry } from "../domains/registry.js";
+import { lookupOperator, type OperatorRegistry } from "../domains/registry.ts";
 import {
 	type Defs,
 	type ValueEnv,
 	extendValueEnv,
 	lookupValue,
-} from "../env.js";
-import { SPIRALError, ErrorCodes } from "../errors.js";
+} from "../env.ts";
+import { SPIRALError, ErrorCodes } from "../errors.ts";
 import {
 	type Expr,
 	type Type,
 	type Value,
 	voidVal,
-} from "../types.js";
+} from "../types.ts";
 import {
 	boolVal,
 	errorVal,
@@ -21,9 +21,9 @@ import {
 	intVal,
 	isError,
 	stringVal,
-} from "../types.js";
-import type { EvalContext, EvalOptions } from "./types.js";
-import { evalLitValue } from "./lit-eval.js";
+} from "../types.ts";
+import type { EvalContext, EvalOptions } from "./types.ts";
+import { evalLitValue } from "./lit-eval.ts";
 
 //==============================================================================
 // Evaluator Class

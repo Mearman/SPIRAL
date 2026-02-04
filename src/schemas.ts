@@ -8,7 +8,7 @@ import {
 	EIRDocumentSchema,
 	LIRDocumentSchema,
 	SPIRALDocument,
-} from "./zod-schemas.js";
+} from "./zod-schemas.ts";
 
 //==============================================================================
 // Generated JSON Schemas

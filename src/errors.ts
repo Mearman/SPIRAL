@@ -1,7 +1,7 @@
 // SPIRAL Error Types
 // Error domain for type checking and evaluation errors
 
-import type { Type, Value } from "./types.js";
+import type { Type, Value } from "./types.ts";
 
 //==============================================================================
 // Error Codes

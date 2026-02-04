@@ -1,7 +1,7 @@
 // SPIRAL Environment Types
 // Type and Value environments for type checking and evaluation
 
-import type { AIRDef, Type, Value } from "./types.js";
+import type { AIRDef, Type, Value } from "./types.ts";
 
 //==============================================================================
 // Type Environment (Γ)

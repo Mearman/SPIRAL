@@ -1,15 +1,15 @@
 // AIR type checking helpers - extracted to reduce file size
 
-import { SPIRALError } from "../errors.js";
-import { lookupType } from "../env.js";
-import type { Expr, Type } from "../types.js";
+import { SPIRALError } from "../errors.ts";
+import { lookupType } from "../env.ts";
+import type { Expr, Type } from "../types.ts";
 import {
 	boolType,
 	fnType as fnTypeCtor,
 	intType,
 	typeEqual,
-} from "../types.js";
-import type { AIRCheckContext, TypeCheckResult } from "./context.js";
+} from "../types.ts";
+import type { AIRCheckContext, TypeCheckResult } from "./context.ts";
 
 //==============================================================================
 // If expression helpers

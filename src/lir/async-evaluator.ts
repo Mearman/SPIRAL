@@ -2,39 +2,39 @@
 // Async CFG-based execution for LIR with fork/join/suspend terminators
 // and spawn/channelOp/await instructions
 
-import { ErrorCodes } from "../errors.js";
+import { ErrorCodes } from "../errors.ts";
 import {
 	type Defs,
 	emptyValueEnv,
 	extendValueEnv,
 	lookupValue,
 	type ValueEnv,
-} from "../env.js";
-import type { OperatorRegistry } from "../domains/registry.js";
-import type { EffectRegistry } from "../effects.js";
-import type { LIRDocument, LirBlock, LirHybridNode, Value } from "../types.js";
-import { errorVal, isBlockNode, isExprNode, voidVal } from "../types.js";
-import { Evaluator } from "../evaluator.js";
-import { createTaskScheduler } from "../scheduler.js";
-import { createAsyncChannelStore } from "../async-effects.js";
+} from "../env.ts";
+import type { OperatorRegistry } from "../domains/registry.ts";
+import type { EffectRegistry } from "../effects.ts";
+import type { LIRDocument, LirBlock, LirHybridNode, Value } from "../types.ts";
+import { errorVal, isBlockNode, isExprNode, voidVal } from "../types.ts";
+import { Evaluator } from "../evaluator.ts";
+import { createTaskScheduler } from "../scheduler.ts";
+import { createAsyncChannelStore } from "../async-effects.ts";
 
 // Re-export types and handlers from sub-modules (public API)
-export type { LIRAsyncEvalOptions, LIRAsyncRuntimeState } from "./async/types.js";
+export type { LIRAsyncEvalOptions, LIRAsyncRuntimeState } from "./async/types.ts";
 export {
 	executeSpawnInstruction,
 	executeChannelOpInstruction,
 	executeAwaitInstruction,
-} from "./async/instructions.js";
+} from "./async/instructions.ts";
 export {
 	executeForkTerminator,
 	executeJoinTerminator,
 	executeSuspendTerminator,
-} from "./async/terminators.js";
+} from "./async/terminators.ts";
 
-import type { LIRAsyncEvalOptions, LIRAsyncRuntimeState } from "./async/types.js";
-import type { InstructionContext, TerminatorContext } from "./async/types.js";
-import { executeBlockAsync } from "./async/instructions.js";
-import { executeTerminatorAsync } from "./async/terminators.js";
+import type { LIRAsyncEvalOptions, LIRAsyncRuntimeState } from "./async/types.ts";
+import type { InstructionContext, TerminatorContext } from "./async/types.ts";
+import { executeBlockAsync } from "./async/instructions.ts";
+import { executeTerminatorAsync } from "./async/terminators.ts";
 
 //==============================================================================
 // Evaluation Inputs (parameter object pattern)

@@ -1,7 +1,7 @@
 // SPIRAL Operator Registry
 // Central registry for all domain operators
 
-import type { Type, Value } from "../types.js";
+import type { Type, Value } from "../types.ts";
 
 //==============================================================================
 // Operator Interface

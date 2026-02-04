@@ -1,10 +1,10 @@
 // LIR expression evaluation helpers
 
-import { ErrorCodes } from "../errors.js";
-import { lookupValue, type ValueEnv } from "../env.js";
-import type { Expr, Value } from "../types.js";
-import { errorVal, intVal, voidVal } from "../types.js";
-import type { LIRRuntimeState } from "./exec-context.js";
+import { ErrorCodes } from "../errors.ts";
+import { lookupValue, type ValueEnv } from "../env.ts";
+import type { Expr, Value } from "../types.ts";
+import { errorVal, intVal, voidVal } from "../types.ts";
+import type { LIRRuntimeState } from "./exec-context.ts";
 
 function evaluateLitExpr(
 	t: { kind: string },

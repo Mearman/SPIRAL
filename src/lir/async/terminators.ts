@@ -1,9 +1,9 @@
 // SPIRAL LIR Async Evaluator - Terminator Handlers
 
-import { ErrorCodes, exhaustive } from "../../errors.js";
-import { extendValueEnv, lookupValue } from "../../env.js";
-import type { OperatorRegistry } from "../../domains/registry.js";
-import type { EffectRegistry } from "../../effects.js";
+import { ErrorCodes, exhaustive } from "../../errors.ts";
+import { extendValueEnv, lookupValue } from "../../env.ts";
+import type { OperatorRegistry } from "../../domains/registry.ts";
+import type { EffectRegistry } from "../../effects.ts";
 import type {
 	LirBlock,
 	LirHybridNode,
@@ -13,14 +13,14 @@ import type {
 	EirTermJoin,
 	EirTermSuspend,
 	Value,
-} from "../../types.js";
+} from "../../types.ts";
 import {
 	errorVal,
 	isError,
 	isFuture,
 	voidVal,
-} from "../../types.js";
-import type { ForkContext, InstructionContext, LIRAsyncRuntimeState, TerminatorContext } from "./types.js";
+} from "../../types.ts";
+import type { ForkContext, InstructionContext, LIRAsyncRuntimeState, TerminatorContext } from "./types.ts";
 
 //==============================================================================
 // Individual Terminator Handlers

@@ -1,11 +1,11 @@
 // SPIRAL Task Scheduler
 // Cooperative task scheduling for async/parallel execution
 
-import type { Value } from "./types.js";
-import { DefaultTaskScheduler } from "./default-scheduler.js";
+import type { Value } from "./types.ts";
+import { DefaultTaskScheduler } from "./default-scheduler.ts";
 
-export { DefaultTaskScheduler } from "./default-scheduler.js";
-export { AsyncBarrier } from "./async-barrier.js";
+export { DefaultTaskScheduler } from "./default-scheduler.ts";
+export { AsyncBarrier } from "./async-barrier.ts";
 
 //==============================================================================
 // Task Scheduler Interface

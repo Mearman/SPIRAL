@@ -4,7 +4,7 @@
 // This module provides formatted error messages with suggestions for
 // common resolution failures, helping users quickly identify and fix issues.
 
-import type { Result } from "../utils/json-pointer.js";
+import type { Result } from "../utils/json-pointer.ts";
 
 //==============================================================================
 // Error Message Formatting

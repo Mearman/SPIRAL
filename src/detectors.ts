@@ -1,10 +1,10 @@
 // SPIRAL Concurrent Execution Detectors
 // Race condition and deadlock detection for async/parallel execution
 
-import type { Value } from "./types.js";
-import { DeadlockDetector } from "./deadlock-detector.js";
-export { DeadlockDetector } from "./deadlock-detector.js";
-export type { DeadlockCycle } from "./deadlock-detector.js";
+import type { Value } from "./types.ts";
+import { DeadlockDetector } from "./deadlock-detector.ts";
+export { DeadlockDetector } from "./deadlock-detector.ts";
+export type { DeadlockCycle } from "./deadlock-detector.ts";
 
 //==============================================================================
 // Detection Options

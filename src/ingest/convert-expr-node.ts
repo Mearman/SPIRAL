@@ -2,18 +2,18 @@
 // Creates nodes in the document's node list, returns node IDs.
 
 import ts from "typescript";
-import type { IngestState } from "./types.js";
+import type { IngestState } from "./types.ts";
 import {
 	freshId,
 	addNode,
 	addLitNode,
 	getBinaryOpMapping,
 	resolveExistingNodeId,
-} from "./helpers.js";
+} from "./helpers.ts";
 import {
 	convertArrowFunctionToNode,
 	convertFunctionExpressionToNode,
-} from "./convert-fn-node.js";
+} from "./convert-fn-node.ts";
 
 // Literal and simple expression converters
 

@@ -1,19 +1,19 @@
 // Python AST to SPIRAL node conversion
 
-import type { IngestState } from "./types.js";
-import { freshId, addNode, addLitNode, resolveExistingNodeId } from "./helpers.js";
+import type { IngestState } from "./types.ts";
+import { freshId, addNode, addLitNode, resolveExistingNodeId } from "./helpers.ts";
 import type {
 	PyNode, PyAssign, PyFunctionDef, PyIf, PyWhile,
 	PyFor, PyBinOp, PyUnaryOp, PyBoolOp, PyCompare,
 	PyIfExp, PyLambda, PyCall, PyConstant, PyName,
-} from "./python-types.js";
+} from "./python-types.ts";
 import {
 	isExprStmt, isAssign, isFunctionDef, isReturn,
 	isIfStmt, isWhileStmt, isForStmt,
 	isConstant, isName, isBinOp, isUnaryOp, isBoolOp,
 	isCompare, isIfExp, isLambdaExpr, isCall,
 	isPrintCall, isStringLiteral,
-} from "./python-types.js";
+} from "./python-types.ts";
 
 //==============================================================================
 // Node emission helpers

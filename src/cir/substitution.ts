@@ -1,8 +1,8 @@
 // SPIRAL CIR Substitution
 // Capture-avoiding substitution for CIR expressions
 
-import type { ValueEnv } from "../env.js";
-import type { Expr, LambdaExpr, LambdaParam, Value } from "../types.js";
+import type { ValueEnv } from "../env.ts";
+import type { Expr, LambdaExpr, LambdaParam, Value } from "../types.ts";
 
 const paramName = (p: string | LambdaParam): string => typeof p === "string" ? p : p.name;
 

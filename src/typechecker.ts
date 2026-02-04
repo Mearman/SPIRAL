@@ -1,23 +1,23 @@
 // SPIRAL Type Checker
 // Implements typing rules: Gamma |- e : tau
 
-import { lookupOperator, type OperatorRegistry } from "./domains/registry.js";
-import { type TypeEnv, emptyTypeEnv, lookupDef, type Defs } from "./env.js";
-import { SPIRALError } from "./errors.js";
-import type { AIRDocument, AirHybridNode, EIRDocument, EirHybridNode, Expr, LambdaParam, Type } from "./types.js";
+import { lookupOperator, type OperatorRegistry } from "./domains/registry.ts";
+import { type TypeEnv, emptyTypeEnv, lookupDef, type Defs } from "./env.ts";
+import { SPIRALError } from "./errors.ts";
+import type { AIRDocument, AirHybridNode, EIRDocument, EirHybridNode, Expr, LambdaParam, Type } from "./types.ts";
 import {
 	boolType,
 	fnType as fnTypeCtor,
 	intType,
 	typeEqual,
 	voidType,
-} from "./types.js";
-import type { EffectRegistry } from "./effects.js";
-import type { AIRCheckContext, EIRCheckContext } from "./typechecker/context.js";
-import { collectLambdaParamsAndLetBindings, identifyBoundNodes } from "./typechecker/bound-nodes.js";
-import { typeCheckNode } from "./typechecker/air-checker.js";
-import { typeCheckEIRNode } from "./typechecker/eir-checker.js";
-import { transpileImports } from "./desugar/transpile-imports.js";
+} from "./types.ts";
+import type { EffectRegistry } from "./effects.ts";
+import type { AIRCheckContext, EIRCheckContext } from "./typechecker/context.ts";
+import { collectLambdaParamsAndLetBindings, identifyBoundNodes } from "./typechecker/bound-nodes.ts";
+import { typeCheckNode } from "./typechecker/air-checker.ts";
+import { typeCheckEIRNode } from "./typechecker/eir-checker.ts";
+import { transpileImports } from "./desugar/transpile-imports.ts";
 
 //==============================================================================
 // Type Checking Result

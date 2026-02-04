@@ -1,17 +1,17 @@
 // EIR try/catch expression evaluation
 
-import { extendValueEnv } from "../env.js";
-import { ErrorCodes } from "../errors.js";
+import { extendValueEnv } from "../env.ts";
+import { ErrorCodes } from "../errors.ts";
 import {
 	type EirExpr,
 	type EvalState,
 	type Expr,
 	type Value,
-} from "../types.js";
-import { errorVal, isError } from "../types.js";
-import type { EIRNodeEvalResult, EirEvalCtx } from "./types.js";
-import { evalEIRNode } from "./eir-eval.js";
-import { evalExprInline } from "./air-expr.js";
+} from "../types.ts";
+import { errorVal, isError } from "../types.ts";
+import type { EIRNodeEvalResult, EirEvalCtx } from "./types.ts";
+import { evalEIRNode } from "./eir-eval.ts";
+import { evalExprInline } from "./air-expr.ts";
 
 //==============================================================================
 // Try/Catch expression

@@ -1,17 +1,17 @@
 // AIR/CIR per-kind type checkers extracted from typeCheckNode
 
-import { SPIRALError } from "../errors.js";
-import { extendTypeEnv } from "../env.js";
-import { navigate } from "../utils/json-pointer.js";
-import type { EirExpr, EirHybridNode, Expr, LambdaParam, Type } from "../types.js";
-import { isBlockNode, isExprNode, isRefNode } from "../types.js";
+import { SPIRALError } from "../errors.ts";
+import { extendTypeEnv } from "../env.ts";
+import { navigate } from "../utils/json-pointer.ts";
+import type { EirExpr, EirHybridNode, Expr, LambdaParam, Type } from "../types.ts";
+import { isBlockNode, isExprNode, isRefNode } from "../types.ts";
 import {
 	boolType,
 	intType,
 	typeEqual,
 	voidType,
-} from "../types.js";
-import type { AIRCheckContext, TypeCheckResult } from "./context.js";
+} from "../types.ts";
+import type { AIRCheckContext, TypeCheckResult } from "./context.ts";
 import {
 	checkIfCondition,
 	resolveIfBranch,
@@ -20,7 +20,7 @@ import {
 	checkCallExprWithFnType,
 	validateFixFnType,
 	validateFixArity,
-} from "./air-helpers.js";
+} from "./air-helpers.ts";
 
 /**
  * Type check a single AIR/CIR node, resolving references.

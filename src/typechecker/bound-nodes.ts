@@ -1,7 +1,7 @@
 // Bound node identification and lambda parameter collection
 
-import type { AirHybridNode, Expr } from "../types.js";
-import { isBlockNode, isExprNode, isRefNode } from "../types.js";
+import type { AirHybridNode, Expr } from "../types.ts";
+import { isBlockNode, isExprNode, isRefNode } from "../types.ts";
 
 /**
  * Collect all lambda parameters and let binding names from a CIR program.

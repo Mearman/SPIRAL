@@ -2,10 +2,10 @@
 // Returns inline Expr objects for use inside lambda bodies.
 
 import ts from "typescript";
-import type { Type } from "../types.js";
-import type { IngestState } from "./types.js";
-import { getBinaryOpMapping, makeVoidExpr } from "./helpers.js";
-import { convertExpressionToNode } from "./convert-expr-node.js";
+import type { Type } from "../types.ts";
+import type { IngestState } from "./types.ts";
+import { getBinaryOpMapping, makeVoidExpr } from "./helpers.ts";
+import { convertExpressionToNode } from "./convert-expr-node.ts";
 
 function convertNumericInline(
 	node: ts.NumericLiteral,

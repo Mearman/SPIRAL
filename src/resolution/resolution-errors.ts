@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Resolution-specific Error Types for SPIRAL $ref System
 
-import { errorVal } from "../types.js";
+import { errorVal } from "../types.ts";
 
 //==============================================================================
 // Resolution Error Codes

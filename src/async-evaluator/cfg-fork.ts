@@ -1,15 +1,15 @@
 // CFG Fork, Join, and Suspend Terminator Handlers
 
-import { ErrorCodes } from "../errors.js";
+import { ErrorCodes } from "../errors.ts";
 import {
 	type Value,
 	voidVal,
 	isFuture,
 	errorVal,
 	isError,
-} from "../types.js";
-import type { EirBlock } from "../types.js";
-import type { AsyncEvalContext } from "./types.js";
+} from "../types.ts";
+import type { EirBlock } from "../types.ts";
+import type { AsyncEvalContext } from "./types.ts";
 
 //==============================================================================
 // execFork - types and helpers

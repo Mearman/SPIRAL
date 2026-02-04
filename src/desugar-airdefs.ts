@@ -1,7 +1,7 @@
 // Desugar airDefs/airRef to lambda/callExpr before evaluation.
 // Each airDef becomes a lambda node; each airRef becomes a callExpr.
 
-import type { AIRDef, Expr, Node, Type } from "./types.js";
+import type { AIRDef, Expr, Node, Type } from "./types.ts";
 
 interface DocLike {
 	airDefs: AIRDef[];

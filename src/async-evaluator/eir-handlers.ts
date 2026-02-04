@@ -1,12 +1,12 @@
 // EIR Expression Handlers
 
-import { lookupOperator } from "../domains/registry.js";
+import { lookupOperator } from "../domains/registry.ts";
 import {
 	type ValueEnv,
 	extendValueEnv,
 	lookupValue,
-} from "../env.js";
-import { ErrorCodes } from "../errors.js";
+} from "../env.ts";
+import { ErrorCodes } from "../errors.ts";
 import {
 	type Value,
 	type Type,
@@ -15,7 +15,7 @@ import {
 	isError,
 	listVal,
 	mapVal,
-} from "../types.js";
+} from "../types.ts";
 import {
 	boolVal as boolValCtor,
 	closureVal,
@@ -24,9 +24,9 @@ import {
 	opaqueVal,
 	stringVal as stringValCtor,
 	undefinedVal,
-} from "../types.js";
-import type { AsyncEvalContext } from "./types.js";
-import type { Expr, LambdaParam } from "../types.js";
+} from "../types.ts";
+import type { AsyncEvalContext } from "./types.ts";
+import type { Expr, LambdaParam } from "../types.ts";
 
 // Re-export control flow handlers
 export {
@@ -37,7 +37,7 @@ export {
 	evalRefCellExpr,
 	evalRefExpr,
 	evalTryExpr,
-} from "./eir-control.js";
+} from "./eir-control.ts";
 
 //==============================================================================
 // Literal

@@ -11,7 +11,7 @@
 // 3. Record field shorthand: {x: "y"} -> [{key: "x", value: "y"}]
 // 4. Call syntax shorthand: op: "core:add" -> ns: "core", name: "add"
 
-import type { Expr, Type } from "./types.js";
+import type { Expr, Type } from "./types.ts";
 
 //==============================================================================
 // Options

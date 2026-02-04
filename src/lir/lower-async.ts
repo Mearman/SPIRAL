@@ -9,9 +9,9 @@ import type {
 	EirRecvExpr,
 	EirSelectExpr,
 	EirRaceExpr,
-} from "../types.js";
-import type { BlockResult, LowerParams } from "./lower-types.js";
-import { addBlock, asStringRef } from "./lower-types.js";
+} from "../types.ts";
+import type { BlockResult, LowerParams } from "./lower-types.ts";
+import { addBlock, asStringRef } from "./lower-types.ts";
 
 
 /** Async-only expression type */

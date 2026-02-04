@@ -1,14 +1,14 @@
 // Shared types and interfaces for the evaluator subsystem
 
-import type { OperatorRegistry } from "../domains/registry.js";
-import type { Defs, ValueEnv } from "../env.js";
+import type { OperatorRegistry } from "../domains/registry.ts";
+import type { Defs, ValueEnv } from "../env.ts";
 import type {
 	AirHybridNode,
 	EirHybridNode,
 	EvalState,
 	Value,
-} from "../types.js";
-import type { EffectRegistry } from "../effects.js";
+} from "../types.ts";
+import type { EffectRegistry } from "../effects.ts";
 
 //==============================================================================
 // Evaluation Options

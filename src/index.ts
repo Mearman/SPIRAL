@@ -12,15 +12,15 @@ export type {
 	EvalState, Effect,
 	LIRDocument, LirBlock, LirInstruction, LirTerminator,
 	EirExpr,
-} from "./types.js";
+} from "./types.ts";
 
-export type { Defs, TypeEnv, ValueEnv } from "./env.js";
+export type { Defs, TypeEnv, ValueEnv } from "./env.ts";
 
-export type { ErrorCode, ValidationError, ValidationResult } from "./errors.js";
+export type { ErrorCode, ValidationError, ValidationResult } from "./errors.ts";
 
-export type { Operator, OperatorRegistry } from "./domains/registry.js";
+export type { Operator, OperatorRegistry } from "./domains/registry.ts";
 
-export type { EffectOp, EffectRegistry } from "./effects.js";
+export type { EffectOp, EffectRegistry } from "./effects.ts";
 
 //==============================================================================
 // Type Constructors
@@ -31,14 +31,14 @@ export {
 	mapType, opaqueType, optionType, setType, stringType,
 	// EIR types
 	refType, voidType,
-} from "./types.js";
+} from "./types.ts";
 
 export {
 	boolVal, closureVal,
 	errorVal, floatVal, intVal, listVal, mapVal, opaqueVal, optionVal, setVal, stringVal,
 	// EIR values
 	voidVal, refCellVal,
-} from "./types.js";
+} from "./types.ts";
 
 //==============================================================================
 // Type Guards and Utilities
@@ -51,13 +51,13 @@ export {
 	isRefCell, isVoid,
 	// EIR utilities
 	emptyEvalState, createEvalState,
-} from "./types.js";
+} from "./types.ts";
 
 //==============================================================================
 // Error Codes
 //==============================================================================
 
-export { ErrorCodes, SPIRALError } from "./errors.js";
+export { ErrorCodes, SPIRALError } from "./errors.ts";
 
 //==============================================================================
 // Environment Functions
@@ -67,42 +67,42 @@ export {
 	defKey, emptyTypeEnv, emptyValueEnv, extendTypeEnv,
 	extendTypeEnvMany, extendValueEnv,
 	extendValueEnvMany, lookupDef, lookupType, lookupValue, registerDef
-} from "./env.js";
+} from "./env.ts";
 
 //==============================================================================
 // Validation
 //==============================================================================
 
-export { validateAIR, validateCIR, validateEIR, validateLIR } from "./validator.js";
+export { validateAIR, validateCIR, validateEIR, validateLIR } from "./validator.ts";
 
-export { combineResults, invalidResult, validResult } from "./errors.js";
+export { combineResults, invalidResult, validResult } from "./errors.ts";
 
 //==============================================================================
 // Type Checking
 //==============================================================================
 
-export { TypeChecker, typeCheckProgram } from "./typechecker.js";
+export { TypeChecker, typeCheckProgram } from "./typechecker.ts";
 
-export { typeCheckEIRProgram, type EIRProgramInput } from "./typechecker.js";
+export { typeCheckEIRProgram, type EIRProgramInput } from "./typechecker.ts";
 
 //==============================================================================
 // Evaluation
 //==============================================================================
 
-export { evaluateProgram, Evaluator, type EvalOptions } from "./evaluator.js";
+export { evaluateProgram, Evaluator, type EvalOptions } from "./evaluator.ts";
 
 // EIR evaluation
-export { evaluateEIR, type EIROptions } from "./evaluator.js";
+export { evaluateEIR, type EIROptions } from "./evaluator.ts";
 
 //==============================================================================
 // Domains
 //==============================================================================
 
-export { bootstrapRegistry, createKernelRegistry } from "./stdlib/bootstrap.js";
+export { bootstrapRegistry, createKernelRegistry } from "./stdlib/bootstrap.ts";
 
 export {
 	defineOperator, lookupOperator, registerOperator, type OperatorBuilder
-} from "./domains/registry.js";
+} from "./domains/registry.ts";
 
 //==============================================================================
 // CIR Substitution
@@ -112,7 +112,7 @@ export {
 	alphaRename,
 	collectFreeVars, freshName,
 	substitute, substituteEnv
-} from "./cir/substitution.js";
+} from "./cir/substitution.ts";
 
 //==============================================================================
 // CIRDocument ↔ Value Conversion (Self-Hosting)
@@ -122,7 +122,7 @@ export {
 	cirDocumentToValue,
 	cirDocumentToValueRaw,
 	valueToCirDocument,
-} from "./cir-conv.js";
+} from "./cir-conv.ts";
 
 //==============================================================================
 // Effects Registry
@@ -137,23 +137,23 @@ export {
 	registerEffect,
 	ioEffects,
 	stateEffects,
-} from "./effects.js";
+} from "./effects.ts";
 
 //==============================================================================
 // LIR
 //==============================================================================
 
-export { evaluateLIR, type LIREvalOptions } from "./lir/evaluator.js";
+export { evaluateLIR, type LIREvalOptions } from "./lir/evaluator.ts";
 
-export { lowerEIRtoLIR } from "./lir/lower.js";
-export { lowerAsyncEIRtoLIR } from "./lir/lower-async-doc.js";
+export { lowerEIRtoLIR } from "./lir/lower.ts";
+export { lowerAsyncEIRtoLIR } from "./lir/lower-async-doc.ts";
 
 //==============================================================================
 // Async Evaluation
 //==============================================================================
 
-export { AsyncEvaluator, type AsyncEvalOptions } from "./async-evaluator.js";
-export { createTaskScheduler, createDeterministicScheduler, type TaskScheduler, type SchedulerMode } from "./scheduler.js";
+export { AsyncEvaluator, type AsyncEvalOptions } from "./async-evaluator.ts";
+export { createTaskScheduler, createDeterministicScheduler, type TaskScheduler, type SchedulerMode } from "./scheduler.ts";
 export {
 	createAsyncChannelStore,
 	createAsyncRefCell,
@@ -165,7 +165,7 @@ export {
 	type AsyncRefCell,
 	type AsyncMutex,
 	type ConcurrentEffectLog,
-} from "./async-effects.js";
+} from "./async-effects.ts";
 
 //==============================================================================
 // Concurrent Execution Detectors
@@ -183,14 +183,14 @@ export {
 	type DetectionResult,
 	DEFAULT_DETECTION_OPTIONS,
 	STRICT_DETECTION_OPTIONS,
-} from "./detectors.js";
+} from "./detectors.ts";
 
 //==============================================================================
 // Synthesis
 //==============================================================================
 
-export { synthesizePython, type PythonSynthOptions } from "./synth/python.js";
-export { synthesizeTypeScript, type TypeScriptSynthOptions } from "./synth/typescript.js";
+export { synthesizePython, type PythonSynthOptions } from "./synth/python.ts";
+export { synthesizeTypeScript, type TypeScriptSynthOptions } from "./synth/typescript.ts";
 
 //==============================================================================
 // CLI Utilities
@@ -201,7 +201,7 @@ export {
 	readInputsFile,
 	parseArgs,
 	type Options as CLIOptions,
-} from "./cli-utils.js";
+} from "./cli-utils.ts";
 
 //==============================================================================
 // Canonicalization (JCS)
@@ -213,7 +213,7 @@ export {
 	documentDigest,
 	nodeDigest,
 	stripMetadata,
-} from "./canonicalize.js";
+} from "./canonicalize.ts";
 
 //==============================================================================
 // Schemas
@@ -230,13 +230,13 @@ export {
 	isEIRSchema,
 	isLIRSchema,
 	isSPIRALSchema,
-} from "./schemas.js";
+} from "./schemas.ts";
 
-export type { SPIRALDocument } from "./zod-schemas.js";
+export type { SPIRALDocument } from "./zod-schemas.ts";
 
 //==============================================================================
 // Ingest
 //==============================================================================
 
-export { ingestTypeScript, type TypeScriptIngestOptions } from "./ingest/typescript.js";
-export { ingestPython, type PythonIngestOptions } from "./ingest/python.js";
+export { ingestTypeScript, type TypeScriptIngestOptions } from "./ingest/typescript.ts";
+export { ingestPython, type PythonIngestOptions } from "./ingest/python.ts";

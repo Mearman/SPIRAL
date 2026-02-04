@@ -1,9 +1,9 @@
 // LIR instruction handlers
 
-import { SPIRALError, ErrorCodes, exhaustive } from "../errors.js";
-import { extendValueEnv, lookupValue } from "../env.js";
-import { lookupOperator } from "../domains/registry.js";
-import { lookupEffect } from "../effects.js";
+import { SPIRALError, ErrorCodes, exhaustive } from "../errors.ts";
+import { extendValueEnv, lookupValue } from "../env.ts";
+import { lookupOperator } from "../domains/registry.ts";
+import { lookupEffect } from "../effects.ts";
 import type {
 	LirInsAssign,
 	LirInsAssignRef,
@@ -13,10 +13,10 @@ import type {
 	LirInsPhi,
 	LirInstruction,
 	Value,
-} from "../types.js";
-import { errorVal } from "../types.js";
-import type { ExecContext, LIRRuntimeState } from "./exec-context.js";
-import { evaluateExpr, resolveArgs } from "./expr.js";
+} from "../types.ts";
+import { errorVal } from "../types.ts";
+import type { ExecContext, LIRRuntimeState } from "./exec-context.ts";
+import { evaluateExpr, resolveArgs } from "./expr.ts";
 
 function handleAssign(
 	ins: LirInsAssign,

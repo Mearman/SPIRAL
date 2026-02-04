@@ -1,10 +1,10 @@
 // SPIRAL LIR Lowering - CIR expression handlers
 
-import type { Expr, LirInstruction } from "../types.js";
-import { isExprNode } from "../types.js";
-import type { BlockResult, LowerParams } from "./lower-types.js";
-import { freshBlock, addBlock, addSimpleBlock } from "./lower-types.js";
-import type { LowerNodeFn } from "./lower.js";
+import type { Expr, LirInstruction } from "../types.ts";
+import { isExprNode } from "../types.ts";
+import type { BlockResult, LowerParams } from "./lower-types.ts";
+import { freshBlock, addBlock, addSimpleBlock } from "./lower-types.ts";
+import type { LowerNodeFn } from "./lower.ts";
 
 //==============================================================================
 // CIR Case Handlers

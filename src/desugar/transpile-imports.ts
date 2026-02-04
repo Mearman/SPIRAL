@@ -8,8 +8,8 @@
 // This maintains ergonomics (short, namespace-based imports) while ensuring
 // the transpiled form is 100% compliant with JSON Schema.
 
-import type { AIRDocument, CIRDocument, EIRDocument, LIRDocument } from "../types.js";
-import type { ImportsObject } from "../types/resolution.js";
+import type { AIRDocument, CIRDocument, EIRDocument, LIRDocument } from "../types.ts";
+import type { ImportsObject } from "../types/resolution.ts";
 
 //==============================================================================
 // Types

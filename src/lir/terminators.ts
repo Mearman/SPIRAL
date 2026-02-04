@@ -1,16 +1,16 @@
 // LIR terminator handlers
 
-import { ErrorCodes, exhaustive } from "../errors.js";
-import { lookupValue } from "../env.js";
+import { ErrorCodes, exhaustive } from "../errors.ts";
+import { lookupValue } from "../env.ts";
 import type {
 	LirTermBranch,
 	LirTermExit,
 	LirTermReturn,
 	LirTerminator,
 	Value,
-} from "../types.js";
-import { errorVal, voidVal } from "../types.js";
-import type { LIRRuntimeState } from "./exec-context.js";
+} from "../types.ts";
+import { errorVal, voidVal } from "../types.ts";
+import type { LIRRuntimeState } from "./exec-context.ts";
 
 function handleBranch(
 	term: LirTermBranch,

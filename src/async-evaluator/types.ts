@@ -1,9 +1,9 @@
 // Async Evaluator - Shared Types
 
-import type { OperatorRegistry } from "../domains/registry.js";
-import type { Defs, ValueEnv } from "../env.js";
-import type { EffectRegistry } from "../effects.js";
-import type { AsyncIOEffectConfig } from "../async-io-effects.js";
+import type { OperatorRegistry } from "../domains/registry.ts";
+import type { Defs, ValueEnv } from "../env.ts";
+import type { EffectRegistry } from "../effects.ts";
+import type { AsyncIOEffectConfig } from "../async-io-effects.ts";
 import type {
 	BlockNode,
 	Value,
@@ -13,8 +13,8 @@ import type {
 	EirInstruction,
 	EirTerminator,
 	AsyncEvalState,
-} from "../types.js";
-import type { TaskScheduler } from "../scheduler.js";
+} from "../types.ts";
+import type { TaskScheduler } from "../scheduler.ts";
 
 //==============================================================================
 // Async Evaluation Options

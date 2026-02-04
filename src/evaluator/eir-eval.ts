@@ -4,8 +4,8 @@ import {
 	type Defs,
 	extendValueEnv,
 	lookupValue,
-} from "../env.js";
-import { SPIRALError, ErrorCodes } from "../errors.js";
+} from "../env.ts";
+import { SPIRALError, ErrorCodes } from "../errors.ts";
 import {
 	type EIRDocument,
 	type EirExpr,
@@ -19,24 +19,24 @@ import {
 	voidVal,
 	createEvalState,
 	refCellVal,
-} from "../types.js";
-import { errorVal, isError } from "../types.js";
-import type { OperatorRegistry } from "../domains/registry.js";
+} from "../types.ts";
+import { errorVal, isError } from "../types.ts";
+import type { OperatorRegistry } from "../domains/registry.ts";
 import {
 	emptyEffectRegistry,
 	lookupEffect,
-} from "../effects.js";
-import type { AirHybridNode } from "../types.js";
-import type { EIROptions, EIRNodeEvalResult, EirEvalCtx } from "./types.js";
-import { Evaluator } from "./helpers.js";
-import { evaluateBlockNode } from "./block-eval.js";
-import { evalNode } from "./air-node.js";
-import { evalExprInline } from "./air-expr.js";
-import { evalEirWhile } from "./eir-loop.js";
-import { evalEirFor } from "./eir-loop.js";
-import { evalEirIter } from "./eir-loop.js";
-import { evalEirTry } from "./eir-try.js";
-import { transpileImports } from "../desugar/transpile-imports.js";
+} from "../effects.ts";
+import type { AirHybridNode } from "../types.ts";
+import type { EIROptions, EIRNodeEvalResult, EirEvalCtx } from "./types.ts";
+import { Evaluator } from "./helpers.ts";
+import { evaluateBlockNode } from "./block-eval.ts";
+import { evalNode } from "./air-node.ts";
+import { evalExprInline } from "./air-expr.ts";
+import { evalEirWhile } from "./eir-loop.ts";
+import { evalEirFor } from "./eir-loop.ts";
+import { evalEirIter } from "./eir-loop.ts";
+import { evalEirTry } from "./eir-try.ts";
+import { transpileImports } from "../desugar/transpile-imports.ts";
 
 export type { EIROptions };
 

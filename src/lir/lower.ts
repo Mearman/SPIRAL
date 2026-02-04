@@ -6,13 +6,13 @@ import type {
 	EirHybridNode,
 	HybridNode,
 	LIRDocument,
-} from "../types.js";
-import { isExprNode } from "../types.js";
-import type { BlockResult, LoweringContext, LowerParams } from "./lower-types.js";
-import { freshBlock, addBlock, validationError } from "./lower-types.js";
-import { isEirOnlyExpr, lowerEirExpr } from "./lower-eir.js";
-import { isAsyncOnlyExpr, lowerAsyncExpr } from "./lower-async.js";
-import { lowerCirExpr } from "./lower-cir.js";
+} from "../types.ts";
+import { isExprNode } from "../types.ts";
+import type { BlockResult, LoweringContext, LowerParams } from "./lower-types.ts";
+import { freshBlock, addBlock, validationError } from "./lower-types.ts";
+import { isEirOnlyExpr, lowerEirExpr } from "./lower-eir.ts";
+import { isAsyncOnlyExpr, lowerAsyncExpr } from "./lower-async.ts";
+import { lowerCirExpr } from "./lower-cir.ts";
 
 //==============================================================================
 // LowerNode function type (shared with sub-modules)

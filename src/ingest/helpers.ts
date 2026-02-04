@@ -6,8 +6,8 @@ import type {
 	CIRDocument,
 	EIRDocument,
 	Type,
-} from "../types.js";
-import type { IngestNode, IngestState, Layer } from "./types.js";
+} from "../types.ts";
+import type { IngestNode, IngestState, Layer } from "./types.ts";
 
 // ---------- ID generation ----------
 

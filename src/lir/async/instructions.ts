@@ -1,9 +1,9 @@
 // SPIRAL LIR Async Evaluator - Instruction Dispatch
 
-import { ErrorCodes, exhaustive } from "../../errors.js";
-import type { LirInstruction, EirInstruction, Value } from "../../types.js";
-import { errorVal } from "../../types.js";
-import type { InstructionContext } from "./types.js";
+import { ErrorCodes, exhaustive } from "../../errors.ts";
+import type { LirInstruction, EirInstruction, Value } from "../../types.ts";
+import { errorVal } from "../../types.ts";
+import type { InstructionContext } from "./types.ts";
 import {
 	handleAssign,
 	handleCall,
@@ -11,19 +11,19 @@ import {
 	handlePhi,
 	handleEffect,
 	handleAssignRef,
-} from "./instruction-handlers.js";
+} from "./instruction-handlers.ts";
 import {
 	executeSpawnInstruction,
 	executeChannelOpInstruction,
 	executeAwaitInstruction,
-} from "./async-instructions.js";
+} from "./async-instructions.ts";
 
 // Re-export async instruction handlers for public API
 export {
 	executeSpawnInstruction,
 	executeChannelOpInstruction,
 	executeAwaitInstruction,
-} from "./async-instructions.js";
+} from "./async-instructions.ts";
 
 //==============================================================================
 // Instruction Dispatch

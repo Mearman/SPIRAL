@@ -4,8 +4,8 @@ import {
 	type ValueEnv,
 	extendValueEnv,
 	lookupValue,
-} from "../env.js";
-import { ErrorCodes } from "../errors.js";
+} from "../env.ts";
+import { ErrorCodes } from "../errors.ts";
 import {
 	type Value,
 	voidVal,
@@ -15,11 +15,11 @@ import {
 	isExprNode,
 	isRefNode,
 	refCellVal,
-} from "../types.js";
-import { lookupEffect } from "../effects.js";
-import { evalAsyncEffect, type AsyncEffectContext } from "../async-io-effects.js";
-import type { AsyncEvalContext } from "./types.js";
-import type { Expr } from "../types.js";
+} from "../types.ts";
+import { lookupEffect } from "../effects.ts";
+import { evalAsyncEffect, type AsyncEffectContext } from "../async-io-effects.ts";
+import type { AsyncEvalContext } from "./types.ts";
+import type { Expr } from "../types.ts";
 
 //==============================================================================
 // While

@@ -1,8 +1,8 @@
 // SPIRAL Default Task Scheduler
 // Cooperative task scheduling with Promise-based execution
 
-import type { Value } from "./types.js";
-import type { TaskScheduler } from "./scheduler.js";
+import type { Value } from "./types.ts";
+import type { TaskScheduler } from "./scheduler.ts";
 
 interface Task {
 	promise: Promise<Value>;

@@ -1,7 +1,7 @@
 // Expression analysis utilities for TypeScript synthesis
 
-import type { Expr, EirExpr, Node, EirNode } from "../types.js";
-import type { ExprSynthState } from "./ts-synth-shared.js";
+import type { Expr, EirExpr, Node, EirNode } from "../types.ts";
+import type { ExprSynthState } from "./ts-synth-shared.ts";
 
 //==============================================================================
 // exprHasFreeVars - check for inline var references

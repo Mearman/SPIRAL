@@ -7,11 +7,11 @@ import type {
 	AIRDocument,
 	CIRDocument,
 	EIRDocument,
-} from "../types.js";
-import type { IngestState } from "./types.js";
-import { scanFeatures } from "./scan.js";
-import { buildDocument, freshId, addNode } from "./helpers.js";
-import { convertNode } from "./convert-node.js";
+} from "../types.ts";
+import type { IngestState } from "./types.ts";
+import { scanFeatures } from "./scan.ts";
+import { buildDocument, freshId, addNode } from "./helpers.ts";
+import { convertNode } from "./convert-node.ts";
 
 //==============================================================================
 // Public API

@@ -2,7 +2,7 @@
 // Loads CIR documents as stdlib, extracts closures, wraps as operators.
 
 import { readFileSync } from "node:fs";
-import { type Defs, type ValueEnv, emptyDefs, emptyValueEnv } from "../env.js";
+import { type Defs, type ValueEnv, emptyDefs, emptyValueEnv } from "../env.ts";
 import {
 	type CIRDocument,
 	type AirHybridNode,
@@ -17,17 +17,17 @@ import {
 	mapType,
 	errorVal,
 	ErrorCodes,
-} from "../types.js";
+} from "../types.ts";
 import {
 	type Operator,
 	type OperatorRegistry,
 	registerOperator,
-} from "../domains/registry.js";
-import { validateCIR } from "../validator.js";
-import { computeBoundNodes, type ProgramCtx, Evaluator } from "../evaluator/air-program.js";
-import { evalNode } from "../evaluator/air-node.js";
-import { evalExprWithNodeMap, buildClosureEnv } from "../evaluator/air-expr.js";
-import type { AirEvalCtx } from "../evaluator/types.js";
+} from "../domains/registry.ts";
+import { validateCIR } from "../validator.ts";
+import { computeBoundNodes, type ProgramCtx, Evaluator } from "../evaluator/air-program.ts";
+import { evalNode } from "../evaluator/air-node.ts";
+import { evalExprWithNodeMap, buildClosureEnv } from "../evaluator/air-expr.ts";
+import type { AirEvalCtx } from "../evaluator/types.ts";
 
 //==============================================================================
 // Public API

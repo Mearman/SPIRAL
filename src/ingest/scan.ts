@@ -1,7 +1,7 @@
 // Pass 1: Feature Scan — determines minimum IR layer for the source
 
 import ts from "typescript";
-import type { Layer } from "./types.js";
+import type { Layer } from "./types.ts";
 
 const LAYER_ORDER: Record<Layer, number> = {
 	air: 0,

@@ -1,11 +1,11 @@
 // SPIRAL LIR Async Evaluator - Shared Types
 
-import type { ValueEnv } from "../../env.js";
-import type { EffectRegistry } from "../../effects.js";
-import type { OperatorRegistry } from "../../domains/registry.js";
-import type { LirBlock, LirHybridNode, Value } from "../../types.js";
-import type { TaskScheduler } from "../../scheduler.js";
-import type { AsyncChannelStore } from "../../async-effects.js";
+import type { ValueEnv } from "../../env.ts";
+import type { EffectRegistry } from "../../effects.ts";
+import type { OperatorRegistry } from "../../domains/registry.ts";
+import type { LirBlock, LirHybridNode, Value } from "../../types.ts";
+import type { TaskScheduler } from "../../scheduler.ts";
+import type { AsyncChannelStore } from "../../async-effects.ts";
 
 //==============================================================================
 // LIR Async Evaluation Options

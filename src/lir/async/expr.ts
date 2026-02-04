@@ -1,9 +1,9 @@
 // SPIRAL LIR Async Evaluator - Expression Evaluation
 
-import { ErrorCodes } from "../../errors.js";
-import { lookupValue, type ValueEnv } from "../../env.js";
-import type { Expr, EirExpr, Value } from "../../types.js";
-import { errorVal, intVal, voidVal } from "../../types.js";
+import { ErrorCodes } from "../../errors.ts";
+import { lookupValue, type ValueEnv } from "../../env.ts";
+import type { Expr, EirExpr, Value } from "../../types.ts";
+import { errorVal, intVal, voidVal } from "../../types.ts";
 
 /**
  * Evaluate a literal expression to a Value.

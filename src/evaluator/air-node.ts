@@ -1,13 +1,13 @@
 // evalNode - dispatch per expression kind for AIR/CIR nodes
 
-import { navigate } from "../utils/json-pointer.js";
+import { navigate } from "../utils/json-pointer.ts";
 import {
 	type ValueEnv,
 	emptyValueEnv,
 	extendValueEnv,
 	lookupValue,
-} from "../env.js";
-import { SPIRALError, ErrorCodes } from "../errors.js";
+} from "../env.ts";
+import { SPIRALError, ErrorCodes } from "../errors.ts";
 import {
 	type AirHybridNode,
 	type Expr,
@@ -24,17 +24,17 @@ import {
 	isError,
 	listVal,
 	mapVal,
-} from "../types.js";
-import type { EvalContext, NodeEvalResult } from "./types.js";
-import type { ProgramCtx } from "./air-program.js";
-import { applyOperator, type OpCall } from "./helpers.js";
-import { evaluateBlockNode } from "./block-eval.js";
-import { evalExprWithNodeMap } from "./air-expr.js";
-import { evalLitValue } from "./lit-eval.js";
+} from "../types.ts";
+import type { EvalContext, NodeEvalResult } from "./types.ts";
+import type { ProgramCtx } from "./air-program.ts";
+import { applyOperator, type OpCall } from "./helpers.ts";
+import { evaluateBlockNode } from "./block-eval.ts";
+import { evalExprWithNodeMap } from "./air-expr.ts";
+import { evalLitValue } from "./lit-eval.ts";
 import {
 	evalNodeCallExpr,
 	evalNodeFix,
-} from "./air-node-fn.js";
+} from "./air-node-fn.ts";
 
 //==============================================================================
 // evalNode - main entry

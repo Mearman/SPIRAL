@@ -1,8 +1,8 @@
 // Type checking context - consolidates parameters for node type checking functions
 
-import type { TypeEnv, Defs } from "../env.js";
-import type { TypeChecker, TypeCheckResult } from "../typechecker.js";
-import type { AirHybridNode, Type } from "../types.js";
+import type { TypeEnv, Defs } from "../env.ts";
+import type { TypeChecker, TypeCheckResult } from "../typechecker.ts";
+import type { AirHybridNode, Type } from "../types.ts";
 
 /**
  * Context for AIR/CIR node type checking.

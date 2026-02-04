@@ -4,8 +4,8 @@ import {
 	type Defs,
 	type ValueEnv,
 	emptyValueEnv,
-} from "../env.js";
-import { ErrorCodes } from "../errors.js";
+} from "../env.ts";
+import { ErrorCodes } from "../errors.ts";
 import {
 	type AIRDocument,
 	type AirHybridNode,
@@ -14,14 +14,14 @@ import {
 	isBlockNode,
 	isExprNode,
 	isRefNode,
-} from "../types.js";
-import { errorVal, isError } from "../types.js";
-import type { AirEvalCtx, EvalOptions } from "./types.js";
-import { Evaluator } from "./helpers.js";
-import { evalNode } from "./air-node.js";
-import { desugarAirDefs } from "../desugar-airdefs.js";
-import { desugarShorthands } from "../desugar-shorthands.js";
-import { transpileImports } from "../desugar/transpile-imports.js";
+} from "../types.ts";
+import { errorVal, isError } from "../types.ts";
+import type { AirEvalCtx, EvalOptions } from "./types.ts";
+import { Evaluator } from "./helpers.ts";
+import { evalNode } from "./air-node.ts";
+import { desugarAirDefs } from "../desugar-airdefs.ts";
+import { desugarShorthands } from "../desugar-shorthands.ts";
+import { transpileImports } from "../desugar/transpile-imports.ts";
 
 export { Evaluator };
 

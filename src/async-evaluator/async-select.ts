@@ -1,6 +1,6 @@
 // EIR Async Select and Race Handlers
 
-import { ErrorCodes } from "../errors.js";
+import { ErrorCodes } from "../errors.ts";
 import {
 	type Value,
 	isFuture,
@@ -8,10 +8,10 @@ import {
 	isBlockNode,
 	isExprNode,
 	isRefNode,
-} from "../types.js";
-import type { EirSelectExpr, EirRaceExpr } from "../types.js";
-import type { ValueEnv } from "../env.js";
-import type { AsyncEvalContext } from "./types.js";
+} from "../types.ts";
+import type { EirSelectExpr, EirRaceExpr } from "../types.ts";
+import type { ValueEnv } from "../env.ts";
+import type { AsyncEvalContext } from "./types.ts";
 
 //==============================================================================
 // Select

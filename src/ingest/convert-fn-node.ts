@@ -1,8 +1,8 @@
 // Function expression converters -- Arrow functions and function expressions
 
 import ts from "typescript";
-import type { Type } from "../types.js";
-import type { IngestState } from "./types.js";
+import type { Type } from "../types.ts";
+import type { IngestState } from "./types.ts";
 import {
 	freshId,
 	addNode,
@@ -10,9 +10,9 @@ import {
 	wrapInDoIfCall,
 	inferTypeFromAnnotation,
 	inferReturnType,
-} from "./helpers.js";
-import { convertExprInline } from "./convert-expr-inline.js";
-import { convertFunctionBodyInline } from "./convert-node.js";
+} from "./helpers.ts";
+import { convertExprInline } from "./convert-expr-inline.ts";
+import { convertFunctionBodyInline } from "./convert-node.ts";
 
 interface LambdaArgs {
 	params: string[];

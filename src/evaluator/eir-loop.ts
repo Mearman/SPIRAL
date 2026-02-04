@@ -1,18 +1,18 @@
 // EIR loop evaluation: while, for, iter
 
-import { type ValueEnv, extendValueEnv } from "../env.js";
-import { ErrorCodes } from "../errors.js";
+import { type ValueEnv, extendValueEnv } from "../env.ts";
+import { ErrorCodes } from "../errors.ts";
 import {
 	type EirExpr,
 	type Expr,
 	type Value,
 	voidVal,
 	intVal,
-} from "../types.js";
-import { boolVal, errorVal, floatVal, isError, stringVal } from "../types.js";
-import type { EIRNodeEvalResult, EirEvalCtx } from "./types.js";
-import { evalEIRNode, eirResult } from "./eir-eval.js";
-import { evalExprInline } from "./air-expr.js";
+} from "../types.ts";
+import { boolVal, errorVal, floatVal, isError, stringVal } from "../types.ts";
+import type { EIRNodeEvalResult, EirEvalCtx } from "./types.ts";
+import { evalEIRNode, eirResult } from "./eir-eval.ts";
+import { evalExprInline } from "./air-expr.ts";
 
 //==============================================================================
 // While loop

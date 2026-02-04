@@ -1,13 +1,13 @@
 // SPIRAL LIR Async Evaluator - Base Instruction Handlers
 
-import { SPIRALError, ErrorCodes } from "../../errors.js";
-import { extendValueEnv, lookupValue } from "../../env.js";
-import { lookupOperator } from "../../domains/registry.js";
-import { lookupEffect } from "../../effects.js";
-import type { Value } from "../../types.js";
-import { errorVal } from "../../types.js";
-import type { InstructionContext, LIRAsyncRuntimeState } from "./types.js";
-import { evaluateExpr } from "./expr.js";
+import { SPIRALError, ErrorCodes } from "../../errors.ts";
+import { extendValueEnv, lookupValue } from "../../env.ts";
+import { lookupOperator } from "../../domains/registry.ts";
+import { lookupEffect } from "../../effects.ts";
+import type { Value } from "../../types.ts";
+import { errorVal } from "../../types.ts";
+import type { InstructionContext, LIRAsyncRuntimeState } from "./types.ts";
+import { evaluateExpr } from "./expr.ts";
 
 //==============================================================================
 // Argument Resolution Helper

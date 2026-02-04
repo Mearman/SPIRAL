@@ -9,7 +9,7 @@ import type {
 	Expr,
 	Value,
 	Type,
-} from "./types.js";
+} from "./types.ts";
 import {
 	stringVal,
 	intVal,
@@ -20,7 +20,7 @@ import {
 	opaqueVal,
 	fnType,
 	intType,
-} from "./types.js";
+} from "./types.ts";
 
 //==============================================================================
 // CIRDocument → Value Conversion

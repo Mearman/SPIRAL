@@ -8,8 +8,8 @@ import type {
 	CallExpr, AirRefExpr, DoExpr, LitExpr, FixExpr,
 	EirAssignExpr, EirEffectExpr,
 	Value,
-} from "../types.js";
-import { isBlockNode, isExprNode } from "../types.js";
+} from "../types.ts";
+import { isBlockNode, isExprNode } from "../types.ts";
 
 export interface PythonSynthOptions {
 	moduleName?: string;

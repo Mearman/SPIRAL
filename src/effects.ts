@@ -1,7 +1,7 @@
 // SPIRAL Effect System
 // Effect registry and built-in effects for EIR
 
-import type { Type, Value } from "./types.js";
+import type { Type, Value } from "./types.ts";
 import {
 	intType,
 	stringType,
@@ -10,7 +10,7 @@ import {
 	stringVal,
 	errorVal,
 	ErrorCodes,
-} from "./types.js";
+} from "./types.ts";
 
 //==============================================================================
 // Effect Operation Signature

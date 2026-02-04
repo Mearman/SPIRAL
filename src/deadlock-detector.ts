@@ -1,7 +1,7 @@
 // SPIRAL Deadlock Detector
 // Deadlock detection for async/parallel execution
 
-import type { DetectionOptions } from "./detectors.js";
+import type { DetectionOptions } from "./detectors.ts";
 
 //==============================================================================
 // Lock Acquisition Tracking

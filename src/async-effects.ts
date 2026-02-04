@@ -5,7 +5,7 @@
 // Async runtime primitives for EIR async
 // Provides AsyncChannel, AsyncRefCell, AsyncMutex, and ConcurrentEffectLog
 
-import type { Value, AsyncChannel, ErrorVal } from "./types.js";
+import type { Value, AsyncChannel, ErrorVal } from "./types.ts";
 
 //==============================================================================
 // Async Mutex (mutual exclusion lock)

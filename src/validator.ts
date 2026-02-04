@@ -7,20 +7,20 @@ import {
 	type ValidationError,
 	type ValidationResult,
 	validResult,
-} from "./errors.js";
+} from "./errors.ts";
 import type {
 	AIRDocument,
 	CIRDocument,
 	EIRDocument,
 	LIRDocument,
-} from "./types.js";
+} from "./types.ts";
 import {
 	AIRDocumentSchema,
 	CIRDocumentSchema,
 	EIRDocumentSchema,
 	LIRDocumentSchema,
-} from "./zod-schemas.js";
-import { desugarShorthands } from "./desugar-shorthands.js";
+} from "./zod-schemas.ts";
+import { desugarShorthands } from "./desugar-shorthands.ts";
 
 //==============================================================================
 // Zod-to-ValidationError Conversion

@@ -3,13 +3,13 @@
 import type {
 	AIRDef, AIRDocument, CIRDocument, EIRDocument,
 	Expr, EirExpr, Node, EirNode, LambdaParam,
-} from "../types.js";
+} from "../types.ts";
 
 const paramName = (p: string | LambdaParam): string => typeof p === "string" ? p : p.name;
-import { isExprNode } from "../types.js";
-import type { ExprSynthState, SynthContext, TypeScriptSynthOptions } from "./ts-synth-shared.js";
-import { OPERATOR_MAP, sanitizeId, stableVarName, freshVar, isValue, formatLiteral, formatUnknownValue, tsExpr } from "./ts-synth-shared.js";
-import { exprHasFreeVars, exprHasParamRefs, markInlinedBodies } from "./ts-synth-utils.js";
+import { isExprNode } from "../types.ts";
+import type { ExprSynthState, SynthContext, TypeScriptSynthOptions } from "./ts-synth-shared.ts";
+import { OPERATOR_MAP, sanitizeId, stableVarName, freshVar, isValue, formatLiteral, formatUnknownValue, tsExpr } from "./ts-synth-shared.ts";
+import { exprHasFreeVars, exprHasParamRefs, markInlinedBodies } from "./ts-synth-utils.ts";
 
 //==============================================================================
 // Main entry for expression-based documents

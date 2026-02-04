@@ -1,14 +1,14 @@
 // EIR per-kind type checkers extracted from typeCheckEIRNode
 
-import { SPIRALError } from "../errors.js";
-import { lookupType } from "../env.js";
+import { SPIRALError } from "../errors.ts";
+import { lookupType } from "../env.ts";
 import type {
 	EirHybridNode, Expr, Type, EirExpr,
 	EirSeqExpr, EirAssignExpr, EirWhileExpr,
 	EirForExpr, EirIterExpr, EirEffectExpr,
 	EirRefCellExpr, EirDerefExpr, EirTryExpr,
-} from "../types.js";
-import { isBlockNode, isRefNode } from "../types.js";
+} from "../types.ts";
+import { isBlockNode, isRefNode } from "../types.ts";
 import {
 	boolType,
 	intType,
@@ -16,9 +16,9 @@ import {
 	refType,
 	typeEqual,
 	voidType,
-} from "../types.js";
-import type { EIRCheckContext, TypeCheckResult } from "./context.js";
-import { typeCheckNode } from "./air-checker.js";
+} from "../types.ts";
+import type { EIRCheckContext, TypeCheckResult } from "./context.ts";
+import { typeCheckNode } from "./air-checker.ts";
 
 /**
  * Type check a single EIR node.

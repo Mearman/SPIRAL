@@ -14,7 +14,7 @@
 // - evaluator/eir-loop.ts  - while/for/iter loops
 // - evaluator/eir-try.ts   - try/catch expression
 
-export type { EvalOptions, EIROptions } from "./evaluator/types.js";
-export { Evaluator } from "./evaluator/helpers.js";
-export { evaluateProgram } from "./evaluator/air-program.js";
-export { evaluateEIR } from "./evaluator/eir-eval.js";
+export type { EvalOptions, EIROptions } from "./evaluator/types.ts";
+export { Evaluator } from "./evaluator/helpers.ts";
+export { evaluateProgram } from "./evaluator/air-program.ts";
+export { evaluateEIR } from "./evaluator/eir-eval.ts";

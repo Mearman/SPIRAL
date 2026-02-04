@@ -4,9 +4,9 @@
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
-import { type OperatorRegistry } from "../domains/registry.js";
-import { createKernelRegistry } from "./kernel.js";
-import { loadStdlib } from "./loader.js";
+import { type OperatorRegistry } from "../domains/registry.ts";
+import { createKernelRegistry } from "./kernel.ts";
+import { loadStdlib } from "./loader.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

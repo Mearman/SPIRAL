@@ -1,12 +1,12 @@
 // SPIRAL LIR Lowering - Shared types and utilities
 
-import { SPIRALError, ErrorCodes } from "../errors.js";
+import { SPIRALError, ErrorCodes } from "../errors.ts";
 import type {
 	EirHybridNode,
 	Expr,
 	LirBlock,
 	LirInstruction,
-} from "../types.js";
+} from "../types.ts";
 
 //==============================================================================
 // Lowering Context

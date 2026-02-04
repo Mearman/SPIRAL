@@ -1,12 +1,12 @@
 // SPIRAL Async Runtime Types
 // Extracted from types.ts to reduce file size
 
-import type { ValueEnv } from "./env.js";
+import type { ValueEnv } from "./env.ts";
 import type {
 	Type, EirExpr,
 	FutureType, ChannelType, TaskType, AsyncFnType,
-} from "./zod-schemas.js";
-import type { Value, EvalState, ErrorVal } from "./types.js";
+} from "./zod-schemas.ts";
+import type { Value, EvalState, ErrorVal } from "./types.ts";
 
 //==============================================================================
 // Async Value Domain — kept as manual interfaces (runtime only)

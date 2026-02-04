@@ -8,9 +8,9 @@
 // - HTTP references: https://example.com/doc.cir.json#/$defs/baz/expr
 // - Custom schemes: stdlib:core-types#/$defs/optionType/expr
 
-import { navigate } from "../utils/json-pointer.js";
-import type { Result } from "../utils/json-pointer.js";
-import type { ResolutionContext } from "../types/resolution.js";
+import { navigate } from "../utils/json-pointer.ts";
+import type { Result } from "../utils/json-pointer.ts";
+import type { ResolutionContext } from "../types/resolution.ts";
 
 //==============================================================================
 // Resolution Errors

@@ -5,8 +5,8 @@
 // infinite recursion during evaluation. It also enforces AIR-specific restrictions
 // (no recursive references) to preserve termination guarantees.
 
-import type { AIRDocument, CIRDocument, EIRDocument, LIRDocument } from "../types.js";
-import { parseRef } from "../types/resolution.js";
+import type { AIRDocument, CIRDocument, EIRDocument, LIRDocument } from "../types.ts";
+import { parseRef } from "../types/resolution.ts";
 
 //==============================================================================
 // Types

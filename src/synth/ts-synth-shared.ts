@@ -1,6 +1,6 @@
 // Shared types, constants, and formatting utilities for TypeScript synthesis
 
-import type { Expr, Node, EirNode, Value, AIRDef } from "../types.js";
+import type { Expr, Node, EirNode, Value, AIRDef } from "../types.ts";
 
 //==============================================================================
 // Options and Types

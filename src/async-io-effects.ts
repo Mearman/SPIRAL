@@ -2,7 +2,7 @@
 // Extended async I/O effect system with file system simulation and HTTP mocking
 // Extends the base effects system with AsyncIOEffectRegistry and in-memory file store
 
-import type { Value, AsyncEvalState, Type } from "./types.js";
+import type { Value, AsyncEvalState, Type } from "./types.ts";
 import {
 	stringType,
 	intType,
@@ -14,9 +14,9 @@ import {
 	futureType,
 	futureVal,
 	ErrorCodes,
-} from "./types.js";
-import type { EffectRegistry } from "./effects.js";
-import { emptyEffectRegistry, registerEffect } from "./effects.js";
+} from "./types.ts";
+import type { EffectRegistry } from "./effects.ts";
+import { emptyEffectRegistry, registerEffect } from "./effects.ts";
 
 //==============================================================================
 // In-Memory File System (for testing)

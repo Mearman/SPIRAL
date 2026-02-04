@@ -1,8 +1,8 @@
 // Python feature scanning — determines minimum IR layer
 
-import type { Layer } from "./types.js";
-import type { PyNode } from "./python-types.js";
-import { isAstNode, isCall, isPrintCall } from "./python-types.js";
+import type { Layer } from "./types.ts";
+import type { PyNode } from "./python-types.ts";
+import { isAstNode, isCall, isPrintCall } from "./python-types.ts";
 
 const LAYER_ORDER: Record<Layer, number> = { air: 0, cir: 1, eir: 2 };
 

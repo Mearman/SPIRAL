@@ -1,8 +1,8 @@
 // Block node evaluation (CFG-based)
 
-import { lookupOperator, type OperatorRegistry } from "../domains/registry.js";
-import { type ValueEnv, extendValueEnv, lookupValue } from "../env.js";
-import { SPIRALError, ErrorCodes } from "../errors.js";
+import { lookupOperator, type OperatorRegistry } from "../domains/registry.ts";
+import { type ValueEnv, extendValueEnv, lookupValue } from "../env.ts";
+import { SPIRALError, ErrorCodes } from "../errors.ts";
 import {
 	type BlockNode,
 	type EirInstruction,
@@ -11,10 +11,10 @@ import {
 	type LirTerminator,
 	type Value,
 	voidVal,
-} from "../types.js";
-import { errorVal, isError } from "../types.js";
-import type { EvalOptions } from "./types.js";
-import { evaluateLitExpr } from "./helpers.js";
+} from "../types.ts";
+import { errorVal, isError } from "../types.ts";
+import type { EvalOptions } from "./types.ts";
+import { evaluateLitExpr } from "./helpers.ts";
 
 //==============================================================================
 // Block Node Evaluation

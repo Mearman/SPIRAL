@@ -4,4 +4,4 @@ export {
 	createAsyncEvaluator,
 	type AsyncEvalOptions,
 	type AsyncEvalConstructorConfig,
-} from "./async-evaluator/index.js";
+} from "./async-evaluator/index.ts";

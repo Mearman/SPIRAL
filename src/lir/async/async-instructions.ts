@@ -1,13 +1,13 @@
 // SPIRAL LIR Async Evaluator - Async Instruction Handlers
 
-import { ErrorCodes } from "../../errors.js";
-import { lookupValue } from "../../env.js";
+import { ErrorCodes } from "../../errors.ts";
+import { lookupValue } from "../../env.ts";
 import type {
 	EirInsSpawn,
 	EirInsChannelOp,
 	EirInsAwait,
 	Value,
-} from "../../types.js";
+} from "../../types.ts";
 import {
 	errorVal,
 	intVal,
@@ -15,9 +15,9 @@ import {
 	isFuture,
 	voidVal,
 	futureVal,
-} from "../../types.js";
-import type { LIRAsyncRuntimeState } from "./types.js";
-import { bindVar } from "./instruction-handlers.js";
+} from "../../types.ts";
+import type { LIRAsyncRuntimeState } from "./types.ts";
+import { bindVar } from "./instruction-handlers.ts";
 
 //==============================================================================
 // Spawn Instruction

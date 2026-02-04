@@ -1,9 +1,9 @@
 // Shared execution context types for the LIR evaluator
 
-import type { EffectRegistry } from "../effects.js";
-import type { ValueEnv, Defs } from "../env.js";
-import type { OperatorRegistry } from "../domains/registry.js";
-import type { Value, LIRDocument } from "../types.js";
+import type { EffectRegistry } from "../effects.ts";
+import type { ValueEnv, Defs } from "../env.ts";
+import type { OperatorRegistry } from "../domains/registry.ts";
+import type { Value, LIRDocument } from "../types.ts";
 
 export interface LIREvalOptions {
 	maxSteps?: number;

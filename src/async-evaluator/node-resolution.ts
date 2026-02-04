@@ -3,8 +3,8 @@
 import {
 	type ValueEnv,
 	lookupValue,
-} from "../env.js";
-import { ErrorCodes } from "../errors.js";
+} from "../env.ts";
+import { ErrorCodes } from "../errors.ts";
 import {
 	type Value,
 	isBlockNode,
@@ -12,9 +12,9 @@ import {
 	isRefNode,
 	errorVal,
 	isError,
-} from "../types.js";
-import type { EirExpr } from "../types.js";
-import type { AsyncEvalContext } from "./types.js";
+} from "../types.ts";
+import type { EirExpr } from "../types.ts";
+import type { AsyncEvalContext } from "./types.ts";
 
 //==============================================================================
 // resolveNodeRef

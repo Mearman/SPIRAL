@@ -2,8 +2,8 @@
 // These cannot be implemented in SPIRAL without infinite regress.
 // Everything else is derived in stdlib CIR programs.
 
-import { SPIRALError, ErrorCodes } from "../errors.js";
-import type { Value } from "../types.js";
+import { SPIRALError, ErrorCodes } from "../errors.ts";
+import type { Value } from "../types.ts";
 import {
 	boolType,
 	boolVal,
@@ -24,13 +24,13 @@ import {
 	stringType,
 	stringVal,
 	voidVal,
-} from "../types.js";
+} from "../types.ts";
 import {
 	defineOperator,
 	type Operator,
 	type OperatorRegistry,
 	registerOperator,
-} from "../domains/registry.js";
+} from "../domains/registry.ts";
 
 // Helpers
 

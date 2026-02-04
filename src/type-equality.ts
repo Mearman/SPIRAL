@@ -1,7 +1,7 @@
 // SPIRAL Type Equality
 // Extracted from types.ts to reduce file complexity
 
-import type { Type } from "./zod-schemas.js";
+import type { Type } from "./zod-schemas.ts";
 
 function paramsEqual(aParams: Type[], bParams: Type[]): boolean {
 	if (aParams.length !== bParams.length) return false;

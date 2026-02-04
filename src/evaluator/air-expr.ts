@@ -1,14 +1,14 @@
 // evalExprWithNodeMap + evalExprInline - evaluate expressions with node map access
 
-import { navigate } from "../utils/json-pointer.js";
-import { lookupOperator } from "../domains/registry.js";
+import { navigate } from "../utils/json-pointer.ts";
+import { lookupOperator } from "../domains/registry.ts";
 import {
 	type ValueEnv,
 	extendValueEnv,
 	lookupDef,
 	lookupValue,
-} from "../env.js";
-import { SPIRALError, ErrorCodes } from "../errors.js";
+} from "../env.ts";
+import { SPIRALError, ErrorCodes } from "../errors.ts";
 import {
 	type AirHybridNode,
 	type CallPat,
@@ -26,7 +26,7 @@ import {
 	isBlockNode,
 	isExprNode,
 	isRefNode,
-} from "../types.js";
+} from "../types.ts";
 import {
 	closureVal,
 	errorVal,
@@ -36,10 +36,10 @@ import {
 	stringVal,
 	undefinedVal,
 	voidVal,
-} from "../types.js";
-import type { AirEvalCtx } from "./types.js";
-import { evaluateBlockNode } from "./block-eval.js";
-import { evalLitValue } from "./lit-eval.js";
+} from "../types.ts";
+import type { AirEvalCtx } from "./types.ts";
+import { evaluateBlockNode } from "./block-eval.ts";
+import { evalLitValue } from "./lit-eval.ts";
 
 //==============================================================================
 // evalExprWithNodeMap - main dispatch

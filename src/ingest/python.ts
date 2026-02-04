@@ -7,12 +7,12 @@ import type {
 	AIRDocument,
 	CIRDocument,
 	EIRDocument,
-} from "../types.js";
-import type { IngestState, Layer } from "./types.js";
-import { isValidPyModule, type PyModule } from "./python-types.js";
-import { buildDocument } from "./helpers.js";
-import { scanPythonFeatures } from "./python-scan.js";
-import { convertModule } from "./python-convert.js";
+} from "../types.ts";
+import type { IngestState, Layer } from "./types.ts";
+import { isValidPyModule, type PyModule } from "./python-types.ts";
+import { buildDocument } from "./helpers.ts";
+import { scanPythonFeatures } from "./python-scan.ts";
+import { convertModule } from "./python-convert.ts";
 
 //==============================================================================
 // Public API

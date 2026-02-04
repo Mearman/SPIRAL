@@ -1,7 +1,7 @@
 // Literal value evaluation
 
-import { ErrorCodes } from "../errors.js";
-import { type Type, type Value, voidVal } from "../types.js";
+import { ErrorCodes } from "../errors.ts";
+import { type Type, type Value, voidVal } from "../types.ts";
 import {
 	boolVal,
 	errorVal,
@@ -14,7 +14,7 @@ import {
 	optionVal,
 	setVal,
 	stringVal,
-} from "../types.js";
+} from "../types.ts";
 
 //==============================================================================
 // Type Helpers

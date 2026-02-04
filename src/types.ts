@@ -29,7 +29,7 @@ export type {
 	BoolType, IntType, FloatType, StringType, VoidType,
 	SetType, ListType, MapType, OptionType, OpaqueType, FnType,
 	RefType, FutureType, ChannelType, TaskType, AsyncFnType,
-} from "./zod-schemas.js";
+} from "./zod-schemas.ts";
 
 //==============================================================================
 // Expression Domain (re-exported from Zod schemas)
@@ -51,13 +51,13 @@ export type {
 	EirParExpr, EirSpawnExpr, EirAwaitExpr, EirChannelExpr,
 	EirSendExpr, EirRecvExpr, EirSelectExpr, EirRaceExpr,
 	EirExpr,
-} from "./zod-schemas.js";
+} from "./zod-schemas.ts";
 
 //==============================================================================
 // AIR Definition (re-exported from Zod schemas)
 //==============================================================================
 
-export type { AIRDef, FunctionSignature, LambdaParam } from "./zod-schemas.js";
+export type { AIRDef, FunctionSignature, LambdaParam } from "./zod-schemas.ts";
 
 //==============================================================================
 // Node & Document Types (re-exported from Zod schemas)
@@ -68,7 +68,7 @@ export type {
 	AirHybridNode, CirHybridNode, EirHybridNode, LirHybridNode,
 	EirNode,
 	AIRDocument, CIRDocument, EIRDocument, LIRDocument,
-} from "./zod-schemas.js";
+} from "./zod-schemas.ts";
 
 //==============================================================================
 // LIR Types (re-exported from Zod schemas)
@@ -78,7 +78,7 @@ export type {
 	LirInstruction, LirInsAssign, LirInsCall, LirInsOp, LirInsPhi, LirInsEffect, LirInsAssignRef,
 	LirTerminator, LirTermJump, LirTermBranch, LirTermReturn, LirTermExit,
 	LirBlock,
-} from "./zod-schemas.js";
+} from "./zod-schemas.ts";
 
 //==============================================================================
 // Layer-Specific Block/Instruction Types (re-exported from Zod schemas)
@@ -91,14 +91,14 @@ export type {
 	EirInsSpawn, EirInsChannelOp, EirInsAwait,
 	EirTerminator, EirTermFork, EirTermJoin, EirTermSuspend,
 	AirBlock, CirBlock, EirBlock,
-} from "./zod-schemas.js";
+} from "./zod-schemas.ts";
 
 //==============================================================================
 // Value Domain (v - runtime values) — kept as manual interfaces
 // These contain non-JSON-serializable types (Set, Map, ValueEnv)
 //==============================================================================
 
-import type { ValueEnv } from "./env.js";
+import type { ValueEnv } from "./env.ts";
 import type {
 	Expr, EirExpr, Type, LambdaParam,
 	BoolType, IntType, FloatType, StringType,
@@ -106,11 +106,11 @@ import type {
 	VoidType, RefType,
 	HybridNode, BlockNode, ExprNode, RefNode,
 	EirParExpr, EirSpawnExpr, EirAwaitExpr,
-} from "./zod-schemas.js";
+} from "./zod-schemas.ts";
 
 import type {
 	FutureVal, ChannelVal, TaskVal, SelectResultVal,
-} from "./pir-types.js";
+} from "./pir-types.ts";
 
 // Forward declarations for EIR values (must be before Value union)
 export interface VoidVal {
@@ -329,7 +329,7 @@ export function isPrimitiveType(t: Type): boolean {
 	);
 }
 
-export { typeEqual } from "./type-equality.js";
+export { typeEqual } from "./type-equality.ts";
 
 //==============================================================================
 // Value Constructors
@@ -422,13 +422,13 @@ export type {
 	FutureVal, ChannelVal, TaskVal, SelectResultVal,
 	AsyncEvalState, TaskState,
 	TaskScheduler, AsyncChannel,
-} from "./pir-types.js";
+} from "./pir-types.ts";
 
 export {
 	futureVal, channelVal, taskVal,
 	futureType, channelTypeCtor, taskType, asyncFnType,
 	isFuture, isChannel, isTask,
-} from "./pir-types.js";
+} from "./pir-types.ts";
 
 export function isEirParExpr(expr: Expr | EirExpr): expr is EirParExpr {
 	return expr.kind === "par";

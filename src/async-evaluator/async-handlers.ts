@@ -1,6 +1,6 @@
 // EIR Async Expression Handlers: par, spawn, await, channel, send, recv, select, race
 
-import { ErrorCodes } from "../errors.js";
+import { ErrorCodes } from "../errors.ts";
 import {
 	type Value,
 	voidVal,
@@ -15,7 +15,7 @@ import {
 	isExprNode,
 	isRefNode,
 	isError,
-} from "../types.js";
+} from "../types.ts";
 import type {
 	EirParExpr,
 	EirSpawnExpr,
@@ -24,13 +24,13 @@ import type {
 	EirSendExpr,
 	EirRecvExpr,
 	AsyncEvalState,
-} from "../types.js";
-import { AsyncChannelStore } from "../async-effects.js";
-import type { ValueEnv } from "../env.js";
-import type { AsyncEvalContext } from "./types.js";
+} from "../types.ts";
+import { AsyncChannelStore } from "../async-effects.ts";
+import type { ValueEnv } from "../env.ts";
+import type { AsyncEvalContext } from "./types.ts";
 
 // Re-export select and race
-export { evalSelectExpr, evalRaceExpr } from "./async-select.js";
+export { evalSelectExpr, evalRaceExpr } from "./async-select.ts";
 
 //==============================================================================
 // Channel helper

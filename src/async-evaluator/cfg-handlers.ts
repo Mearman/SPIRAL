@@ -1,8 +1,8 @@
 // CFG Instruction and Terminator Handlers
 
-import { lookupOperator } from "../domains/registry.js";
-import { extendValueEnvMany } from "../env.js";
-import { ErrorCodes } from "../errors.js";
+import { lookupOperator } from "../domains/registry.ts";
+import { extendValueEnvMany } from "../env.ts";
+import { ErrorCodes } from "../errors.ts";
 import {
 	type Value,
 	voidVal,
@@ -14,13 +14,13 @@ import {
 	isBlockNode,
 	isExprNode,
 	isRefNode,
-} from "../types.js";
-import type { EirInsChannelOp, EirExpr } from "../types.js";
-import { getChannels } from "./async-handlers.js";
-import type { AsyncEvalContext } from "./types.js";
+} from "../types.ts";
+import type { EirInsChannelOp, EirExpr } from "../types.ts";
+import { getChannels } from "./async-handlers.ts";
+import type { AsyncEvalContext } from "./types.ts";
 
 // Re-export fork, join, suspend terminators
-export { execFork, execJoin, execSuspend } from "./cfg-fork.js";
+export { execFork, execJoin, execSuspend } from "./cfg-fork.ts";
 
 //==============================================================================
 // execPhi

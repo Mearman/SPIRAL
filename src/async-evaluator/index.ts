@@ -2,14 +2,14 @@
 // Promise-based big-step evaluation for async: p, s |- e => v, s'
 // Extends EIR with async primitives (par, spawn, await, channels)
 
-import type { OperatorRegistry } from "../domains/registry.js";
+import type { OperatorRegistry } from "../domains/registry.ts";
 import {
 	type Defs,
 	type ValueEnv,
 	emptyValueEnv,
 	emptyDefs,
-} from "../env.js";
-import { ErrorCodes } from "../errors.js";
+} from "../env.ts";
+import { ErrorCodes } from "../errors.ts";
 import {
 	type BlockNode,
 	isBlockNode,
@@ -23,20 +23,20 @@ import {
 	type EirHybridNode,
 	type EirExpr,
 	type EirBlock,
-} from "../types.js";
-import { emptyEffectRegistry, type EffectRegistry } from "../effects.js";
-import type { AsyncIOEffectConfig } from "../async-io-effects.js";
-import type { EirInstruction, EirTerminator } from "../types.js";
-import { createTaskScheduler } from "../scheduler.js";
-import { createAsyncChannelStore } from "../async-effects.js";
+} from "../types.ts";
+import { emptyEffectRegistry, type EffectRegistry } from "../effects.ts";
+import type { AsyncIOEffectConfig } from "../async-io-effects.ts";
+import type { EirInstruction, EirTerminator } from "../types.ts";
+import { createTaskScheduler } from "../scheduler.ts";
+import { createAsyncChannelStore } from "../async-effects.ts";
 
-import type { AsyncEvalContext, AsyncEvalOptions, EvalServices } from "./types.js";
+import type { AsyncEvalContext, AsyncEvalOptions, EvalServices } from "./types.ts";
 
 // Handler modules
-import * as asyncHandlers from "./async-handlers.js";
-import * as eir from "./eir-handlers.js";
-import * as cfg from "./cfg-handlers.js";
-import { resolveNodeRef } from "./node-resolution.js";
+import * as asyncHandlers from "./async-handlers.ts";
+import * as eir from "./eir-handlers.ts";
+import * as cfg from "./cfg-handlers.ts";
+import { resolveNodeRef } from "./node-resolution.ts";
 
 export type { AsyncEvalOptions, AsyncEvalContext };
 

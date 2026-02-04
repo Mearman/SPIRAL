@@ -4,18 +4,18 @@ import {
 	type ValueEnv,
 	extendValueEnv,
 	lookupValue,
-} from "../env.js";
-import { SPIRALError, ErrorCodes } from "../errors.js";
+} from "../env.ts";
+import { SPIRALError, ErrorCodes } from "../errors.ts";
 import {
 	type ClosureVal,
 	type Expr,
 	type Value,
-} from "../types.js";
-import { errorVal, isError } from "../types.js";
-import type { NodeEvalResult } from "./types.js";
-import type { ProgramCtx } from "./air-program.js";
-import { applyOperator, type OpCall } from "./helpers.js";
-import { evalExprWithNodeMap, evalExprInline, buildClosureEnv } from "./air-expr.js";
+} from "../types.ts";
+import { errorVal, isError } from "../types.ts";
+import type { NodeEvalResult } from "./types.ts";
+import type { ProgramCtx } from "./air-program.ts";
+import { applyOperator, type OpCall } from "./helpers.ts";
+import { evalExprWithNodeMap, evalExprInline, buildClosureEnv } from "./air-expr.ts";
 
 //==============================================================================
 // evalNodeCallExpr

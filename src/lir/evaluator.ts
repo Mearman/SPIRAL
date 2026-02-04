@@ -1,29 +1,29 @@
 // SPIRAL LIR Evaluator
 // Executes Control Flow Graph (CFG) based LIR programs
 
-import { ErrorCodes } from "../errors.js";
+import { ErrorCodes } from "../errors.ts";
 import {
 	type Defs,
 	emptyValueEnv,
 	extendValueEnv,
 	lookupValue,
 	type ValueEnv,
-} from "../env.js";
-import type { OperatorRegistry } from "../domains/registry.js";
-import type { EffectRegistry } from "../effects.js";
-import type { LIRDocument, LirBlock, LirHybridNode, Value } from "../types.js";
-import { errorVal, isBlockNode, isExprNode, voidVal } from "../types.js";
-import { Evaluator } from "../evaluator.js";
+} from "../env.ts";
+import type { OperatorRegistry } from "../domains/registry.ts";
+import type { EffectRegistry } from "../effects.ts";
+import type { LIRDocument, LirBlock, LirHybridNode, Value } from "../types.ts";
+import { errorVal, isBlockNode, isExprNode, voidVal } from "../types.ts";
+import { Evaluator } from "../evaluator.ts";
 import type {
 	EvalLIRParams,
 	EvalLIRResult,
 	ExecContext,
 	LIRRuntimeState,
-} from "./exec-context.js";
-import { executeInstruction } from "./instructions.js";
-import { executeTerminator } from "./terminators.js";
+} from "./exec-context.ts";
+import { executeInstruction } from "./instructions.ts";
+import { executeTerminator } from "./terminators.ts";
 
-export type { LIREvalOptions } from "./exec-context.js";
+export type { LIREvalOptions } from "./exec-context.ts";
 
 type EvaluateLIRFn = (
 	...args: [

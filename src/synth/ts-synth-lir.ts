@@ -1,8 +1,8 @@
 // LIR (CFG-based) synthesis for TypeScript
 
-import type { LIRDocument, LirHybridNode, BlockNode } from "../types.js";
-import { isBlockNode } from "../types.js";
-import type { TypeScriptSynthOptions } from "./ts-synth-shared.js";
+import type { LIRDocument, LirHybridNode, BlockNode } from "../types.ts";
+import { isBlockNode } from "../types.ts";
+import type { TypeScriptSynthOptions } from "./ts-synth-shared.ts";
 
 //==============================================================================
 // Main entry for LIR documents

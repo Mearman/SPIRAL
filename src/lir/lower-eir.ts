@@ -10,10 +10,10 @@ import type {
 	EirSeqExpr,
 	EirTryExpr,
 	EirWhileExpr,
-} from "../types.js";
-import type { BlockResult, LowerParams, LoweringContext } from "./lower-types.js";
-import { freshBlock, addBlock, asStringRef, validationError } from "./lower-types.js";
-import type { LowerNodeFn } from "./lower.js";
+} from "../types.ts";
+import type { BlockResult, LowerParams, LoweringContext } from "./lower-types.ts";
+import { freshBlock, addBlock, asStringRef, validationError } from "./lower-types.ts";
+import type { LowerNodeFn } from "./lower.ts";
 
 /** EIR-only expression type (excludes base Expr) */
 export type EirOnlyExpr =
