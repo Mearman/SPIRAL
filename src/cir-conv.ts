@@ -328,13 +328,71 @@ function valueToType(value: Value): Type {
 		const kindVal = value.value.get("kind");
 		if (kindVal?.kind === "string") {
 			const kind = kindVal.value;
-			// Return appropriate type based on kind
+			// Primitive types
 			if (kind === "int") return intType;
 			if (kind === "bool") return { kind: "bool" };
 			if (kind === "string") return { kind: "string" };
+			if (kind === "float") return { kind: "float" };
+			if (kind === "void") return { kind: "void" };
+
+			// Function type: { kind: "fn", params: Type[], returns: Type }
 			if (kind === "fn") {
-				// For function types, return a minimal fn type
-				return fnType([], intType);
+				const paramsVal = value.value.get("params");
+				const returnsVal = value.value.get("returns");
+				const params = paramsVal?.kind === "list" ? paramsVal.value.map(valueToType) : [];
+				const returns = returnsVal ? valueToType(returnsVal) : intType;
+				return { kind: "fn", params, returns };
+			}
+
+			// List type: { kind: "list", of: Type }
+			if (kind === "list") {
+				const ofVal = value.value.get("of");
+				const elemVal = value.value.get("elem");
+				const elementTypeVal = value.value.get("elementType");
+				// Try multiple possible field names for element type
+				const elem = ofVal ?? elemVal ?? elementTypeVal;
+				return { kind: "list", of: elem ? valueToType(elem) : intType };
+			}
+
+			// Map type: { kind: "map", key: Type, value: Type }
+			if (kind === "map") {
+				const keyVal = value.value.get("key");
+				const valueFieldVal = value.value.get("value");
+				return {
+					kind: "map",
+					key: keyVal ? valueToType(keyVal) : intType,
+					value: valueFieldVal ? valueToType(valueFieldVal) : intType,
+				};
+			}
+
+			// Set type: { kind: "set", of: Type }
+			if (kind === "set") {
+				const ofVal = value.value.get("of");
+				const elemVal = value.value.get("elem");
+				const elementTypeVal = value.value.get("elementType");
+				// Try multiple possible field names for element type
+				const elem = ofVal ?? elemVal ?? elementTypeVal;
+				return { kind: "set", of: elem ? valueToType(elem) : intType };
+			}
+
+			// Option type: { kind: "option", of: Type }
+			if (kind === "option") {
+				const ofVal = value.value.get("of");
+				return { kind: "option", of: ofVal ? valueToType(ofVal) : intType };
+			}
+
+			// Ref type: { kind: "ref", of: Type }
+			if (kind === "ref") {
+				const ofVal = value.value.get("of");
+				return { kind: "ref", of: ofVal ? valueToType(ofVal) : intType };
+			}
+
+			// Opaque type: { kind: "opaque", name: string }
+			if (kind === "opaque") {
+				const nameVal = value.value.get("name");
+				if (nameVal?.kind === "string") {
+					return { kind: "opaque", name: nameVal.value };
+				}
 			}
 		}
 	}
