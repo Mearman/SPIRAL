@@ -1,0 +1,129 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "EIR iter loop — iterates over list elements, binding var to each element and evaluating body. State carries over through each iteration. Tracks step count to prevent infinite loops.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+		{"id": "voidValue", "expr": {"kind": "record", "fields": []}},
+
+		{"id": "varKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:var"}},
+		{"id": "iterKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:iter"}},
+		{"id": "bodyKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:body"}},
+		{"id": "kindKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "stateKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:state"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:value"}},
+		{"id": "nodesKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodes"}},
+		{"id": "exprKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+
+		{"id": "stringType", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
+		{"id": "listTypeStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "list"}},
+
+		{"id": "iterState", "expr": {"kind": "var", "name": "iterState"}},
+		{"id": "iterDoc", "expr": {"kind": "var", "name": "iterDoc"}},
+		{"id": "iterExpr", "expr": {"kind": "var", "name": "iterExpr"}},
+
+		{"id": "iterVar", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["iterExpr", "varKey"]}},
+		{"id": "iterIterRef", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["iterExpr", "iterKey"]}},
+		{"id": "iterBodyRef", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["iterExpr", "bodyKey"]}},
+
+		{"id": "iterEnv", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["iterState"]}},
+		{"id": "iterNodeValues", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["iterState"]}},
+		{"id": "iterNodes", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["iterDoc", "nodesKey"]}},
+
+		{"id": "itType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["iterIterRef"]}},
+		{"id": "itIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["itType", "stringType"]}},
+		{"id": "itInCache", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["iterNodeValues", "iterIterRef"]}},
+		{"id": "itFromCache", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["iterNodeValues", "iterIterRef"]}},
+		{"id": "itNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["iterNodes", "iterIterRef"]}},
+		{"id": "itNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["itNode", "exprKey"]}},
+		{"id": "itEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["iterDoc", "iterEnv", "itNodeExpr"]}},
+		{"id": "itInlineEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["iterDoc", "iterEnv", "iterIterRef"]}},
+		{"id": "itUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "itInCache", "then": "itFromCache", "else": "itEval"}},
+		{"id": "iterListVal", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "itIsString", "then": "itUseCache", "else": "itInlineEval"}},
+
+		{"id": "iterListKind", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["iterListVal", "kindKey"]}},
+		{"id": "iterIsList", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["iterListKind", "listTypeStr"]}},
+		{"id": "iterListLength", "expr": {"kind": "call", "ns": "list", "name": "length", "args": ["iterListVal"]}},
+
+		{"id": "ilRecVar", "expr": {"kind": "var", "name": "ilRec"}},
+		{"id": "ilVarVar", "expr": {"kind": "var", "name": "ilVar"}},
+		{"id": "ilListVar", "expr": {"kind": "var", "name": "ilList"}},
+		{"id": "ilBodyRefVar", "expr": {"kind": "var", "name": "ilBodyRef"}},
+		{"id": "ilDocVar", "expr": {"kind": "var", "name": "ilDoc"}},
+		{"id": "ilStateVar", "expr": {"kind": "var", "name": "ilState"}},
+		{"id": "ilIndexVar", "expr": {"kind": "var", "name": "ilIndex"}},
+		{"id": "ilLengthVar", "expr": {"kind": "var", "name": "ilLength"}},
+
+		{"id": "ilCheckSteps", "expr": {"kind": "call", "ns": "eir-state", "name": "state:incSteps", "args": ["ilStateVar"]}},
+		{"id": "ilStepsExceeded", "expr": {"kind": "call", "ns": "eir-state", "name": "state:checkMaxSteps", "args": ["ilCheckSteps"]}},
+		{"id": "ilDone", "expr": {"kind": "call", "ns": "core", "name": "gte", "args": ["ilIndexVar", "ilLengthVar"]}},
+		{"id": "ilCurrentElem", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["ilListVar", "ilIndexVar"]}},
+		{"id": "ilCurrentEnv", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["ilCheckSteps"]}},
+		{"id": "ilEnvWithVar", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["ilCurrentEnv", "ilVarVar", "ilCurrentElem"]}},
+		{"id": "ilStateWithVar", "expr": {"kind": "call", "ns": "eir-state", "name": "state:withEnv", "args": ["ilCheckSteps", "ilEnvWithVar"]}},
+
+		{"id": "ibType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["ilBodyRefVar"]}},
+		{"id": "ibIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["ibType", "stringType"]}},
+		{"id": "ilNodeValues", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["ilStateWithVar"]}},
+		{"id": "ilNodes", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["ilDocVar", "nodesKey"]}},
+		{"id": "ibInCache", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["ilNodeValues", "ilBodyRefVar"]}},
+		{"id": "ibFromCache", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["ilNodeValues", "ilBodyRefVar"]}},
+		{"id": "ibNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["ilNodes", "ilBodyRefVar"]}},
+		{"id": "ibNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["ibNode", "exprKey"]}},
+		{"id": "ibEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["ilDocVar", "ilEnvWithVar", "ibNodeExpr"]}},
+		{"id": "ibInlineEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["ilDocVar", "ilEnvWithVar", "ilBodyRefVar"]}},
+		{"id": "ibUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "ibInCache", "then": "ibFromCache", "else": "ibEval"}},
+		{"id": "ilBodyVal", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "ibIsString", "then": "ibUseCache", "else": "ibInlineEval"}},
+
+		{"id": "ilBodyResultState", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["ilBodyVal", "stateKey"]}},
+		{"id": "ilBodyResultValue", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["ilBodyVal", "valueKey"]}},
+		{"id": "ilNextIndex", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["ilIndexVar", "one"]}},
+		{"id": "ilRecurse", "expr": {"kind": "callExpr", "args": ["ilRecVar", "ilVarVar", "ilListVar", "ilBodyRefVar", "ilDocVar", "ilBodyResultState", "ilNextIndex", "ilLengthVar"], "fn": "ilRecVar"}},
+		{"id": "ilAfterBody", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "ilDone", "then": "ilCheckSteps", "else": "ilRecurse"}},
+		{"id": "ilBody", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "ilStepsExceeded", "then": "ilCheckSteps", "else": "ilAfterBody"}},
+
+		{"id": "ilInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["ilVar", "ilList", "ilBodyRef", "ilDoc", "ilState", "ilIndex", "ilLength"],
+			"body": "ilBody"
+		}},
+		{"id": "ilOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["ilRec"],
+			"body": "ilInner"
+		}},
+		{"id": "iterLoopFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "ilOuter"
+		}},
+
+		{"id": "iterLoopState", "expr": {"kind": "callExpr", "args": ["iterLoopFn", "iterVar", "iterListVal", "iterBodyRef", "iterDoc", "iterState", "zero", "iterListLength"], "fn": "iterLoopFn"}},
+
+		{"id": "iterResultRecord", "expr": {"kind": "record", "fields": [
+			{"key": "s:state", "value": "iterLoopState"},
+			{"key": "s:value", "value": "voidValue"}
+		]}},
+
+		{"id": "eir:iter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["iterState", "iterDoc", "iterExpr"],
+			"body": "iterResultRecord"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "eir:iter", "value": "eir:iter"}
+			]
+		}}
+	],
+	"result": "exports"
+}
