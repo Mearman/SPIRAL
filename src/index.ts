@@ -120,6 +120,7 @@ export {
 
 export {
 	cirDocumentToValue,
+	cirDocumentToValueRaw,
 	valueToCirDocument,
 } from "./cir-conv.js";
 
