@@ -1,0 +1,173 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "EIR try expression — evaluates body, and if it returns an error value, evaluates catch block with the error bound to the catch parameter. State carries over from body or catch evaluation.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+		{"id": "voidValue", "expr": {"kind": "record", "fields": []}},
+
+		{"id": "bodyKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:body"}},
+		{"id": "catchKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "catch"}},
+		{"id": "paramKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "param"}},
+		{"id": "kindKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "stateKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:state"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:value"}},
+		{"id": "nodesKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodes"}},
+		{"id": "exprKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+
+		{"id": "stringType", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
+		{"id": "errorType", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "error"}},
+
+		{"id": "tryState", "expr": {"kind": "var", "name": "tryState"}},
+		{"id": "tryDoc", "expr": {"kind": "var", "name": "tryDoc"}},
+		{"id": "tryExpr", "expr": {"kind": "var", "name": "tryExpr"}},
+
+		{"id": "tryBodyRef", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["tryExpr", "bodyKey"]}},
+		{"id": "tryCatchSpec", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["tryExpr", "catchKey"]}},
+		{"id": "tryCatchParam", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["tryCatchSpec", "paramKey"]}},
+		{"id": "tryCatchBodyRef", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["tryCatchSpec", "bodyKey"]}},
+
+		{"id": "tryEnv", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["tryState"]}},
+		{"id": "tryNodeValues", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["tryState"]}},
+		{"id": "tryNodes", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["tryDoc", "nodesKey"]}},
+		{"id": "tryDocVar", "expr": {"kind": "var", "name": "tryDocVar"}},
+		{"id": "tryEnvVar", "expr": {"kind": "var", "name": "tryEnvVar"}},
+		{"id": "tryNodeValuesVar", "expr": {"kind": "var", "name": "tryNodeValuesVar"}},
+		{"id": "tryNodesVar", "expr": {"kind": "var", "name": "tryNodesVar"}},
+
+		{"id": "tbType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["tryBodyRef"]}},
+		{"id": "tbIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["tbType", "stringType"]}},
+		{"id": "tbInCache", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["tryNodeValues", "tryBodyRef"]}},
+		{"id": "tbFromCache", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["tryNodeValues", "tryBodyRef"]}},
+		{"id": "tbNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["tryNodes", "tryBodyRef"]}},
+		{"id": "tbNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["tbNode", "exprKey"]}},
+		{"id": "tbEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["tryDoc", "tryEnv", "tbNodeExpr"]}},
+		{"id": "tbInlineEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["tryDoc", "tryEnv", "tryBodyRef"]}},
+		{"id": "tbUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "tbInCache", "then": "tbFromCache", "else": "tbEval"}},
+		{"id": "tryBodyValue", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "tbIsString", "then": "tbUseCache", "else": "tbInlineEval"}},
+
+		{"id": "tryNodeValuesAfterBody", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["tryNodeValues", "tryBodyRef", "tryBodyValue"]}},
+		{"id": "tryStateWithBodyCache", "expr": {"kind": "call", "ns": "eir-state", "name": "state:setNodeValues", "args": ["tryState", "tryNodeValuesAfterBody"]}},
+		{"id": "tryEnvAfterBody", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["tryStateWithBodyCache"]}},
+
+		{"id": "tbvKind", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["tryBodyValue", "kindKey"]}},
+		{"id": "tbvIsError", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["tbvKind", "errorType"]}},
+
+		{"id": "catchBodyStateVar", "expr": {"kind": "var", "name": "catchBodyState"}},
+		{"id": "catchBodyDocVar", "expr": {"kind": "var", "name": "catchBodyDoc"}},
+		{"id": "catchBodyRefVar", "expr": {"kind": "var", "name": "catchBodyRef"}},
+		{"id": "catchEnvVar", "expr": {"kind": "var", "name": "catchEnv"}},
+		{"id": "catchNodeValuesVar", "expr": {"kind": "var", "name": "catchNodeValues"}},
+		{"id": "catchNodesVar", "expr": {"kind": "var", "name": "catchNodes"}},
+
+		{"id": "cbType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["catchBodyRefVar"]}},
+		{"id": "cbIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["cbType", "stringType"]}},
+		{"id": "cbInCache", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["catchNodeValuesVar", "catchBodyRefVar"]}},
+		{"id": "cbFromCache", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["catchNodeValuesVar", "catchBodyRefVar"]}},
+		{"id": "cbNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["catchNodesVar", "catchBodyRefVar"]}},
+		{"id": "cbNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["cbNode", "exprKey"]}},
+		{"id": "cbEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["catchBodyDocVar", "catchEnvVar", "cbNodeExpr"]}},
+		{"id": "cbInlineEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["catchBodyDocVar", "catchEnvVar", "catchBodyRefVar"]}},
+		{"id": "cbUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "cbInCache", "then": "cbFromCache", "else": "cbEval"}},
+		{"id": "catchBodyValue", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "cbIsString", "then": "cbUseCache", "else": "cbInlineEval"}},
+
+		{"id": "catchNodeValuesAfter", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["catchNodeValuesVar", "catchBodyRefVar", "catchBodyValue"]}},
+		{"id": "catchStateWithCache", "expr": {"kind": "call", "ns": "eir-state", "name": "state:setNodeValues", "args": ["catchBodyStateVar", "catchNodeValuesAfter"]}},
+
+		{"id": "catchResultRecord", "expr": {"kind": "record", "fields": [
+			{"key": "s:state", "value": "catchStateWithCache"},
+			{"key": "s:value", "value": "catchBodyValue"}
+		]}},
+
+		{"id": "evalCatchBodyInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["catchBodyState", "catchBodyDoc", "catchBodyRef", "catchEnv", "catchNodeValues", "catchNodes"],
+			"body": "catchResultRecord"
+		}},
+		{"id": "evalCatchBody", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["catchState", "catchError", "catchDoc"],
+			"body": "catchResultRecord"
+		}},
+
+		{"id": "evalCatchInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["catchState", "catchError", "catchDoc"],
+			"body": "evalCatchBody"
+		}},
+
+		{
+			"id": "evalCatch",
+			"expr": {
+				"kind": "fix",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"fn": "evalCatchInner"
+			}
+		},
+
+		{"id": "ecState", "expr": {"kind": "var", "name": "ecState"}},
+		{"id": "ecError", "expr": {"kind": "var", "name": "ecError"}},
+		{"id": "ecDoc", "expr": {"kind": "var", "name": "ecDoc"}},
+
+		{"id": "ecCatchParam", "expr": {"kind": "var", "name": "tryCatchParam"}},
+		{"id": "ecCatchBodyRef", "expr": {"kind": "var", "name": "tryCatchBodyRef"}},
+
+		{"id": "ecEnv", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["ecState"]}},
+		{"id": "ecNodeValues", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["ecState"]}},
+		{"id": "ecNodes", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["ecDoc", "nodesKey"]}},
+
+		{"id": "ecEnvWithError", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["ecEnv", "ecCatchParam", "ecError"]}},
+		{"id": "ecStateWithEnv", "expr": {"kind": "call", "ns": "eir-state", "name": "state:withEnv", "args": ["ecState", "ecEnvWithError"]}},
+
+		{"id": "ecbType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["ecCatchBodyRef"]}},
+		{"id": "ecbIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["ecbType", "stringType"]}},
+		{"id": "ecbInCache", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["ecNodeValues", "ecCatchBodyRef"]}},
+		{"id": "ecbFromCache", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["ecNodeValues", "ecCatchBodyRef"]}},
+		{"id": "ecbNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["ecNodes", "ecCatchBodyRef"]}},
+		{"id": "ecbNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["ecbNode", "exprKey"]}},
+		{"id": "ecbEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["ecDoc", "ecEnvWithError", "ecbNodeExpr"]}},
+		{"id": "ecbInlineEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["ecDoc", "ecEnvWithError", "ecCatchBodyRef"]}},
+		{"id": "ecbUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "ecbInCache", "then": "ecbFromCache", "else": "ecbEval"}},
+		{"id": "ecbValue", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "ecbIsString", "then": "ecbUseCache", "else": "ecbInlineEval"}},
+
+		{"id": "ecNodeValuesAfter", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["ecNodeValues", "ecCatchBodyRef", "ecbValue"]}},
+		{"id": "ecStateAfter", "expr": {"kind": "call", "ns": "eir-state", "name": "state:setNodeValues", "args": ["ecStateWithEnv", "ecNodeValuesAfter"]}},
+
+		{"id": "ecResult", "expr": {"kind": "record", "fields": [
+			{"key": "s:state", "value": "ecStateAfter"},
+			{"key": "s:value", "value": "ecbValue"}
+		]}},
+
+		{"id": "tryCatchResult", "expr": {"kind": "callExpr", "args": ["tryStateWithBodyCache", "tryBodyValue", "tryDoc"], "fn": "evalCatch"}},
+
+		{"id": "trySuccessRecord", "expr": {"kind": "record", "fields": [
+			{"key": "s:state", "value": "tryStateWithBodyCache"},
+			{"key": "s:value", "value": "tryBodyValue"}
+		]}},
+
+		{"id": "tryResult", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "tbvIsError", "then": "tryCatchResult", "else": "trySuccessRecord"}},
+
+		{"id": "eir:try", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["tryState", "tryDoc", "tryExpr"],
+			"body": "tryResult"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "eir:try", "value": "eir:try"}
+			]
+		}}
+	],
+	"result": "exports"
+}
