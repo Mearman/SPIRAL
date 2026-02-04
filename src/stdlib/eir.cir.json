@@ -1,0 +1,135 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "EIR evaluator entry point — eir:eval takes an EIR document in Value format and evaluates it. Dispatches to EIR expression evaluators (seq, assign, while, for, iter, effect, refCell, deref, try) and manages state through the evaluation.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+		{"id": "two", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 2}},
+
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+
+		{"id": "kindKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:value"}},
+		{"id": "stateKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:state"}},
+		{"id": "nodesKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:nodes"}},
+		{"id": "exprKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:expr"}},
+		{"id": "idKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:id"}},
+		{"id": "resultKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:result"}},
+
+		{"id": "stringType", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
+
+		{"id": "seqKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "seq"}},
+		{"id": "assignKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "assign"}},
+		{"id": "whileKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "while"}},
+		{"id": "forKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "for"}},
+		{"id": "iterKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "iter"}},
+		{"id": "effectKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "effect"}},
+		{"id": "refCellKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "refCell"}},
+		{"id": "derefKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "deref"}},
+		{"id": "tryKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "try"}},
+
+		{"id": "docVar", "expr": {"kind": "var", "name": "doc"}},
+		{"id": "nodes", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["docVar", "nodesKey"]}},
+		{"id": "resultId", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["docVar", "resultKey"]}},
+		{"id": "nodeCount", "expr": {"kind": "call", "ns": "list", "name": "length", "args": ["nodes"]}},
+
+		{"id": "initEnv", "expr": {"kind": "call", "ns": "eir-state", "name": "state:init", "args": ["emptyMap"]}},
+
+		{"id": "evIdxVar", "expr": {"kind": "var", "name": "evIdx"}},
+		{"id": "evStateVar", "expr": {"kind": "var", "name": "evState"}},
+		{"id": "evDocVar", "expr": {"kind": "var", "name": "evDoc"}},
+		{"id": "evNodesVar", "expr": {"kind": "var", "name": "evNodes"}},
+		{"id": "evCountVar", "expr": {"kind": "var", "name": "evCount"}},
+
+		{"id": "evIsDone", "expr": {"kind": "call", "ns": "core", "name": "gte", "args": ["evIdxVar", "evCountVar"]}},
+		{"id": "evCurNode", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["evNodesVar", "evIdxVar"]}},
+		{"id": "evCurId", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["evCurNode", "idKey"]}},
+		{"id": "evCurExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["evCurNode", "exprKey"]}},
+		{"id": "evExprKind", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["evCurExpr", "kindKey"]}},
+
+		{"id": "evIsSeq", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["evExprKind", "seqKind"]}},
+		{"id": "evIsAssign", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["evExprKind", "assignKind"]}},
+		{"id": "evIsWhile", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["evExprKind", "whileKind"]}},
+		{"id": "evIsFor", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["evExprKind", "forKind"]}},
+		{"id": "evIsIter", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["evExprKind", "iterKind"]}},
+		{"id": "evIsEffect", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["evExprKind", "effectKind"]}},
+		{"id": "evIsRefCell", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["evExprKind", "refCellKind"]}},
+		{"id": "evIsDeref", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["evExprKind", "derefKind"]}},
+		{"id": "evIsTry", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["evExprKind", "tryKind"]}},
+
+		{"id": "evSeqResult", "expr": {"kind": "call", "ns": "eir-seq", "name": "eir:seq", "args": ["evStateVar", "evDocVar", "evCurExpr"]}},
+		{"id": "evAssignResult", "expr": {"kind": "call", "ns": "eir-assign", "name": "eir:assign", "args": ["evStateVar", "evDocVar", "evCurExpr"]}},
+		{"id": "evWhileResult", "expr": {"kind": "call", "ns": "eir-while", "name": "eir:while", "args": ["evStateVar", "evDocVar", "evCurExpr"]}},
+		{"id": "evForResult", "expr": {"kind": "call", "ns": "eir-for", "name": "eir:for", "args": ["evStateVar", "evDocVar", "evCurExpr"]}},
+		{"id": "evIterResult", "expr": {"kind": "call", "ns": "eir-iter", "name": "eir:iter", "args": ["evStateVar", "evDocVar", "evCurExpr"]}},
+		{"id": "evEffectResult", "expr": {"kind": "call", "ns": "eir-effect", "name": "eir:effect", "args": ["evStateVar", "evDocVar", "evCurExpr"]}},
+		{"id": "evRefCellResult", "expr": {"kind": "call", "ns": "eir-refcell", "name": "eir:refCell", "args": ["evStateVar", "evDocVar", "evCurExpr"]}},
+		{"id": "evDerefResult", "expr": {"kind": "call", "ns": "eir-refcell", "name": "eir:deref", "args": ["evStateVar", "evDocVar", "evCurExpr"]}},
+		{"id": "evTryResult", "expr": {"kind": "call", "ns": "eir-try", "name": "eir:try", "args": ["evStateVar", "evDocVar", "evCurExpr"]}},
+
+		{"id": "evDispatchSeq", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsSeq", "then": "evSeqResult", "else": "evAssignResult"}},
+		{"id": "evDispatchAssign", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsAssign", "then": "evAssignResult", "else": "evWhileResult"}},
+		{"id": "evDispatchWhile", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsWhile", "then": "evWhileResult", "else": "evForResult"}},
+		{"id": "evDispatchFor", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsFor", "then": "evForResult", "else": "evIterResult"}},
+		{"id": "evDispatchIter", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsIter", "then": "evIterResult", "else": "evEffectResult"}},
+		{"id": "evDispatchEffect", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsEffect", "then": "evEffectResult", "else": "evRefCellResult"}},
+		{"id": "evDispatchRefCell", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsRefCell", "then": "evRefCellResult", "else": "evDerefResult"}},
+		{"id": "evDispatchDeref", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsDeref", "then": "evDerefResult", "else": "evTryResult"}},
+		{"id": "evDispatchTry", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsTry", "then": "evTryResult", "else": "evStateVar"}},
+
+		{"id": "evNodeResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["evDispatchTry", "stateKey"]}},
+		{"id": "evNodeValue", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["evDispatchTry", "valueKey"]}},
+		{"id": "evNewNodeValues", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["evNodeResult"]}},
+		{"id": "evNodeValuesWithCur", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["evNewNodeValues", "evCurId", "evNodeValue"]}},
+		{"id": "evStateWithCache", "expr": {"kind": "call", "ns": "eir-state", "name": "state:setNodeValues", "args": ["evNodeResult", "evNodeValuesWithCur"]}},
+
+		{"id": "evNextIdx", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["evIdxVar", "one"]}},
+		{"id": "evRecurse", "expr": {"kind": "callExpr", "args": ["evNextIdx", "evStateWithCache", "evDocVar", "evNodesVar", "evCountVar"], "fn": "evRecVar"}},
+		{"id": "evBody", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "evIsDone", "then": "evStateVar", "else": "evRecurse"}},
+
+		{"id": "evInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["evIdx", "evState", "evDoc", "evNodes", "evCount"],
+			"body": "evBody"
+		}},
+		{"id": "evOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["evRec"],
+			"body": "evInner"
+		}},
+		{"id": "evRecVar", "expr": {"kind": "var", "name": "evRec"}},
+		{"id": "evalNodesFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "evOuter"
+		}},
+
+		{"id": "finalState", "expr": {"kind": "callExpr", "args": ["zero", "initEnv", "docVar", "nodes", "nodeCount"], "fn": "evalNodesFn"}},
+		{"id": "finalNodeValues", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["finalState"]}},
+		{"id": "hasResult", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["finalNodeValues", "resultId"]}},
+		{"id": "cachedResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["finalNodeValues", "resultId"]}},
+		{"id": "resultNode", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["nodes", "zero"]}},
+		{"id": "fallbackResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["resultNode", "exprKey"]}},
+		{"id": "result", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "hasResult", "then": "cachedResult", "else": "fallbackResult"}},
+
+		{"id": "eirEval", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["doc"],
+			"body": "result"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "eir:eval", "value": "eirEval"}
+			]
+		}}
+	],
+	"result": "exports"
+}
