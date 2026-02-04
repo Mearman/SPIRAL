@@ -31,6 +31,9 @@
 		{"id": "derefKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "deref"}},
 		{"id": "tryKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "try"}},
 
+		{"id": "errorNotCached", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "INTERNAL_ERROR"}},
+		{"id": "errorMsg", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Result not found in cache"}},
+
 		{"id": "docVar", "expr": {"kind": "var", "name": "doc"}},
 		{"id": "nodes", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["docVar", "nodesKey"]}},
 		{"id": "resultId", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["docVar", "resultKey"]}},
@@ -113,9 +116,12 @@
 		{"id": "finalNodeValues", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["finalState"]}},
 		{"id": "hasResult", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["finalNodeValues", "resultId"]}},
 		{"id": "cachedResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["finalNodeValues", "resultId"]}},
-		{"id": "resultNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["nodes", "resultId"]}},
-		{"id": "fallbackResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["resultNode", "exprKey"]}},
-		{"id": "result", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "hasResult", "then": "cachedResult", "else": "fallbackResult"}},
+		{"id": "fallbackError", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "error"},
+			{"key": "s:code", "value": "errorNotCached"},
+			{"key": "s:message", "value": "errorMsg"}
+		]}},
+		{"id": "result", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "hasResult", "then": "cachedResult", "else": "fallbackError"}},
 
 		{"id": "eirEval", "expr": {
 			"kind": "lambda",
