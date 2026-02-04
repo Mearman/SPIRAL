@@ -61,7 +61,11 @@
 		{"id": "eacNewAccum", "expr": {"kind": "call", "ns": "list", "name": "append", "args": ["eaAccumVar", "eacArgValue"]}},
 		{"id": "eacNewIndex", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["eaIndexVar", "one"]}},
 		{"id": "eacRecurse", "expr": {"kind": "callExpr", "args": ["eaListVar", "eacNewIndex", "eacNewAccum", "eacNewState", "eaDocVar", "eacNewEnv", "eacNewNodeValues", "eaNodesVar"], "fn": "eaRecVar"}},
-		{"id": "eacResult", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "eaDone", "then": "eaAccumVar", "else": "eacRecurse"}},
+		{"id": "eacDoneRecord", "expr": {"kind": "record", "fields": [
+			{"key": "s:args", "value": "eaAccumVar"},
+			{"key": "s:state", "value": "eaStateVar"}
+		]}},
+		{"id": "eacResult", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "eaDone", "then": "eacDoneRecord", "else": "eacRecurse"}},
 
 		{"id": "eaInner", "expr": {
 			"kind": "lambda",
@@ -84,8 +88,8 @@
 
 		{"id": "evalArgsResult", "expr": {"kind": "callExpr", "args": ["effectArgs", "zero", "emptyList", "effectState", "effectDoc", "effectEnv", "effectNodeValues", "effectNodes"], "fn": "evalArgsFn"}},
 
-		{"id": "evaluatedArgs", "expr": {"kind": "var", "name": "evaluatedArgs"}},
-		{"id": "finalState", "expr": {"kind": "var", "name": "finalState"}},
+		{"id": "evaluatedArgs", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["evalArgsResult", "argsKey"]}},
+		{"id": "finalState", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["evalArgsResult", "stateKey"]}},
 
 		{"id": "effectResultValue", "expr": {"kind": "record", "fields": [
 			{"key": "kind", "value": "effect"},
@@ -98,16 +102,11 @@
 			{"key": "s:value", "value": "effectResultValue"}
 		]}},
 
-		{"id": "eaFinalResult", "expr": {"kind": "record", "fields": [
-			{"key": "s:evaluatedArgs", "value": "evalArgsResult"},
-			{"key": "s:finalState", "value": "finalState"}
-		]}},
-
 		{"id": "eir:effect", "expr": {
 			"kind": "lambda",
 			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
 			"params": ["effectState", "effectDoc", "effectExpr"],
-			"body": "eaFinalResult"
+			"body": "effectResultRecord"
 		}},
 
 		{"id": "exports", "expr": {
