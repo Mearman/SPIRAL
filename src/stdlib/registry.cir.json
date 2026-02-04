@@ -1,0 +1,237 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"airDefs": [],
+	"nodes": [
+		{
+			"id": "emptyRegistry",
+			"expr": {
+				"kind": "record",
+				"fields": []
+			}
+		},
+		{
+			"id": "colon",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": ":"
+			}
+		},
+		{
+			"id": "opKey",
+			"expr": {
+				"kind": "lambda",
+				"params": [
+					{ "name": "ns", "type": { "kind": "string" } },
+					{ "name": "name", "type": { "kind": "string" } }
+				],
+				"body": "opKeyImpl"
+			}
+		},
+		{
+			"id": "colonVar",
+			"expr": {
+				"kind": "var",
+				"name": "colon"
+			}
+		},
+		{
+			"id": "nsVar",
+			"expr": {
+				"kind": "var",
+				"name": "ns"
+			}
+		},
+		{
+			"id": "nameVar",
+			"expr": {
+				"kind": "var",
+				"name": "name"
+			}
+		},
+		{
+			"id": "concat1",
+			"expr": {
+				"kind": "call",
+				"ns": "string",
+				"name": "concat",
+				"args": ["nsVar", "colonVar"]
+			}
+		},
+		{
+			"id": "opKeyImpl",
+			"expr": {
+				"kind": "call",
+				"ns": "string",
+				"name": "concat",
+				"args": ["concat1", "nameVar"]
+			}
+		},
+		{
+			"id": "nsKey",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "ns"
+			}
+		},
+		{
+			"id": "nameKey",
+			"expr": {
+				"kind": "lit",
+				"type": { "kind": "string" },
+				"value": "name"
+			}
+		},
+		{
+			"id": "makeOpKey",
+			"expr": {
+				"kind": "lambda",
+				"params": [
+					{ "name": "op", "type": { "kind": "map", "keys": { "kind": "string" }, "values": { "kind": "opaque" } } }
+				],
+				"body": "makeOpKeyBody"
+			}
+		},
+		{
+			"id": "opVar",
+			"expr": {
+				"kind": "var",
+				"name": "op"
+			}
+		},
+		{
+			"id": "getNs",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "get",
+				"args": ["opVar", "nsKey"]
+			}
+		},
+		{
+			"id": "getName",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "get",
+				"args": ["opVar", "nameKey"]
+			}
+		},
+		{
+			"id": "makeOpKeyBody",
+			"expr": {
+				"kind": "callExpr",
+				"args": ["getNs", "getName"],
+				"fn": "opKey"
+			}
+		},
+		{
+			"id": "lookupOp",
+			"expr": {
+				"kind": "lambda",
+				"params": [
+					{ "name": "registry", "type": { "kind": "map", "keys": { "kind": "string" }, "values": { "kind": "opaque" } } },
+					{ "name": "ns", "type": { "kind": "string" } },
+					{ "name": "name", "type": { "kind": "string" } }
+				],
+				"body": "lookupOpBody"
+			}
+		},
+		{
+			"id": "registryVar",
+			"expr": {
+				"kind": "var",
+				"name": "registry"
+			}
+		},
+		{
+			"id": "nsVar2",
+			"expr": {
+				"kind": "var",
+				"name": "ns"
+			}
+		},
+		{
+			"id": "nameVar2",
+			"expr": {
+				"kind": "var",
+				"name": "name"
+			}
+		},
+		{
+			"id": "key",
+			"expr": {
+				"kind": "callExpr",
+				"args": ["nsVar2", "nameVar2"],
+				"fn": "opKey"
+			}
+		},
+		{
+			"id": "lookupOpBody",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "get",
+				"args": ["registryVar", "key"]
+			}
+		},
+		{
+			"id": "registerOp",
+			"expr": {
+				"kind": "lambda",
+				"params": [
+					{ "name": "registry", "type": { "kind": "map", "keys": { "kind": "string" }, "values": { "kind": "opaque" } } },
+					{ "name": "op", "type": { "kind": "map", "keys": { "kind": "string" }, "values": { "kind": "opaque" } } }
+				],
+				"body": "registerOpBody"
+			}
+		},
+		{
+			"id": "registryVar2",
+			"expr": {
+				"kind": "var",
+				"name": "registry"
+			}
+		},
+		{
+			"id": "opVar2",
+			"expr": {
+				"kind": "var",
+				"name": "op"
+			}
+		},
+		{
+			"id": "opKeyForOp",
+			"expr": {
+				"kind": "callExpr",
+				"args": ["opVar2"],
+				"fn": "makeOpKey"
+			}
+		},
+		{
+			"id": "registerOpBody",
+			"expr": {
+				"kind": "call",
+				"ns": "map",
+				"name": "set",
+				"args": ["registryVar2", "opKeyForOp", "opVar2"]
+			}
+		},
+		{
+			"id": "exports",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{ "key": "registry:empty", "value": "emptyRegistry" },
+					{ "key": "registry:opKey", "value": "opKey" },
+					{ "key": "registry:makeOpKey", "value": "makeOpKey" },
+					{ "key": "registry:lookup", "value": "lookupOp" },
+					{ "key": "registry:register", "value": "registerOp" }
+				]
+			}
+		}
+	],
+	"result": "exports"
+}
