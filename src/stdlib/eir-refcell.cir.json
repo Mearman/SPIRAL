@@ -1,0 +1,120 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "EIR refCell and deref expressions — creates mutable reference cells and reads from them. refCell creates a reference to an existing variable, deref reads the current value from a reference cell.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+
+		{"id": "targetKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "target"}},
+		{"id": "stateKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:state"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:value"}},
+		{"id": "kindKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+
+		{"id": "refCellKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "refCell"}},
+		{"id": "refCellType", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "refCell"}},
+		{"id": "derefType", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "deref"}},
+		{"id": "errorType", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "error"}},
+
+		{"id": "refCellState", "expr": {"kind": "var", "name": "refCellState"}},
+		{"id": "refCellDoc", "expr": {"kind": "var", "name": "refCellDoc"}},
+		{"id": "refCellExpr", "expr": {"kind": "var", "name": "refCellExpr"}},
+
+		{"id": "refCellTarget", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["refCellExpr", "targetKey"]}},
+		{"id": "refCellEnv", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["refCellState"]}},
+		{"id": "refCellRefCells", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getRefCells", "args": ["refCellState"]}},
+
+		{"id": "refCellIdSuffix", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "_ref"}},
+		{"id": "refCellId", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["refCellTarget", "refCellIdSuffix"]}},
+
+		{"id": "rcExistingValue", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["refCellEnv", "refCellTarget"]}},
+		{"id": "rcHasExisting", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["refCellEnv", "refCellTarget"]}},
+
+		{"id": "unboundError", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "UnboundIdentifier"}},
+		{"id": "rcErrorMsgPrefix", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Cannot create ref cell for unbound identifier: "}},
+		{"id": "rcErrorMsg", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["rcErrorMsgPrefix", "refCellTarget"]}},
+		{"id": "rcErrorValue", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "errorType"},
+			{"key": "code", "value": "unboundError"},
+			{"key": "message", "value": "rcErrorMsg"}
+		]}},
+
+		{"id": "rcNewRefCells", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["refCellRefCells", "refCellId", "rcExistingValue"]}},
+		{"id": "rcNewState", "expr": {"kind": "call", "ns": "eir-state", "name": "state:setRefCells", "args": ["refCellState", "rcNewRefCells"]}},
+
+		{"id": "rcSuccessValue", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "refCellType"},
+			{"key": "target", "value": "refCellTarget"}
+		]}},
+
+		{"id": "rcSuccessRecord", "expr": {"kind": "record", "fields": [
+			{"key": "s:state", "value": "rcNewState"},
+			{"key": "s:value", "value": "rcSuccessValue"}
+		]}},
+
+		{"id": "rcErrorRecord", "expr": {"kind": "record", "fields": [
+			{"key": "s:state", "value": "refCellState"},
+			{"key": "s:value", "value": "rcErrorValue"}
+		]}},
+
+		{"id": "refCellResult", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "rcHasExisting", "then": "rcSuccessRecord", "else": "rcErrorRecord"}},
+
+		{"id": "eir:refCell", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["refCellState", "refCellDoc", "refCellExpr"],
+			"body": "refCellResult"
+		}},
+
+		{"id": "derefState", "expr": {"kind": "var", "name": "derefState"}},
+		{"id": "derefDoc", "expr": {"kind": "var", "name": "derefDoc"}},
+		{"id": "derefExpr", "expr": {"kind": "var", "name": "derefExpr"}},
+
+		{"id": "derefTarget", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["derefExpr", "targetKey"]}},
+		{"id": "derefRefCells", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getRefCells", "args": ["derefState"]}},
+
+		{"id": "derefIdSuffix", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "_ref"}},
+		{"id": "derefId", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["derefTarget", "derefIdSuffix"]}},
+
+		{"id": "drHasRefCell", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["derefRefCells", "derefId"]}},
+
+		{"id": "drNotFoundError", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "DomainError"}},
+		{"id": "drErrorMsgPrefix", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Reference cell not found: "}},
+		{"id": "drErrorMsg", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["drErrorMsgPrefix", "derefTarget"]}},
+		{"id": "drErrorValue", "expr": {"kind": "record", "fields": [
+			{"key": "kind", "value": "errorType"},
+			{"key": "code", "value": "drNotFoundError"},
+			{"key": "message", "value": "drErrorMsg"}
+		]}},
+
+		{"id": "drCellValue", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["derefRefCells", "derefId"]}},
+
+		{"id": "drSuccessRecord", "expr": {"kind": "record", "fields": [
+			{"key": "s:state", "value": "derefState"},
+			{"key": "s:value", "value": "drCellValue"}
+		]}},
+
+		{"id": "drErrorRecord", "expr": {"kind": "record", "fields": [
+			{"key": "s:state", "value": "derefState"},
+			{"key": "s:value", "value": "drErrorValue"}
+		]}},
+
+		{"id": "derefResult", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "drHasRefCell", "then": "drSuccessRecord", "else": "drErrorRecord"}},
+
+		{"id": "eir:deref", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["derefState", "derefDoc", "derefExpr"],
+			"body": "derefResult"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "eir:refCell", "value": "eir:refCell"},
+				{"key": "eir:deref", "value": "eir:deref"}
+			]
+		}}
+	],
+	"result": "exports"
+}
