@@ -1,0 +1,168 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "EIR state primitives — state manipulation for EIR evaluation. Manages environment, ref cells, node values, and step counter.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+		{"id": "million", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1000000}},
+
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+
+		{"id": "envKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:env"}},
+		{"id": "refCellsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:refCells"}},
+		{"id": "nodeValuesKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:nodeValues"}},
+		{"id": "stepsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:steps"}},
+		{"id": "maxStepsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:maxSteps"}},
+
+		{"id": "initEnv", "expr": {"kind": "var", "name": "initEnv"}},
+		{"id": "stateInit", "expr": {"kind": "record", "fields": [
+			{"key": "s:env", "value": "initEnv"},
+			{"key": "s:refCells", "value": "emptyMap"},
+			{"key": "s:nodeValues", "value": "emptyMap"},
+			{"key": "s:steps", "value": "zero"},
+			{"key": "s:maxSteps", "value": "million"}
+		]}},
+		{"id": "stateInitFn", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["initEnv"],
+			"body": "stateInit"
+		}},
+		{"id": "siDefault", "expr": {"kind": "callExpr", "args": ["emptyMap"], "fn": "stateInitFn"}},
+		{"id": "state:init", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["initEnv"],
+			"body": "siDefault"
+		}},
+
+		{"id": "sweState", "expr": {"kind": "var", "name": "sweState"}},
+		{"id": "sweNewEnv", "expr": {"kind": "var", "name": "sweNewEnv"}},
+		{"id": "sweResult", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["sweState", "envKey", "sweNewEnv"]}},
+		{"id": "state:withEnv", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["sweState", "sweNewEnv"],
+			"body": "sweResult"
+		}},
+
+		{"id": "sgeState", "expr": {"kind": "var", "name": "sgeState"}},
+		{"id": "sgeResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["sgeState", "envKey"]}},
+		{"id": "state:getEnv", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["sgeState"],
+			"body": "sgeResult"
+		}},
+
+		{"id": "srcState", "expr": {"kind": "var", "name": "srcState"}},
+		{"id": "srcResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["srcState", "refCellsKey"]}},
+		{"id": "state:getRefCells", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["srcState"],
+			"body": "srcResult"
+		}},
+
+		{"id": "sscState", "expr": {"kind": "var", "name": "sscState"}},
+		{"id": "sscNewCells", "expr": {"kind": "var", "name": "sscNewCells"}},
+		{"id": "sscResult", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["sscState", "refCellsKey", "sscNewCells"]}},
+		{"id": "state:setRefCells", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["sscState", "sscNewCells"],
+			"body": "sscResult"
+		}},
+
+		{"id": "sisState", "expr": {"kind": "var", "name": "sisState"}},
+		{"id": "sisSteps", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["sisState", "stepsKey"]}},
+		{"id": "sisNewSteps", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["sisSteps", "one"]}},
+		{"id": "sisResult", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["sisState", "stepsKey", "sisNewSteps"]}},
+		{"id": "state:incSteps", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["sisState"],
+			"body": "sisResult"
+		}},
+
+		{"id": "sgsState", "expr": {"kind": "var", "name": "sgsState"}},
+		{"id": "sgsResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["sgsState", "stepsKey"]}},
+		{"id": "state:getSteps", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["sgsState"],
+			"body": "sgsResult"
+		}},
+
+		{"id": "scmState", "expr": {"kind": "var", "name": "scmState"}},
+		{"id": "scmSteps", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["scmState", "stepsKey"]}},
+		{"id": "scmMaxSteps", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["scmState", "maxStepsKey"]}},
+		{"id": "scmExceeded", "expr": {"kind": "call", "ns": "core", "name": "gt", "args": ["scmSteps", "scmMaxSteps"]}},
+		{"id": "state:checkMaxSteps", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "bool"}},
+			"params": ["scmState"],
+			"body": "scmExceeded"
+		}},
+
+		{"id": "gnvState", "expr": {"kind": "var", "name": "gnvState"}},
+		{"id": "gnvResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["gnvState", "nodeValuesKey"]}},
+		{"id": "state:getNodeValues", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["gnvState"],
+			"body": "gnvResult"
+		}},
+
+		{"id": "snvState", "expr": {"kind": "var", "name": "snvState"}},
+		{"id": "snvNewValues", "expr": {"kind": "var", "name": "snvNewValues"}},
+		{"id": "snvResult", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["snvState", "nodeValuesKey", "snvNewValues"]}},
+		{"id": "state:setNodeValues", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["snvState", "snvNewValues"],
+			"body": "snvResult"
+		}},
+
+		{"id": "gmsState", "expr": {"kind": "var", "name": "gmsState"}},
+		{"id": "gmsResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["gmsState", "maxStepsKey"]}},
+		{"id": "state:getMaxSteps", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["gmsState"],
+			"body": "gmsResult"
+		}},
+
+		{"id": "smsState", "expr": {"kind": "var", "name": "smsState"}},
+		{"id": "smsNewMax", "expr": {"kind": "var", "name": "smsNewMax"}},
+		{"id": "smsResult", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["smsState", "maxStepsKey", "smsNewMax"]}},
+		{"id": "state:setMaxSteps", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["smsState", "smsNewMax"],
+			"body": "smsResult"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "state:init", "value": "state:init"},
+				{"key": "state:withEnv", "value": "state:withEnv"},
+				{"key": "state:getEnv", "value": "state:getEnv"},
+				{"key": "state:getRefCells", "value": "state:getRefCells"},
+				{"key": "state:setRefCells", "value": "state:setRefCells"},
+				{"key": "state:incSteps", "value": "state:incSteps"},
+				{"key": "state:getSteps", "value": "state:getSteps"},
+				{"key": "state:checkMaxSteps", "value": "state:checkMaxSteps"},
+				{"key": "state:getNodeValues", "value": "state:getNodeValues"},
+				{"key": "state:setNodeValues", "value": "state:setNodeValues"},
+				{"key": "state:getMaxSteps", "value": "state:getMaxSteps"},
+				{"key": "state:setMaxSteps", "value": "state:setMaxSteps"}
+			]
+		}}
+	],
+	"result": "exports"
+}
