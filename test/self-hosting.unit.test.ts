@@ -334,7 +334,8 @@ describe("SPIRAL Self-Hosting", () => {
 				result: "result",
 			};
 
-			const docValue = cirDocumentToValue(doc);
+			// Use cirDocumentToValueRaw because CIR typechecker expects unprefixed keys
+			const docValue = cirDocumentToValueRaw(doc);
 			const result = typecheckOp.fn(docValue);
 
 			// Handle error result - CIR typechecker may not support all cases yet
@@ -367,7 +368,8 @@ describe("SPIRAL Self-Hosting", () => {
 				result: "result",
 			};
 
-			const docValue = cirDocumentToValue(doc);
+			// Use cirDocumentToValueRaw because CIR typechecker expects unprefixed keys
+			const docValue = cirDocumentToValueRaw(doc);
 			const result = typecheckOp.fn(docValue);
 
 			// Handle error result - CIR typechecker may not support all cases yet
@@ -378,7 +380,7 @@ describe("SPIRAL Self-Hosting", () => {
 
 			// If successful, verify result structure
 			assert.equal(result.kind, "map");
-			const typeField = result.value.get("s:type");
+			const typeField = result.value.get("type");
 			assert.ok(typeField, "Result should have type field");
 		});
 
@@ -398,7 +400,8 @@ describe("SPIRAL Self-Hosting", () => {
 				result: "result",
 			};
 
-			const docValue = cirDocumentToValue(doc);
+			// Use cirDocumentToValueRaw because CIR typechecker expects unprefixed keys
+			const docValue = cirDocumentToValueRaw(doc);
 			const result = typecheckOp.fn(docValue);
 
 			// Handle error result - CIR typechecker may not support all cases yet
@@ -409,7 +412,7 @@ describe("SPIRAL Self-Hosting", () => {
 
 			// If successful, verify result structure
 			assert.equal(result.kind, "map");
-			const typeField = result.value.get("s:type");
+			const typeField = result.value.get("type");
 			assert.ok(typeField, "Result should have type field");
 		});
 
@@ -429,7 +432,8 @@ describe("SPIRAL Self-Hosting", () => {
 				result: "result",
 			};
 
-			const docValue = cirDocumentToValue(doc);
+			// Use cirDocumentToValueRaw because CIR typechecker expects unprefixed keys
+			const docValue = cirDocumentToValueRaw(doc);
 			const result = typecheckOp.fn(docValue);
 
 			// Handle error result - CIR typechecker may not support all cases yet
@@ -440,7 +444,7 @@ describe("SPIRAL Self-Hosting", () => {
 
 			// If successful, verify result structure
 			assert.equal(result.kind, "map");
-			const typeField = result.value.get("s:type");
+			const typeField = result.value.get("type");
 			assert.ok(typeField, "Result should have type field");
 		});
 
@@ -478,7 +482,8 @@ describe("SPIRAL Self-Hosting", () => {
 				result: "result",
 			};
 
-			const docValue = cirDocumentToValue(doc);
+			// Use cirDocumentToValueRaw because CIR typechecker expects unprefixed keys
+			const docValue = cirDocumentToValueRaw(doc);
 			const result = typecheckOp.fn(docValue);
 
 			// Handle error result - CIR typechecker may not support all cases yet
@@ -489,7 +494,7 @@ describe("SPIRAL Self-Hosting", () => {
 
 			// If successful, verify result structure
 			assert.equal(result.kind, "map");
-			const typeField = result.value.get("s:type");
+			const typeField = result.value.get("type");
 			assert.ok(typeField, "Result should have type field");
 		});
 	});
