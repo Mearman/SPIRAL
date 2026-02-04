@@ -16,7 +16,7 @@ import {
 	loadFixtureDocument,
 	loadFixtureInputs,
 	type ComplianceFixture,
-} from "./fixtures/cross-compliance.fixtures.js";
+} from "./fixtures/cross-compliance.fixtures.ts";
 
 //==============================================================================
 // Value Comparison Utilities

@@ -21,6 +21,7 @@ import {
 	voidVal,
 } from "../../types.ts";
 import type { ForkContext, InstructionContext, LIRAsyncRuntimeState, TerminatorContext } from "./types.ts";
+import { executeBlockAsync } from "./instructions.ts";
 
 //==============================================================================
 // Individual Terminator Handlers
@@ -165,7 +166,6 @@ async function executeForkBranchStep(
 	currentBlock: LirBlock,
 	contexts: { ctx: InstructionContext; termCtx: TerminatorContext },
 ): Promise<string | Value> {
-	const { executeBlockAsync } = await import("./instructions.js");
 	const insResult = await executeBlockAsync(currentBlock, contexts.ctx);
 	if (insResult && isError(insResult)) {
 		return insResult;
