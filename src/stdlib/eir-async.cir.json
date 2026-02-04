@@ -1,0 +1,292 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Async EIR primitives — spawn, await, par, channel, send, recv, select, race. NOTE: These are CIR stub implementations. True async execution requires the TypeScript runtime with native async support. These implementations provide the interface structure and return appropriate placeholder values.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+		{"id": "two", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 2}},
+
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+		{"id": "voidValue", "expr": {"kind": "record", "fields": []}},
+
+		{"id": "targetKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "target"}},
+		{"id": "bodyKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:body"}},
+		{"id": "tasksKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:tasks"}},
+		{"id": "channelKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "channel"}},
+		{"id": "channelTypeKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "channelType"}},
+		{"id": "bufferSizeKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "bufferSize"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+		{"id": "casesKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:cases"}},
+		{"id": "kindKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "stateKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:state"}},
+		{"id": "svalueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:value"}},
+
+		{"id": "futureKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "future"}},
+		{"id": "channelKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "channel"}},
+		{"id": "stringType", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
+
+		{
+			"id": "eir:spawn",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["spawnState", "spawnDoc", "spawnExpr"],
+				"body": {
+					"kind": "record",
+					"fields": [
+						{"key": "s:state", "value": "spawnState"},
+						{"key": "s:value", "value": {
+							"kind": "record",
+							"fields": [
+								{"key": "kind", "value": "futureKind"},
+								{"key": "target", "value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "get",
+									"args": ["spawnExpr", "targetKey"]
+								}},
+								{"key": "status", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "pending"}}
+							]
+						}}
+					]
+				},
+				"description": "Creates a new async task that evaluates the target node. Returns a future value with task ID. In TypeScript runtime, this spawns actual concurrent execution. In CIR, returns a placeholder future record."
+			}
+		},
+
+		{
+			"id": "eir:await",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["awaitState", "awaitDoc", "awaitExpr"],
+				"body": {
+					"kind": "record",
+					"fields": [
+						{"key": "s:state", "value": "awaitState"},
+						{"key": "s:value", "value": {
+							"kind": "record",
+							"fields": [
+								{"key": "kind", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "awaitResult"}},
+								{"key": "status", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "blocking"}},
+								{"key": "note", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "True async await requires TypeScript runtime"}}
+							]
+						}}
+					]
+				},
+				"description": "Waits for a future to resolve and returns its value. In TypeScript runtime, this blocks until the task completes. In CIR, returns a placeholder indicating blocking behavior."
+			}
+		},
+
+		{
+			"id": "eir:par",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["parState", "parDoc", "parExpr"],
+				"body": {
+					"kind": "record",
+					"fields": [
+						{"key": "s:state", "value": "parState"},
+						{"key": "s:value", "value": {
+							"kind": "record",
+							"fields": [
+								{"key": "kind", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "parResult"}},
+								{"key": "tasks", "value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "get",
+									"args": ["parExpr", "tasksKey"]
+								}},
+								{"key": "status", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "sequential_stub"}},
+								{"key": "note", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "True parallel execution requires TypeScript runtime"}}
+							]
+						}}
+					]
+				},
+				"description": "Evaluates multiple expressions in parallel and returns a list of results. In TypeScript runtime, executes concurrently. In CIR, returns a placeholder with task list."
+			}
+		},
+
+		{
+			"id": "eir:channel",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["chanState", "chanDoc", "chanExpr"],
+				"body": {
+					"kind": "record",
+					"fields": [
+						{"key": "s:state", "value": "chanState"},
+						{"key": "s:value", "value": {
+							"kind": "record",
+							"fields": [
+								{"key": "kind", "value": "channelKind"},
+								{"key": "channelType", "value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "get",
+									"args": ["chanExpr", "channelTypeKey"]
+								}},
+								{"key": "bufferSize", "value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "get",
+									"args": ["chanExpr", "bufferSizeKey"]
+								}},
+								{"key": "status", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "stub"}}
+							]
+						}}
+					]
+				},
+				"description": "Creates a typed communication channel. Supports mpsc (multi-producer, single-consumer), mpmc, spmc, and spsc types. In TypeScript runtime, creates actual channel with buffering. In CIR, returns a placeholder channel record."
+			}
+		},
+
+		{
+			"id": "eir:send",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["sendState", "sendDoc", "sendExpr"],
+				"body": {
+					"kind": "record",
+					"fields": [
+						{"key": "s:state", "value": "sendState"},
+						{"key": "s:value", "value": {
+							"kind": "record",
+							"fields": [
+								{"key": "kind", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "sendResult"}},
+								{"key": "channel", "value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "get",
+									"args": ["sendExpr", "channelKey"]
+								}},
+								{"key": "value", "value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "get",
+									"args": ["sendExpr", "valueKey"]
+								}},
+								{"key": "status", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "queued_stub"}},
+								{"key": "note", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "True send requires TypeScript runtime channel"}}
+							]
+						}}
+					]
+				},
+				"description": "Sends a value into a channel. Blocks if channel buffer is full. In TypeScript runtime, performs actual send operation. In CIR, returns a placeholder indicating queued state."
+			}
+		},
+
+		{
+			"id": "eir:recv",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["recvState", "recvDoc", "recvExpr"],
+				"body": {
+					"kind": "record",
+					"fields": [
+						{"key": "s:state", "value": "recvState"},
+						{"key": "s:value", "value": {
+							"kind": "record",
+							"fields": [
+								{"key": "kind", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "recvResult"}},
+								{"key": "channel", "value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "get",
+									"args": ["recvExpr", "channelKey"]
+								}},
+								{"key": "status", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "blocking_stub"}},
+								{"key": "note", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "True recv requires TypeScript runtime channel"}}
+							]
+						}}
+					]
+				},
+				"description": "Receives a value from a channel. Blocks if channel is empty. In TypeScript runtime, performs actual receive operation. In CIR, returns a placeholder indicating blocking state."
+			}
+		},
+
+		{
+			"id": "eir:select",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["selState", "selDoc", "selExpr"],
+				"body": {
+					"kind": "record",
+					"fields": [
+						{"key": "s:state", "value": "selState"},
+						{"key": "s:value", "value": {
+							"kind": "record",
+							"fields": [
+								{"key": "kind", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "selectResult"}},
+								{"key": "cases", "value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "get",
+									"args": ["selExpr", "casesKey"]
+								}},
+								{"key": "selected", "value": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+								{"key": "status", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "first_case_stub"}},
+								{"key": "note", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "True select requires TypeScript runtime"}}
+							]
+						}}
+					]
+				},
+				"description": "Waits on multiple channel operations and completes when one is ready. Returns the result and index of completed case. In TypeScript runtime, performs actual select operation. In CIR, returns placeholder selecting first case."
+			}
+		},
+
+		{
+			"id": "eir:race",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["raceState", "raceDoc", "raceExpr"],
+				"body": {
+					"kind": "record",
+					"fields": [
+						{"key": "s:state", "value": "raceState"},
+						{"key": "s:value", "value": {
+							"kind": "record",
+							"fields": [
+								{"key": "kind", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "raceResult"}},
+								{"key": "tasks", "value": {
+									"kind": "call",
+									"ns": "map",
+									"name": "get",
+									"args": ["raceExpr", "tasksKey"]
+								}},
+								{"key": "winner", "value": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+								{"key": "status", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "first_task_stub"}},
+								{"key": "note", "value": {"kind": "lit", "type": {"kind": "string"}, "value": "True race requires TypeScript runtime"}}
+							]
+						}}
+					]
+				},
+				"description": "Executes multiple tasks concurrently and returns the result of the first to complete. Other tasks are cancelled. In TypeScript runtime, performs actual race. In CIR, returns placeholder with first task selected."
+			}
+		},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "eir:spawn", "value": "eir:spawn"},
+				{"key": "eir:await", "value": "eir:await"},
+				{"key": "eir:par", "value": "eir:par"},
+				{"key": "eir:channel", "value": "eir:channel"},
+				{"key": "eir:send", "value": "eir:send"},
+				{"key": "eir:recv", "value": "eir:recv"},
+				{"key": "eir:select", "value": "eir:select"},
+				{"key": "eir:race", "value": "eir:race"}
+			]
+		}}
+	],
+	"result": "exports"
+}
