@@ -1,0 +1,130 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "EIR while loop — repeatedly evaluates body while condition is true. State carries over through each iteration. Tracks step count to prevent infinite loops.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+		{"id": "voidValue", "expr": {"kind": "record", "fields": []}},
+
+		{"id": "condKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "cond"}},
+		{"id": "bodyKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "body"}},
+		{"id": "nodesKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodes"}},
+		{"id": "exprKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+		{"id": "kindKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "stateKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:state"}},
+
+		{"id": "stringType", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
+		{"id": "boolType", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "bool"}},
+
+		{"id": "whileState", "expr": {"kind": "var", "name": "whileState"}},
+		{"id": "whileDoc", "expr": {"kind": "var", "name": "whileDoc"}},
+		{"id": "whileExpr", "expr": {"kind": "var", "name": "whileExpr"}},
+
+		{"id": "whileCondRef", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["whileExpr", "condKey"]}},
+		{"id": "whileBodyRef", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["whileExpr", "bodyKey"]}},
+		{"id": "whileEnv", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["whileState"]}},
+		{"id": "whileNodeValues", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["whileState"]}},
+		{"id": "whileNodes", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["whileDoc", "nodesKey"]}},
+		{"id": "whileRefCells", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getRefCells", "args": ["whileState"]}},
+
+		{"id": "wcrType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["whileCondRef"]}},
+		{"id": "wcrIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["wcrType", "stringType"]}},
+		{"id": "wcrInCache", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["whileNodeValues", "whileCondRef"]}},
+		{"id": "wcrFromCache", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["whileNodeValues", "whileCondRef"]}},
+		{"id": "wcrNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["whileNodes", "whileCondRef"]}},
+		{"id": "wcrNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["wcrNode", "exprKey"]}},
+		{"id": "wcrEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["whileDoc", "whileEnv", "wcrNodeExpr"]}},
+		{"id": "wcrInlineEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["whileDoc", "whileEnv", "whileCondRef"]}},
+		{"id": "wcrUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "wcrInCache", "then": "wcrFromCache", "else": "wcrEval"}},
+		{"id": "whileCondValue", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "wcrIsString", "then": "wcrUseCache", "else": "wcrInlineEval"}},
+
+		{"id": "wcvType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["whileCondValue"]}},
+		{"id": "wcvIsBool", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["wcvType", "boolType"]}},
+		{"id": "wcvKind", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["whileCondValue", "kindKey"]}},
+		{"id": "wcvIsBoolValue", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["wcvKind", "boolType"]}},
+		{"id": "wcvValue", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["whileCondValue", "valueKey"]}},
+		{"id": "whileCondIsTrue", "expr": {"kind": "if", "type": {"kind": "bool"}, "cond": "wcvIsBoolValue", "then": "wcvValue", "else": "zero"}},
+
+		{"id": "wbrType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["whileBodyRef"]}},
+		{"id": "wbrIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["wbrType", "stringType"]}},
+		{"id": "wbrInCache", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["whileNodeValues", "whileBodyRef"]}},
+		{"id": "wbrFromCache", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["whileNodeValues", "whileBodyRef"]}},
+		{"id": "wbrNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["whileNodes", "whileBodyRef"]}},
+		{"id": "wbrNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["wbrNode", "exprKey"]}},
+		{"id": "wbrEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["whileDoc", "whileEnv", "wbrNodeExpr"]}},
+		{"id": "wbrInlineEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["whileDoc", "whileEnv", "whileBodyRef"]}},
+		{"id": "wbrUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "wbrInCache", "then": "wbrFromCache", "else": "wbrEval"}},
+		{"id": "whileBodyValue", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "wbrIsString", "then": "wbrUseCache", "else": "wbrInlineEval"}},
+
+		{"id": "wlRecVar", "expr": {"kind": "var", "name": "wlRec"}},
+		{"id": "wlStateVar", "expr": {"kind": "var", "name": "wlState"}},
+		{"id": "wlDocVar", "expr": {"kind": "var", "name": "wlDoc"}},
+		{"id": "wlExprVar", "expr": {"kind": "var", "name": "wlExpr"}},
+		{"id": "wlCondRefVar", "expr": {"kind": "var", "name": "wlCondRef"}},
+		{"id": "wlBodyRefVar", "expr": {"kind": "var", "name": "wlBodyRef"}},
+
+		{"id": "wlCheckSteps", "expr": {"kind": "call", "ns": "eir-state", "name": "state:incSteps", "args": ["wlStateVar"]}},
+		{"id": "wlStepsExceeded", "expr": {"kind": "call", "ns": "eir-state", "name": "state:checkMaxSteps", "args": ["wlCheckSteps"]}},
+		{"id": "wlCondVal", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["wlDocVar", "wlStateVar", "wlCondRefVar"]}},
+		{"id": "wlCondType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["wlCondVal"]}},
+		{"id": "wlIsBool", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["wlCondType", "boolType"]}},
+		{"id": "wlCondKind", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["wlCondVal", "kindKey"]}},
+		{"id": "wlCondIsBoolValue", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["wlCondKind", "boolType"]}},
+		{"id": "wlCondBoolValue", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["wlCondVal", "valueKey"]}},
+		{"id": "wlCondBool", "expr": {"kind": "if", "type": {"kind": "bool"}, "cond": "wlCondIsBoolValue", "then": "wlCondBoolValue", "else": "zero"}},
+		{"id": "wlShouldContinue", "expr": {"kind": "if", "type": {"kind": "bool"}, "cond": "wlIsBool", "then": "wlCondBool", "else": "zero"}},
+
+		{"id": "wlBodyVal", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["wlDocVar", "wlCheckSteps", "wlBodyRefVar"]}},
+		{"id": "wlBodyState", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["wlBodyVal", "stateKey"]}},
+		{"id": "wlNewState", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "wlShouldContinue", "then": "wlBodyState", "else": "wlCheckSteps"}},
+
+		{"id": "wlRecurse", "expr": {"kind": "callExpr", "args": ["wlRecVar", "wlNewState", "wlDocVar", "wlExprVar", "wlCondRefVar", "wlBodyRefVar"], "fn": "wlRecVar"}},
+		{"id": "wlShouldRecurse", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "wlShouldContinue", "then": "wlRecurse", "else": "wlNewState"}},
+		{"id": "wlBody", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "wlStepsExceeded", "then": "wlCheckSteps", "else": "wlShouldRecurse"}},
+
+		{"id": "wlInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["wlState", "wlDoc", "wlExpr", "wlCondRef", "wlBodyRef"],
+			"body": "wlBody"
+		}},
+		{"id": "wlOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["wlRec"],
+			"body": "wlInner"
+		}},
+		{"id": "whileLoopFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "wlOuter"
+		}},
+
+		{"id": "whileLoopState", "expr": {"kind": "callExpr", "args": ["whileLoopFn", "whileState", "whileDoc", "whileExpr", "whileCondRef", "whileBodyRef"], "fn": "whileLoopFn"}},
+
+		{"id": "whileResultRecord", "expr": {"kind": "record", "fields": [
+			{"key": "s:state", "value": "whileLoopState"},
+			{"key": "s:value", "value": "voidValue"}
+		]}},
+
+		{"id": "eir:while", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["whileState", "whileDoc", "whileExpr"],
+			"body": "whileResultRecord"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "eir:while", "value": "eir:while"}
+			]
+		}}
+	],
+	"result": "exports"
+}
