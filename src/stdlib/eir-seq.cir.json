@@ -1,0 +1,80 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "EIR seq expression — evaluates first part (for side effects), then evaluates then part, returning the then result. State carries over from first to then evaluation.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+
+		{"id": "firstKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "first"}},
+		{"id": "thenKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "then"}},
+		{"id": "kindKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "idKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "id"}},
+		{"id": "nodesKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodes"}},
+		{"id": "exprKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+
+		{"id": "stringType", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
+		{"id": "refStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ref"}},
+
+		{"id": "seqState", "expr": {"kind": "var", "name": "seqState"}},
+		{"id": "seqDoc", "expr": {"kind": "var", "name": "seqDoc"}},
+		{"id": "seqExpr", "expr": {"kind": "var", "name": "seqExpr"}},
+
+		{"id": "seqFirstPart", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["seqExpr", "firstKey"]}},
+		{"id": "seqThenPart", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["seqExpr", "thenKey"]}},
+		{"id": "seqEnv", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["seqState"]}},
+		{"id": "seqNodeValues", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["seqState"]}},
+		{"id": "seqNodes", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["seqDoc", "nodesKey"]}},
+
+		{"id": "sfpType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["seqFirstPart"]}},
+		{"id": "sfpIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["sfpType", "stringType"]}},
+		{"id": "sfpInCache", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["seqNodeValues", "seqFirstPart"]}},
+		{"id": "sfpFromCache", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["seqNodeValues", "seqFirstPart"]}},
+		{"id": "sfpNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["seqNodeValues", "seqFirstPart"]}},
+		{"id": "sfpNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["sfpNode", "exprKey"]}},
+		{"id": "sfpEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["seqDoc", "seqEnv", "sfpNodeExpr"]}},
+		{"id": "sfpInlineEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["seqDoc", "seqEnv", "seqFirstPart"]}},
+		{"id": "sfpUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "sfpInCache", "then": "sfpFromCache", "else": "sfpEval"}},
+		{"id": "sfpFirstValue", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "sfpIsString", "then": "sfpUseCache", "else": "sfpInlineEval"}},
+
+		{"id": "seqStateWithFirst", "expr": {"kind": "call", "ns": "eir-state", "name": "state:withEnv", "args": ["seqState", "seqEnv"]}},
+		{"id": "seqEnvAfterFirst", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["seqStateWithFirst"]}},
+
+		{"id": "stpType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["seqThenPart"]}},
+		{"id": "stpIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["stpType", "stringType"]}},
+		{"id": "stpNodeValuesAfter", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["seqStateWithFirst"]}},
+		{"id": "stpInCache", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["stpNodeValuesAfter", "seqThenPart"]}},
+		{"id": "stpFromCache", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["stpNodeValuesAfter", "seqThenPart"]}},
+		{"id": "stpNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["stpNodeValuesAfter", "seqThenPart"]}},
+		{"id": "stpNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["stpNode", "exprKey"]}},
+		{"id": "stpEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["seqDoc", "seqEnvAfterFirst", "stpNodeExpr"]}},
+		{"id": "stpInlineEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["seqDoc", "seqEnvAfterFirst", "seqThenPart"]}},
+		{"id": "stpUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "stpInCache", "then": "stpFromCache", "else": "stpEval"}},
+		{"id": "stpThenValue", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "stpIsString", "then": "stpUseCache", "else": "stpInlineEval"}},
+
+		{"id": "seqResultRecord", "expr": {"kind": "record", "fields": [
+			{"key": "s:state", "value": "seqStateWithFirst"},
+			{"key": "s:value", "value": "stpThenValue"}
+		]}},
+
+		{"id": "eir:seq", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["seqState", "seqDoc", "seqExpr"],
+			"body": "seqResultRecord"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "eir:seq", "value": "eir:seq"}
+			]
+		}}
+	],
+	"result": "exports"
+}
