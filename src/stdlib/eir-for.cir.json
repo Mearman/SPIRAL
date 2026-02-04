@@ -1,0 +1,137 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "EIR for loop — iterates from start to end (inclusive), binding var to current value and evaluating body. State carries over through each iteration. Tracks step count to prevent infinite loops.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+		{"id": "voidValue", "expr": {"kind": "record", "fields": []}},
+
+		{"id": "varKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "var"}},
+		{"id": "startKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:start"}},
+		{"id": "endKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:end"}},
+		{"id": "bodyKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:body"}},
+		{"id": "kindKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "stateKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:state"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "s:value"}},
+		{"id": "nodesKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodes"}},
+		{"id": "exprKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+
+		{"id": "stringType", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
+		{"id": "intTypeStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "int"}},
+
+		{"id": "forState", "expr": {"kind": "var", "name": "forState"}},
+		{"id": "forDoc", "expr": {"kind": "var", "name": "forDoc"}},
+		{"id": "forExpr", "expr": {"kind": "var", "name": "forExpr"}},
+
+		{"id": "forVar", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["forExpr", "varKey"]}},
+		{"id": "forStartRef", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["forExpr", "startKey"]}},
+		{"id": "forEndRef", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["forExpr", "endKey"]}},
+		{"id": "forBodyRef", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["forExpr", "bodyKey"]}},
+
+		{"id": "forEnv", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["forState"]}},
+		{"id": "forNodeValues", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["forState"]}},
+		{"id": "forNodes", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["forDoc", "nodesKey"]}},
+
+		{"id": "fsType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["forStartRef"]}},
+		{"id": "fsIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["fsType", "stringType"]}},
+		{"id": "fsInCache", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["forNodeValues", "forStartRef"]}},
+		{"id": "fsFromCache", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["forNodeValues", "forStartRef"]}},
+		{"id": "fsNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["forNodes", "forStartRef"]}},
+		{"id": "fsNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["fsNode", "exprKey"]}},
+		{"id": "fsEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["forDoc", "forEnv", "fsNodeExpr"]}},
+		{"id": "fsInlineEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["forDoc", "forEnv", "forStartRef"]}},
+		{"id": "fsUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "fsInCache", "then": "fsFromCache", "else": "fsEval"}},
+		{"id": "forStartVal", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "fsIsString", "then": "fsUseCache", "else": "fsInlineEval"}},
+
+		{"id": "feType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["forEndRef"]}},
+		{"id": "feIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["feType", "stringType"]}},
+		{"id": "feInCache", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["forNodeValues", "forEndRef"]}},
+		{"id": "feFromCache", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["forNodeValues", "forEndRef"]}},
+		{"id": "feNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["forNodes", "forEndRef"]}},
+		{"id": "feNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["feNode", "exprKey"]}},
+		{"id": "feEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["forDoc", "forEnv", "feNodeExpr"]}},
+		{"id": "feInlineEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["forDoc", "forEnv", "forEndRef"]}},
+		{"id": "feUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "feInCache", "then": "feFromCache", "else": "feEval"}},
+		{"id": "forEndVal", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "feIsString", "then": "feUseCache", "else": "feInlineEval"}},
+
+		{"id": "flRecVar", "expr": {"kind": "var", "name": "flRec"}},
+		{"id": "flVarVar", "expr": {"kind": "var", "name": "flVar"}},
+		{"id": "flStartVar", "expr": {"kind": "var", "name": "flStart"}},
+		{"id": "flEndVar", "expr": {"kind": "var", "name": "flEnd"}},
+		{"id": "flBodyRefVar", "expr": {"kind": "var", "name": "flBodyRef"}},
+		{"id": "flDocVar", "expr": {"kind": "var", "name": "flDoc"}},
+		{"id": "flStateVar", "expr": {"kind": "var", "name": "flState"}},
+		{"id": "flIndexVar", "expr": {"kind": "var", "name": "flIndex"}},
+
+		{"id": "flCheckSteps", "expr": {"kind": "call", "ns": "eir-state", "name": "state:incSteps", "args": ["flStateVar"]}},
+		{"id": "flStepsExceeded", "expr": {"kind": "call", "ns": "eir-state", "name": "state:checkMaxSteps", "args": ["flCheckSteps"]}},
+		{"id": "flDone", "expr": {"kind": "call", "ns": "core", "name": "gt", "args": ["flIndexVar", "flEndVar"]}},
+		{"id": "flCurrentEnv", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["flCheckSteps"]}},
+		{"id": "flEnvWithVar", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["flCurrentEnv", "flVarVar", "flIndexVar"]}},
+		{"id": "flStateWithVar", "expr": {"kind": "call", "ns": "eir-state", "name": "state:withEnv", "args": ["flCheckSteps", "flEnvWithVar"]}},
+
+		{"id": "fbType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["flBodyRefVar"]}},
+		{"id": "fbIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["fbType", "stringType"]}},
+		{"id": "flNodeValues", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["flStateWithVar"]}},
+		{"id": "flNodes", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["flDocVar", "nodesKey"]}},
+		{"id": "fbInCache", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["flNodeValues", "flBodyRefVar"]}},
+		{"id": "fbFromCache", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["flNodeValues", "flBodyRefVar"]}},
+		{"id": "fbNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["flNodes", "flBodyRefVar"]}},
+		{"id": "fbNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["fbNode", "exprKey"]}},
+		{"id": "fbEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["flDocVar", "flEnvWithVar", "fbNodeExpr"]}},
+		{"id": "fbInlineEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["flDocVar", "flEnvWithVar", "flBodyRefVar"]}},
+		{"id": "fbUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "fbInCache", "then": "fbFromCache", "else": "fbEval"}},
+		{"id": "flBodyVal", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "fbIsString", "then": "fbUseCache", "else": "fbInlineEval"}},
+
+		{"id": "flBodyResultState", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["flBodyVal", "stateKey"]}},
+		{"id": "flBodyResultValue", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["flBodyVal", "valueKey"]}},
+		{"id": "flNextIndex", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["flIndexVar", "one"]}},
+		{"id": "flRecurse", "expr": {"kind": "callExpr", "args": ["flRecVar", "flVarVar", "flStartVar", "flEndVar", "flBodyRefVar", "flDocVar", "flBodyResultState", "flNextIndex"], "fn": "flRecVar"}},
+		{"id": "flAfterBody", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "flDone", "then": "flCheckSteps", "else": "flRecurse"}},
+		{"id": "flBody", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "flStepsExceeded", "then": "flCheckSteps", "else": "flAfterBody"}},
+
+		{"id": "flInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["flVar", "flStart", "flEnd", "flBodyRef", "flDoc", "flState", "flIndex"],
+			"body": "flBody"
+		}},
+		{"id": "flOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["flRec"],
+			"body": "flInner"
+		}},
+		{"id": "forLoopFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "flOuter"
+		}},
+
+		{"id": "forLoopState", "expr": {"kind": "callExpr", "args": ["forLoopFn", "forVar", "forStartVal", "forEndVal", "forBodyRef", "forDoc", "forState", "forStartVal"], "fn": "forLoopFn"}},
+
+		{"id": "forResultRecord", "expr": {"kind": "record", "fields": [
+			{"key": "s:state", "value": "forLoopState"},
+			{"key": "s:value", "value": "voidValue"}
+		]}},
+
+		{"id": "eir:for", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["forState", "forDoc", "forExpr"],
+			"body": "forResultRecord"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "eir:for", "value": "eir:for"}
+			]
+		}}
+	],
+	"result": "exports"
+}
