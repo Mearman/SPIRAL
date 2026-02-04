@@ -13,7 +13,7 @@ import {
 	isCIRSchema,
 	isEIRSchema,
 	isLIRSchema,
-} from "../src/schemas.js";
+} from "../src/schemas.ts";
 
 //==============================================================================
 // Test Fixtures

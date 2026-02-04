@@ -8,8 +8,8 @@ import {
 	invalidResult,
 	combineResults,
 	exhaustive,
-} from "../src/errors.js";
-import type { Type, Value } from "../src/types.js";
+} from "../src/errors.ts";
+import type { Type, Value } from "../src/types.ts";
 
 describe("SPIRALError class", () => {
 	it("constructor sets code, message, name, and meta is undefined", () => {

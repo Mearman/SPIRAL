@@ -13,7 +13,7 @@ import {
 	buildPointer,
 	joinPointers,
 	getParentPointer,
-} from "../../src/utils/json-pointer.js";
+} from "../../src/utils/json-pointer.ts";
 
 describe("JSON Pointer - Token Escaping", () => {
 	describe("escapeToken", () => {

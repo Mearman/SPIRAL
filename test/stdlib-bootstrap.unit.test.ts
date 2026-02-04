@@ -4,12 +4,12 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createKernelRegistry } from "../src/stdlib/kernel.js";
-import { loadStdlib } from "../src/stdlib/loader.js";
-import { lookupOperator } from "../src/domains/registry.js";
-import { boolVal, floatVal, intVal, listVal, mapVal, setVal, stringVal, hashValue, voidVal, closureVal } from "../src/types.js";
-import type { Expr, LambdaParam } from "../src/types.js";
-import type { Value } from "../src/types.js";
+import { createKernelRegistry } from "../src/stdlib/kernel.ts";
+import { loadStdlib } from "../src/stdlib/loader.ts";
+import { lookupOperator } from "../src/domains/registry.ts";
+import { boolVal, floatVal, intVal, listVal, mapVal, setVal, stringVal, hashValue, voidVal, closureVal } from "../src/types.ts";
+import type { Expr, LambdaParam } from "../src/types.ts";
+import type { Value } from "../src/types.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const stdlibDir = resolve(__dirname, "../src/stdlib");

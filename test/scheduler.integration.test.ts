@@ -9,8 +9,8 @@ import {
 	AsyncBarrier,
 	createTaskScheduler,
 	createDeterministicScheduler,
-} from "../src/scheduler.js";
-import type { Value } from "../src/types.js";
+} from "../src/scheduler.ts";
+import type { Value } from "../src/types.ts";
 
 //==============================================================================
 // DefaultTaskScheduler Tests

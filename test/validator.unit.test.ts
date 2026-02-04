@@ -9,13 +9,13 @@ import {
 	validateCIR,
 	validateEIR,
 	validateLIR,
-} from "../src/validator.js";
+} from "../src/validator.ts";
 import type {
 	AIRDocument,
 	CIRDocument,
 	EIRDocument,
 	LIRDocument,
-} from "../src/types.js";
+} from "../src/types.ts";
 
 //==============================================================================
 // Test Fixtures - Valid Documents

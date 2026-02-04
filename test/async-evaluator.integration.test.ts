@@ -6,29 +6,29 @@ import assert from "node:assert/strict";
 
 import {
 	createAsyncEvaluator,
-} from "../src/async-evaluator.js";
+} from "../src/async-evaluator.ts";
 import {
 	emptyRegistry,
 	defineOperator,
 	registerOperator,
 	type OperatorRegistry,
-} from "../src/domains/registry.js";
-import { emptyDefs } from "../src/env.js";
+} from "../src/domains/registry.ts";
+import { emptyDefs } from "../src/env.ts";
 import {
 	emptyEffectRegistry,
 	registerEffect,
 	type EffectRegistry,
-} from "../src/effects.js";
+} from "../src/effects.ts";
 import type {
 	EIRDocument,
 	EirHybridNode,
 	EirExpr,
 	Value,
-} from "../src/types.js";
+} from "../src/types.ts";
 import {
 	intVal,
 	voidVal,
-} from "../src/types.js";
+} from "../src/types.ts";
 
 //==============================================================================
 // Test Fixtures

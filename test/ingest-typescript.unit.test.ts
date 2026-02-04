@@ -1,11 +1,11 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { ingestTypeScript } from "../src/ingest/typescript.js";
-import { evaluateProgram } from "../src/evaluator.js";
-import { bootstrapRegistry } from "../src/stdlib/bootstrap.js";
-import { emptyDefs } from "../src/env.js";
-import { intVal, stringVal, boolVal } from "../src/types.js";
-import type { AIRDocument } from "../src/types.js";
+import { ingestTypeScript } from "../src/ingest/typescript.ts";
+import { evaluateProgram } from "../src/evaluator.ts";
+import { bootstrapRegistry } from "../src/stdlib/bootstrap.ts";
+import { emptyDefs } from "../src/env.ts";
+import { intVal, stringVal, boolVal } from "../src/types.ts";
+import type { AIRDocument } from "../src/types.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers

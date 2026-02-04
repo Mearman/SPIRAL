@@ -1,11 +1,11 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import { Evaluator, evaluateProgram } from "../src/evaluator.js";
-import { createKernelRegistry } from "../src/stdlib/kernel.js";
-import { emptyValueEnv, extendValueEnv, emptyDefs } from "../src/env.js";
-import type { ValueEnv } from "../src/env.js";
-import type { Expr, AIRDocument, Value } from "../src/types.js";
+import { Evaluator, evaluateProgram } from "../src/evaluator.ts";
+import { createKernelRegistry } from "../src/stdlib/kernel.ts";
+import { emptyValueEnv, extendValueEnv, emptyDefs } from "../src/env.ts";
+import type { ValueEnv } from "../src/env.ts";
+import type { Expr, AIRDocument, Value } from "../src/types.ts";
 import {
 	boolVal,
 	floatVal,
@@ -16,7 +16,7 @@ import {
 	optionVal,
 	stringVal,
 	voidVal,
-} from "../src/types.js";
+} from "../src/types.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers

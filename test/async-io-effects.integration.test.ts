@@ -6,10 +6,10 @@ import {
 	createMockHttpClient,
 	createAsyncIOConfig,
 	evalAsyncEffect,
-} from "../src/async-io-effects.js";
-import type { AsyncEvalState } from "../src/types.js";
-import { createTaskScheduler } from "../src/scheduler.js";
-import { stringVal, intVal } from "../src/types.js";
+} from "../src/async-io-effects.ts";
+import type { AsyncEvalState } from "../src/types.ts";
+import { createTaskScheduler } from "../src/scheduler.ts";
+import { stringVal, intVal } from "../src/types.ts";
 
 describe("async-io-effects", () => {
 	it("should create an in-memory file system", () => {

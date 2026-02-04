@@ -12,7 +12,7 @@ import {
 	validateAIR,
 	validateCIR,
 	validateLIR,
-} from "../../src/validator.js";
+} from "../../src/validator.ts";
 
 //==============================================================================
 // Helpers

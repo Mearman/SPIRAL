@@ -6,7 +6,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
 // Import everything from the main index to test re-exports
-import * as spiral from "../src/index.js";
+import * as spiral from "../src/index.ts";
 
 //==============================================================================
 // Test Suite

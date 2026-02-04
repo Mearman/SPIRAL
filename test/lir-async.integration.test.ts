@@ -14,7 +14,7 @@ import {
 	executeAwaitInstruction,
 	type LIRAsyncRuntimeState,
 	type LIRAsyncEvalOptions,
-} from "../src/lir/async-evaluator.js";
+} from "../src/lir/async-evaluator.ts";
 import {
 	intVal,
 	voidVal,
@@ -33,29 +33,29 @@ import {
 	type PirTermFork,
 	type PirTermJoin,
 	type PirTermSuspend,
-} from "../src/types.js";
+} from "../src/types.ts";
 import {
 	emptyRegistry,
 	defineOperator,
 	registerOperator,
 	type OperatorRegistry,
-} from "../src/domains/registry.js";
+} from "../src/domains/registry.ts";
 import {
 	emptyEffectRegistry,
 	type EffectRegistry,
-} from "../src/effects.js";
+} from "../src/effects.ts";
 import {
 	createTaskScheduler,
 	type TaskScheduler,
-} from "../src/scheduler.js";
+} from "../src/scheduler.ts";
 import {
 	createAsyncChannelStore,
 	type AsyncChannelStore,
-} from "../src/async-effects.js";
+} from "../src/async-effects.ts";
 import {
 	emptyValueEnv,
 	extendValueEnv,
-} from "../src/env.js";
+} from "../src/env.ts";
 
 //==============================================================================
 // Test Helpers

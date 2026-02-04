@@ -6,34 +6,34 @@ import assert from "node:assert/strict";
 
 import {
 	evaluateEIR,
-} from "../src/evaluator.js";
+} from "../src/evaluator.ts";
 import {
 	AsyncEvaluator,
-} from "../src/async-evaluator.js";
+} from "../src/async-evaluator.ts";
 import {
 	createTaskScheduler,
-} from "../src/scheduler.js";
+} from "../src/scheduler.ts";
 import {
 	emptyRegistry,
 	defineOperator,
 	registerOperator,
 	type OperatorRegistry,
-} from "../src/domains/registry.js";
-import { emptyDefs, type Defs } from "../src/env.js";
+} from "../src/domains/registry.ts";
+import { emptyDefs, type Defs } from "../src/env.ts";
 import {
 	emptyEffectRegistry,
 	registerEffect,
 	type EffectRegistry,
-} from "../src/effects.js";
+} from "../src/effects.ts";
 import type {
 	EIRDocument,
 	Value,
-} from "../src/types.js";
+} from "../src/types.ts";
 import {
 	intVal,
 	voidVal,
 	isError,
-} from "../src/types.js";
+} from "../src/types.ts";
 
 //==============================================================================
 // Test Fixtures

@@ -3,8 +3,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import { createKernelRegistry } from "../src/stdlib/kernel.js";
-import { lookupOperator } from "../src/domains/registry.js";
+import { createKernelRegistry } from "../src/stdlib/kernel.ts";
+import { lookupOperator } from "../src/domains/registry.ts";
 import {
 	intVal,
 	stringVal,
@@ -14,7 +14,7 @@ import {
 	mapVal,
 	voidVal,
 	errorVal,
-} from "../src/types.js";
+} from "../src/types.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers

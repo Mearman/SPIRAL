@@ -3,13 +3,13 @@
 
 import { describe, it } from "node:test";
 import * as assert from "node:assert";
-import { evaluateProgram, evaluateEIR } from "../src/evaluator.js";
-import { evaluateLIR as evaluateLIRSync } from "../src/lir/evaluator.js";
-import { evaluateLIRAsync } from "../src/lir/async-evaluator.js";
-import { emptyDefs } from "../src/env.js";
-import { emptyEffectRegistry } from "../src/effects.js";
-import { bootstrapRegistry } from "../src/stdlib/bootstrap.js";
-import type { Value } from "../src/types.js";
+import { evaluateProgram, evaluateEIR } from "../src/evaluator.ts";
+import { evaluateLIR as evaluateLIRSync } from "../src/lir/evaluator.ts";
+import { evaluateLIRAsync } from "../src/lir/async-evaluator.ts";
+import { emptyDefs } from "../src/env.ts";
+import { emptyEffectRegistry } from "../src/effects.ts";
+import { bootstrapRegistry } from "../src/stdlib/bootstrap.ts";
+import type { Value } from "../src/types.ts";
 import {
 	COMPLIANCE_FIXTURES,
 	getFixturesByLayer,

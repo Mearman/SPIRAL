@@ -6,10 +6,10 @@ import assert from "node:assert/strict";
 
 import {
 	validateEIR,
-} from "../src/validator.js";
+} from "../src/validator.ts";
 import type {
 	EIRDocument,
-} from "../src/types.js";
+} from "../src/types.ts";
 
 //==============================================================================
 // Test Fixtures

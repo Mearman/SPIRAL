@@ -10,7 +10,7 @@ import {
 	documentDigest,
 	nodeDigest,
 	stripMetadata,
-} from "../src/canonicalize.js";
+} from "../src/canonicalize.ts";
 
 //==============================================================================
 // Test Fixtures

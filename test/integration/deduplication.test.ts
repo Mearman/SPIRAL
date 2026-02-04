@@ -10,16 +10,16 @@
 
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import { evaluateProgram } from "../../src/evaluator/air-program.js";
-import { transpileImports } from "../../src/desugar/transpile-imports.js";
-import { detectCycles } from "../../src/validation/cycle-detection.js";
+import { evaluateProgram } from "../../src/evaluator/air-program.ts";
+import { transpileImports } from "../../src/desugar/transpile-imports.ts";
+import { detectCycles } from "../../src/validation/cycle-detection.ts";
 import {
 	formatJsonPointerError,
 	formatImportError,
 	formatNamespaceNotFoundError,
-} from "../../src/validation/error-messages.js";
-import { bootstrapRegistry } from "../../src/stdlib/bootstrap.js";
-import type { AIRDocument } from "../../src/types.js";
+} from "../../src/validation/error-messages.ts";
+import { bootstrapRegistry } from "../../src/stdlib/bootstrap.ts";
+import type { AIRDocument } from "../../src/types.ts";
 
 describe("Deduplication Integration Tests", () => {
 	describe("Intra-File $defs and $ref", () => {

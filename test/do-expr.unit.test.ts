@@ -8,25 +8,25 @@ import {
 	validateCIR,
 	validateAIR,
 	validateEIR,
-} from "../src/validator.js";
-import { evaluateProgram } from "../src/evaluator.js";
-import { createKernelRegistry } from "../src/stdlib/kernel.js";
-import { typeCheckProgram } from "../src/typechecker.js";
-import { emptyDefs } from "../src/env.js";
-import { synthesizePython } from "../src/synth/python.js";
+} from "../src/validator.ts";
+import { evaluateProgram } from "../src/evaluator.ts";
+import { createKernelRegistry } from "../src/stdlib/kernel.ts";
+import { typeCheckProgram } from "../src/typechecker.ts";
+import { emptyDefs } from "../src/env.ts";
+import { synthesizePython } from "../src/synth/python.ts";
 import {
 	intVal,
 	stringVal,
 	intType,
 	stringType,
 	voidType,
-} from "../src/types.js";
+} from "../src/types.ts";
 import type {
 	AIRDocument,
 	CIRDocument,
 	EIRDocument,
 	Expr,
-} from "../src/types.js";
+} from "../src/types.ts";
 
 //==============================================================================
 // Helpers

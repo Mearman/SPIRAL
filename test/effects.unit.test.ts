@@ -10,8 +10,8 @@ import {
 	createDefaultEffectRegistry,
 	createQueuedEffectRegistry,
 	type EffectOp,
-} from "../src/effects.js";
-import { intVal, stringVal } from "../src/types.js";
+} from "../src/effects.ts";
+import { intVal, stringVal } from "../src/types.ts";
 
 describe("effects", () => {
 	// =========================================================================

@@ -17,7 +17,7 @@ import {
 	createConcurrentEffectLog,
 	createAsyncRefCellStore,
 	createAsyncChannelStore,
-} from "../src/async-effects.js";
+} from "../src/async-effects.ts";
 
 //==============================================================================
 // AsyncMutex Tests

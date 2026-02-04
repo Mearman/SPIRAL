@@ -4,15 +4,15 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import { bootstrapRegistry } from "../src/stdlib/bootstrap.js";
-import { lookupOperator } from "../src/domains/registry.js";
+import { bootstrapRegistry } from "../src/stdlib/bootstrap.ts";
+import { lookupOperator } from "../src/domains/registry.ts";
 import {
 	stringVal,
 	intVal,
 	boolVal,
 	listVal,
-} from "../src/types.js";
-import type { Value } from "../src/types.js";
+} from "../src/types.ts";
+import type { Value } from "../src/types.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers

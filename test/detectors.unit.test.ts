@@ -10,8 +10,8 @@ import {
 	createRaceDetector,
 	createDeadlockDetector,
 	createDetectors,
-} from "../src/detectors.js";
-import { intVal } from "../src/types.js";
+} from "../src/detectors.ts";
+import { intVal } from "../src/types.ts";
 
 //==============================================================================
 // Test Fixtures

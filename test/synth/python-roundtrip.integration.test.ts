@@ -16,14 +16,14 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
 
-import { ingestPython } from "../../src/ingest/python.js";
-import { ingestTypeScript } from "../../src/ingest/typescript.js";
-import { synthesizePython } from "../../src/synth/python.js";
-import { synthesizeTypeScript } from "../../src/synth/typescript.js";
-import { evaluateProgram } from "../../src/evaluator.js";
-import { bootstrapRegistry } from "../../src/stdlib/bootstrap.js";
-import { emptyDefs } from "../../src/env.js";
-import type { AIRDocument, Value, Node } from "../../src/types.js";
+import { ingestPython } from "../../src/ingest/python.ts";
+import { ingestTypeScript } from "../../src/ingest/typescript.ts";
+import { synthesizePython } from "../../src/synth/python.ts";
+import { synthesizeTypeScript } from "../../src/synth/typescript.ts";
+import { evaluateProgram } from "../../src/evaluator.ts";
+import { bootstrapRegistry } from "../../src/stdlib/bootstrap.ts";
+import { emptyDefs } from "../../src/env.ts";
+import type { AIRDocument, Value, Node } from "../../src/types.ts";
 
 //==============================================================================
 // Python availability check

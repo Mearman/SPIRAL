@@ -7,14 +7,14 @@ import assert from "node:assert/strict";
 import {
 	synthesizeTypeScript,
 	type TypeScriptSynthOptions,
-} from "../../src/synth/typescript.js";
+} from "../../src/synth/typescript.ts";
 import type {
 	AIRDocument,
 	CIRDocument,
 	EIRDocument,
 	LIRDocument,
 	Node,
-} from "../../src/types.js";
+} from "../../src/types.ts";
 
 //==============================================================================
 // Test Fixtures

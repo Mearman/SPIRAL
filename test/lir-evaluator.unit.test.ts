@@ -1,12 +1,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import { evaluateLIR } from "../src/lir/evaluator.js";
-import { createKernelRegistry } from "../src/stdlib/kernel.js";
+import { evaluateLIR } from "../src/lir/evaluator.ts";
+import { createKernelRegistry } from "../src/stdlib/kernel.ts";
 import {
 	createDefaultEffectRegistry,
-} from "../src/effects.js";
-import { emptyValueEnv, extendValueEnv } from "../src/env.js";
+} from "../src/effects.ts";
+import { emptyValueEnv, extendValueEnv } from "../src/env.ts";
 import {
 	intVal,
 	boolVal,
@@ -14,8 +14,8 @@ import {
 	floatVal,
 	errorVal,
 	voidVal,
-} from "../src/types.js";
-import type { LIRDocument, LirBlock } from "../src/types.js";
+} from "../src/types.ts";
+import type { LIRDocument, LirBlock } from "../src/types.ts";
 
 // =============================================================================
 // Helpers

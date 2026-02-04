@@ -8,23 +8,23 @@ import { dirname, resolve, relative, basename } from "path";
 import { fileURLToPath } from "url";
 import { globSync } from "glob";
 
-import { evaluateProgram, evaluateEIR } from "../src/evaluator.js";
-import { evaluateLIR } from "../src/lir/evaluator.js";
-import { evaluateLIRAsync } from "../src/lir/async-evaluator.js";
-import { AsyncEvaluator } from "../src/async-evaluator/index.js";
-import { emptyDefs, emptyValueEnv } from "../src/env.js";
+import { evaluateProgram, evaluateEIR } from "../src/evaluator.ts";
+import { evaluateLIR } from "../src/lir/evaluator.ts";
+import { evaluateLIRAsync } from "../src/lir/async-evaluator.ts";
+import { AsyncEvaluator } from "../src/async-evaluator/index.ts";
+import { emptyDefs, emptyValueEnv } from "../src/env.ts";
 import {
 	createDefaultEffectRegistry,
 	createQueuedEffectRegistry,
-} from "../src/effects.js";
-import { bootstrapRegistry } from "../src/stdlib/bootstrap.js";
+} from "../src/effects.ts";
+import { bootstrapRegistry } from "../src/stdlib/bootstrap.ts";
 import {
 	validateAIR,
 	validateCIR,
 	validateEIR,
 	validateLIR,
-} from "../src/validator.js";
-import type { Value, OperatorRegistry } from "../src/types.js";
+} from "../src/validator.ts";
+import type { Value, OperatorRegistry } from "../src/types.ts";
 
 //==============================================================================
 // Types
