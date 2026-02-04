@@ -33,6 +33,7 @@
 
 		{"id": "errorNotCached", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "INTERNAL_ERROR"}},
 		{"id": "errorMsg", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "Result not found in cache"}},
+		{"id": "errorKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "error"}},
 
 		{"id": "docVar", "expr": {"kind": "var", "name": "doc"}},
 		{"id": "nodes", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["docVar", "nodesKey"]}},
@@ -117,7 +118,7 @@
 		{"id": "hasResult", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["finalNodeValues", "resultId"]}},
 		{"id": "cachedResult", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["finalNodeValues", "resultId"]}},
 		{"id": "fallbackError", "expr": {"kind": "record", "fields": [
-			{"key": "kind", "value": "error"},
+			{"key": "kind", "value": "errorKind"},
 			{"key": "s:code", "value": "errorNotCached"},
 			{"key": "s:message", "value": "errorMsg"}
 		]}},

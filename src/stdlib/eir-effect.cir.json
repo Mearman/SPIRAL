@@ -91,8 +91,9 @@
 		{"id": "evaluatedArgs", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["evalArgsResult", "argsKey"]}},
 		{"id": "finalState", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["evalArgsResult", "stateKey"]}},
 
+		{"id": "effectKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "effect"}},
 		{"id": "effectResultValue", "expr": {"kind": "record", "fields": [
-			{"key": "kind", "value": "effect"},
+			{"key": "kind", "value": "effectKind"},
 			{"key": "s:op", "value": "effectOp"},
 			{"key": "s:args", "value": "evaluatedArgs"}
 		]}},

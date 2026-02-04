@@ -41,6 +41,18 @@ export function bootstrapRegistry(): OperatorRegistry {
 		"optimize-fold.cir.json",
 		"synth.cir.json",
 		"synth-typescript.cir.json",
+		// EIR stdlib - must be loaded after base stdlib
+		"eir-state.cir.json",
+		"eir-seq.cir.json",
+		"eir-assign.cir.json",
+		"eir-while.cir.json",
+		"eir-for.cir.json",
+		"eir-iter.cir.json",
+		"eir-effect.cir.json",
+		"eir-refcell.cir.json",
+		"eir-try.cir.json",
+		// Note: eir-async.cir.json excluded - stub implementation not needed for core EIR tests
+		"eir.cir.json",
 	];
 
 	const paths: string[] = [];
