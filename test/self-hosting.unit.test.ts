@@ -253,5 +253,68 @@ describe("SPIRAL Self-Hosting", () => {
 			assert.equal(result.kind, "int");
 			assert.equal(result.value, 30);
 		});
+
+		it("should evaluate multiplication expressions via meta:eval", () => {
+			const metaEval = registry.get("meta:eval");
+
+			// Test multiplication: 5 * 10 = 50
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{ id: "five", expr: { kind: "lit", type: { kind: "int" }, value: 5 } },
+					{ id: "ten", expr: { kind: "lit", type: { kind: "int" }, value: 10 } },
+					{ id: "result", expr: { kind: "call", ns: "core", "name": "mul", "args": ["five", "ten"] } },
+				],
+				result: "result",
+			};
+
+			const docValue = cirDocumentToValue(doc);
+			const result = metaEval.fn(docValue);
+			assert.equal(result.kind, "int");
+			assert.equal(result.value, 50);
+		});
+
+		it("should evaluate subtraction expressions via meta:eval", () => {
+			const metaEval = registry.get("meta:eval");
+
+			// Test subtraction: 20 - 5 = 15
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{ id: "twenty", expr: { kind: "lit", type: { kind: "int" }, value: 20 } },
+					{ id: "five", expr: { kind: "lit", type: { kind: "int" }, value: 5 } },
+					{ id: "result", expr: { kind: "call", ns: "core", "name": "sub", "args": ["twenty", "five"] } },
+				],
+				result: "result",
+			};
+
+			const docValue = cirDocumentToValue(doc);
+			const result = metaEval.fn(docValue);
+			assert.equal(result.kind, "int");
+			assert.equal(result.value, 15);
+		});
+
+		it("should evaluate division expressions via meta:eval", () => {
+			const metaEval = registry.get("meta:eval");
+
+			// Test division: 100 / 4 = 25
+			const doc = {
+				version: "1.0.0",
+				airDefs: [],
+				nodes: [
+					{ id: "hundred", expr: { kind: "lit", type: { kind: "int" }, value: 100 } },
+					{ id: "four", expr: { kind: "lit", type: { kind: "int" }, value: 4 } },
+					{ id: "result", expr: { kind: "call", ns: "core", "name": "div", "args": ["hundred", "four"] } },
+				],
+				result: "result",
+			};
+
+			const docValue = cirDocumentToValue(doc);
+			const result = metaEval.fn(docValue);
+			assert.equal(result.kind, "int");
+			assert.equal(result.value, 25);
+		});
 	});
 });
