@@ -347,8 +347,12 @@ describe("SPIRAL Self-Hosting", () => {
 
 			// If successful, verify result structure
 			assert.equal(result.kind, "map");
-			const typeField = result.value.get("s:type");
-			assert.ok(typeField, "Result should have type field");
+			const validField = result.value.get("s:valid");
+			assert.ok(validField?.kind === "bool" && validField.value === true, "Typecheck should be valid");
+			const nodeTypes = result.value.get("s:nodeTypes");
+			assert.ok(nodeTypes, "Result should have nodeTypes field");
+			const resultType = nodeTypes.value.get("s:result");
+			assert.ok(resultType, "nodeTypes should contain result node type");
 		});
 
 		it("should typecheck arithmetic expression via CIR typechecker", () => {
@@ -379,8 +383,12 @@ describe("SPIRAL Self-Hosting", () => {
 
 			// If successful, verify result structure
 			assert.equal(result.kind, "map");
-			const typeField = result.value.get("s:type");
-			assert.ok(typeField, "Result should have type field");
+			const validField = result.value.get("s:valid");
+			assert.ok(validField?.kind === "bool" && validField.value === true, "Typecheck should be valid");
+			const nodeTypes = result.value.get("s:nodeTypes");
+			assert.ok(nodeTypes, "Result should have nodeTypes field");
+			const resultType = nodeTypes.value.get("s:result");
+			assert.ok(resultType, "nodeTypes should contain result node type");
 		});
 
 		it("should typecheck boolean expression via CIR typechecker", () => {
@@ -411,8 +419,12 @@ describe("SPIRAL Self-Hosting", () => {
 
 			// If successful, verify result structure
 			assert.equal(result.kind, "map");
-			const typeField = result.value.get("s:type");
-			assert.ok(typeField, "Result should have type field");
+			const validField = result.value.get("s:valid");
+			assert.ok(validField?.kind === "bool" && validField.value === true, "Typecheck should be valid");
+			const nodeTypes = result.value.get("s:nodeTypes");
+			assert.ok(nodeTypes, "Result should have nodeTypes field");
+			const resultType = nodeTypes.value.get("s:result");
+			assert.ok(resultType, "nodeTypes should contain result node type");
 		});
 
 		it("should typecheck comparison expression via CIR typechecker", () => {
@@ -443,8 +455,12 @@ describe("SPIRAL Self-Hosting", () => {
 
 			// If successful, verify result structure
 			assert.equal(result.kind, "map");
-			const typeField = result.value.get("s:type");
-			assert.ok(typeField, "Result should have type field");
+			const validField = result.value.get("s:valid");
+			assert.ok(validField?.kind === "bool" && validField.value === true, "Typecheck should be valid");
+			const nodeTypes = result.value.get("s:nodeTypes");
+			assert.ok(nodeTypes, "Result should have nodeTypes field");
+			const resultType = nodeTypes.value.get("s:result");
+			assert.ok(resultType, "nodeTypes should contain result node type");
 		});
 
 		it("should typecheck list operations via CIR typechecker", () => {
@@ -493,8 +509,12 @@ describe("SPIRAL Self-Hosting", () => {
 
 			// If successful, verify result structure
 			assert.equal(result.kind, "map");
-			const typeField = result.value.get("s:type");
-			assert.ok(typeField, "Result should have type field");
+			const validField = result.value.get("s:valid");
+			assert.ok(validField?.kind === "bool" && validField.value === true, "Typecheck should be valid");
+			const nodeTypes = result.value.get("s:nodeTypes");
+			assert.ok(nodeTypes, "Result should have nodeTypes field");
+			const resultType = nodeTypes.value.get("s:result");
+			assert.ok(resultType, "nodeTypes should contain result node type");
 		});
 
 		it("should typecheck single node document via CIR typechecker", () => {

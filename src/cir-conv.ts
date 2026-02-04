@@ -145,9 +145,12 @@ function exprToValueCIR(expr: Expr): Value {
 		return litToValueCIR(expr);
 	}
 
-	// For refs, return string with @ prefix
+	// For refs, return map structure with "s:" prefix
 	if (expr.kind === "ref") {
-		return stringVal(`@${expr.id}`);
+		const map = new Map<string, Value>();
+		map.set("s:kind", stringVal("ref"));
+		map.set("s:id", stringVal(expr.id));
+		return mapVal(map);
 	}
 
 	// For vars, return string
@@ -203,6 +206,7 @@ function exprToValueRaw(expr: Expr): Value {
 function litToValueCIR(expr: { kind: "lit"; type: { kind: string }; value: unknown }): Value {
 	const map = new Map<string, Value>();
 	map.set("s:kind", stringVal("lit"));
+	map.set("s:type", typeToValue(expr.type));
 	map.set("s:value", litValueToValue(expr));
 	return mapVal(map);
 }
