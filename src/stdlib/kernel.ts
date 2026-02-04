@@ -441,7 +441,49 @@ const metaTypeEq: Operator = defineOperator("meta", "typeEq")
 		return boolVal(a.kind === b.kind);
 	}).build();
 
-// Kernel Registry — 37 native operators
+// env — Environment manipulation (3): for EIR evaluation
+
+const envGet: Operator = defineOperator("env", "get")
+	.setParams(mapType(stringType, intType), stringType).setReturns(intType).setPure(true)
+	.setImpl((env, key) => {
+		if (isError(env)) return env;
+		if (isError(key)) return key;
+		if (env.kind !== "map") return errorVal(ErrorCodes.TypeError, "Expected map value");
+		if (key.kind !== "string") return errorVal(ErrorCodes.TypeError, "Expected string key");
+		const hash = "s:" + key.value;
+		const result = env.value.get(hash);
+		if (result === undefined) return errorVal(ErrorCodes.DomainError, "Key not found: " + key.value);
+		return result;
+	}).build();
+
+const envSet: Operator = defineOperator("env", "set")
+	.setParams(mapType(stringType, intType), stringType, intType).setReturns(mapType(stringType, intType)).setPure(true)
+	.setImpl((env, key, value) => {
+		if (isError(env)) return env;
+		if (isError(key)) return key;
+		if (isError(value)) return value;
+		if (env.kind !== "map") return errorVal(ErrorCodes.TypeError, "Expected map value");
+		if (key.kind !== "string") return errorVal(ErrorCodes.TypeError, "Expected string key");
+		const newMap = new Map(env.value);
+		newMap.set("s:" + key.value, value);
+		return mapVal(newMap);
+	}).build();
+
+const envExtend: Operator = defineOperator("env", "extend")
+	.setParams(mapType(stringType, intType), mapType(stringType, intType)).setReturns(mapType(stringType, intType)).setPure(true)
+	.setImpl((base, extension) => {
+		if (isError(base)) return base;
+		if (isError(extension)) return extension;
+		if (base.kind !== "map") return errorVal(ErrorCodes.TypeError, "Expected map value");
+		if (extension.kind !== "map") return errorVal(ErrorCodes.TypeError, "Expected map value");
+		const newMap = new Map(base.value);
+		for (const [key, val] of extension.value) {
+			newMap.set(key, val);
+		}
+		return mapVal(newMap);
+	}).build();
+
+// Kernel Registry — 40 native operators
 
 export function createKernelRegistry(): OperatorRegistry {
 	const operators: Operator[] = [
@@ -469,6 +511,8 @@ export function createKernelRegistry(): OperatorRegistry {
 		jsonParse,
 		// meta: type introspection (2)
 		metaTypeOf, metaTypeEq,
+		// env: environment manipulation (3)
+		envGet, envSet, envExtend,
 	];
 
 	return operators.reduce<OperatorRegistry>(

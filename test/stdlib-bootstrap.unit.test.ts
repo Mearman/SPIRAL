@@ -109,8 +109,8 @@ describe("kernel registry", () => {
 		assert.equal(parse.fn(stringVal("{invalid")).kind, "error");
 	});
 
-	it("has 37 total operators", () => {
-		assert.strictEqual(kernel.size, 39);
+	it("has 40 total operators", () => {
+		assert.strictEqual(kernel.size, 42);
 	});
 });
 
