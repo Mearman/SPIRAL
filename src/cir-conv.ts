@@ -8,6 +8,7 @@ import type {
 	CirHybridNode,
 	Expr,
 	Value,
+	Type,
 } from "./types.js";
 import {
 	stringVal,
@@ -17,6 +18,8 @@ import {
 	mapVal,
 	listVal,
 	opaqueVal,
+	fnType,
+	intType,
 } from "./types.js";
 
 //==============================================================================
@@ -28,8 +31,36 @@ import {
  *
  * This converts the TypeScript CIRDocument object into a SPIRAL Value that
  * can be passed to CIR-implemented functions like meta:eval.
+ *
+ * Uses the "s:" prefix convention expected by CIR stdlib.
  */
 export function cirDocumentToValue(doc: CIRDocument): Value {
+	const map = new Map<string, Value>();
+
+	// version: string (not used by CIR evaluators, but included for completeness)
+	map.set("s:version", stringVal(doc.version));
+
+	// airDefs: AirDef[] → list of opaque values (airDefs are metadata only)
+	map.set("s:airDefs", listVal(
+		doc.airDefs.map(airDefToValue)
+	));
+
+	// nodes: Node[] → list of map values (each node is a map)
+	map.set("s:nodes", listVal(
+		doc.nodes.map(nodeToValueCIR)
+	));
+
+	// result: string
+	map.set("s:result", stringVal(doc.result));
+
+	return mapVal(map);
+}
+
+/**
+ * Convert a CIRDocument to a Value without "s:" prefix.
+ * Used for round-trip conversion and TypeScript interop.
+ */
+export function cirDocumentToValueRaw(doc: CIRDocument): Value {
 	const map = new Map<string, Value>();
 
 	// version: string
@@ -42,7 +73,7 @@ export function cirDocumentToValue(doc: CIRDocument): Value {
 
 	// nodes: Node[] → list of map values (each node is a map)
 	map.set("nodes", listVal(
-		doc.nodes.map(nodeToValue)
+		doc.nodes.map(nodeToValueRaw)
 	));
 
 	// result: string
@@ -55,7 +86,34 @@ function airDefToValue(airDef: AIRDef): Value {
 	return opaqueVal("airDef", airDef);
 }
 
-function nodeToValue(node: CirHybridNode): Value {
+// Node conversion for CIR stdlib (uses "s:" prefix)
+function nodeToValueCIR(node: CirHybridNode): Value {
+	const map = new Map<string, Value>();
+
+	// id: string
+	map.set("s:id", stringVal(node.id));
+
+	// expr: Expr
+	if ("expr" in node) {
+		map.set("s:expr", exprToValueCIR(node.expr));
+	}
+
+	// type: Type (optional)
+	if ("type" in node && node.type) {
+		map.set("s:type", typeToValue(node.type));
+	}
+
+	// blocks: Block[] (for CFG nodes)
+	if ("blocks" in node) {
+		map.set("s:blocks", opaqueVal("blocks", node.blocks));
+		map.set("s:entry", stringVal(node.entry));
+	}
+
+	return mapVal(map);
+}
+
+// Node conversion for raw format (no prefix, for round-trip)
+function nodeToValueRaw(node: CirHybridNode): Value {
 	const map = new Map<string, Value>();
 
 	// id: string
@@ -63,7 +121,7 @@ function nodeToValue(node: CirHybridNode): Value {
 
 	// expr: Expr
 	if ("expr" in node) {
-		map.set("expr", exprToValue(node.expr));
+		map.set("expr", exprToValueRaw(node.expr));
 	}
 
 	// type: Type (optional)
@@ -80,10 +138,11 @@ function nodeToValue(node: CirHybridNode): Value {
 	return mapVal(map);
 }
 
-function exprToValue(expr: Expr): Value {
-	// For literals, return the value directly
+// Expression conversion for CIR stdlib (uses "s:" prefix)
+function exprToValueCIR(expr: Expr): Value {
+	// For literals, return the value directly with "s:" prefix
 	if (expr.kind === "lit") {
-		return litToValue(expr);
+		return litToValueCIR(expr);
 	}
 
 	// For refs, return string with @ prefix
@@ -96,12 +155,66 @@ function exprToValue(expr: Expr): Value {
 		return stringVal(expr.name);
 	}
 
+	// For call expressions, convert to map structure with "s:" prefix
+	if (expr.kind === "call") {
+		return callExprToValueCIR(expr);
+	}
+
+	// For lambda expressions, convert to map structure with "s:" prefix
+	if (expr.kind === "lambda") {
+		return lambdaExprToValueCIR(expr);
+	}
+
 	// For other expressions, return as opaque value
-	// (full conversion would need to handle all expr kinds recursively)
 	return opaqueVal("expr", expr);
 }
 
-function litToValue(expr: { kind: "lit"; type: { kind: string }; value: unknown }): Value {
+// Expression conversion for raw format (no prefix, for round-trip)
+function exprToValueRaw(expr: Expr): Value {
+	// For literals, return the value directly
+	if (expr.kind === "lit") {
+		return litToValueRaw(expr);
+	}
+
+	// For refs, return string with @ prefix
+	if (expr.kind === "ref") {
+		return stringVal(`@${expr.id}`);
+	}
+
+	// For vars, return string
+	if (expr.kind === "var") {
+		return stringVal(expr.name);
+	}
+
+	// For call expressions, convert to map structure
+	if (expr.kind === "call") {
+		return callExprToValueRaw(expr);
+	}
+
+	// For lambda expressions, convert to map structure
+	if (expr.kind === "lambda") {
+		return lambdaExprToValueRaw(expr);
+	}
+
+	// For other expressions, return as opaque value
+	return opaqueVal("expr", expr);
+}
+
+function litToValueCIR(expr: { kind: "lit"; type: { kind: string }; value: unknown }): Value {
+	const map = new Map<string, Value>();
+	map.set("s:kind", stringVal("lit"));
+	map.set("s:value", litValueToValue(expr));
+	return mapVal(map);
+}
+
+function litToValueRaw(expr: { kind: "lit"; type: { kind: string }; value: unknown }): Value {
+	const map = new Map<string, Value>();
+	map.set("kind", stringVal("lit"));
+	map.set("value", litValueToValue(expr));
+	return mapVal(map);
+}
+
+function litValueToValue(expr: { kind: "lit"; type: { kind: string }; value: unknown }): Value {
 	switch (expr.type.kind) {
 	case "int":
 		return intVal(Number(expr.value));
@@ -114,6 +227,69 @@ function litToValue(expr: { kind: "lit"; type: { kind: string }; value: unknown 
 	default:
 		return opaqueVal("lit", expr);
 	}
+}
+
+function callExprToValueCIR(expr: Expr & { kind: "call" }): Value {
+	const map = new Map<string, Value>();
+	map.set("s:kind", stringVal("call"));
+	map.set("s:ns", stringVal(expr.ns));
+	map.set("s:name", stringVal(expr.name));
+
+	// Args are always strings (node references) for CIR format
+	// If arg is an Expr, it should be converted to a node reference (opaque)
+	map.set("s:args", listVal(expr.args.map(arg =>
+		typeof arg === "string" ? stringVal(arg) : opaqueVal("arg", arg)
+	)));
+
+	return mapVal(map);
+}
+
+function callExprToValueRaw(expr: Expr & { kind: "call" }): Value {
+	const map = new Map<string, Value>();
+	map.set("kind", stringVal("call"));
+	map.set("ns", stringVal(expr.ns));
+	map.set("name", stringVal(expr.name));
+
+	// Convert args to Value - strings become stringVal, Exprs become exprToValue
+	const argsValues = expr.args.map(arg => {
+		if (typeof arg === "string") {
+			return stringVal(arg);
+		}
+		return exprToValueRaw(arg);
+	});
+	map.set("args", listVal(argsValues));
+
+	return mapVal(map);
+}
+
+function lambdaExprToValueCIR(expr: Expr & { kind: "lambda" }): Value {
+	const map = new Map<string, Value>();
+	map.set("s:kind", stringVal("lambda"));
+
+	// Convert params to list of strings
+	const paramNames = expr.params.map(p => typeof p === "string" ? p : p.name);
+	map.set("s:params", listVal(paramNames.map(stringVal)));
+	map.set("s:body", stringVal(expr.body));
+
+	// Store type
+	map.set("s:type", typeToValue(expr.type));
+
+	return mapVal(map);
+}
+
+function lambdaExprToValueRaw(expr: Expr & { kind: "lambda" }): Value {
+	const map = new Map<string, Value>();
+	map.set("kind", stringVal("lambda"));
+
+	// Convert params to list of strings
+	const paramNames = expr.params.map(p => typeof p === "string" ? p : p.name);
+	map.set("params", listVal(paramNames.map(stringVal)));
+	map.set("body", stringVal(expr.body));
+
+	// Store type
+	map.set("type", typeToValue(expr.type));
+
+	return mapVal(map);
 }
 
 function typeToValue(type: { kind: string }): Value {
@@ -145,6 +321,25 @@ function convertTypeField(key: string, val: unknown): Value {
 	}
 	// Object or other - convert to opaque
 	return opaqueVal(key, val);
+}
+
+function valueToType(value: Value): Type {
+	if (value.kind === "map") {
+		const kindVal = value.value.get("kind");
+		if (kindVal?.kind === "string") {
+			const kind = kindVal.value;
+			// Return appropriate type based on kind
+			if (kind === "int") return intType;
+			if (kind === "bool") return { kind: "bool" };
+			if (kind === "string") return { kind: "string" };
+			if (kind === "fn") {
+				// For function types, return a minimal fn type
+				return fnType([], intType);
+			}
+		}
+	}
+	// For opaque or other types, return a fallback int type
+	return intType;
 }
 
 //==============================================================================
@@ -222,6 +417,39 @@ function valueToNode(value: Value, index: number): CirHybridNode {
 	throw new Error(`Node "${id}" has neither expr nor blocks`);
 }
 
+function valueToLitExpr(map: Map<string, Value>): Expr {
+	const valueVal = map.get("value");
+	if (!valueVal) {
+		throw new Error("Literal expression must have 'value' field");
+	}
+
+	// Determine type based on the value kind
+	if (valueVal.kind === "int") {
+		return { kind: "lit", type: { kind: "int" }, value: valueVal.value };
+	}
+	if (valueVal.kind === "bool") {
+		return { kind: "lit", type: { kind: "bool" }, value: valueVal.value };
+	}
+	if (valueVal.kind === "string") {
+		return { kind: "lit", type: { kind: "string" }, value: valueVal.value };
+	}
+	if (valueVal.kind === "float") {
+		return { kind: "lit", type: { kind: "float" }, value: valueVal.value };
+	}
+
+	// For other types, return a generic string literal
+	// Note: OpaqueVal, ErrorVal, etc. have different properties
+	if (valueVal.kind === "opaque") {
+		return { kind: "lit", type: { kind: "string" }, value: valueVal.name };
+	}
+	if (valueVal.kind === "error") {
+		return { kind: "lit", type: { kind: "string" }, value: valueVal.message };
+	}
+
+	// Fallback for unknown types - return 0 as a safe default
+	return { kind: "lit", type: { kind: "int" }, value: 0 };
+}
+
 function valueToExprNode(id: string, map: Map<string, Value>): CirHybridNode {
 	const exprVal = map.get("expr");
 	if (!exprVal) {
@@ -260,7 +488,77 @@ function valueToExpr(value: Value): Expr {
 		return { kind: "var", name: value.value };
 	}
 
+	// For map values, check if it's a structured expression
+	if (value.kind === "map") {
+		return valueToMapExpr(value);
+	}
+
 	// For opaque values, we can't reliably reconstruct without type assertions
-	// This is acceptable since opaque values are preserved in round-trip
 	throw new Error(`Cannot convert value kind "${value.kind}" to Expr (opaque reconstruction not supported)`);
+}
+
+function valueToMapExpr(value: { kind: "map"; value: Map<string, Value> }): Expr {
+	const kindVal = value.value.get("kind");
+	if (kindVal?.kind !== "string") {
+		throw new Error("Map expression must have string 'kind' field");
+	}
+
+	const kind = kindVal.value;
+
+	if (kind === "lit") {
+		return valueToLitExpr(value.value);
+	}
+
+	if (kind === "call") {
+		return valueToCallExpr(value.value);
+	}
+
+	if (kind === "lambda") {
+		return valueToLambdaExpr(value.value);
+	}
+
+	throw new Error(`Unsupported map expression kind: "${kind}"`);
+}
+
+function valueToCallExpr(map: Map<string, Value>): Expr {
+	const nsVal = map.get("ns");
+	const nameVal = map.get("name");
+	const argsVal = map.get("args");
+
+	if (nsVal?.kind !== "string" || nameVal?.kind !== "string" || argsVal?.kind !== "list") {
+		throw new Error("Call expression must have ns (string), name (string), and args (list)");
+	}
+
+	const args = argsVal.value.map(arg => {
+		// For string values (node references), return the string
+		if (arg.kind === "string") {
+			return arg.value;
+		}
+		// For other values (inline expressions), convert to Expr
+		return valueToExpr(arg);
+	});
+
+	return { kind: "call", ns: nsVal.value, name: nameVal.value, args };
+}
+
+function valueToLambdaExpr(map: Map<string, Value>): Expr {
+	const paramsVal = map.get("params");
+	const bodyVal = map.get("body");
+	const typeVal = map.get("type");
+
+	if (paramsVal?.kind !== "list" || bodyVal?.kind !== "string") {
+		throw new Error("Lambda expression must have params (list) and body (string)");
+	}
+
+	const params = paramsVal.value.map(param => {
+		if (param.kind !== "string") {
+			throw new Error("Lambda params must be strings");
+		}
+		return param.value;
+	});
+
+	// Reconstruct type if available, otherwise use fallback
+	const type = typeVal ? valueToType(typeVal) : fnType([], intType);
+
+	return { kind: "lambda", params, body: bodyVal.value, type };
 }
