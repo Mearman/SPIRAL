@@ -1,0 +1,62 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "EIR assign expression — assigns a value to a variable in the environment, returns void. The value is evaluated before assignment.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+		{"id": "voidValue", "expr": {"kind": "record", "fields": []}},
+
+		{"id": "targetKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "target"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+		{"id": "nodesKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "nodes"}},
+		{"id": "exprKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+
+		{"id": "stringType", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
+
+		{"id": "assignState", "expr": {"kind": "var", "name": "assignState"}},
+		{"id": "assignDoc", "expr": {"kind": "var", "name": "assignDoc"}},
+		{"id": "assignExpr", "expr": {"kind": "var", "name": "assignExpr"}},
+
+		{"id": "assignTarget", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["assignExpr", "targetKey"]}},
+		{"id": "assignValueRef", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["assignExpr", "valueKey"]}},
+
+		{"id": "assignEnv", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getEnv", "args": ["assignState"]}},
+		{"id": "assignNodeValues", "expr": {"kind": "call", "ns": "eir-state", "name": "state:getNodeValues", "args": ["assignState"]}},
+		{"id": "assignNodes", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["assignDoc", "nodesKey"]}},
+
+		{"id": "avrType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["assignValueRef"]}},
+		{"id": "avrIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["avrType", "stringType"]}},
+		{"id": "avrInCache", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["assignNodeValues", "assignValueRef"]}},
+		{"id": "avrFromCache", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["assignNodeValues", "assignValueRef"]}},
+		{"id": "avrNode", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["assignNodes", "assignValueRef"]}},
+		{"id": "avrNodeExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["avrNode", "exprKey"]}},
+		{"id": "avrEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["assignDoc", "assignEnv", "avrNodeExpr"]}},
+		{"id": "avrInlineEval", "expr": {"kind": "call", "ns": "meta", "name": "eval", "args": ["assignDoc", "assignEnv", "assignValueRef"]}},
+		{"id": "avrUseCache", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "avrInCache", "then": "avrFromCache", "else": "avrEval"}},
+		{"id": "assignValue", "expr": {"kind": "if", "type": {"kind": "int"}, "cond": "avrIsString", "then": "avrUseCache", "else": "avrInlineEval"}},
+
+		{"id": "newEnv", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["assignEnv", "assignTarget", "assignValue"]}},
+		{"id": "newState", "expr": {"kind": "call", "ns": "eir-state", "name": "state:withEnv", "args": ["assignState", "newEnv"]}},
+
+		{"id": "assignResultRecord", "expr": {"kind": "record", "fields": [
+			{"key": "s:state", "value": "newState"},
+			{"key": "s:value", "value": "voidValue"}
+		]}},
+
+		{"id": "eir:assign", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["assignState", "assignDoc", "assignExpr"],
+			"body": "assignResultRecord"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "eir:assign", "value": "eir:assign"}
+			]
+		}}
+	],
+	"result": "exports"
+}
