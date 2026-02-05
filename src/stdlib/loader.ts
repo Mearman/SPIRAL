@@ -35,17 +35,86 @@ import type { AirEvalCtx } from "../evaluator/types.ts";
 
 /**
  * Load stdlib CIR documents and register their operators.
- * Documents are loaded in order — later documents can use operators from earlier ones.
+ * Uses two-phase loading to handle forward references:
+ * - Phase 1: Extract operator signatures from all files (no evaluation)
+ * - Phase 2: Evaluate all files and register actual closures
+ *
+ * Documents can now reference operators defined later in the same file or in later files.
  */
 export function loadStdlib(
 	kernelRegistry: OperatorRegistry,
 	stdlibPaths: string[],
 ): OperatorRegistry {
+	// Phase 1: Parse all files and extract operator signatures
+	const phase1Result = loadPhase1(kernelRegistry, stdlibPaths);
+
+	// Phase 2: Evaluate all files and register actual closures
+	return loadPhase2(phase1Result);
+}
+
+interface Phase1Result {
+	registry: OperatorRegistry;
+	defs: Defs;
+	parsedDocs: { path: string; doc: CIRDocument }[];
+}
+
+/**
+ * Phase 1: Parse all files and extract operator signatures.
+ * This builds a complete registry of all available operators without evaluating any bodies.
+ */
+function loadPhase1(
+	kernelRegistry: OperatorRegistry,
+	stdlibPaths: string[],
+): Phase1Result {
 	let registry = kernelRegistry;
 	const defs = emptyDefs();
+	const parsedDocs: { path: string; doc: CIRDocument }[] = [];
+
 	for (const path of stdlibPaths) {
-		registry = loadSingleStdlib(path, registry, defs);
+		const doc = parseAndValidate(path);
+		parsedDocs.push({ path, doc });
+
+		// Extract operator signatures from exports without evaluating
+		const resultNode = doc.nodes.find(n => n.id === doc.result);
+		if (!resultNode || !("expr" in resultNode) || resultNode.expr.kind !== "record") {
+			throw new Error(`Stdlib result must be a record expression in ${path}`);
+		}
+
+		// Register stub operators for each export
+		for (const field of resultNode.expr.fields) {
+			const qualifiedName = field.key;
+			const colonIdx = qualifiedName.indexOf(":");
+			if (colonIdx === -1) continue;
+
+			// Register a placeholder operator that will be replaced in phase 2
+			registry = registerOperator(registry, {
+				ns: qualifiedName.slice(0, colonIdx),
+				name: qualifiedName.slice(colonIdx + 1),
+				params: [intType], // Placeholder params, will be updated in phase 2
+				returns: intType,
+				pure: true,
+				fn: () => {
+					throw new Error(`Operator ${qualifiedName} called before phase 2 initialization`);
+				},
+			});
+		}
 	}
+
+	return { registry, defs, parsedDocs };
+}
+
+/**
+ * Phase 2: Evaluate all documents and register actual closures.
+ * Now all operators are registered, so evaluation can succeed with forward references.
+ */
+function loadPhase2(ctx: Phase1Result): OperatorRegistry {
+	const { defs, parsedDocs } = ctx;
+	let { registry } = ctx;
+
+	for (const { path, doc } of parsedDocs) {
+		registry = loadSingleStdlibWithFullRegistry(path, doc, registry, defs);
+	}
+
 	return registry;
 }
 
@@ -125,8 +194,16 @@ function extractOperators(evalResult: StdlibEvalResult, ctx: ExtractCtx): Operat
 	return registry;
 }
 
-function loadSingleStdlib(path: string, registry: OperatorRegistry, defs: Defs): OperatorRegistry {
-	const doc = parseAndValidate(path);
+/**
+ * Load a single stdlib document with a pre-parsed document.
+ * Used in Phase 2 when we have the full registry available.
+ */
+function loadSingleStdlibWithFullRegistry(
+	path: string,
+	doc: CIRDocument,
+	registry: OperatorRegistry,
+	defs: Defs,
+): OperatorRegistry {
 	const evalResult = evaluateStdlibDoc(doc, registry, defs);
 	return extractOperators(evalResult, { registry, defs, path });
 }
