@@ -1,0 +1,112 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Error handling utilities without exceptions — provides error code system, error checking, and safe unwrapping operations in SPIRAL CIR. Uses record-based error representation {kind: 'error', code: '...', message: '...'}.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+
+		{"id": "kindKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "codeKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "code"}},
+		{"id": "messageKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "message"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+
+		{"id": "errorKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "error"}},
+		{"id": "okKind", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ok"}},
+
+		{"id": "error:code:body", "expr": {"kind": "record", "fields": [{"key": "kind", "value": {"kind": "ref", "id": "errorKind"}}, {"key": "code", "value": {"kind": "var", "name": "code"}}, {"key": "message", "value": {"kind": "var", "name": "message"}}]}},
+		{
+			"id": "error:code",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["code", "message"],
+				"body": "error:code:body"
+			}
+		},
+
+		{"id": "eieValue", "expr": {"kind": "var", "name": "eieValue"}},
+		{"id": "eieKind", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["eieValue"]}},
+		{"id": "eieIsRecord", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["eieKind", {"kind": "lit", "type": {"kind": "string"}, "value": "record"}]}},
+		{"id": "eieHasKind", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["eieValue", "kindKey"]}},
+		{"id": "eieValueKind", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["eieValue", "kindKey"]}},
+		{"id": "eieIsError", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["eieValueKind", "errorKind"]}},
+		{"id": "eieBody", "expr": {"kind": "if", "cond": "eieIsRecord", "then": {"kind": "if", "cond": "eieHasKind", "then": "eieIsError", "else": {"kind": "lit", "type": {"kind": "bool"}, "value": false}}, "else": {"kind": "lit", "type": {"kind": "bool"}, "value": false}}},
+		{
+			"id": "error:is-error",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "bool"}},
+				"params": ["value"],
+				"body": "eieBody"
+			}
+		},
+
+		{"id": "euoValue", "expr": {"kind": "var", "name": "euoValue"}},
+		{"id": "euoDefault", "expr": {"kind": "var", "name": "euoDefault"}},
+		{"id": "euoIsError", "expr": {"kind": "call", "ns": "error", "name": "is-error", "args": ["euoValue"]}},
+		{"id": "euoBody", "expr": {"kind": "if", "cond": "euoIsError", "then": "euoDefault", "else": "euoValue"}},
+		{
+			"id": "error:unwrap-or",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["value", "default"],
+				"body": "euoBody"
+			}
+		},
+
+		{"id": "euotValue", "expr": {"kind": "var", "name": "euotValue"}},
+		{"id": "euotCode", "expr": {"kind": "var", "name": "euotCode"}},
+		{"id": "euotMessage", "expr": {"kind": "var", "name": "euotMessage"}},
+		{"id": "euotIsError", "expr": {"kind": "call", "ns": "error", "name": "is-error", "args": ["euotValue"]}},
+		{"id": "euotNewError", "expr": {"kind": "call", "ns": "error", "name": "code", "args": ["euotCode", "euotMessage"]}},
+		{"id": "euotBody", "expr": {"kind": "if", "cond": "euotIsError", "then": "euotNewError", "else": "euotValue"}},
+		{
+			"id": "error:unwrap-or-throw",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["value", "code", "message"],
+				"body": "euotBody"
+			}
+		},
+
+		{"id": "error:ok:body", "expr": {"kind": "record", "fields": [{"key": "kind", "value": {"kind": "ref", "id": "okKind"}}, {"key": "value", "value": {"kind": "var", "name": "value"}}]}},
+		{
+			"id": "error:ok",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["value"],
+				"body": "error:ok:body"
+			}
+		},
+
+		{"id": "euvValue", "expr": {"kind": "var", "name": "euvValue"}},
+		{"id": "euvIsOk", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": [{"kind": "call", "ns": "map", "name": "get", "args": ["euvValue", "kindKey"]}, "okKind"]}},
+		{
+			"id": "error:is-ok",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "bool"}},
+				"params": ["value"],
+				"body": "euvIsOk"
+			}
+		},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "error:code", "value": "error:code"},
+				{"key": "error:is-error", "value": "error:is-error"},
+				{"key": "error:unwrap-or", "value": "error:unwrap-or"},
+				{"key": "error:unwrap-or-throw", "value": "error:unwrap-or-throw"},
+				{"key": "error:ok", "value": "error:ok"},
+				{"key": "error:is-ok", "value": "error:is-ok"}
+			]
+		}}
+	],
+	"result": "exports"
+}
