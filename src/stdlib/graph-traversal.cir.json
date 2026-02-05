@@ -1,0 +1,280 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Graph traversal algorithms for AST/CFG analysis — implements adjacency map building, DFS traversal, reachable node collection, topological sorting, and transitive dependency collection in SPIRAL CIR.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+		{"id": "emptySet", "expr": {"kind": "lit", "type": {"kind": "set", "of": {"kind": "string"}}, "value": []}},
+
+		{"id": "idKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "id"}},
+		{"id": "exprKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "expr"}},
+		{"id": "kindKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "argsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "args"}},
+		{"id": "fnKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fn"}},
+		{"id": "bodyKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "body"}},
+		{"id": "condKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "cond"}},
+		{"id": "thenKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "then"}},
+		{"id": "elseKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "else"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+		{"id": "fieldsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fields"}},
+		{"id": "elementsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "elements"}},
+		{"id": "paramsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "params"}},
+
+		{"id": "refStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ref"}},
+		{"id": "callStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call"}},
+		{"id": "callExprStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "callExpr"}},
+		{"id": "ifStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "if"}},
+		{"id": "lambdaStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lambda"}},
+
+		{"id": "baIdxVar", "expr": {"kind": "var", "name": "baIdx"}},
+		{"id": "baNodesVar", "expr": {"kind": "var", "name": "baNodes"}},
+		{"id": "baAccVar", "expr": {"kind": "var", "name": "baAcc"}},
+		{"id": "baRecVar", "expr": {"kind": "var", "name": "baRec"}},
+		{"id": "baLen", "expr": {"kind": "call", "ns": "list", "name": "length", "args": ["baNodesVar"]}},
+		{"id": "baDone", "expr": {"kind": "call", "ns": "core", "name": "gte", "args": ["baIdxVar", "baLen"]}},
+		{"id": "baNode", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["baNodesVar", "baIdxVar"]}},
+		{"id": "baNid", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["baNode", "idKey"]}},
+		{"id": "baExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["baNode", "exprKey"]}},
+		{"id": "baRefs", "expr": {"kind": "call", "ns": "graph", "name": "extract-refs", "args": ["baExpr"]}},
+		{"id": "baNewAcc", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["baAccVar", "baNid", "baRefs"]}},
+		{"id": "baNextIdx", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["baIdxVar", "one"]}},
+		{"id": "baRecurse", "expr": {"kind": "callExpr", "args": ["baNodesVar", "baNextIdx", "baNewAcc"], "fn": "baRecVar"}},
+		{"id": "baBody", "expr": {"kind": "if", "cond": "baDone", "then": "baAccVar", "else": "baRecurse"}},
+		{"id": "baInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["baIdx", "baNodes", "baAcc"],
+			"body": "baBody"
+		}},
+		{"id": "baOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["baRec"],
+			"body": "baInner"
+		}},
+		{"id": "buildAdjFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "baOuter"
+		}},
+		{"id": "graph:build-adjacency:body", "expr": {"kind": "callExpr", "args": [{"kind": "var", "name": "nodes"}, {"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "emptyMap"}], "fn": "buildAdjFixFn"}},
+		{
+			"id": "graph:build-adjacency",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["nodes"],
+				"body": "graph:build-adjacency:body"
+			}
+		},
+
+		{"id": "dfsNodeIdVar", "expr": {"kind": "var", "name": "dfsNodeId"}},
+		{"id": "dfsAdjVar", "expr": {"kind": "var", "name": "dfsAdj"}},
+		{"id": "dfsVisitedVar", "expr": {"kind": "var", "name": "dfsVisited"}},
+		{"id": "dfsResultVar", "expr": {"kind": "var", "name": "dfsResult"}},
+		{"id": "dfsHasNeighbors", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["dfsAdjVar", "dfsNodeIdVar"]}},
+		{"id": "dfsNeighbors", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["dfsAdjVar", "dfsNodeIdVar"]}},
+		{"id": "dfsUnvisitedNeighbors", "expr": {"kind": "call", "ns": "graph", "name": "filter-unvisited", "args": ["dfsNeighbors", "dfsVisitedVar"]}},
+		{"id": "dfsNewVisited", "expr": {"kind": "call", "ns": "set", "name": "add", "args": ["dfsVisitedVar", "dfsNodeIdVar"]}},
+		{"id": "dfsNewResult", "expr": {"kind": "call", "ns": "list", "name": "cons", "args": ["dfsNodeIdVar", "dfsResultVar"]}},
+		{"id": "dfsRecurseOnNeighbors", "expr": {"kind": "call", "ns": "graph", "name": "dfs-visit-many", "args": ["dfsUnvisitedNeighbors", "dfsAdjVar", "dfsNewVisited", "dfsNewResult"]}},
+		{"id": "dfsSkipNode", "expr": {"kind": "record", "fields": [
+			{"key": "visited", "value": "dfsVisitedVar"},
+			{"key": "result", "value": "dfsResultVar"}
+		]}},
+		{"id": "dfsVisitResult", "expr": {"kind": "if", "cond": "dfsHasNeighbors", "then": "dfsRecurseOnNeighbors", "else": {"kind": "record", "fields": [
+			{"key": "visited", "value": "dfsNewVisited"},
+			{"key": "result", "value": "dfsNewResult"}
+		]}}},
+		{"id": "dfsWasVisited", "expr": {"kind": "call", "ns": "set", "name": "contains", "args": ["dfsVisitedVar", "dfsNodeIdVar"]}},
+		{"id": "dfsVisitBody", "expr": {"kind": "if", "cond": "dfsWasVisited", "then": "dfsSkipNode", "else": "dfsVisitResult"}},
+		{
+			"id": "graph:dfs",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["nodeId", "adj", "visited", "result"],
+				"body": "dfsVisitBody"
+			}
+		},
+
+		{"id": "wrNodeMapVar", "expr": {"kind": "var", "name": "wrNodeMap"}},
+		{"id": "wrWlVar", "expr": {"kind": "var", "name": "wrWl"}},
+		{"id": "wrIdxVar", "expr": {"kind": "var", "name": "wrIdx"}},
+		{"id": "wrVisitedVar", "expr": {"kind": "var", "name": "wrVisited"}},
+		{"id": "wrRecVar", "expr": {"kind": "var", "name": "wrRec"}},
+		{"id": "wrLen", "expr": {"kind": "call", "ns": "list", "name": "length", "args": ["wrWlVar"]}},
+		{"id": "wrDone", "expr": {"kind": "call", "ns": "core", "name": "gte", "args": ["wrIdxVar", "wrLen"]}},
+		{"id": "wrCurId", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["wrWlVar", "wrIdxVar"]}},
+		{"id": "wrHasNode", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["wrNodeMapVar", "wrCurId"]}},
+		{"id": "wrExpr", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["wrNodeMapVar", "wrCurId"]}},
+		{"id": "wrRefs", "expr": {"kind": "call", "ns": "graph", "name": "extract-refs", "args": ["wrExpr"]}},
+		{"id": "wrAddRefsToWl", "expr": {"kind": "call", "ns": "graph", "name": "add-unvisited-to-wl", "args": ["wrRefs", "wrWlVar", "wrVisitedVar"]}},
+		{"id": "wrNewVisited", "expr": {"kind": "call", "ns": "set", "name": "add", "args": ["wrVisitedVar", "wrCurId"]}},
+		{"id": "wrNextIdx", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["wrIdxVar", "one"]}},
+		{"id": "wrRecurseFound", "expr": {"kind": "callExpr", "args": ["wrNodeMapVar", "wrAddRefsToWl", "wrNextIdx", "wrNewVisited"], "fn": "wrRecVar"}},
+		{"id": "wrNextIdx2", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["wrIdxVar", "one"]}},
+		{"id": "wrRecurseNotFound", "expr": {"kind": "callExpr", "args": ["wrNodeMapVar", "wrWlVar", "wrNextIdx2", "wrVisitedVar"], "fn": "wrRecVar"}},
+		{"id": "wrRecurse", "expr": {"kind": "if", "cond": "wrHasNode", "then": "wrRecurseFound", "else": "wrRecurseNotFound"}},
+		{"id": "wrBody", "expr": {"kind": "if", "cond": "wrDone", "then": "wrVisitedVar", "else": "wrRecurse"}},
+		{"id": "wrInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["wrNodeMap", "wrWl", "wrIdx", "wrVisited"],
+			"body": "wrBody"
+		}},
+		{"id": "wrOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["wrRec"],
+			"body": "wrInner"
+		}},
+		{"id": "walkReachableFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "wrOuter"
+		}},
+		{"id": "graph:collect-reachable:body", "expr": {"kind": "let", "name": "wrInitWl", "value": {"kind": "call", "ns": "list", "name": "cons", "args": [{"kind": "var", "name": "rootId"}, {"kind": "ref", "id": "emptyList"}]}, "body": {"kind": "let", "name": "wrInitVisited", "value": {"kind": "call", "ns": "set", "name": "add", "args": [{"kind": "ref", "id": "emptySet"}, {"kind": "var", "name": "rootId"}]}, "body": {"kind": "callExpr", "args": [{"kind": "var", "name": "nodeMap"}, {"kind": "var", "name": "wrInitWl"}, {"kind": "ref", "id": "zero"}, {"kind": "var", "name": "wrInitVisited"}], "fn": "walkReachableFixFn"}}}},
+		{
+			"id": "graph:collect-reachable",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["nodeMap", "rootId"],
+				"body": "graph:collect-reachable:body"
+			}
+		},
+
+		{"id": "erExprVar", "expr": {"kind": "var", "name": "erExpr"}},
+		{"id": "erKind", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["erExprVar", "kindKey"]}},
+		{"id": "erIsRef", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["erKind", "refStr"]}},
+		{"id": "erRefId", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["erExprVar", "idKey"]}},
+		{"id": "erRefResult", "expr": {"kind": "call", "ns": "list", "name": "cons", "args": ["erRefId", "emptyList"]}},
+		{"id": "erIsCall", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["erKind", "callStr"]}},
+		{"id": "erCallArgs", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["erExprVar", "argsKey"]}},
+		{"id": "erCallResult", "expr": {"kind": "call", "ns": "graph", "name": "extract-refs-from-list", "args": ["erCallArgs"]}},
+		{"id": "erIsCallExpr", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["erKind", "callExprStr"]}},
+		{"id": "erCEFn", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["erExprVar", "fnKey"]}},
+		{"id": "erCEArgs", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["erExprVar", "argsKey"]}},
+		{"id": "erCERefResult", "expr": {"kind": "call", "ns": "list", "name": "cons", "args": ["erCEFn", "emptyList"]}},
+		{"id": "erCEArgsResult", "expr": {"kind": "call", "ns": "graph", "name": "extract-refs-from-list", "args": ["erCEArgs"]}},
+		{"id": "erCEResult", "expr": {"kind": "call", "ns": "list", "name": "concat", "args": ["erCERefResult", "erCEArgsResult"]}},
+		{"id": "erIsIf", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["erKind", "ifStr"]}},
+		{"id": "erIfCond", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["erExprVar", "condKey"]}},
+		{"id": "erIfThen", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["erExprVar", "thenKey"]}},
+		{"id": "erIfElse", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["erExprVar", "elseKey"]}},
+		{"id": "erIfCondRefs", "expr": {"kind": "call", "ns": "graph", "name": "extract-refs", "args": ["erIfCond"]}},
+		{"id": "erIfThenRefs", "expr": {"kind": "call", "ns": "graph", "name": "extract-refs", "args": ["erIfThen"]}},
+		{"id": "erIfElseRefs", "expr": {"kind": "call", "ns": "graph", "name": "extract-refs", "args": ["erIfElse"]}},
+		{"id": "erIfResult", "expr": {"kind": "call", "ns": "list", "name": "concat", "args": ["erIfCondRefs", {"kind": "call", "ns": "list", "name": "concat", "args": ["erIfThenRefs", "erIfElseRefs"]}]}},
+		{"id": "erIsLambda", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["erKind", "lambdaStr"]}},
+		{"id": "erLambdaBody", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["erExprVar", "bodyKey"]}},
+		{"id": "erLambdaResult", "expr": {"kind": "call", "ns": "graph", "name": "extract-refs", "args": ["erLambdaBody"]}},
+		{"id": "erDefault", "expr": "emptyList"},
+		{
+			"id": "erBody",
+			"expr": {"kind": "if", "cond": "erIsRef", "then": "erRefResult",
+				"else": {"kind": "if", "cond": "erIsCall", "then": "erCallResult",
+					"else": {"kind": "if", "cond": "erIsCallExpr", "then": "erCEResult",
+						"else": {"kind": "if", "cond": "erIsIf", "then": "erIfResult",
+							"else": {"kind": "if", "cond": "erIsLambda", "then": "erLambdaResult",
+								"else": "erDefault"
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "graph:extract-refs",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["expr"],
+				"body": "erBody"
+			}
+		},
+
+		{"id": "erflIdxVar", "expr": {"kind": "var", "name": "erflIdx"}},
+		{"id": "erflListVar", "expr": {"kind": "var", "name": "erflList"}},
+		{"id": "erflAccVar", "expr": {"kind": "var", "name": "erflAcc"}},
+		{"id": "erflRecVar", "expr": {"kind": "var", "name": "erflRec"}},
+		{"id": "erflLen", "expr": {"kind": "call", "ns": "list", "name": "length", "args": ["erflListVar"]}},
+		{"id": "erflDone", "expr": {"kind": "call", "ns": "core", "name": "gte", "args": ["erflIdxVar", "erflLen"]}},
+		{"id": "erflElem", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["erflListVar", "erflIdxVar"]}},
+		{"id": "erflType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["erflElem"]}},
+		{"id": "erflIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["erflType", {"kind": "lit", "type": {"kind": "string"}, "value": "string"}]}},
+		{"id": "erflCons", "expr": {"kind": "call", "ns": "list", "name": "cons", "args": ["erflElem", "erflAccVar"]}},
+		{"id": "erflNewAcc", "expr": {"kind": "if", "cond": "erflIsString", "then": "erflCons", "else": "erflAccVar"}},
+		{"id": "erflNextIdx", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["erflIdxVar", "one"]}},
+		{"id": "erflRecurse", "expr": {"kind": "callExpr", "args": ["erflListVar", "erflNextIdx", "erflNewAcc"], "fn": "erflRecVar"}},
+		{"id": "erflBody", "expr": {"kind": "if", "cond": "erflDone", "then": "erflAccVar", "else": "erflRecurse"}},
+		{"id": "erflInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["erflIdx", "erflList", "erflAcc"],
+			"body": "erflBody"
+		}},
+		{"id": "erflOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["erflRec"],
+			"body": "erflInner"
+		}},
+		{"id": "extractRefsFromListFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "erflOuter"
+		}},
+		{"id": "graph:extract-refs-from-list:body", "expr": {"kind": "callExpr", "args": [{"kind": "var", "name": "list"}, {"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "emptyList"}], "fn": "extractRefsFromListFixFn"}},
+		{
+			"id": "graph:extract-refs-from-list",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["list"],
+				"body": "graph:extract-refs-from-list:body"
+			}
+		},
+
+		{"id": "cdNodeIdVar", "expr": {"kind": "var", "name": "cdNodeId"}},
+		{"id": "cdAdjVar", "expr": {"kind": "var", "name": "cdAdj"}},
+		{"id": "cdVisitedVar", "expr": {"kind": "var", "name": "cdVisited"}},
+		{"id": "cdAccVar", "expr": {"kind": "var", "name": "cdAcc"}},
+		{"id": "cdRecVar", "expr": {"kind": "var", "name": "cdRec"}},
+		{"id": "cdWasVisited", "expr": {"kind": "call", "ns": "set", "name": "contains", "args": ["cdVisitedVar", "cdNodeIdVar"]}},
+		{"id": "cdNewAcc", "expr": {"kind": "call", "ns": "list", "name": "cons", "args": ["cdNodeIdVar", "cdAccVar"]}},
+		{"id": "cdNewVisited", "expr": {"kind": "call", "ns": "set", "name": "add", "args": ["cdVisitedVar", "cdNodeIdVar"]}},
+		{"id": "cdHasNeighbors", "expr": {"kind": "call", "ns": "map", "name": "has", "args": ["cdAdjVar", "cdNodeIdVar"]}},
+		{"id": "cdNeighbors", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["cdAdjVar", "cdNodeIdVar"]}},
+		{"id": "cdCollectDeps", "expr": {"kind": "callExpr", "args": ["cdNeighbors", "cdAdjVar", "cdNewVisited", "cdNewAcc"], "fn": "cdRecVar"}},
+		{"id": "cdSkip", "expr": {"kind": "call", "ns": "list", "name": "cons", "args": ["cdNodeIdVar", "cdAccVar"]}},
+		{"id": "cdBody", "expr": {"kind": "if", "cond": "cdWasVisited", "then": "cdSkip", "else": {"kind": "if", "cond": "cdHasNeighbors", "then": "cdCollectDeps", "else": "cdNewAcc"}}},
+		{
+			"id": "graph:collect-dependencies",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["nodeId", "adj", "visited", "acc"],
+				"body": "cdBody"
+			}
+		},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "graph:build-adjacency", "value": "graph:build-adjacency"},
+				{"key": "graph:dfs", "value": "graph:dfs"},
+				{"key": "graph:collect-reachable", "value": "graph:collect-reachable"},
+				{"key": "graph:extract-refs", "value": "graph:extract-refs"},
+				{"key": "graph:extract-refs-from-list", "value": "graph:extract-refs-from-list"},
+				{"key": "graph:collect-dependencies", "value": "graph:collect-dependencies"}
+			]
+		}}
+	],
+	"result": "exports"
+}
