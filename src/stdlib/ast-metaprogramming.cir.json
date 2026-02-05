@@ -1,0 +1,279 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "AST metaprogramming utilities — helpers for constructing and manipulating SPIRAL AST nodes in CIR. Provides operators for creating literal, var, ref, call, lambda, let, if, and record nodes, plus utilities for extracting and setting fields.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+
+		{"id": "kindKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "typeKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "type"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+		{"id": "nameKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "name"}},
+		{"id": "idKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "id"}},
+		{"id": "nsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ns"}},
+		{"id": "argsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "args"}},
+		{"id": "fnKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fn"}},
+		{"id": "paramsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "params"}},
+		{"id": "bodyKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "body"}},
+		{"id": "condKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "cond"}},
+		{"id": "thenKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "then"}},
+		{"id": "elseKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "else"}},
+		{"id": "fieldsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "fields"}},
+		{"id": "elementsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "elements"}},
+		{"id": "casesKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "cases"}},
+		{"id": "defaultKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "default"}},
+		{"id": "patternKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "pattern"}},
+
+		{"id": "litStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lit"}},
+		{"id": "varStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "var"}},
+		{"id": "refStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "ref"}},
+		{"id": "callStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "call"}},
+		{"id": "lambdaStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lambda"}},
+		{"id": "letStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "let"}},
+		{"id": "ifStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "if"}},
+		{"id": "recordStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "record"}},
+		{"id": "listOfStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "listOf"}},
+		{"id": "matchStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "match"}},
+
+		{"id": "stringTypeStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "string"}},
+		{"id": "intTypeStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "int"}},
+		{"id": "boolTypeStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "bool"}},
+		{"id": "floatTypeStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "float"}},
+
+		{"id": "aclKind", "expr": {"kind": "var", "name": "aclKind"}},
+		{"id": "aclType", "expr": {"kind": "var", "name": "aclType"}},
+		{"id": "aclValue", "expr": {"kind": "var", "name": "aclValue"}},
+
+		{"id": "acvKind", "expr": {"kind": "var", "name": "acvKind"}},
+		{"id": "acvName", "expr": {"kind": "var", "name": "acvName"}},
+
+		{"id": "acrId", "expr": {"kind": "var", "name": "acrId"}},
+
+		{"id": "accNs", "expr": {"kind": "var", "name": "accNs"}},
+		{"id": "accName", "expr": {"kind": "var", "name": "accName"}},
+		{"id": "accArgs", "expr": {"kind": "var", "name": "accArgs"}},
+
+		{"id": "aclaParams", "expr": {"kind": "var", "name": "aclaParams"}},
+		{"id": "aclaBody", "expr": {"kind": "var", "name": "aclaBody"}},
+
+		{"id": "acleName", "expr": {"kind": "var", "name": "acleName"}},
+		{"id": "acleValue", "expr": {"kind": "var", "name": "acleValue"}},
+		{"id": "acleBody", "expr": {"kind": "var", "name": "acleBody"}},
+
+		{"id": "aciCond", "expr": {"kind": "var", "name": "aciCond"}},
+		{"id": "aciThen", "expr": {"kind": "var", "name": "aciThen"}},
+		{"id": "aciElse", "expr": {"kind": "var", "name": "aciElse"}},
+
+		{"id": "acrecFields", "expr": {"kind": "var", "name": "acrecFields"}},
+
+		{
+			"id": "astCreateLitBody",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{"key": "kind", "value": "aclKind"},
+					{"key": "type", "value": "aclType"},
+					{"key": "value", "value": "aclValue"}
+				]
+			}
+		},
+		{
+			"id": "ast:create-lit",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["kind", "type", "value"],
+				"body": "astCreateLitBody"
+			}
+		},
+
+		{
+			"id": "astCreateVarBody",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{"key": "kind", "value": "varStr"},
+					{"key": "name", "value": "acvName"}
+				]
+			}
+		},
+		{
+			"id": "ast:create-var",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["name"],
+				"body": "astCreateVarBody"
+			}
+		},
+
+		{
+			"id": "astCreateRefBody",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{"key": "kind", "value": "refStr"},
+					{"key": "id", "value": "acrId"}
+				]
+			}
+		},
+		{
+			"id": "ast:create-ref",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["id"],
+				"body": "astCreateRefBody"
+			}
+		},
+
+		{
+			"id": "astCreateCallBody",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{"key": "kind", "value": "callStr"},
+					{"key": "ns", "value": "accNs"},
+					{"key": "name", "value": "accName"},
+					{"key": "args", "value": "accArgs"}
+				]
+			}
+		},
+		{
+			"id": "ast:create-call",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["ns", "name", "args"],
+				"body": "astCreateCallBody"
+			}
+		},
+
+		{
+			"id": "astCreateLambdaBody",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{"key": "kind", "value": "lambdaStr"},
+					{"key": "params", "value": "aclaParams"},
+					{"key": "body", "value": "aclaBody"}
+				]
+			}
+		},
+		{
+			"id": "ast:create-lambda",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["params", "body"],
+				"body": "astCreateLambdaBody"
+			}
+		},
+
+		{
+			"id": "astCreateLetBody",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{"key": "kind", "value": "letStr"},
+					{"key": "name", "value": "acleName"},
+					{"key": "value", "value": "acleValue"},
+					{"key": "body", "value": "acleBody"}
+				]
+			}
+		},
+		{
+			"id": "ast:create-let",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["name", "value", "body"],
+				"body": "astCreateLetBody"
+			}
+		},
+
+		{
+			"id": "astCreateIfBody",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{"key": "kind", "value": "ifStr"},
+					{"key": "cond", "value": "aciCond"},
+					{"key": "then", "value": "aciThen"},
+					{"key": "else", "value": "aciElse"}
+				]
+			}
+		},
+		{
+			"id": "ast:create-if",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["cond", "then", "else"],
+				"body": "astCreateIfBody"
+			}
+		},
+
+		{
+			"id": "astCreateRecordBody",
+			"expr": {
+				"kind": "record",
+				"fields": [
+					{"key": "kind", "value": "recordStr"},
+					{"key": "fields", "value": "acrecFields"}
+				]
+			}
+		},
+		{
+			"id": "ast:create-record",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["fields"],
+				"body": "astCreateRecordBody"
+			}
+		},
+
+		{"id": "agkBody", "expr": {"kind": "call", "ns": "map", "name": "get", "args": [{"kind": "var", "name": "node"}, {"kind": "ref", "id": "kindKey"}]}},
+		{
+			"id": "ast:get-kind",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["node"],
+				"body": "agkBody"
+			}
+		},
+
+		{"id": "asfBody", "expr": {"kind": "call", "ns": "map", "name": "set", "args": [{"kind": "var", "name": "node"}, {"kind": "var", "name": "key"}, {"kind": "var", "name": "value"}]}},
+		{
+			"id": "ast:set-field",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["node", "key", "value"],
+				"body": "asfBody"
+			}
+		},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "ast:create-lit", "value": "ast:create-lit"},
+				{"key": "ast:create-var", "value": "ast:create-var"},
+				{"key": "ast:create-ref", "value": "ast:create-ref"},
+				{"key": "ast:create-call", "value": "ast:create-call"},
+				{"key": "ast:create-lambda", "value": "ast:create-lambda"},
+				{"key": "ast:create-let", "value": "ast:create-let"},
+				{"key": "ast:create-if", "value": "ast:create-if"},
+				{"key": "ast:create-record", "value": "ast:create-record"},
+				{"key": "ast:get-kind", "value": "ast:get-kind"},
+				{"key": "ast:set-field", "value": "ast:set-field"}
+			]
+		}}
+	],
+	"result": "exports"
+}
