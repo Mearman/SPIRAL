@@ -53,6 +53,12 @@ export function bootstrapRegistry(): OperatorRegistry {
 		"eir-try.cir.json",
 		// Note: eir-async.cir.json excluded - stub implementation not needed for core EIR tests
 		"eir.cir.json",
+		// Metaprogramming stdlib - AST, graph, error handling, substitution, bound-nodes
+		"error-handling.cir.json",
+		"ast-metaprogramming.cir.json",
+		"graph-traversal.cir.json",
+		// "substitution.cir.json", // TODO: Fix forward reference issue
+		// "bound-nodes.cir.json", // TODO: Fix inline lambda body expressions
 	];
 
 	const paths: string[] = [];
