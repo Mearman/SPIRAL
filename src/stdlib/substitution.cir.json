@@ -1,0 +1,205 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Mearman/SPIRAL/main/cir.schema.json",
+	"version": "1.0.0",
+	"description": "Substitution and alpha-renaming utilities — refactors src/cir/substitution.ts to CIR. Provides fresh name generation, capture-avoiding substitution, free variable collection, and alpha renaming using fix combinators and set operations.",
+	"airDefs": [],
+	"nodes": [
+		{"id": "zero", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 0}},
+		{"id": "one", "expr": {"kind": "lit", "type": {"kind": "int"}, "value": 1}},
+		{"id": "emptyList", "expr": {"kind": "listOf", "elements": []}},
+		{"id": "emptySet", "expr": {"kind": "lit", "type": {"kind": "set", "of": {"kind": "string"}}, "value": []}},
+		{"id": "emptyMap", "expr": {"kind": "record", "fields": []}},
+
+		{"id": "kindKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "kind"}},
+		{"id": "nameKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "name"}},
+		{"id": "paramsKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "params"}},
+		{"id": "bodyKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "body"}},
+		{"id": "valueKey", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "value"}},
+
+		{"id": "varStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "var"}},
+		{"id": "lambdaStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "lambda"}},
+		{"id": "letStr", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "let"}},
+
+		{"id": "spiralPrefix", "expr": {"kind": "lit", "type": {"kind": "string"}, "value": "__spiral_"}},
+
+		{"id": "fnBaseVar", "expr": {"kind": "var", "name": "fnBase"}},
+		{"id": "fnCounterVar", "expr": {"kind": "var", "name": "fnCounter"}},
+		{"id": "fnContextVar", "expr": {"kind": "var", "name": "fnContext"}},
+		{"id": "fnRecVar", "expr": {"kind": "var", "name": "fnRec"}},
+		{"id": "fnCandidate", "expr": {"kind": "if", "cond": {"kind": "call", "ns": "core", "name": "eq", "args": ["fnCounterVar", "zero"]}, "then": "fnBaseVar", "else": {"kind": "call", "ns": "string", "name": "concat", "args": ["spiralPrefix", {"kind": "call", "ns": "core", "name": "toString", "args": ["fnCounterVar"]}]}}},
+		{"id": "fnHasCandidate", "expr": {"kind": "call", "ns": "set", "name": "contains", "args": ["fnContextVar", "fnCandidate"]}},
+		{"id": "fnNextCounter", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["fnCounterVar", "one"]}},
+		{"id": "fnRecurse", "expr": {"kind": "callExpr", "args": ["fnBaseVar", "fnNextCounter", "fnContextVar"], "fn": "fnRecVar"}},
+		{"id": "fnBody", "expr": {"kind": "if", "cond": "fnHasCandidate", "then": "fnRecurse", "else": "fnCandidate"}},
+		{"id": "fnInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["fnBase", "fnCounter", "fnContext"],
+			"body": "fnBody"
+		}},
+		{"id": "fnOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["fnRec"],
+			"body": "fnInner"
+		}},
+		{"id": "freshNameFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "fnOuter"
+		}},
+		{"id": "subst:fresh-name:body", "expr": {"kind": "callExpr", "args": [{"kind": "var", "name": "base"}, {"kind": "ref", "id": "zero"}, {"kind": "var", "name": "context"}], "fn": "freshNameFixFn"}},
+		{
+			"id": "subst:fresh-name",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["base", "context"],
+				"body": "subst:fresh-name:body"
+			}
+		},
+
+		{"id": "cfvExprVar", "expr": {"kind": "var", "name": "cfvExpr"}},
+		{"id": "cfvBoundVarsVar", "expr": {"kind": "var", "name": "cfvBoundVars"}},
+		{"id": "cfvAccVar", "expr": {"kind": "var", "name": "cfvAcc"}},
+		{"id": "cfvRecVar", "expr": {"kind": "var", "name": "cfvRec"}},
+		{"id": "cfvKind", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["cfvExprVar", "kindKey"]}},
+		{"id": "cfvIsVar", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["cfvKind", "varStr"]}},
+		{"id": "cfvVarName", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["cfvExprVar", "nameKey"]}},
+		{"id": "cfvIsBound", "expr": {"kind": "call", "ns": "set", "name": "contains", "args": ["cfvBoundVarsVar", "cfvVarName"]}},
+		{"id": "cfvIsFree", "expr": {"kind": "call", "ns": "bool", "name": "not", "args": ["cfvIsBound"]}},
+		{"id": "cfvAddIfFree", "expr": {"kind": "if", "cond": "cfvIsFree", "then": {"kind": "call", "ns": "set", "name": "add", "args": ["cfvAccVar", "cfvVarName"]}, "else": "cfvAccVar"}},
+		{"id": "cfvIsLambda", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["cfvKind", "lambdaStr"]}},
+		{"id": "cfvParams", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["cfvExprVar", "paramsKey"]}},
+		{"id": "cfvAddParamsToBound", "expr": {"kind": "call", "ns": "set", "name": "union", "args": ["cfvParams", "cfvBoundVarsVar"]}},
+		{"id": "cfvNewBoundVars", "expr": {"kind": "if", "cond": "cfvIsLambda", "then": "cfvAddParamsToBound", "else": "cfvBoundVarsVar"}},
+		{"id": "cfvIsLet", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["cfvKind", "letStr"]}},
+		{"id": "cfvLetName", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["cfvExprVar", "nameKey"]}},
+		{"id": "cfvAddLetToBound", "expr": {"kind": "call", "ns": "set", "name": "add", "args": ["cfvBoundVarsVar", "cfvLetName"]}},
+		{"id": "cfvNewBoundVarsLet", "expr": {"kind": "if", "cond": "cfvIsLet", "then": "cfvAddLetToBound", "else": "cfvNewBoundVars"}},
+		{"id": "cfvBody", "expr": {"kind": "if", "cond": "cfvIsVar", "then": "cfvAddIfFree", "else": "cfvNewBoundVarsLet"}},
+		{
+			"id": "subst:collect-free-vars",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["expr", "boundVars"],
+				"body": "cfvBody"
+			}
+		},
+
+		{"id": "subExprVar", "expr": {"kind": "var", "name": "subExpr"}},
+		{"id": "subVarNameVar", "expr": {"kind": "var", "name": "subVarName"}},
+		{"id": "subValueVar", "expr": {"kind": "var", "name": "subValue"}},
+		{"id": "subBoundVarsVar", "expr": {"kind": "var", "name": "subBoundVars"}},
+		{"id": "subKind", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["subExprVar", "kindKey"]}},
+		{"id": "subIsVar", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["subKind", "varStr"]}},
+		{"id": "subExprName", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["subExprVar", "nameKey"]}},
+		{"id": "subNamesMatch", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["subExprName", "subVarNameVar"]}},
+		{"id": "subIsNotBound", "expr": {"kind": "call", "ns": "bool", "name": "not", "args": [{"kind": "call", "ns": "set", "name": "contains", "args": ["subBoundVarsVar", "subVarNameVar"]}]}},
+		{"id": "subShouldReplace", "expr": {"kind": "call", "ns": "bool", "name": "and", "args": ["subNamesMatch", "subIsNotBound"]}},
+		{"id": "subReplaceResult", "expr": {"kind": "if", "cond": "subShouldReplace", "then": "subValueVar", "else": "subExprVar"}},
+		{
+			"id": "subst:substitute",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["expr", "varName", "value"],
+				"body": "subReplaceResult"
+			}
+		},
+
+		{"id": "arExprVar", "expr": {"kind": "var", "name": "arExpr"}},
+		{"id": "arOldVarsVar", "expr": {"kind": "var", "name": "arOldVars"}},
+		{"id": "arNewVarsVar", "expr": {"kind": "var", "name": "arNewVars"}},
+		{"id": "arKind", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["arExprVar", "kindKey"]}},
+		{"id": "arIsVar", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["arKind", "varStr"]}},
+		{"id": "arExprName", "expr": {"kind": "call", "ns": "map", "name": "get", "args": ["arExprVar", "nameKey"]}},
+		{"id": "arIdxVar", "expr": {"kind": "var", "name": "arIdx"}},
+		{"id": "arOldVarsVar2", "expr": {"kind": "var", "name": "arOldVars"}},
+		{"id": "arNewVarsVar2", "expr": {"kind": "var", "name": "arNewVars"}},
+		{"id": "arAccVar", "expr": {"kind": "var", "name": "arAcc"}},
+		{"id": "arRecVar", "expr": {"kind": "var", "name": "arRec"}},
+		{"id": "arLen", "expr": {"kind": "call", "ns": "list", "name": "length", "args": ["arOldVarsVar2"]}},
+		{"id": "arDone", "expr": {"kind": "call", "ns": "core", "name": "gte", "args": ["arIdxVar", "arLen"]}},
+		{"id": "arOldVar", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["arOldVarsVar2", "arIdxVar"]}},
+		{"id": "arNewVar", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["arNewVarsVar2", "arIdxVar"]}},
+		{"id": "arNamesMatch", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["arExprName", "arOldVar"]}},
+		{"id": "arNewName", "expr": {"kind": "if", "cond": "arNamesMatch", "then": "arNewVar", "else": "arExprName"}},
+		{"id": "arNewAcc", "expr": {"kind": "call", "ns": "map", "name": "set", "args": ["arAccVar", "nameKey", "arNewName"]}},
+		{"id": "arNextIdx", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["arIdxVar", "one"]}},
+		{"id": "arRecurse", "expr": {"kind": "callExpr", "args": ["arOldVarsVar2", "arNewVarsVar2", "arNextIdx", "arNewAcc"], "fn": "arRecVar"}},
+		{"id": "arBody", "expr": {"kind": "if", "cond": "arDone", "then": "arAccVar", "else": "arRecurse"}},
+		{"id": "arInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["arIdx", "arOldVars", "arNewVars", "arAcc"],
+			"body": "arBody"
+		}},
+		{"id": "arOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["arRec"],
+			"body": "arInner"
+		}},
+		{"id": "alphaRenameVarFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "arOuter"
+		}},
+		{"id": "arRenameResult", "expr": {"kind": "callExpr", "args": [{"kind": "var", "name": "arOldVars"}, {"kind": "var", "name": "arNewVars"}, "zero", "arExprVar"], "fn": "alphaRenameVarFixFn"}},
+		{"id": "arResult", "expr": {"kind": "if", "cond": "arIsVar", "then": "arRenameResult", "else": "arExprVar"}},
+		{
+			"id": "subst:alpha-rename",
+			"expr": {
+				"kind": "lambda",
+				"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+				"params": ["expr", "oldVars", "newVars"],
+				"body": "arResult"
+			}
+		},
+
+		{"id": "slIdxVar", "expr": {"kind": "var", "name": "slIdx"}},
+		{"id": "slListVar", "expr": {"kind": "var", "name": "slList"}},
+		{"id": "slAccVar", "expr": {"kind": "var", "name": "slAcc"}},
+		{"id": "slRecVar", "expr": {"kind": "var", "name": "slRec"}},
+		{"id": "slLen", "expr": {"kind": "call", "ns": "list", "name": "length", "args": ["slListVar"]}},
+		{"id": "slDone", "expr": {"kind": "call", "ns": "core", "name": "gte", "args": ["slIdxVar", "slLen"]}},
+		{"id": "slElem", "expr": {"kind": "call", "ns": "list", "name": "nth", "args": ["slListVar", "slIdxVar"]}},
+		{"id": "slType", "expr": {"kind": "call", "ns": "core", "name": "typeof", "args": ["slElem"]}},
+		{"id": "slIsString", "expr": {"kind": "call", "ns": "core", "name": "eq", "args": ["slType", {"kind": "lit", "type": {"kind": "string"}, "value": "string"}]}},
+		{"id": "slCons", "expr": {"kind": "call", "ns": "list", "name": "cons", "args": ["slElem", "slAccVar"]}},
+		{"id": "slNewAcc", "expr": {"kind": "if", "cond": "slIsString", "then": "slCons", "else": "slAccVar"}},
+		{"id": "slNextIdx", "expr": {"kind": "call", "ns": "core", "name": "add", "args": ["slIdxVar", "one"]}},
+		{"id": "slRecurse", "expr": {"kind": "callExpr", "args": ["slListVar", "slNextIdx", "slNewAcc"], "fn": "slRecVar"}},
+		{"id": "slBody", "expr": {"kind": "if", "cond": "slDone", "then": "slAccVar", "else": "slRecurse"}},
+		{"id": "slInner", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"params": ["slIdx", "slList", "slAcc"],
+			"body": "slBody"
+		}},
+		{"id": "slOuter", "expr": {
+			"kind": "lambda",
+			"type": {"kind": "fn", "params": [{"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}], "returns": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}}},
+			"params": ["slRec"],
+			"body": "slInner"
+		}},
+		{"id": "stringListFixFn", "expr": {
+			"kind": "fix",
+			"type": {"kind": "fn", "params": [{"kind": "int"}, {"kind": "int"}, {"kind": "int"}], "returns": {"kind": "int"}},
+			"fn": "slOuter"
+		}},
+
+		{"id": "exports", "expr": {
+			"kind": "record",
+			"fields": [
+				{"key": "subst:fresh-name", "value": "subst:fresh-name"},
+				{"key": "subst:collect-free-vars", "value": "subst:collect-free-vars"},
+				{"key": "subst:substitute", "value": "subst:substitute"},
+				{"key": "subst:alpha-rename", "value": "subst:alpha-rename"}
+			]
+		}}
+	],
+	"result": "exports"
+}
